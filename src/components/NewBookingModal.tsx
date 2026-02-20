@@ -56,18 +56,17 @@ const PROCEDURES = [
 ];
 
 const UNITS = ["Unidade Centro", "Unidade Zona Sul", "Unidade Norte"];
-
 const PERIODS = ["Manhã", "Tarde", "Noite"];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+    <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
       {children}
     </label>
   );
 }
 
-function Input({
+function TextInput({
   value,
   onChange,
   placeholder,
@@ -89,7 +88,7 @@ function Input({
   );
 }
 
-function Select({
+function SelectInput({
   value,
   onChange,
   options,
@@ -124,24 +123,49 @@ function Select({
 }
 
 export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBookingModalProps) {
+  if (!slot) return null;
+
+  // Compute defaults from the clicked slot
+  const defaultTime = `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
+  const defaultDate = `${slot.date.getFullYear()}-${String(slot.date.getMonth() + 1).padStart(2, "0")}-${String(slot.date.getDate()).padStart(2, "0")}`;
+
+  return (
+    <ModalBody
+      slot={slot}
+      defaultTime={defaultTime}
+      defaultDate={defaultDate}
+      professionals={professionals}
+      onClose={onClose}
+      onSave={onSave}
+    />
+  );
+}
+
+// Inner component — keyed externally so it fully re-mounts per slot
+function ModalBody({
+  slot,
+  defaultTime,
+  defaultDate,
+  professionals,
+  onClose,
+  onSave,
+}: {
+  slot: NewBookingSlot;
+  defaultTime: string;
+  defaultDate: string;
+  professionals: Professional[];
+  onClose: () => void;
+  onSave: (data: NewBookingFormData) => Promise<void>;
+}) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  const defaultTime = slot
-    ? `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`
-    : "";
-
-  // Safe ISO date string avoiding timezone offset issues
-  const defaultDate = slot
-    ? `${slot.date.getFullYear()}-${String(slot.date.getMonth() + 1).padStart(2, "0")}-${String(slot.date.getDate()).padStart(2, "0")}`
-    : "";
 
   const [form, setForm] = useState<NewBookingFormData>({
     lead_name: "",
     phone: "",
     procedure_name: "",
     unit_name: UNITS[0],
-    professional_id: slot?.professional.id ?? professionals[0]?.id ?? 0,
+    professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
     notes: "",
@@ -151,7 +175,7 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const isValid = form.lead_name.trim() && form.procedure_name;
+  const isValid = !!form.lead_name.trim() && !!form.procedure_name;
 
   const handleSave = async () => {
     if (!isValid) return;
@@ -168,30 +192,20 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
     }
   };
 
-  if (!slot) return null;
-
   const profOptions = professionals.map((p) => ({ value: String(p.id), label: p.name }));
   const procedureOptions = PROCEDURES.map((p) => ({ value: p, label: p }));
   const unitOptions = UNITS.map((u) => ({ value: u, label: u }));
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
 
-  const selectedProf = professionals.find((p) => p.id === form.professional_id);
-
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div
         className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg border border-border animate-fade-in flex flex-col"
-        style={{
-          background: "hsl(var(--surface-raised))",
-          maxHeight: "90vh",
-        }}
+        style={{ background: "hsl(var(--surface-raised))", maxHeight: "90vh" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border surface-elevated rounded-t-2xl flex-shrink-0">
@@ -218,52 +232,44 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
 
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-          {/* Slot info pill */}
+          {/* Context pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/25">
               <Clock className="h-3 w-3" />
               {defaultTime}
             </span>
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-elevated text-foreground border border-border">
+              <Calendar className="h-3 w-3 text-muted-foreground" />
+              {format(slot.date, "dd/MM/yyyy", { locale: ptBR })}
+            </span>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-elevated text-foreground border border-border">
               <User className="h-3 w-3 text-muted-foreground" />
               {slot.professional.name}
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              {slot.professional.specialty}
             </span>
           </div>
 
           {/* Paciente */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1"><User className="h-3 w-3" /> Paciente</span>
+              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Paciente *</span>
             </FieldLabel>
-            <Input
-              value={form.lead_name}
-              onChange={set("lead_name")}
-              placeholder="Nome completo"
-            />
+            <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" />
           </div>
 
           {/* Telefone */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> Telefone</span>
+              <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
             </FieldLabel>
-            <Input
-              value={form.phone}
-              onChange={set("phone")}
-              placeholder="+55 11 99999-9999"
-              type="tel"
-            />
+            <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" />
           </div>
 
           {/* Procedimento */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1"><Stethoscope className="h-3 w-3" /> Procedimento</span>
+              <span className="flex items-center gap-1.5"><Stethoscope className="h-3 w-3" /> Procedimento *</span>
             </FieldLabel>
-            <Select
+            <SelectInput
               value={form.procedure_name}
               onChange={set("procedure_name")}
               options={procedureOptions}
@@ -274,28 +280,36 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
           {/* Profissional */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1"><User className="h-3 w-3" /> Profissional</span>
+              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Profissional</span>
             </FieldLabel>
-            <Select
+            <SelectInput
               value={String(form.professional_id)}
               onChange={(v) => set("professional_id")(Number(v))}
               options={profOptions}
             />
           </div>
 
-          {/* Data e Hora lado a lado */}
+          {/* Data e Hora — usando text para garantir o valor pré-preenchido */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>
-                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Data</span>
+                <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
               </FieldLabel>
-              <Input value={form.date} onChange={set("date")} type="date" />
+              <TextInput
+                value={form.date}
+                onChange={set("date")}
+                placeholder="AAAA-MM-DD"
+              />
             </div>
             <div>
               <FieldLabel>
-                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Horário</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Horário</span>
               </FieldLabel>
-              <Input value={form.time} onChange={set("time")} type="time" />
+              <TextInput
+                value={form.time}
+                onChange={set("time")}
+                placeholder="HH:MM"
+              />
             </div>
           </div>
 
@@ -303,20 +317,20 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>
-                <span className="flex items-center gap-1"><Building2 className="h-3 w-3" /> Unidade</span>
+                <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
               </FieldLabel>
-              <Select value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
+              <SelectInput value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
             </div>
             <div>
               <FieldLabel>Período</FieldLabel>
-              <Select value={form.period} onChange={set("period")} options={periodOptions} />
+              <SelectInput value={form.period} onChange={set("period")} options={periodOptions} />
             </div>
           </div>
 
           {/* Observações */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1"><StickyNote className="h-3 w-3" /> Observações</span>
+              <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Observações</span>
             </FieldLabel>
             <textarea
               value={form.notes}
