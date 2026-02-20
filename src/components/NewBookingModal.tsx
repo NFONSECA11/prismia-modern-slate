@@ -38,6 +38,7 @@ export interface NewBookingFormData {
   professional_id: number;
   date: string;
   time: string;
+  time_end: string;
   notes: string;
   period: string;
 }
@@ -127,12 +128,14 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
 
   // Compute defaults from the clicked slot
   const defaultTime = `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
+  const defaultTimeEnd = `${String(slot.hour + 1).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
   const defaultDate = `${slot.date.getFullYear()}-${String(slot.date.getMonth() + 1).padStart(2, "0")}-${String(slot.date.getDate()).padStart(2, "0")}`;
 
   return (
     <ModalBody
       slot={slot}
       defaultTime={defaultTime}
+      defaultTimeEnd={defaultTimeEnd}
       defaultDate={defaultDate}
       professionals={professionals}
       onClose={onClose}
@@ -145,6 +148,7 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
 function ModalBody({
   slot,
   defaultTime,
+  defaultTimeEnd,
   defaultDate,
   professionals,
   onClose,
@@ -152,6 +156,7 @@ function ModalBody({
 }: {
   slot: NewBookingSlot;
   defaultTime: string;
+  defaultTimeEnd: string;
   defaultDate: string;
   professionals: Professional[];
   onClose: () => void;
@@ -168,6 +173,7 @@ function ModalBody({
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
+    time_end: defaultTimeEnd,
     notes: "",
     period: PERIODS[0],
   });
@@ -236,7 +242,7 @@ function ModalBody({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/25">
               <Clock className="h-3 w-3" />
-              {defaultTime}
+              {defaultTime} – {defaultTimeEnd}
             </span>
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-elevated text-foreground border border-border">
               <Calendar className="h-3 w-3 text-muted-foreground" />
@@ -289,27 +295,26 @@ function ModalBody({
             />
           </div>
 
-          {/* Data e Hora — usando text para garantir o valor pré-preenchido */}
+          {/* Data e Hora */}
+          <div>
+            <FieldLabel>
+              <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
+            </FieldLabel>
+            <TextInput value={form.date} onChange={set("date")} placeholder="AAAA-MM-DD" />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>
-                <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Início</span>
               </FieldLabel>
-              <TextInput
-                value={form.date}
-                onChange={set("date")}
-                placeholder="AAAA-MM-DD"
-              />
+              <TextInput value={form.time} onChange={set("time")} placeholder="HH:MM" />
             </div>
             <div>
               <FieldLabel>
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Horário</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Término</span>
               </FieldLabel>
-              <TextInput
-                value={form.time}
-                onChange={set("time")}
-                placeholder="HH:MM"
-              />
+              <TextInput value={form.time_end} onChange={set("time_end")} placeholder="HH:MM" />
             </div>
           </div>
 
