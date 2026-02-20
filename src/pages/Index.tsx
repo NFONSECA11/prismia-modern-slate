@@ -12,9 +12,10 @@ import {
   CalendarDays,
   RefreshCw,
   Sparkles,
-  ChevronDown,
   Search,
   SlidersHorizontal,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 type View = "table" | "agenda";
@@ -37,16 +38,16 @@ export default function Index() {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isRefetching, refetch } = useQuery({
+  const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests"],
     queryFn: fetchBookingRequests,
-    staleTime: 30_000,
+    // Refetch automático a cada 30s
+    refetchInterval: 30_000,
+    // Refetch ao recuperar foco da janela (usuário troca de aba e volta)
+    refetchOnWindowFocus: true,
+    staleTime: 20_000,
+    retry: 2,
   });
-
-  const handleSaveBooking = async (data: NewBookingFormData) => {
-    await createBooking(data);
-    queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
-  };
 
   const bookings = data?.results ?? [];
   const professionals = data?.professionals ?? [];
@@ -70,6 +71,17 @@ export default function Index() {
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
   };
 
+  const handleSaveBooking = async (formData: NewBookingFormData) => {
+    await createBooking(formData);
+    queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+  };
+
+  // Ao trocar de aba, força refetch
+  const handleSetView = (v: View) => {
+    setView(v);
+    refetch();
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
       {/* Top navigation bar */}
@@ -78,7 +90,6 @@ export default function Index() {
         style={{ background: "hsl(var(--surface))", backdropFilter: "blur(12px)" }}
       >
         <div className="flex items-center gap-3">
-          {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
               <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
@@ -87,6 +98,19 @@ export default function Index() {
           </div>
           <span className="text-border text-xs">|</span>
           <span className="text-xs text-muted-foreground font-medium">Dashboard Operacional</span>
+
+          {/* Indicador de conectividade */}
+          {isError ? (
+            <span className="flex items-center gap-1 text-[10px] font-medium text-status-canceled bg-status-canceled-bg px-2 py-0.5 rounded-full border border-status-canceled/25">
+              <WifiOff className="h-3 w-3" />
+              Offline — localhost:8000
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
+              <Wifi className="h-3 w-3" />
+              API conectada
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -101,7 +125,7 @@ export default function Index() {
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
             <button
-              onClick={() => setView("table")}
+              onClick={() => handleSetView("table")}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                 view === "table"
                   ? "bg-surface-raised text-foreground shadow-sm"
@@ -112,7 +136,7 @@ export default function Index() {
               Tabela
             </button>
             <button
-              onClick={() => setView("agenda")}
+              onClick={() => handleSetView("agenda")}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                 view === "agenda"
                   ? "bg-surface-raised text-foreground shadow-sm"
@@ -145,9 +169,26 @@ export default function Index() {
           ))}
         </div>
 
+        {/* Erro de conexão — banner */}
+        {isError && (
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3 bg-status-canceled-bg border border-status-canceled/30 text-status-canceled text-sm animate-fade-in">
+            <WifiOff className="h-4 w-4 flex-shrink-0" />
+            <div>
+              <span className="font-semibold">Backend inacessível.</span>
+              {" "}Verifique se o Django está rodando em{" "}
+              <code className="font-mono text-xs bg-status-canceled/10 px-1 rounded">
+                http://localhost:8000
+              </code>{" "}
+              e que o CORS está configurado para{" "}
+              <code className="font-mono text-xs bg-status-canceled/10 px-1 rounded">
+                localhost:5173
+              </code>.
+            </div>
+          </div>
+        )}
+
         {/* Filters row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -159,7 +200,6 @@ export default function Index() {
             />
           </div>
 
-          {/* Status filter chips */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
             {STATUS_FILTERS.map((f) => (
@@ -206,7 +246,6 @@ export default function Index() {
         </div>
       </main>
 
-      {/* Drawer */}
       <BookingDrawer
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
