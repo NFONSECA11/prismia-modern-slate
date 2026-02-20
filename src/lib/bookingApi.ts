@@ -1,6 +1,6 @@
-import { BookingListResponse } from "@/types/booking";
+import { BookingListResponse, BookingRequest } from "@/types/booking";
 
-// Mock data matching the Django API contract
+// Mutable mock store (simulates a backend in memory)
 export const MOCK_BOOKINGS: BookingListResponse = {
   count: 7,
   professionals: [
@@ -26,10 +26,7 @@ export const MOCK_BOOKINGS: BookingListResponse = {
       updated_at: "2026-02-20T16:40:16Z",
       vars_snapshot: {
         preferred_window: "2026-02-20 a 2026-02-25 - Manhã",
-        chosen_slot: {
-          start_at: "2026-02-21T10:00:00Z",
-          label: "21/02 às 10:00 (Opção 2)",
-        },
+        chosen_slot: { start_at: "2026-02-21T10:00:00Z", label: "21/02 às 10:00 (Opção 2)" },
       },
     },
     {
@@ -66,10 +63,7 @@ export const MOCK_BOOKINGS: BookingListResponse = {
       updated_at: "2026-02-20T08:00:00Z",
       vars_snapshot: {
         preferred_window: "2026-02-21 - Manhã",
-        chosen_slot: {
-          start_at: "2026-02-21T09:00:00Z",
-          label: "21/02 às 09:00",
-        },
+        chosen_slot: { start_at: "2026-02-21T09:00:00Z", label: "21/02 às 09:00" },
       },
     },
     {
@@ -106,10 +100,7 @@ export const MOCK_BOOKINGS: BookingListResponse = {
       updated_at: "2026-02-20T14:10:00Z",
       vars_snapshot: {
         preferred_window: "2026-02-24 a 2026-03-01 - Tarde",
-        chosen_slot: {
-          start_at: "2026-02-25T15:00:00Z",
-          label: "25/02 às 15:00 (Opção 1)",
-        },
+        chosen_slot: { start_at: "2026-02-25T15:00:00Z", label: "25/02 às 15:00 (Opção 1)" },
       },
     },
     {
@@ -149,13 +140,63 @@ export const MOCK_BOOKINGS: BookingListResponse = {
   ],
 };
 
-// Simulate API call
+let nextId = 100;
+
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   await new Promise((r) => setTimeout(r, 600));
-  return MOCK_BOOKINGS;
+  return { ...MOCK_BOOKINGS, results: [...MOCK_BOOKINGS.results], count: MOCK_BOOKINGS.results.length };
 }
 
 export async function confirmBooking(id: number, payload: { use_chosen_slot: boolean; notes: string }): Promise<void> {
   await new Promise((r) => setTimeout(r, 800));
   console.log(`POST /api/booking/requests/${id}/confirm/`, payload);
+}
+
+export interface CreateBookingPayload {
+  lead_name: string;
+  phone: string;
+  procedure_name: string;
+  unit_name: string;
+  professional_id: number;
+  date: string;
+  time: string;
+  time_end: string;
+  notes: string;
+  period: string;
+}
+
+export async function createBooking(payload: CreateBookingPayload): Promise<BookingRequest> {
+  await new Promise((r) => setTimeout(r, 700));
+
+  const prof = MOCK_BOOKINGS.professionals.find((p) => p.id === payload.professional_id);
+
+  const newBooking: BookingRequest = {
+    id: nextId++,
+    lead_name: payload.lead_name,
+    phone: payload.phone,
+    status: "pending",
+    booking_mode: "manual",
+    procedure_name: payload.procedure_name,
+    procedure_slug: payload.procedure_name.toLowerCase().replace(/\s+/g, "-"),
+    unit_name: payload.unit_name,
+    professional_id: payload.professional_id,
+    professional_name: prof?.name ?? "",
+    preferred_window: payload.date,
+    preferred_period: payload.period,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    vars_snapshot: {
+      preferred_window: `${payload.date} - ${payload.period}`,
+      chosen_slot: {
+        start_at: `${payload.date}T${payload.time}:00`,
+        label: `${payload.date} às ${payload.time}`,
+      },
+    },
+  };
+
+  // Persist in mock store so next fetch returns updated list
+  MOCK_BOOKINGS.results.push(newBooking);
+  MOCK_BOOKINGS.count = MOCK_BOOKINGS.results.length;
+
+  return newBooking;
 }

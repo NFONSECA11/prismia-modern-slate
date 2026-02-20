@@ -18,6 +18,7 @@ interface AgendaViewProps {
   bookings: BookingRequest[];
   professionals: Professional[];
   onSelectBooking: (booking: BookingRequest) => void;
+  onSaveBooking: (data: NewBookingFormData) => Promise<void>;
 }
 
 type AgendaMode = "day" | "week";
@@ -337,7 +338,7 @@ function WeekView({
 }
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
-export function AgendaView({ bookings, professionals, onSelectBooking }: AgendaViewProps) {
+export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBooking }: AgendaViewProps) {
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date("2026-02-20"));
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
@@ -361,8 +362,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking }: AgendaV
       : `${format(weekStart, "dd MMM", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd MMM yyyy", { locale: ptBR })}`;
 
   const handleSaveBooking = async (data: NewBookingFormData) => {
-    await new Promise((r) => setTimeout(r, 900));
-    console.log("POST /api/booking/requests/ →", data);
+    await onSaveBooking(data);
   };
 
   return (
