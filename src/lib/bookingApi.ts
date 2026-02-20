@@ -1,21 +1,10 @@
 import api from "@/lib/api";
 import { BookingListResponse, BookingRequest } from "@/types/booking";
-import { mockBookingListResponse, mockBookings } from "@/lib/mockData";
-
-// Flag: true enquanto o backend não estiver acessível
-let useMock = false;
 
 // ── Listagem ─────────────────────────────────────────────────────────────────
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  try {
-    const { data } = await api.get<BookingListResponse>("/api/booking/requests/");
-    useMock = false;
-    return data;
-  } catch {
-    console.warn("[API] Backend inacessível — usando dados mock");
-    useMock = true;
-    return { ...mockBookingListResponse };
-  }
+  const { data } = await api.get<BookingListResponse>("/api/booking/requests/");
+  return data;
 }
 
 // ── Confirmar agendamento ────────────────────────────────────────────────────
@@ -76,32 +65,6 @@ export async function createBooking(
       },
     },
   };
-
-  if (useMock) {
-    // Cria localmente quando o backend está offline
-    const newBooking: BookingRequest = {
-      id: Date.now(),
-      lead_name: payload.lead_name,
-      phone: payload.phone,
-      status: "pending",
-      booking_mode: "manual",
-      procedure_name: payload.procedure_name,
-      procedure_slug: payload.procedure_name.toLowerCase().replace(/\s+/g, "-"),
-      unit_name: payload.unit_name,
-      professional_id: payload.professional_id,
-      professional_name: mockBookingListResponse.professionals.find(p => p.id === payload.professional_id)?.name ?? "Profissional",
-      preferred_window: body.vars_snapshot.preferred_window,
-      preferred_period: payload.period,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      vars_snapshot: body.vars_snapshot,
-    };
-    mockBookings.push(newBooking);
-    mockBookingListResponse.count = mockBookings.length;
-    console.info("[Mock] Agendamento criado localmente:", newBooking.lead_name);
-    return newBooking;
-  }
-
   const { data } = await api.post<BookingRequest>("/api/booking/requests/", body);
   return data;
 }
