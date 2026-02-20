@@ -2,11 +2,12 @@ import axios from "axios";
 
 // Base Axios instance — aponta para o Django em Docker
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://tile-desktop-porcelain-iowa.trycloudflare.com",
   timeout: 10_000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    Authorization: "Token 79ca14e2ccad8be2417242cce0a9c2729c737875",
   },
 });
 
