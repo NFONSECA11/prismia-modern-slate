@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus } from "@/types/booking";
-import { fetchBookingRequests } from "@/lib/bookingApi";
+import { fetchBookingRequests, createBooking } from "@/lib/bookingApi";
+import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
 import { AgendaView } from "@/components/AgendaView";
@@ -41,6 +42,11 @@ export default function Index() {
     queryFn: fetchBookingRequests,
     staleTime: 30_000,
   });
+
+  const handleSaveBooking = async (data: NewBookingFormData) => {
+    await createBooking(data);
+    queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+  };
 
   const bookings = data?.results ?? [];
   const professionals = data?.professionals ?? [];
@@ -194,6 +200,7 @@ export default function Index() {
               bookings={filteredBookings}
               professionals={professionals}
               onSelectBooking={setSelectedBooking}
+              onSaveBooking={handleSaveBooking}
             />
           )}
         </div>
