@@ -340,7 +340,7 @@ function WeekView({
 // ── Main AgendaView ─────────────────────────────────────────────────────────
 export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBooking }: AgendaViewProps) {
   const [mode, setMode] = useState<AgendaMode>("week");
-  const [currentDate, setCurrentDate] = useState<Date>(new Date("2026-02-20"));
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
