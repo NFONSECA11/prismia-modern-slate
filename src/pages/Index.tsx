@@ -331,7 +331,6 @@ export default function Index() {
 
       <BookingDrawer
         booking={selectedBooking}
-        professionals={professionals}
         onClose={() => setSelectedBooking(null)}
         onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["booking-requests"] })}
       />

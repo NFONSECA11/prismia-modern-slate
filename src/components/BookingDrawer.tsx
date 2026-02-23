@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   confirmBooking,
   cancelBooking,
@@ -12,6 +13,7 @@ import {
   handoffOff,
   suggestSlots,
   patchBooking,
+  fetchProfessionalsByUnit,
 } from "@/lib/bookingApi";
 import {
   X,
@@ -36,7 +38,6 @@ import {
 
 interface BookingDrawerProps {
   booking: BookingRequest | null;
-  professionals?: Professional[];
   onClose: () => void;
   onConfirmed: () => void;
 }
@@ -115,9 +116,18 @@ function ActionButton({
   );
 }
 
-export function BookingDrawer({ booking, professionals = [], onClose, onConfirmed }: BookingDrawerProps) {
+export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
+  const { activeUnit } = useAuth();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+
+  const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim());
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals-unit", activeUnit?.id],
+    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
+    enabled: !!booking && !hasProfessional && !!activeUnit,
+  });
 
   const assignProfMut = useMutation({
     mutationFn: (profId: number) => patchBooking(booking!.id, { professional_id: profId }),
