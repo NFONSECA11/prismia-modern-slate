@@ -20,6 +20,25 @@ export async function confirmBooking(
   await api.post(`/api/booking/requests/${id}/confirm/`, payload);
 }
 
+// ── Cancelar ─────────────────────────────────────────────────────────────────
+export async function cancelBooking(id: number): Promise<void> {
+  await api.post(`/api/booking/requests/${id}/cancel/`);
+}
+
+// ── Reabrir ──────────────────────────────────────────────────────────────────
+export async function reopenBooking(id: number): Promise<void> {
+  await api.post(`/api/booking/requests/${id}/reopen/`);
+}
+
+// ── Handoff ON / OFF ─────────────────────────────────────────────────────────
+export async function handoffOn(id: number): Promise<void> {
+  await api.post(`/api/booking/requests/${id}/handoff_on/`);
+}
+
+export async function handoffOff(id: number): Promise<void> {
+  await api.post(`/api/booking/requests/${id}/handoff_off/`);
+}
+
 // ── Sugerir horários ─────────────────────────────────────────────────────────
 export interface SuggestSlotsPayload {
   generate: boolean;

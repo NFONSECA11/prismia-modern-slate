@@ -1,0 +1,105 @@
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { MeResponse, UserRole, Unit, Company, fetchMe, logout as apiLogout, login as apiLogin } from "@/lib/authApi";
+
+interface AuthState {
+  user: MeResponse["user"] | null;
+  company: Company | null;
+  role: UserRole | null;
+  units: Unit[];
+  activeUnit: Unit | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+interface AuthContextType extends AuthState {
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  setActiveUnit: (unit: Unit) => void;
+  canManage: boolean; // owner or manager
+  bootstrap: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    company: null,
+    role: null,
+    units: [],
+    activeUnit: null,
+    isLoading: true,
+    isAuthenticated: false,
+  });
+
+  const bootstrap = useCallback(async () => {
+    try {
+      const me = await fetchMe();
+      setState({
+        user: me.user,
+        company: me.company,
+        role: me.role,
+        units: me.units,
+        activeUnit: me.units[0] ?? null,
+        isLoading: false,
+        isAuthenticated: true,
+      });
+    } catch {
+      setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    bootstrap();
+  }, [bootstrap]);
+
+  const login = async (username: string, password: string) => {
+    await apiLogin(username, password);
+    await bootstrap();
+  };
+
+  const logout = async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // ignore
+    }
+    setState({
+      user: null,
+      company: null,
+      role: null,
+      units: [],
+      activeUnit: null,
+      isLoading: false,
+      isAuthenticated: false,
+    });
+  };
+
+  const setActiveUnit = (unit: Unit) => {
+    setState((s) => ({ ...s, activeUnit: unit }));
+  };
+
+  const canManage = state.role === "owner" || state.role === "manager";
+
+  return (
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        logout,
+        setActiveUnit,
+        canManage,
+        bootstrap,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}

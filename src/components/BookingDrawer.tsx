@@ -2,9 +2,16 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BookingRequest, BookingStatus } from "@/types/booking";
+import { BookingRequest, BookingStatus, BookingMode } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
-import { confirmBooking, suggestSlots } from "@/lib/bookingApi";
+import {
+  confirmBooking,
+  cancelBooking,
+  reopenBooking,
+  handoffOn,
+  handoffOff,
+  suggestSlots,
+} from "@/lib/bookingApi";
 import {
   X,
   Phone,
@@ -19,6 +26,11 @@ import {
   Hash,
   Ban,
   CalendarSearch,
+  XCircle,
+  RotateCcw,
+  PhoneForwarded,
+  PhoneOff,
+  Hourglass,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -27,8 +39,7 @@ interface BookingDrawerProps {
   onConfirmed: () => void;
 }
 
-// Estados finais da FSM — botões desabilitados
-const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled"];
+const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];
 function isTerminal(status: BookingStatus) {
   return TERMINAL_STATUSES.includes(status);
 }
@@ -66,43 +77,105 @@ function TerminalBadge() {
   );
 }
 
-export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
-  const [actionDone, setActionDone] = useState<"confirmed" | "suggested" | null>(null);
+function ActionButton({
+  onClick,
+  disabled,
+  loading,
+  icon: Icon,
+  label,
+  variant = "default",
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  icon: React.ElementType;
+  label: string;
+  variant?: "primary" | "danger" | "default";
+}) {
+  const classes = {
+    primary:
+      "gradient-primary text-primary-foreground hover:opacity-90",
+    danger:
+      "bg-status-canceled/10 text-status-canceled border border-status-canceled/30 hover:bg-status-canceled/20",
+    default:
+      "border border-border text-muted-foreground hover:text-foreground hover:bg-surface-elevated",
+  };
 
-  const confirmMutation = useMutation({
-    mutationFn: () =>
-      confirmBooking(booking!.id, {
-        use_chosen_slot: !!booking?.vars_snapshot?.chosen_slot,
-        notes: "Confirmado via Dashboard PrismIA",
-      }),
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${classes[variant]}`}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+      {label}
+    </button>
+  );
+}
+
+export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
+  const [actionDone, setActionDone] = useState<string | null>(null);
+
+  const makeMutation = (fn: () => Promise<void>, successMsg: string) => ({
+    mutationFn: fn,
     onSuccess: () => {
-      setActionDone("confirmed");
+      setActionDone(successMsg);
       setTimeout(() => {
         onConfirmed();
-        onClose();
+        if (successMsg === "Confirmado!" || successMsg === "Cancelado!") onClose();
         setActionDone(null);
       }, 1800);
     },
   });
 
-  const suggestMutation = useMutation({
-    mutationFn: () =>
-      suggestSlots(booking!.id, { generate: true, send: true }),
-    onSuccess: () => {
-      setActionDone("suggested");
-      setTimeout(() => {
-        onConfirmed(); // revalida cache
-        setActionDone(null);
-      }, 2000);
-    },
-  });
+  const confirmMut = useMutation(
+    makeMutation(
+      () =>
+        confirmBooking(booking!.id, {
+          use_chosen_slot: !!(booking?.vars_snapshot?.chosen_slot || booking?.chosen_slot),
+          notes: "Confirmado via Dashboard PrismIA",
+        }),
+      "Confirmado!"
+    )
+  );
+
+  const cancelMut = useMutation(
+    makeMutation(() => cancelBooking(booking!.id), "Cancelado!")
+  );
+
+  const reopenMut = useMutation(
+    makeMutation(() => reopenBooking(booking!.id), "Reaberto!")
+  );
+
+  const handoffOnMut = useMutation(
+    makeMutation(() => handoffOn(booking!.id), "Handoff ativado!")
+  );
+
+  const handoffOffMut = useMutation(
+    makeMutation(() => handoffOff(booking!.id), "Handoff desativado!")
+  );
+
+  const suggestMut = useMutation(
+    makeMutation(
+      () => suggestSlots(booking!.id, { generate: true, send: true }),
+      "Sugestões enviadas!"
+    )
+  );
 
   if (!booking) return null;
 
-  const hasChosenSlot = !!booking.vars_snapshot?.chosen_slot;
-  const chosenSlot = booking.vars_snapshot?.chosen_slot;
+  const hasChosenSlot = !!(booking.vars_snapshot?.chosen_slot || booking.chosen_slot);
+  const chosenSlot = booking.chosen_slot || booking.vars_snapshot?.chosen_slot;
   const terminal = isTerminal(booking.status);
-  const busy = confirmMutation.isPending || suggestMutation.isPending;
+  const busy =
+    confirmMut.isPending ||
+    cancelMut.isPending ||
+    reopenMut.isPending ||
+    handoffOnMut.isPending ||
+    handoffOffMut.isPending ||
+    suggestMut.isPending;
+
+  const mode = booking.booking_mode as BookingMode;
 
   const formattedCreated = (() => {
     try {
@@ -112,12 +185,94 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     }
   })();
 
+  // ── Render mode-specific actions ──────────────────────────────────────
+  function renderActions() {
+    if (actionDone) {
+      return (
+        <div className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-status-confirmed bg-status-confirmed-bg border border-status-confirmed/30 animate-fade-in">
+          <CheckCircle2 className="h-4 w-4" />
+          {actionDone}
+        </div>
+      );
+    }
+
+    const actions: React.ReactNode[] = [];
+
+    if (mode === "handoff_manual") {
+      if (booking.status === "handoff") {
+        actions.push(
+          <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+          <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
+        );
+      }
+    } else if (mode === "assisted_slots_dashboard") {
+      if (booking.status === "handoff" && !hasChosenSlot) {
+        actions.push(
+          <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
+          <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
+        );
+      } else if (booking.status === "awaiting_choice") {
+        // show waiting state + cancel
+        actions.push(
+          <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
+        );
+      } else if (hasChosenSlot && (booking.status === "handoff" || booking.status === "pending")) {
+        actions.push(
+          <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+          <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
+        );
+      }
+    } else if (mode === "auto_slots_bot") {
+      if (!terminal) {
+        if (hasChosenSlot) {
+          actions.push(
+            <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+          );
+        }
+        actions.push(
+          <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
+        );
+      }
+    } else {
+      // fallback — generic
+      if (!terminal) {
+        actions.push(
+          <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
+          <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+        );
+      }
+    }
+
+    // Handoff ON/OFF for non-terminal
+    if (!terminal && booking.status !== "awaiting_choice") {
+      if (booking.status === "handoff") {
+        actions.push(
+          <ActionButton key="hoff" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={PhoneOff} label="Handoff Off" />,
+        );
+      } else {
+        actions.push(
+          <ActionButton key="hon" onClick={() => handoffOnMut.mutate()} disabled={busy} loading={handoffOnMut.isPending} icon={PhoneForwarded} label="Handoff On" />,
+        );
+      }
+    }
+
+    // Reopen for terminal
+    if (terminal) {
+      actions.push(
+        <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
+      );
+    }
+
+    return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
+  }
+
+  const anyError =
+    confirmMut.isError || cancelMut.isError || reopenMut.isError || handoffOnMut.isError || handoffOffMut.isError || suggestMut.isError;
+
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Drawer Panel */}
       <aside
         className="fixed right-0 top-0 z-50 h-full w-full max-w-[480px] shadow-lg animate-slide-in-right flex flex-col"
         style={{
@@ -197,29 +352,75 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             />
           </div>
 
+          {/* Awaiting choice state (assisted_slots_dashboard) */}
+          {booking.status === "awaiting_choice" && (
+            <div className="rounded-xl p-4 border border-status-pending/30 bg-status-pending-bg/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Hourglass className="h-4 w-4 text-status-pending" />
+                <span className="text-xs font-semibold text-status-pending uppercase tracking-wider">
+                  Aguardando escolha do cliente
+                </span>
+              </div>
+              {booking.offer_slots && booking.offer_slots.length > 0 && (
+                <div className="space-y-1.5">
+                  {booking.offer_slots.map((slot, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-foreground">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-bold text-muted-foreground">
+                        {i + 1}
+                      </span>
+                      {slot.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {booking.offer_expires_at && (
+                <p className="text-[10px] text-muted-foreground mt-2 font-mono">
+                  Expira: {booking.offer_expires_at}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Chosen slot */}
-          {hasChosenSlot && (
+          {hasChosenSlot && chosenSlot && (
             <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
                 <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                  Slot Selecionado pela IA
+                  Slot Selecionado
                 </span>
               </div>
-              <p className="text-sm font-medium text-foreground">{chosenSlot!.label}</p>
+              <p className="text-sm font-medium text-foreground">
+                {booking.chosen_slot_label || chosenSlot.label}
+              </p>
               <p className="text-xs text-muted-foreground font-mono mt-1">
-                {chosenSlot!.start_at}
+                {chosenSlot.start_at}
               </p>
             </div>
           )}
 
+          {/* Scheduled at */}
+          {booking.scheduled_at && (
+            <div className="rounded-xl p-4 border border-status-confirmed/30 bg-status-confirmed-bg/30">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar className="h-4 w-4 text-status-confirmed" />
+                <span className="text-xs font-semibold text-status-confirmed uppercase tracking-wider">
+                  Agendado para
+                </span>
+              </div>
+              <p className="text-sm font-medium text-foreground">{booking.scheduled_at}</p>
+            </div>
+          )}
+
           {/* No slot warning */}
-          {!hasChosenSlot && !terminal && (
+          {!hasChosenSlot && !terminal && booking.status !== "awaiting_choice" && (
             <div className="rounded-xl p-4 border border-status-pending/30 bg-status-pending-bg/30">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-status-pending" />
                 <span className="text-xs font-medium text-status-pending">
-                  Nenhum slot selecionado — gere sugestões via IA para enviar ao lead.
+                  {mode === "assisted_slots_dashboard"
+                    ? "Nenhum slot selecionado — clique em 'Sugerir Horários' para enviar opções ao lead."
+                    : "Nenhum slot selecionado."}
                 </span>
               </div>
             </div>
@@ -236,66 +437,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           </div>
         </div>
 
-        {/* Footer — CTA */}
+        {/* Footer — Actions */}
         <div className="px-5 py-4 border-t border-border surface-elevated space-y-2">
-          {/* Feedback de ação concluída */}
-          {actionDone === "confirmed" && (
-            <div className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-status-confirmed bg-status-confirmed-bg border border-status-confirmed/30 animate-fade-in">
-              <CheckCircle2 className="h-4 w-4" />
-              Agendamento confirmado!
-            </div>
-          )}
-          {actionDone === "suggested" && (
-            <div className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-primary bg-primary/10 border border-primary/30 animate-fade-in">
-              <CalendarSearch className="h-4 w-4" />
-              Sugestões enviadas ao lead!
-            </div>
-          )}
+          {renderActions()}
 
-          {/* Botões de ação — desabilitados em status terminal */}
-          {!actionDone && (
-            <div className="flex gap-2">
-              {/* Sugerir Horários */}
-              <button
-                onClick={() => suggestMutation.mutate()}
-                disabled={terminal || busy}
-                title={terminal ? "Status terminal — ação indisponível" : ""}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {suggestMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CalendarSearch className="h-4 w-4" />
-                )}
-                Sugerir Horários
-              </button>
-
-              {/* Confirmar */}
-              <button
-                onClick={() => confirmMutation.mutate()}
-                disabled={terminal || busy}
-                title={terminal ? "Status terminal — ação indisponível" : ""}
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  hasChosenSlot && !terminal
-                    ? "gradient-primary text-primary-foreground hover:opacity-90 animate-pulse-glow"
-                    : "bg-surface-elevated text-foreground border border-border hover:border-primary/50"
-                }`}
-              >
-                {confirmMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-                Confirmar
-              </button>
-            </div>
-          )}
-
-          {/* Erros de rede */}
-          {(confirmMutation.isError || suggestMutation.isError) && (
+          {anyError && (
             <p className="text-xs text-center text-status-canceled animate-fade-in">
-              Erro ao comunicar com o servidor. Verifique se o backend está acessível em{" "}
-              <code className="font-mono">localhost:8000</code>.
+              Erro ao comunicar com o servidor. Tente novamente.
             </p>
           )}
         </div>
