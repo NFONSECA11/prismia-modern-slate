@@ -38,19 +38,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor: log errors + redirect on 401
+// Interceptor: log errors (no auto-redirect — AuthProvider handles 401 gracefully)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
     const msg = err?.response?.data?.detail ?? err?.response?.data?.error ?? err?.message ?? "Erro desconhecido";
     console.error("[API]", err?.config?.url, "→", status, msg);
-
-    // 401 = session expired → redirect to login
-    if (status === 401 && !err?.config?.url?.includes("/auth/")) {
-      window.location.href = "/login";
-    }
-
     return Promise.reject(err);
   }
 );
