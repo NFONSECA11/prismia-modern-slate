@@ -266,8 +266,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
   }
 
-  const anyError =
-    confirmMut.isError || cancelMut.isError || reopenMut.isError || handoffOnMut.isError || handoffOffMut.isError || suggestMut.isError;
+  const errorMutation = [confirmMut, cancelMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
+  const anyError = !!errorMutation;
+  const errorDetail = (() => {
+    if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
+    const err = errorMutation.error as any;
+    const data = err?.response?.data;
+    if (data?.detail) return data.detail;
+    if (data?.error) return data.error;
+    if (data?.code) return `Erro: ${data.code}`;
+    return err?.message || "Erro ao comunicar com o servidor. Tente novamente.";
+  })();
 
   return (
     <>
@@ -443,7 +452,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
           {anyError && (
             <p className="text-xs text-center text-status-canceled animate-fade-in">
-              Erro ao comunicar com o servidor. Tente novamente.
+              {errorDetail}
             </p>
           )}
         </div>
