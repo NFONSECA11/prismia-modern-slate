@@ -8,7 +8,7 @@ function getCookie(name: string): string | null {
 
 // Base Axios instance — session/cookie auth (same domain in production)
 const api = axios.create({
-  baseURL: "https://sports-reduction-completing-bacteria.trycloudflare.com",
+  baseURL: "https://inclusion-flying-registration-angels.trycloudflare.com",
   timeout: 10_000,
   withCredentials: true, // envia cookies (sessionid, csrftoken)
   headers: {
