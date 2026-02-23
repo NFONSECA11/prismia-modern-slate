@@ -79,7 +79,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Phone className="h-3 w-3" />
-                        {booking.phone}
+                        {booking.phone || (booking as any).lead_phone || (booking as any).contact_phone || "Sem telefone"}
                       </span>
                     </div>
                   </td>
