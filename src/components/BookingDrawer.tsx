@@ -140,14 +140,31 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   });
 
   const assignProfMut = useMutation({
-    mutationFn: (profId: number) => patchBooking(booking!.id, { professional_id: profId }),
-    onSuccess: () => {
+    mutationFn: async (profId: number) => {
+      try {
+        return await patchBooking(booking!.id, { professional_id: profId });
+      } catch (e: any) {
+        // Fallback: try with "professional" field
+        if (e?.response?.status === 500 || e?.response?.status === 400) {
+          console.log("[BookingDrawer] retrying with 'professional' field");
+          return await patchBooking(booking!.id, { professional: profId });
+        }
+        throw e;
+      }
+    },
+    onSuccess: (result) => {
+      console.log("[BookingDrawer] assign success:", result);
       setActionDone("Profissional atribuído!");
       setSelectedProfessionalId(null);
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
       }, 1200);
+    },
+    onError: (err: any) => {
+      console.error("[BookingDrawer] assign error:", err?.response?.status, err?.response?.data);
+      setActionDone("Erro ao atribuir profissional");
+      setTimeout(() => setActionDone(null), 3000);
     },
   });
 
