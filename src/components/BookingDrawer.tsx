@@ -122,6 +122,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
 
   const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
+  
+  if (booking) {
+    console.log("[BookingDrawer] professional_name:", JSON.stringify(booking.professional_name), "| professional_id:", booking.professional_id, "| hasProfessional:", hasProfessional, "| activeUnit:", activeUnit?.id);
+  }
 
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals-unit", activeUnit?.id, booking?.id],
