@@ -121,7 +121,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
 
-  const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim());
+  const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
 
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals-unit", activeUnit?.id, booking?.id],
@@ -373,7 +373,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               icon={User}
               label="Profissional"
               value={
-                booking.professional_name && booking.professional_name.trim() ? (
+                hasProfessional ? (
                   booking.professional_name
                 ) : (
                   <div className="flex items-center gap-2">
