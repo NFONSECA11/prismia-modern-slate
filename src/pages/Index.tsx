@@ -56,6 +56,10 @@ export default function Index() {
   });
 
   const bookings = data?.results ?? [];
+  if (bookings.length > 0) {
+    console.log("[DEBUG] First booking keys:", Object.keys(bookings[0]));
+    console.log("[DEBUG] First booking phone field:", JSON.stringify({ phone: bookings[0].phone, raw: bookings[0] }));
+  }
   const professionals = data?.professionals ?? [];
 
   const filteredBookings = bookings.filter((b) => {
