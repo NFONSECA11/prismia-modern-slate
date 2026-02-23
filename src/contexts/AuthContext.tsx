@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { MeResponse, UserRole, Unit, Company, fetchMe, logout as apiLogout, login as apiLogin } from "@/lib/authApi";
+import { setAuthToken } from "@/lib/api";
 
 interface AuthState {
   user: MeResponse["user"] | null;
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+    setAuthToken(null);
     setState({
       user: null,
       company: null,

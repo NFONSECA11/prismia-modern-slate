@@ -1,4 +1,4 @@
-import api, { setInMemoryCsrfToken } from "@/lib/api";
+import api, { setInMemoryCsrfToken, setAuthToken } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export type UserRole = "owner" | "manager" | "agent";
@@ -34,15 +34,24 @@ export async function fetchCsrf(): Promise<string> {
   return token!;
 }
 
-// ── Login ────────────────────────────────────────────────────────────────────
+// ── Login (Token auth) ──────────────────────────────────────────────────────
 export async function login(username: string, password: string): Promise<void> {
   await fetchCsrf();
-  await api.post("/api/auth/login/", { username, password });
+  const { data } = await api.post("/api/auth/login/", { username, password });
+  // DRF returns { key: "..." } or { token: "..." }
+  const token = data?.token ?? data?.key ?? null;
+  if (token) {
+    setAuthToken(token);
+    console.log("[Auth] Token stored successfully");
+  } else {
+    console.warn("[Auth] No token in login response, falling back to session auth", data);
+  }
 }
 
 // ── Logout ───────────────────────────────────────────────────────────────────
 export async function logout(): Promise<void> {
   await api.post("/api/auth/logout/");
+  setAuthToken(null);
 }
 
 // ── Me (bootstrap) ──────────────────────────────────────────────────────────
