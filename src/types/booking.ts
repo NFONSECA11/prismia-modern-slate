@@ -33,7 +33,8 @@ export interface VarsSnapshot {
 export interface BookingRequest {
   id: number;
   lead_name: string;
-  phone: string;
+  phone?: string;
+  contact_phone?: string;
   status: BookingStatus;
   booking_mode: BookingMode | string;
   procedure_name: string;
