@@ -56,8 +56,10 @@ export async function logout(): Promise<void> {
 
 // ── Me (bootstrap) ──────────────────────────────────────────────────────────
 export async function fetchMe(): Promise<MeResponse> {
-  const { data } = await api.get<MeResponse>("/api/me/");
-  return data;
+  const { data } = await api.get("/api/me/");
+  // Handle wrapped response: { ok, result: { user, role, ... } }
+  const payload = data?.result ?? data;
+  return payload as MeResponse;
 }
 
 // ── Password Reset ──────────────────────────────────────────────────────────
