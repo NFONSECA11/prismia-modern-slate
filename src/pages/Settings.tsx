@@ -37,6 +37,7 @@ export default function Settings() {
             { label: "Profissionais", description: "Gerenciar profissionais e disponibilidade" },
             { label: "Especialidades", description: "Cadastrar e editar especialidades" },
             { label: "Agendamento", description: "Regras de horário, bloqueios e janelas" },
+            { label: "Booking Mode", description: "Configurar modo de agendamento (manual, assistido, automático)" },
           ].map((item) => (
             <div
               key={item.label}
