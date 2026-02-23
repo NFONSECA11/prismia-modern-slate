@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
 import { BookingListResponse, BookingRequest } from "@/types/booking";
 
 // ── Listagem ─────────────────────────────────────────────────────────────────
@@ -17,25 +18,30 @@ export async function confirmBooking(
   id: number,
   payload: ConfirmBookingPayload
 ): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/confirm/`, payload);
 }
 
 // ── Cancelar ─────────────────────────────────────────────────────────────────
 export async function cancelBooking(id: number): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/cancel/`);
 }
 
 // ── Reabrir ──────────────────────────────────────────────────────────────────
 export async function reopenBooking(id: number): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/reopen/`);
 }
 
 // ── Handoff ON / OFF ─────────────────────────────────────────────────────────
 export async function handoffOn(id: number): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/handoff_on/`);
 }
 
 export async function handoffOff(id: number): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/handoff_off/`);
 }
 
@@ -49,6 +55,7 @@ export async function suggestSlots(
   id: number,
   payload: SuggestSlotsPayload = { generate: true, send: true }
 ): Promise<void> {
+  await fetchCsrf();
   await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload);
 }
 
@@ -84,6 +91,7 @@ export async function createBooking(
       },
     },
   };
+  await fetchCsrf();
   const { data } = await api.post<BookingRequest>("/api/booking/requests/", body);
   return data;
 }
