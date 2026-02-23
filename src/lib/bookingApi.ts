@@ -46,17 +46,10 @@ export async function handoffOff(id: number): Promise<void> {
 }
 
 // ── Sugerir horários ─────────────────────────────────────────────────────────
-export interface SuggestSlotsPayload {
-  generate: boolean;
-  send: boolean;
-}
-
-export async function suggestSlots(
-  id: number,
-  payload: SuggestSlotsPayload = { generate: true, send: true }
-): Promise<void> {
+export async function suggestSlots(id: number): Promise<any> {
   await fetchCsrf();
-  await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload);
+  const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, {});
+  return data;
 }
 
 // ── Criar novo agendamento ───────────────────────────────────────────────────
