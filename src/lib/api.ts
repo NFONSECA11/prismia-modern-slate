@@ -17,18 +17,18 @@ const api = axios.create({
   },
 });
 
+// In-memory CSRF token store (set by authApi.fetchCsrf)
+let _inMemoryCsrfToken: string | null = null;
+export function setInMemoryCsrfToken(token: string | null) {
+  _inMemoryCsrfToken = token;
+}
+
 // Interceptor: inject CSRF token + Referer on mutating requests
 api.interceptors.request.use((config) => {
   const method = (config.method ?? "get").toLowerCase();
   if (["post", "put", "patch", "delete"].includes(method)) {
     // Prefer in-memory token (works cross-origin where cookies are blocked)
-    let csrf: string | null = null;
-    try {
-      const { getCsrfToken } = require("@/lib/authApi");
-      csrf = getCsrfToken();
-    } catch { /* authApi not loaded yet */ }
-    // Fallback to cookie
-    if (!csrf) csrf = getCookie("csrftoken");
+    const csrf = _inMemoryCsrfToken || getCookie("csrftoken");
     if (csrf) {
       config.headers["X-CSRFToken"] = csrf;
     }

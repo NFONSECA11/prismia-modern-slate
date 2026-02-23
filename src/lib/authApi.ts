@@ -1,4 +1,4 @@
-import api from "@/lib/api";
+import api, { setInMemoryCsrfToken } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export type UserRole = "owner" | "manager" | "agent";
@@ -27,16 +27,11 @@ export interface MeResponse {
 }
 
 // ── CSRF bootstrap ──────────────────────────────────────────────────────────
-let _csrfToken: string | null = null;
-
-export function getCsrfToken() {
-  return _csrfToken;
-}
-
 export async function fetchCsrf(): Promise<string> {
   const { data } = await api.get("/api/auth/csrf/");
-  _csrfToken = data?.result?.csrfToken ?? null;
-  return _csrfToken!;
+  const token = data?.result?.csrfToken ?? null;
+  setInMemoryCsrfToken(token);
+  return token!;
 }
 
 // ── Login ────────────────────────────────────────────────────────────────────
