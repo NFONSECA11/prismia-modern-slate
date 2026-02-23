@@ -360,7 +360,7 @@ export function BookingDrawer({ booking, professionals = [], onClose, onConfirme
               icon={User}
               label="Profissional"
               value={
-                booking.professional_name ? (
+                booking.professional_name && booking.professional_name.trim() ? (
                   booking.professional_name
                 ) : (
                   <div className="flex items-center gap-2">
