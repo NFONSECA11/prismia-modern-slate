@@ -5,6 +5,12 @@ import { BookingListResponse, BookingRequest, Professional } from "@/types/booki
 // ── Listagem ─────────────────────────────────────────────────────────────────
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const { data } = await api.get<BookingListResponse>("/api/booking/requests/");
+  // Debug: log first booking to check contact_phone
+  const first = data?.results?.[0];
+  if (first) {
+    console.log("[bookingApi] first booking keys:", Object.keys(first));
+    console.log("[bookingApi] contact_phone:", first.contact_phone, "phone:", first.phone);
+  }
   return data;
 }
 
