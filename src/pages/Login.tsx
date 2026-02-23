@@ -18,13 +18,17 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
+      console.log("[Login] Attempting login for:", username);
       await login(username, password);
+      console.log("[Login] Success, navigating to /");
       navigate("/", { replace: true });
     } catch (err: any) {
+      console.error("[Login] Error:", err);
       const msg =
         err?.response?.data?.error ??
         err?.response?.data?.detail ??
         err?.response?.data?.non_field_errors?.[0] ??
+        err?.message ??
         "Credenciais inválidas. Verifique usuário e senha.";
       setError(msg);
     } finally {
