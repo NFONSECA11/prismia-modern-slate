@@ -62,7 +62,10 @@ export default function Index() {
   const professionals = data?.professionals ?? [];
 
   const filteredBookings = bookings.filter((b) => {
-    const matchStatus = statusFilter === "all" || b.status === statusFilter;
+    const matchStatus =
+      statusFilter === "all" ||
+      b.status === statusFilter ||
+      (statusFilter === "canceled" && b.status === "cancelled");
     const q = search.toLowerCase();
     const matchSearch =
       !q ||
@@ -310,7 +313,7 @@ export default function Index() {
                 {f.label}
                 {f.value !== "all" && (
                   <span className="ml-1 opacity-60">
-                    {bookings.filter((b) => b.status === f.value).length}
+                    {bookings.filter((b) => b.status === f.value || (f.value === "canceled" && b.status === "cancelled")).length}
                   </span>
                 )}
               </button>
