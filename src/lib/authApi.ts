@@ -1,7 +1,7 @@
 import api, { setInMemoryCsrfToken, setAuthToken } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export type UserRole = "owner" | "manager" | "agent";
+export type UserRole = "owner" | "manager" | "agent" | "admin";
 
 export interface Unit {
   id: number;
