@@ -381,7 +381,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               <StatusBadge status={booking.status} size="md" />
             </div>
             <div className="mt-2">
-              <BookingModeIcon mode={booking.booking_mode} />
+              <BookingModeIcon mode={booking.booking_mode} showLabel />
             </div>
           </div>
 

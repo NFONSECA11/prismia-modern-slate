@@ -10,21 +10,29 @@ const MODE_CONFIG: Record<string, { icon: React.ElementType; label: string; colo
 interface BookingModeIconProps {
   mode: string;
   size?: "sm" | "md";
+  showLabel?: boolean;
 }
 
-export function BookingModeIcon({ mode, size = "sm" }: BookingModeIconProps) {
+export function BookingModeIcon({ mode, size = "sm", showLabel = false }: BookingModeIconProps) {
   const config = MODE_CONFIG[mode];
   if (!config) return <span className="text-[10px] text-muted-foreground/50">{mode}</span>;
 
   const Icon = config.icon;
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
 
+  const content = (
+    <span className={`inline-flex items-center gap-1.5 ${config.color} ${!showLabel ? "cursor-help" : ""}`}>
+      <Icon className={iconSize} />
+      {showLabel && <span className="text-xs font-medium">{config.label}</span>}
+    </span>
+  );
+
+  if (showLabel) return content;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={`inline-flex items-center ${config.color} cursor-help`}>
-          <Icon className={iconSize} />
-        </span>
+        {content}
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs font-medium">
         {config.label}
