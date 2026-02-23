@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BookingRequest, BookingStatus, BookingMode } from "@/types/booking";
+import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   confirmBooking,
@@ -11,6 +11,7 @@ import {
   handoffOn,
   handoffOff,
   suggestSlots,
+  patchBooking,
 } from "@/lib/bookingApi";
 import {
   X,
@@ -35,6 +36,7 @@ import {
 
 interface BookingDrawerProps {
   booking: BookingRequest | null;
+  professionals?: Professional[];
   onClose: () => void;
   onConfirmed: () => void;
 }
@@ -113,8 +115,21 @@ function ActionButton({
   );
 }
 
-export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
+export function BookingDrawer({ booking, professionals = [], onClose, onConfirmed }: BookingDrawerProps) {
   const [actionDone, setActionDone] = useState<string | null>(null);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+
+  const assignProfMut = useMutation({
+    mutationFn: (profId: number) => patchBooking(booking!.id, { professional_id: profId }),
+    onSuccess: () => {
+      setActionDone("Profissional atribuído!");
+      setSelectedProfessionalId(null);
+      setTimeout(() => {
+        onConfirmed();
+        setActionDone(null);
+      }, 1200);
+    },
+  });
 
   const makeMutation = (fn: () => Promise<void>, successMsg: string) => ({
     mutationFn: fn,
@@ -341,7 +356,44 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           <div className="rounded-xl px-4 py-1 bg-surface border border-border">
             <DetailRow icon={Hash} label="Procedimento" value={booking.procedure_name} />
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
-            <DetailRow icon={User} label="Profissional" value={booking.professional_name} />
+            <DetailRow
+              icon={User}
+              label="Profissional"
+              value={
+                booking.professional_name ? (
+                  booking.professional_name
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedProfessionalId ?? ""}
+                      onChange={(e) => setSelectedProfessionalId(Number(e.target.value) || null)}
+                      className="text-sm bg-surface border border-border rounded-lg px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60"
+                    >
+                      <option value="">Selecionar...</option>
+                      {professionals.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                      disabled={!selectedProfessionalId || assignProfMut.isPending}
+                      className="text-xs font-medium px-2.5 py-1 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {assignProfMut.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        "Atribuir"
+                      )}
+                    </button>
+                    {assignProfMut.isError && (
+                      <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+                    )}
+                  </div>
+                )
+              }
+            />
             <DetailRow
               icon={Calendar}
               label="Janela Preferida"
