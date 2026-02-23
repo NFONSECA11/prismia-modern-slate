@@ -9,10 +9,10 @@
 @layer base {
   :root {
     /* Slate/Navy Dark Palette */
-    --background: 222 47% 7%;          /* #0a0f1c — deepest navy */
-    --surface: 222 39% 11%;            /* #0f172a — slate-900 */
-    --surface-raised: 217 33% 17%;     /* #1e293b — slate-800 */
-    --surface-elevated: 215 28% 22%;   /* #263347 — slate-700 */
+    --background: 0 0% 7%;              /* #121212 — grafite escuro */
+    --surface: 0 0% 10%;              /* #1a1a1a — grafite surface */
+    --surface-raised: 0 0% 14%;       /* #242424 — grafite raised */
+    --surface-elevated: 0 0% 19%;     /* #303030 — grafite elevated */
 
     --foreground: 213 31% 91%;         /* #dde8f0 — crisp light */
     --foreground-muted: 215 20% 58%;   /* #7d98b3 — muted text */
