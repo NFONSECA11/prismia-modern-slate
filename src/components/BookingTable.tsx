@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BookingModeIcon } from "@/components/BookingModeIcon";
 import { Phone, Calendar, Clock, User, ChevronRight, Loader2 } from "lucide-react";
 
 interface BookingTableProps {
@@ -76,7 +77,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                   {/* Contato */}
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                        <BookingModeIcon mode={booking.booking_mode} />
+                      </div>
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Phone className="h-3 w-3" />
                         {booking.phone || (booking as any).lead_phone || (booking as any).contact_phone || "Sem telefone"}

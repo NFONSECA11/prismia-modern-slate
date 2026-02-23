@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BookingModeIcon } from "@/components/BookingModeIcon";
 
 import {
   confirmBooking,
@@ -34,6 +35,8 @@ import {
   PhoneForwarded,
   PhoneOff,
   Hourglass,
+  CalendarClock,
+  Bot,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -377,9 +380,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               </div>
               <StatusBadge status={booking.status} size="md" />
             </div>
-            <p className="text-[10px] font-mono text-muted-foreground/50 mt-2">
-              mode: {booking.booking_mode}
-            </p>
+            <div className="mt-2">
+              <BookingModeIcon mode={booking.booking_mode} />
+            </div>
           </div>
 
           {/* Details grid */}
