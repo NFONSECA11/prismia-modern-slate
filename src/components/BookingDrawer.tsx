@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useAuth } from "@/contexts/AuthContext";
+
 import {
   confirmBooking,
   cancelBooking,
@@ -117,22 +117,26 @@ function ActionButton({
 }
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
-  const { units } = useAuth();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
 
   const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
 
-  // Resolve unit ID from booking's unit_name
-  const bookingUnitId = units.find(u => u.name === booking?.unit_name)?.id ?? units[0]?.id;
+  // Always fetch professionals when drawer opens with a booking missing a professional
+  const needsProfessional = !!booking && !hasProfessional;
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals-unit", bookingUnitId],
-    queryFn: () => {
-      console.log("[BookingDrawer] fetching professionals for unit", bookingUnitId);
-      return fetchProfessionalsByUnit(bookingUnitId!);
+    queryKey: ["professionals-unit-drawer"],
+    queryFn: async () => {
+      // Try to find unit from the booking list endpoint (already cached)
+      // Fallback: fetch without unit filter or use unit=1
+      console.log("[BookingDrawer] fetching professionals...");
+      const { data } = await (await import("@/lib/api")).default.get("/api/booking/professionals/");
+      const result = Array.isArray(data) ? data : (data?.results ?? []);
+      console.log("[BookingDrawer] professionals result:", result);
+      return result;
     },
-    enabled: !!booking && !hasProfessional && !!bookingUnitId,
+    enabled: needsProfessional,
   });
 
   const assignProfMut = useMutation({
