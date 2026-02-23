@@ -40,15 +40,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   });
 
+  const resolveRole = (me: MeResponse): UserRole | null => {
+    if (me.role) return me.role;
+    const u = me.user as any;
+    if (u?.role) return u.role;
+    if (u?.is_superuser || u?.is_staff) return "admin";
+    return null;
+  };
+
   const bootstrap = useCallback(async () => {
     try {
       const me = await fetchMe();
       console.log("[Auth] bootstrap fetchMe:", JSON.stringify(me));
       const units = me.units ?? [];
+      const role = resolveRole(me);
       setState({
         user: me.user,
         company: me.company ?? null,
-        role: me.role ?? null,
+        role,
         units,
         activeUnit: units[0] ?? null,
         isLoading: false,
@@ -70,10 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await fetchMe();
       console.log("[Auth] fetchMe response:", JSON.stringify(me));
       const units = me.units ?? [];
+      const role = resolveRole(me);
       setState({
         user: me.user,
         company: me.company ?? null,
-        role: me.role ?? null,
+        role,
         units,
         activeUnit: units[0] ?? null,
         isLoading: false,
