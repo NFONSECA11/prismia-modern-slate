@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { BookingListResponse, BookingRequest } from "@/types/booking";
+import { BookingListResponse, BookingRequest, Professional } from "@/types/booking";
 
 // ── Listagem ─────────────────────────────────────────────────────────────────
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
@@ -49,6 +49,14 @@ export async function handoffOff(id: number): Promise<void> {
 export async function suggestSlots(id: number): Promise<any> {
   await fetchCsrf();
   const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, {});
+  return data;
+}
+
+// ── Listar profissionais por unidade ──────────────────────────────────────────
+export async function fetchProfessionalsByUnit(unitId: number): Promise<Professional[]> {
+  const { data } = await api.get<Professional[]>(`/api/booking/professionals/`, {
+    params: { unit: unitId },
+  });
   return data;
 }
 
