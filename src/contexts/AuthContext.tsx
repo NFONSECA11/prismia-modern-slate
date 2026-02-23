@@ -42,12 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const bootstrap = useCallback(async () => {
     try {
       const me = await fetchMe();
+      console.log("[Auth] bootstrap fetchMe:", JSON.stringify(me));
+      const units = me.units ?? [];
       setState({
         user: me.user,
-        company: me.company,
-        role: me.role,
-        units: me.units,
-        activeUnit: me.units[0] ?? null,
+        company: me.company ?? null,
+        role: me.role ?? null,
+        units,
+        activeUnit: units[0] ?? null,
         isLoading: false,
         isAuthenticated: true,
       });
@@ -65,12 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // bootstrap must succeed after login — re-throw so Login page can show the error
     try {
       const me = await fetchMe();
+      console.log("[Auth] fetchMe response:", JSON.stringify(me));
+      const units = me.units ?? [];
       setState({
         user: me.user,
-        company: me.company,
-        role: me.role,
-        units: me.units,
-        activeUnit: me.units[0] ?? null,
+        company: me.company ?? null,
+        role: me.role ?? null,
+        units,
+        activeUnit: units[0] ?? null,
         isLoading: false,
         isAuthenticated: true,
       });
