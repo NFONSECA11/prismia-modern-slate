@@ -54,10 +54,11 @@ export async function suggestSlots(id: number): Promise<any> {
 
 // ── Listar profissionais por unidade ──────────────────────────────────────────
 export async function fetchProfessionalsByUnit(unitId: number): Promise<Professional[]> {
-  const { data } = await api.get<Professional[]>(`/api/booking/professionals/`, {
+  const { data } = await api.get(`/api/booking/professionals/`, {
     params: { unit: unitId },
   });
-  return data;
+  // API pode retornar array direto ou { results: [...] }
+  return Array.isArray(data) ? data : (data?.results ?? []);
 }
 
 // ── Atualizar booking (ex: profissional) ─────────────────────────────────────
