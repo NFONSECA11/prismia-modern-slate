@@ -117,23 +117,22 @@ function ActionButton({
 }
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
-  const { activeUnit } = useAuth();
+  const { units } = useAuth();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
 
   const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
-  
-  if (booking) {
-    console.log("[BookingDrawer] professional_name:", JSON.stringify(booking.professional_name), "| professional_id:", booking.professional_id, "| hasProfessional:", hasProfessional, "| activeUnit:", activeUnit?.id);
-  }
+
+  // Resolve unit ID from booking's unit_name
+  const bookingUnitId = units.find(u => u.name === booking?.unit_name)?.id ?? units[0]?.id;
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals-unit", activeUnit?.id, booking?.id],
+    queryKey: ["professionals-unit", bookingUnitId],
     queryFn: () => {
-      console.log("[BookingDrawer] fetching professionals for unit", activeUnit!.id);
-      return fetchProfessionalsByUnit(activeUnit!.id);
+      console.log("[BookingDrawer] fetching professionals for unit", bookingUnitId);
+      return fetchProfessionalsByUnit(bookingUnitId!);
     },
-    enabled: !!booking && !hasProfessional && !!activeUnit?.id,
+    enabled: !!booking && !hasProfessional && !!bookingUnitId,
   });
 
   const assignProfMut = useMutation({
