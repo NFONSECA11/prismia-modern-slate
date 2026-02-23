@@ -141,14 +141,48 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
+      const id = booking!.id;
+      const { default: apiInstance } = await import("@/lib/api");
+      const { fetchCsrf } = await import("@/lib/authApi");
+
+      // Strategy 1: POST to dedicated assign endpoint
       try {
-        return await patchBooking(booking!.id, { professional_id: profId });
+        await fetchCsrf();
+        const { data } = await apiInstance.post(`/api/booking/requests/${id}/assign_professional/`, { professional_id: profId });
+        console.log("[assign] POST assign_professional/ OK", data);
+        return data;
       } catch (e: any) {
-        // Fallback: try with "professional" field
-        if (e?.response?.status === 500 || e?.response?.status === 400) {
-          console.log("[BookingDrawer] retrying with 'professional' field");
-          return await patchBooking(booking!.id, { professional: profId });
-        }
+        console.warn("[assign] POST assign_professional/ failed:", e?.response?.status);
+      }
+
+      // Strategy 2: PUT (may avoid select_for_update issue)
+      try {
+        await fetchCsrf();
+        const { data } = await apiInstance.put(`/api/booking/requests/${id}/`, { professional_id: profId });
+        console.log("[assign] PUT OK", data);
+        return data;
+      } catch (e: any) {
+        console.warn("[assign] PUT failed:", e?.response?.status);
+      }
+
+      // Strategy 3: PATCH with professional_id
+      try {
+        await fetchCsrf();
+        const { data } = await apiInstance.patch(`/api/booking/requests/${id}/`, { professional_id: profId });
+        console.log("[assign] PATCH professional_id OK", data);
+        return data;
+      } catch (e: any) {
+        console.warn("[assign] PATCH professional_id failed:", e?.response?.status, e?.response?.data);
+      }
+
+      // Strategy 4: PATCH with professional
+      try {
+        await fetchCsrf();
+        const { data } = await apiInstance.patch(`/api/booking/requests/${id}/`, { professional: profId });
+        console.log("[assign] PATCH professional OK", data);
+        return data;
+      } catch (e: any) {
+        console.error("[assign] All strategies failed. Last error:", e?.response?.status, e?.response?.data);
         throw e;
       }
     },
