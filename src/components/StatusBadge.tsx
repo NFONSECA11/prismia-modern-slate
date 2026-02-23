@@ -6,7 +6,7 @@ interface StatusConfig {
   dot: string;
 }
 
-const STATUS_MAP: Record<BookingStatus, StatusConfig> = {
+const STATUS_MAP: Record<string, StatusConfig> = {
   confirmed: {
     label: "Confirmado",
     className: "bg-status-confirmed-bg text-status-confirmed border border-status-confirmed/25",
@@ -31,6 +31,21 @@ const STATUS_MAP: Record<BookingStatus, StatusConfig> = {
     label: "Cancelado",
     className: "bg-status-canceled-bg text-status-canceled border border-status-canceled/25",
     dot: "bg-status-canceled",
+  },
+  cancelled: {
+    label: "Cancelado",
+    className: "bg-status-canceled-bg text-status-canceled border border-status-canceled/25",
+    dot: "bg-status-canceled",
+  },
+  failed: {
+    label: "Falhou",
+    className: "bg-status-canceled-bg text-status-canceled border border-status-canceled/25",
+    dot: "bg-status-canceled",
+  },
+  awaiting_choice: {
+    label: "Aguardando Escolha",
+    className: "bg-status-pending-bg text-status-pending border border-status-pending/25",
+    dot: "bg-status-pending",
   },
 };
 

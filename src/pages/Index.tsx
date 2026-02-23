@@ -7,6 +7,7 @@ import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
 import { AgendaView } from "@/components/AgendaView";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutList,
   CalendarDays,
@@ -16,6 +17,10 @@ import {
   SlidersHorizontal,
   Wifi,
   WifiOff,
+  LogOut,
+  ChevronDown,
+  Building2,
+  Shield,
 } from "lucide-react";
 
 type View = "table" | "agenda";
@@ -25,25 +30,26 @@ const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "handoff", label: "Handoff" },
   { value: "assisted", label: "Assisted" },
+  { value: "awaiting_choice", label: "Aguardando" },
   { value: "pending", label: "Pendente" },
   { value: "confirmed", label: "Confirmado" },
   { value: "canceled", label: "Cancelado" },
 ];
 
 export default function Index() {
+  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage } = useAuth();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
+  const [showUnitMenu, setShowUnitMenu] = useState(false);
 
   const queryClient = useQueryClient();
 
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests"],
     queryFn: fetchBookingRequests,
-    // Refetch automático a cada 30s
     refetchInterval: 30_000,
-    // Refetch ao recuperar foco da janela (usuário troca de aba e volta)
     refetchOnWindowFocus: true,
     staleTime: 20_000,
     retry: 2,
@@ -76,10 +82,19 @@ export default function Index() {
     queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
   };
 
-  // Ao trocar de aba, força refetch
   const handleSetView = (v: View) => {
     setView(v);
     refetch();
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const roleLabel: Record<string, string> = {
+    owner: "Owner",
+    manager: "Manager",
+    agent: "Agente",
   };
 
   return (
@@ -97,23 +112,85 @@ export default function Index() {
             <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
           </div>
           <span className="text-border text-xs">|</span>
-          <span className="text-xs text-muted-foreground font-medium">Dashboard Operacional</span>
 
-          {/* Indicador de conectividade */}
+          {/* Company + Unit selector */}
+          <div className="flex items-center gap-2">
+            {company && (
+              <span className="text-xs text-muted-foreground font-medium">{company.name}</span>
+            )}
+            {units.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUnitMenu(!showUnitMenu)}
+                  className="flex items-center gap-1 text-xs font-medium text-foreground px-2 py-1 rounded-lg border border-border hover:bg-surface-elevated transition-colors"
+                >
+                  <Building2 className="h-3 w-3 text-muted-foreground" />
+                  {activeUnit?.name ?? "Unidade"}
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </button>
+                {showUnitMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowUnitMenu(false)} />
+                    <div className="absolute top-full left-0 mt-1 z-50 rounded-lg border border-border surface-raised shadow-md py-1 min-w-[160px]">
+                      {units.map((u) => (
+                        <button
+                          key={u.id}
+                          onClick={() => {
+                            setActiveUnit(u);
+                            setShowUnitMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                            activeUnit?.id === u.id
+                              ? "text-primary font-semibold bg-primary/5"
+                              : "text-foreground hover:bg-surface-elevated"
+                          }`}
+                        >
+                          {u.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {units.length <= 1 && activeUnit && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Building2 className="h-3 w-3" />
+                {activeUnit.name}
+              </span>
+            )}
+          </div>
+
+          {/* Connectivity */}
           {isError ? (
             <span className="flex items-center gap-1 text-[10px] font-medium text-status-canceled bg-status-canceled-bg px-2 py-0.5 rounded-full border border-status-canceled/25">
               <WifiOff className="h-3 w-3" />
-              Offline — localhost:8000
+              Offline
             </span>
           ) : (
             <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
               <Wifi className="h-3 w-3" />
-              API conectada
+              Conectado
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Role badge */}
+          {role && (
+            <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
+              <Shield className="h-3 w-3" />
+              {roleLabel[role] ?? role}
+            </span>
+          )}
+
+          {/* User */}
+          {user && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              {user.first_name || user.username}
+            </span>
+          )}
+
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
@@ -122,7 +199,9 @@ export default function Index() {
             <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
             Atualizar
           </button>
+
           <div className="h-4 w-px bg-border" />
+
           <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
             <button
               onClick={() => handleSetView("table")}
@@ -147,17 +226,29 @@ export default function Index() {
               Agenda
             </button>
           </div>
+
+          <div className="h-4 w-px bg-border" />
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-status-canceled transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+            title="Sair"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Sair</span>
+          </button>
         </div>
       </header>
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
         {/* KPI row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             { label: "Total", value: stats.total, color: "text-foreground" },
             { label: "Handoff", value: stats.handoff, color: "text-status-handoff" },
             { label: "Assisted", value: stats.assisted, color: "text-status-assisted" },
             { label: "Pendentes", value: stats.pending, color: "text-status-pending" },
+            { label: "Confirmados", value: stats.confirmed, color: "text-status-confirmed" },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -169,20 +260,12 @@ export default function Index() {
           ))}
         </div>
 
-        {/* Erro de conexão — banner */}
+        {/* Error banner */}
         {isError && (
           <div className="flex items-center gap-3 rounded-xl px-4 py-3 bg-status-canceled-bg border border-status-canceled/30 text-status-canceled text-sm animate-fade-in">
             <WifiOff className="h-4 w-4 flex-shrink-0" />
             <div>
-              <span className="font-semibold">Backend inacessível.</span>
-              {" "}Verifique se o Django está rodando em{" "}
-              <code className="font-mono text-xs bg-status-canceled/10 px-1 rounded">
-                http://localhost:8000
-              </code>{" "}
-              e que o CORS está configurado para{" "}
-              <code className="font-mono text-xs bg-status-canceled/10 px-1 rounded">
-                localhost:5173
-              </code>.
+              <span className="font-semibold">Backend inacessível.</span> Verifique a conexão com o servidor.
             </div>
           </div>
         )}
