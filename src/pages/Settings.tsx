@@ -20,23 +20,25 @@ function storeMode(unitId: number, mode: string) {
 }
 
 export default function Settings() {
-  const { company, activeUnit } = useAuth();
+  const { company, units } = useAuth();
   const navigate = useNavigate();
 
-  const [selectedMode, setSelectedMode] = useState<string>("handoff_manual");
+  const [modes, setModes] = useState<Record<number, string>>({});
 
   useEffect(() => {
-    if (activeUnit) {
-      setSelectedMode(getStoredMode(activeUnit.id));
-    }
-  }, [activeUnit]);
+    const initial: Record<number, string> = {};
+    units.forEach((u) => {
+      initial[u.id] = getStoredMode(u.id);
+    });
+    setModes(initial);
+  }, [units]);
 
-  const handleModeChange = (mode: string) => {
-    if (!activeUnit) return;
-    setSelectedMode(mode);
-    storeMode(activeUnit.id, mode);
+  const handleModeChange = (unitId: number, mode: string) => {
+    setModes((prev) => ({ ...prev, [unitId]: mode }));
+    storeMode(unitId, mode);
+    const unitName = units.find((u) => u.id === unitId)?.name ?? "Unidade";
     const label = BOOKING_MODES.find((m) => m.value === mode)?.label ?? mode;
-    toast.success(`Modo alterado para "${label}"`);
+    toast.success(`${unitName}: modo alterado para "${label}"`);
   };
 
   return (
@@ -60,46 +62,52 @@ export default function Settings() {
       </header>
 
       <main className="px-6 py-6 max-w-3xl mx-auto space-y-6">
-        {/* Booking Mode — functional */}
+        {/* Booking Mode — per unit */}
         <section className="space-y-3">
           <div>
             <h2 className="text-sm font-bold text-foreground">Booking Mode</h2>
             <p className="text-xs text-muted-foreground">
-              Modo de agendamento ativo para{" "}
-              <span className="font-medium text-foreground">{activeUnit?.name ?? "esta unidade"}</span>
+              Configure o modo de agendamento de cada unidade
             </p>
           </div>
 
-          <div className="grid gap-2">
-            {BOOKING_MODES.map((mode) => {
-              const isActive = selectedMode === mode.value;
-              return (
-                <button
-                  key={mode.value}
-                  onClick={() => handleModeChange(mode.value)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 border text-left transition-all ${
-                    isActive
-                      ? "border-primary/60 bg-primary/5 ring-1 ring-primary/30"
-                      : "border-border surface-raised hover:border-border hover:bg-surface-elevated"
-                  }`}
-                >
-                  <BookingModeIcon mode={mode.value} size="md" showLabel={false} />
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
-                      {mode.label}
-                    </span>
-                    <p className="text-xs text-muted-foreground">{mode.description}</p>
-                  </div>
-                  <div
-                    className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isActive ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    }`}
-                  >
-                    {isActive && <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />}
-                  </div>
-                </button>
-              );
-            })}
+          <div className="space-y-4">
+            {units.map((unit) => (
+              <div key={unit.id} className="space-y-2">
+                <span className="text-xs font-semibold text-foreground">{unit.name}</span>
+                <div className="grid gap-2">
+                  {BOOKING_MODES.map((mode) => {
+                    const isActive = modes[unit.id] === mode.value;
+                    return (
+                      <button
+                        key={mode.value}
+                        onClick={() => handleModeChange(unit.id, mode.value)}
+                        className={`flex items-center gap-3 rounded-xl px-4 py-3 border text-left transition-all ${
+                          isActive
+                            ? "border-primary/60 bg-primary/5 ring-1 ring-primary/30"
+                            : "border-border surface-raised hover:border-border hover:bg-surface-elevated"
+                        }`}
+                      >
+                        <BookingModeIcon mode={mode.value} size="md" showLabel={false} />
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
+                            {mode.label}
+                          </span>
+                          <p className="text-xs text-muted-foreground">{mode.description}</p>
+                        </div>
+                        <div
+                          className={`h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isActive ? "border-primary bg-primary" : "border-muted-foreground/40"
+                          }`}
+                        >
+                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
