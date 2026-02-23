@@ -52,6 +52,16 @@ export async function suggestSlots(id: number): Promise<any> {
   return data;
 }
 
+// ── Atualizar booking (ex: profissional) ─────────────────────────────────────
+export async function patchBooking(
+  id: number,
+  payload: Record<string, unknown>
+): Promise<BookingRequest> {
+  await fetchCsrf();
+  const { data } = await api.patch<BookingRequest>(`/api/booking/requests/${id}/`, payload);
+  return data;
+}
+
 // ── Criar novo agendamento ───────────────────────────────────────────────────
 export interface CreateBookingPayload {
   lead_name: string;
