@@ -124,9 +124,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim());
 
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals-unit", activeUnit?.id],
-    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
-    enabled: !!booking && !hasProfessional && !!activeUnit,
+    queryKey: ["professionals-unit", activeUnit?.id, booking?.id],
+    queryFn: () => {
+      console.log("[BookingDrawer] fetching professionals for unit", activeUnit!.id);
+      return fetchProfessionalsByUnit(activeUnit!.id);
+    },
+    enabled: !!booking && !hasProfessional && !!activeUnit?.id,
   });
 
   const assignProfMut = useMutation({
