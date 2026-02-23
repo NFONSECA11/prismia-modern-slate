@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 type View = "table" | "agenda";
-type FilterStatus = BookingStatus | "all";
+type FilterStatus = BookingStatus | "all" | "today";
 
 const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
   { value: "all", label: "Todos" },
@@ -36,6 +36,7 @@ const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
   { value: "pending", label: "Pendente" },
   { value: "confirmed", label: "Confirmado" },
   { value: "canceled", label: "Cancelado" },
+  { value: "today" as FilterStatus, label: "Hoje" },
 ];
 
 export default function Index() {
@@ -61,11 +62,16 @@ export default function Index() {
   const bookings = data?.results ?? [];
   const professionals = data?.professionals ?? [];
 
+  const todayStr = new Date().toISOString().slice(0, 10);
   const filteredBookings = bookings.filter((b) => {
-    const matchStatus =
-      statusFilter === "all" ||
-      b.status === statusFilter ||
-      (statusFilter === "canceled" && b.status === "cancelled");
+    let matchStatus: boolean;
+    if (statusFilter === "all") {
+      matchStatus = true;
+    } else if (statusFilter === "today") {
+      matchStatus = b.created_at.slice(0, 10) === todayStr;
+    } else {
+      matchStatus = b.status === statusFilter || (statusFilter === "canceled" && b.status === "cancelled");
+    }
     const q = search.toLowerCase();
     const matchSearch =
       !q ||
@@ -313,7 +319,9 @@ export default function Index() {
                 {f.label}
                 {f.value !== "all" && (
                   <span className="ml-1 opacity-60">
-                    {bookings.filter((b) => b.status === f.value || (f.value === "canceled" && b.status === "cancelled")).length}
+                    {f.value === "today"
+                      ? bookings.filter((b) => b.created_at.slice(0, 10) === todayStr).length
+                      : bookings.filter((b) => b.status === f.value || (f.value === "canceled" && b.status === "cancelled")).length}
                   </span>
                 )}
               </button>
