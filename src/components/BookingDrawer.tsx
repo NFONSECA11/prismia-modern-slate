@@ -157,7 +157,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const suggestMut = useMutation(
     makeMutation(
-      () => suggestSlots(booking!.id, { generate: true, send: true }),
+      () => suggestSlots(booking!.id),
       "Sugestões enviadas!"
     )
   );
