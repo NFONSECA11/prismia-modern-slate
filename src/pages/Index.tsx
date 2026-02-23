@@ -232,16 +232,14 @@ export default function Index() {
 
           <div className="h-4 w-px bg-border" />
 
-          {canManage && (
-            <button
-              onClick={() => navigate("/settings")}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-              title="Configurações"
-            >
-              <Settings className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Configurações</span>
-            </button>
-          )}
+          <button
+            onClick={() => navigate("/settings")}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+            title="Configurações"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Configurações</span>
+          </button>
 
           <button
             onClick={handleLogout}
