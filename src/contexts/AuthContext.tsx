@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const canManage = state.role === "owner" || state.role === "manager";
+  console.log("[Auth] role:", JSON.stringify(state.role), "canManage:", canManage);
 
   return (
     <AuthContext.Provider
