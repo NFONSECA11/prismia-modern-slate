@@ -1,10 +1,10 @@
-import { PhoneForwarded, CalendarClock, Bot } from "lucide-react";
+import { HandMetal, LayoutDashboard, Zap } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MODE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  handoff_manual: { icon: PhoneForwarded, label: "Handoff Manual", color: "text-status-handoff" },
-  assisted_slots_dashboard: { icon: CalendarClock, label: "Assistido", color: "text-status-assisted" },
-  auto_slots_bot: { icon: Bot, label: "Automático", color: "text-primary" },
+  handoff_manual: { icon: HandMetal, label: "Handoff Manual", color: "text-amber-400" },
+  assisted_slots_dashboard: { icon: LayoutDashboard, label: "Assistido (Dashboard)", color: "text-sky-400" },
+  auto_slots_bot: { icon: Zap, label: "Automático (Bot)", color: "text-emerald-400" },
 };
 
 interface BookingModeIconProps {
@@ -22,11 +22,11 @@ export function BookingModeIcon({ mode, size = "sm" }: BookingModeIconProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={`inline-flex items-center ${config.color}`}>
+        <span className={`inline-flex items-center ${config.color} cursor-help`}>
           <Icon className={iconSize} />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top" className="text-xs">
+      <TooltipContent side="top" className="text-xs font-medium">
         {config.label}
       </TooltipContent>
     </Tooltip>
