@@ -62,7 +62,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string) => {
     await apiLogin(username, password);
-    await bootstrap();
+    // bootstrap must succeed after login — re-throw so Login page can show the error
+    try {
+      const me = await fetchMe();
+      setState({
+        user: me.user,
+        company: me.company,
+        role: me.role,
+        units: me.units,
+        activeUnit: me.units[0] ?? null,
+        isLoading: false,
+        isAuthenticated: true,
+      });
+    } catch (err) {
+      console.error("[Auth] bootstrap after login failed:", err);
+      setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
+      throw new Error("Login realizado, mas não foi possível carregar os dados do usuário.");
+    }
   };
 
   const logout = async () => {
