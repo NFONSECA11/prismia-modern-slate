@@ -9,7 +9,7 @@
 @layer base {
   :root {
     /* Slate/Navy Dark Palette */
-    --background: 222 30% 12%;          /* #161d2e — slate mais claro */
+    --background: 220 10% 10%;          /* #17181c — cinza neutro escuro */
     --surface: 222 39% 11%;            /* #0f172a — slate-900 */
     --surface-raised: 217 33% 17%;     /* #1e293b — slate-800 */
     --surface-elevated: 215 28% 22%;   /* #263347 — slate-700 */
