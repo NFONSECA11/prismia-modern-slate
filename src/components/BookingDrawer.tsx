@@ -272,6 +272,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
     const err = errorMutation.error as any;
     const data = err?.response?.data;
+    if (data?.code === "missing_slots" || data?.detail === "missing_slots")
+      return "Não há disponibilidades para esse profissional e esse procedimento.";
     if (data?.detail) return data.detail;
     if (data?.error) return data.error;
     if (data?.code) return `Erro: ${data.code}`;
