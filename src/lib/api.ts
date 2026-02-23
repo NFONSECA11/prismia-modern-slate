@@ -21,7 +21,14 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const method = (config.method ?? "get").toLowerCase();
   if (["post", "put", "patch", "delete"].includes(method)) {
-    const csrf = getCookie("csrftoken");
+    // Prefer in-memory token (works cross-origin where cookies are blocked)
+    let csrf: string | null = null;
+    try {
+      const { getCsrfToken } = require("@/lib/authApi");
+      csrf = getCsrfToken();
+    } catch { /* authApi not loaded yet */ }
+    // Fallback to cookie
+    if (!csrf) csrf = getCookie("csrftoken");
     if (csrf) {
       config.headers["X-CSRFToken"] = csrf;
     }

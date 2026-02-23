@@ -27,8 +27,16 @@ export interface MeResponse {
 }
 
 // ── CSRF bootstrap ──────────────────────────────────────────────────────────
-export async function fetchCsrf(): Promise<void> {
-  await api.get("/api/auth/csrf/");
+let _csrfToken: string | null = null;
+
+export function getCsrfToken() {
+  return _csrfToken;
+}
+
+export async function fetchCsrf(): Promise<string> {
+  const { data } = await api.get("/api/auth/csrf/");
+  _csrfToken = data?.result?.csrfToken ?? null;
+  return _csrfToken!;
 }
 
 // ── Login ────────────────────────────────────────────────────────────────────
