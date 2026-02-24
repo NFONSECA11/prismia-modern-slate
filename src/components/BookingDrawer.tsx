@@ -588,12 +588,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   const content = (msg.content ?? "").toString().trim();
 
                   return (
-                    <div key={msg.id} className={`flex flex-col gap-0.5 ${isBot ? "items-start" : "items-end"}`}>
+                    <div key={msg.id} className={`flex flex-col gap-0.5 ${isBot ? "items-end" : "items-start"}`}>
                       <div
                         className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-words ${
                           isBot
-                            ? "bg-surface-elevated text-foreground border border-border"
-                            : "gradient-primary text-foreground"
+                            ? "gradient-primary text-foreground"
+                            : "bg-surface-elevated text-foreground border border-border"
                         }`}
                       >
                         {content ? content : <span className="italic text-muted-foreground">[sem conteúdo]</span>}
