@@ -262,7 +262,7 @@ export async function sendBookingMessage(
 ): Promise<BookingMessage> {
   await fetchCsrf();
   const { data } = await api.post(`/api/booking/requests/${bookingId}/send/`, {
-    content,
+    text: content,
   });
   return normalizeBookingMessage(data?.result ?? data, 0);
 }
