@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import { MeResponse, UserRole, Unit, Company, fetchMe, logout as apiLogout, login as apiLogin } from "@/lib/authApi";
 import { setAuthToken } from "@/lib/api";
 
