@@ -583,24 +583,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 <p className="text-xs text-muted-foreground text-center py-4">Nenhuma mensagem encontrada.</p>
               ) : (
                 messages.map((msg) => {
-                  const isBot = msg.role === "assistant" || msg.role === "system";
+                  const role = (msg.role ?? "").toLowerCase();
+                  const isBot = role.includes("assistant") || role.includes("system") || role.includes("bot");
+                  const content = (msg.content ?? "").toString().trim();
+
                   return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col gap-0.5 ${isBot ? "items-start" : "items-end"}`}
-                    >
+                    <div key={msg.id} className={`flex flex-col gap-0.5 ${isBot ? "items-start" : "items-end"}`}>
                       <div
-                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-words ${
                           isBot
                             ? "bg-surface-elevated text-foreground border border-border"
-                            : "gradient-primary text-primary-foreground"
+                            : "gradient-primary text-foreground"
                         }`}
                       >
-                        {msg.content}
+                        {content ? content : <span className="italic text-muted-foreground">[sem conteúdo]</span>}
                       </div>
                       <span className="text-[9px] text-muted-foreground px-1 font-mono">
                         {(() => {
                           try {
+                            if (!msg.created_at) return "";
                             return format(new Date(msg.created_at), "dd/MM HH:mm", { locale: ptBR });
                           } catch {
                             return "";

@@ -144,22 +144,115 @@ export async function patchBooking(
 
 // ── Mensagens de um booking ──────────────────────────────────────────────────
 export interface BookingMessage {
-  id: number;
-  role: string;        // "assistant" | "user" | "system" etc.
+  id: string | number;
+  role: string; // "assistant" | "user" | "system" etc.
   content: string;
   created_at: string;
 }
 
-export async function fetchBookingMessages(
-  bookingId: number,
-  limit = 30
-): Promise<BookingMessage[]> {
+function pickFirstDefined<T>(...vals: Array<T | undefined | null>): T | undefined {
+  for (const v of vals) {
+    if (v !== undefined && v !== null) return v;
+  }
+  return undefined;
+}
+
+function coerceString(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value && typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    const nested = pickFirstDefined(v.content, v.text, v.message, v.body);
+    if (typeof nested === "string") return nested;
+  }
+  return undefined;
+}
+
+function getAnyStringField(obj: Record<string, unknown>): string | undefined {
+  for (const k of Object.keys(obj)) {
+    const v = obj[k];
+    const s = coerceString(v);
+    if (s && s.trim()) return s;
+  }
+  return undefined;
+}
+
+function normalizeBookingMessage(raw: unknown, index: number): BookingMessage {
+  if (typeof raw === "string") {
+    return { id: index, role: "unknown", content: raw, created_at: "" };
+  }
+
+  const r = (raw ?? {}) as Record<string, unknown>;
+
+  const id = pickFirstDefined(r.id as any, r.pk as any, r.uuid as any, r.message_id as any, index);
+
+  const roleRaw = (coerceString(pickFirstDefined(
+    r.role,
+    r.sender_role,
+    r.author_role,
+    r.from_role,
+    r.sender,
+    r.author,
+    r.from,
+    r.direction,
+    r.origin
+  )) ?? "unknown").toLowerCase();
+
+  const role = roleRaw.includes("assist") || roleRaw.includes("bot") || roleRaw.includes("system")
+    ? "assistant"
+    : roleRaw.includes("user") || roleRaw.includes("lead") || roleRaw.includes("client")
+      ? "user"
+      : (roleRaw || "unknown");
+
+  const content = (
+    coerceString(pickFirstDefined(
+      r.content,
+      r.message,
+      r.text,
+      r.body,
+      r.msg,
+      (r.data as any)?.content,
+      (r.data as any)?.text,
+      (r.payload as any)?.content,
+      (r.payload as any)?.text
+    )) ??
+    getAnyStringField(r) ??
+    ""
+  ).trim();
+
+  const created_at = coerceString(pickFirstDefined(
+    r.created_at,
+    r.timestamp,
+    r.sent_at,
+    r.created,
+    r.createdAt,
+    r.time
+  )) ?? "";
+
+  return {
+    id: id as any,
+    role,
+    content: content || "[sem conteúdo]",
+    created_at,
+  };
+}
+
+export async function fetchBookingMessages(bookingId: number, limit = 30): Promise<BookingMessage[]> {
   const { data } = await api.get(`/api/booking/requests/${bookingId}/messages/`, {
     params: { limit },
   });
-  // API pode retornar array direto ou { results: [...] }
-  const msgs = Array.isArray(data) ? data : (data?.results ?? data?.result ?? []);
-  return msgs as BookingMessage[];
+
+  // API pode retornar array direto ou { results: [...] } ou { result: [...] }
+  const raw = Array.isArray(data) ? data : (data?.results ?? data?.result ?? []);
+
+  // Ajuda a depurar formatos inesperados sem quebrar a UI
+  if (import.meta.env.DEV) {
+    const sample = Array.isArray(raw) ? raw[0] : raw;
+    console.log("[bookingApi] /messages sample:", sample);
+  }
+
+  if (!Array.isArray(raw)) return [];
+  return raw.map((m, i) => normalizeBookingMessage(m, i));
 }
 
 // ── Criar novo agendamento ───────────────────────────────────────────────────
