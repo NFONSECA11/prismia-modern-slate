@@ -372,7 +372,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           <div className="rounded-xl p-4 bg-surface border border-border">
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
+                  <BookingModeIcon mode={booking.booking_mode} />
+                </div>
                 {(booking.contact_phone || booking.phone) && (
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                     <Phone className="h-3 w-3" />
@@ -382,11 +385,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               </div>
               <StatusBadge status={booking.status} size="md" />
             </div>
-            <div className="mt-2">
-              <BookingModeIcon mode={booking.booking_mode} showLabel />
-            </div>
           </div>
-
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             <DetailRow icon={Hash} label="Procedimento" value={booking.procedure_name} />
