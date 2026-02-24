@@ -292,7 +292,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const mode = booking.booking_mode as BookingMode;
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
-  const isBotOn = effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice";
+  const isBotOn = effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending";
   const botLabel = isBotOn ? "ON" : "OFF";
 
   const formattedCreated = (() => {
