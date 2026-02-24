@@ -507,7 +507,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   Agendado para
                 </span>
               </div>
-              <p className="text-sm font-medium text-foreground">{booking.scheduled_at}</p>
+              <p className="text-sm font-medium text-foreground">
+                {(() => {
+                  try {
+                    const d = new Date(booking.scheduled_at!);
+                    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+                      " às " +
+                      d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                  } catch {
+                    return booking.scheduled_at;
+                  }
+                })()}
+              </p>
             </div>
           )}
 
