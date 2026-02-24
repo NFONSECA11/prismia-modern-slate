@@ -597,8 +597,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                       <div
                         className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-words ${
                           isBotFinal
-                            ? "gradient-primary text-foreground"
-                            : "bg-surface-elevated text-foreground border border-border"
+                            ? "bg-[hsl(186_72%_48%/0.15)] text-foreground border border-[hsl(186_72%_48%/0.3)]"
+                            : "bg-[hsl(262_52%_60%/0.15)] text-foreground border border-[hsl(262_52%_60%/0.3)]"
                         }`}
                       >
                         {content ? content : <span className="italic text-muted-foreground">[sem conteúdo]</span>}
