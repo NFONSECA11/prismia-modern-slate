@@ -231,9 +231,35 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     makeMutation(() => cancelBooking(booking!.id), "Cancelado!")
   );
 
-  const reopenMut = useMutation(
-    makeMutation(() => reopenBooking(booking!.id), "Reaberto!")
-  );
+  const reopenMut = useMutation({
+    mutationFn: () => reopenBooking(booking!.id),
+    onMutate: async () => {
+      // Optimistic: update cached booking list so status changes instantly
+      await queryClient.cancelQueries({ queryKey: ["booking-requests"] });
+      queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
+        if (!old?.results) return old;
+        return {
+          ...old,
+          results: old.results.map((b: any) =>
+            b.id === booking!.id ? { ...b, status: "handoff" } : b
+          ),
+        };
+      });
+      // Also update the detail query used for bot status
+      queryClient.setQueryData(["booking-request-detail-bot", booking!.id], (old: any) =>
+        old ? { ...old, status: "handoff" } : old
+      );
+    },
+    onSuccess: async () => {
+      setActionDone("Reaberto!");
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      setTimeout(() => {
+        onConfirmed();
+        setActionDone(null);
+      }, 1200);
+    },
+  });
 
   const handoffOnMut = useMutation(
     makeMutation(() => handoffOn(booking!.id), "Handoff ativado!")
