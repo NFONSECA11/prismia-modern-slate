@@ -316,23 +316,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
     }
 
-    // Handoff ON/OFF for non-terminal
-    if (!terminal && booking.status !== "awaiting_choice") {
-      if (booking.status === "handoff") {
-        actions.push(
-          <ActionButton key="hoff" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={PhoneOff} label="Handoff Off" />,
-        );
-      } else {
-        actions.push(
-          <ActionButton key="hon" onClick={() => handoffOnMut.mutate()} disabled={busy} loading={handoffOnMut.isPending} icon={PhoneForwarded} label="Handoff On" />,
-        );
-      }
-    }
-
     // Reopen for terminal
     if (terminal) {
       actions.push(
         <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
+      );
+    }
+
+    // Bot ON/OFF toggle — always available
+    if (isBotOn) {
+      actions.push(
+        <ActionButton key="bot-off" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={BotOff} label="Desligar Bot" variant="danger" />,
+      );
+    } else {
+      actions.push(
+        <ActionButton key="bot-on" onClick={() => handoffOnMut.mutate()} disabled={busy} loading={handoffOnMut.isPending} icon={Bot} label="Ligar Bot" variant="primary" />,
       );
     }
 
