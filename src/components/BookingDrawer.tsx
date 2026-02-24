@@ -385,7 +385,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end gap-1.5">
+                <StatusBadge status={booking.status} size="md" />
                 {booking.conversation_bot_mode && (
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
@@ -402,7 +403,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     Bot {booking.conversation_bot_mode.toUpperCase()}
                   </span>
                 )}
-                <StatusBadge status={booking.status} size="md" />
               </div>
             </div>
           </div>
