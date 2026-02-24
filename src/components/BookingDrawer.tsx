@@ -312,17 +312,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       );
     }
 
-    // Bot ON/OFF toggle — always available
-    if (isBotOn) {
-      actions.push(
-        <ActionButton key="bot-off" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={BotOff} label="Desligar Bot" variant="danger" />,
-      );
-    } else {
-      actions.push(
-        <ActionButton key="bot-on" onClick={() => handoffOnMut.mutate()} disabled={busy} loading={handoffOnMut.isPending} icon={Bot} label="Ligar Bot" variant="primary" />,
-      );
-    }
-
     return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
   }
 
