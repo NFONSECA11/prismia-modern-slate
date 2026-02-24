@@ -373,8 +373,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
                   <BookingModeIcon mode={booking.booking_mode} />
+                  <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
                 </div>
                 {(booking.contact_phone || booking.phone) && (
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
