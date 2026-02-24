@@ -260,7 +260,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                   const rawBotMode = booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode;
                   const normalizedBotMode = typeof rawBotMode === "string" ? rawBotMode.trim().toLowerCase() : "off";
                   const isBotOn = normalizedBotMode === "on";
-                  const isBotOff = booking.status === "handoff" || booking.status === "awaiting_choice";
+                  const isBotOff = booking.status === "handoff" || booking.status === "awaiting_choice" || booking.status === "pending";
                   const isBusy = busyBookingId === booking.id;
 
                   return (
