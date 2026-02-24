@@ -236,18 +236,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const mode = booking.booking_mode as BookingMode;
 
-  const rawBotMode =
-    bookingDetailForBot?.conversation_bot_mode ??
-    bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ??
-    booking.conversation_bot_mode ??
-    booking.vars_snapshot?.conversation_bot_mode;
-
-  const normalizedBotMode =
-    typeof rawBotMode === "string"
-      ? rawBotMode.trim().toLowerCase()
-      : "off";
-
-  const isBotOn = normalizedBotMode === "on";
+  const isBotOn = booking.status !== "handoff" && booking.status !== "awaiting_choice";
   const botLabel = isBotOn ? "ON" : "OFF";
 
   const formattedCreated = (() => {
