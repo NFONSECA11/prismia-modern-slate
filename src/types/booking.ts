@@ -46,6 +46,7 @@ export interface BookingRequest {
   preferred_period: string;
   created_at: string;
   updated_at: string;
+  conversation_bot_mode?: "on" | "off" | string;
   vars_snapshot: VarsSnapshot;
   // assisted_slots_dashboard fields
   offer_slots?: OfferSlot[];

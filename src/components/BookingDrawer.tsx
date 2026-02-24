@@ -28,6 +28,8 @@ import {
   AlertCircle,
   Loader2,
   Hash,
+  BotMessageSquare,
+  BotOff,
   Ban,
   CalendarSearch,
   XCircle,
@@ -383,7 +385,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   </p>
                 )}
               </div>
-              <StatusBadge status={booking.status} size="md" />
+              <div className="flex items-center gap-2">
+                {booking.conversation_bot_mode && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
+                      booking.conversation_bot_mode === "on"
+                        ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
+                        : "text-muted-foreground border-border bg-surface-elevated"
+                    }`}
+                  >
+                    {booking.conversation_bot_mode === "on" ? (
+                      <BotMessageSquare className="h-3 w-3" />
+                    ) : (
+                      <BotOff className="h-3 w-3" />
+                    )}
+                    Bot {booking.conversation_bot_mode.toUpperCase()}
+                  </span>
+                )}
+                <StatusBadge status={booking.status} size="md" />
+              </div>
             </div>
           </div>
           {/* Details grid */}
