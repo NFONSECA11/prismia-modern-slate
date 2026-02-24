@@ -142,6 +142,26 @@ export async function patchBooking(
   return data;
 }
 
+// ── Mensagens de um booking ──────────────────────────────────────────────────
+export interface BookingMessage {
+  id: number;
+  role: string;        // "assistant" | "user" | "system" etc.
+  content: string;
+  created_at: string;
+}
+
+export async function fetchBookingMessages(
+  bookingId: number,
+  limit = 30
+): Promise<BookingMessage[]> {
+  const { data } = await api.get(`/api/booking/requests/${bookingId}/messages/`, {
+    params: { limit },
+  });
+  // API pode retornar array direto ou { results: [...] }
+  const msgs = Array.isArray(data) ? data : (data?.results ?? data?.result ?? []);
+  return msgs as BookingMessage[];
+}
+
 // ── Criar novo agendamento ───────────────────────────────────────────────────
 export interface CreateBookingPayload {
   lead_name: string;
