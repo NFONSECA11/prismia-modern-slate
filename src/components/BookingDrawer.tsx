@@ -54,18 +54,20 @@ function DetailRow({
   icon: Icon,
   label,
   value,
+  className,
 }: {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-border/40 last:border-0">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-elevated text-muted-foreground flex-shrink-0 mt-0.5">
+    <div className={`flex items-start gap-3 p-3 rounded-lg bg-surface-elevated/50 ${className ?? ""}`}>
+      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface text-muted-foreground flex-shrink-0 mt-0.5">
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
           {label}
         </span>
         <span className="text-sm text-foreground leading-snug">{value}</span>
@@ -386,12 +388,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           </div>
 
           {/* Details grid */}
-          <div className="rounded-xl px-4 py-1 bg-surface border border-border">
+          <div className="grid grid-cols-2 gap-2">
             <DetailRow icon={Hash} label="Procedimento" value={booking.procedure_name} />
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
               icon={User}
               label="Profissional"
+              className="col-span-2"
               value={
                 hasProfessional ? (
                   booking.professional_name
@@ -430,6 +433,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             <DetailRow
               icon={Calendar}
               label="Janela Preferida"
+              className="col-span-2"
               value={
                 <span>
                   {booking.preferred_window}
