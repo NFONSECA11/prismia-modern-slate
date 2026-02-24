@@ -119,14 +119,7 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
     }
   }
 
-  // Handoff toggle
-  if (!terminal && booking.status !== "awaiting_choice") {
-    if (booking.status === "handoff") {
-      actions.push({ key: "handoff_off", icon: PhoneOff, label: "Handoff Off", variant: "default" });
-    } else {
-      actions.push({ key: "handoff_on", icon: PhoneForwarded, label: "Handoff On", variant: "default" });
-    }
-  }
+  // Handoff toggle removed from quick actions per user request
 
   // Reopen for terminal
   if (terminal) {
