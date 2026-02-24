@@ -15,6 +15,7 @@ import {
   suggestSlots,
   patchBooking,
   fetchProfessionalsByUnit,
+  fetchBookingRequestById,
 } from "@/lib/bookingApi";
 import {
   X,
@@ -146,6 +147,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     enabled: needsProfessional,
   });
 
+  const { data: bookingDetailForBot, refetch: refetchBookingDetailForBot } = useQuery({
+    queryKey: ["booking-request-detail-bot", booking?.id],
+    queryFn: () => fetchBookingRequestById(booking!.id),
+    enabled: !!booking,
+    staleTime: 0,
+  });
+
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
       return await patchBooking(booking!.id, { professional_id: profId });
@@ -168,8 +176,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const makeMutation = (fn: () => Promise<void>, successMsg: string) => ({
     mutationFn: fn,
-    onSuccess: () => {
+    onSuccess: async () => {
       setActionDone(successMsg);
+      await refetchBookingDetailForBot();
       setTimeout(() => {
         onConfirmed();
         if (successMsg === "Confirmado!" || successMsg === "Cancelado!") onClose();
@@ -228,6 +237,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const mode = booking.booking_mode as BookingMode;
 
   const rawBotMode =
+    bookingDetailForBot?.conversation_bot_mode ??
+    bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ??
     booking.conversation_bot_mode ??
     booking.vars_snapshot?.conversation_bot_mode;
 
