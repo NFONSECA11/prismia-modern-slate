@@ -28,6 +28,7 @@ export interface OfferSlot {
 export interface VarsSnapshot {
   preferred_window?: string;
   chosen_slot?: ChosenSlot;
+  conversation_bot_mode?: "on" | "off" | string;
 }
 
 export interface BookingRequest {
