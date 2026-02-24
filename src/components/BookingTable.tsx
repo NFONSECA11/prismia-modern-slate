@@ -267,6 +267,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                   const rawBotMode = booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode;
                   const normalizedBotMode = typeof rawBotMode === "string" ? rawBotMode.trim().toLowerCase() : "off";
                   const isBotOn = normalizedBotMode === "on";
+                  const isBotOff = booking.status === "handoff" || booking.status === "awaiting_choice";
                   const isBusy = busyBookingId === booking.id;
 
                   return (
@@ -332,9 +333,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                           </span>
                           
                           {/* Quick actions - visible on hover */}
-                          {(actions.length > 0 || !isBotOn) && (
+                          {(actions.length > 0 || isBotOff) && (
                             <div className="hidden group-hover:flex items-center gap-1 animate-fade-in">
-                              {!isBotOn && (
+                              {isBotOff && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
