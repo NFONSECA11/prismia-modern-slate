@@ -261,7 +261,7 @@ export async function sendBookingMessage(
   content: string
 ): Promise<BookingMessage> {
   await fetchCsrf();
-  const { data } = await api.post(`/api/booking/requests/${bookingId}/messages/`, {
+  const { data } = await api.post(`/api/booking/requests/${bookingId}/send/`, {
     content,
   });
   return normalizeBookingMessage(data?.result ?? data, 0);
