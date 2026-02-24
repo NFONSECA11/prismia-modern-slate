@@ -74,6 +74,11 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   return { ...normalized, results: resultsWithPhone };
 }
 
+export async function fetchBookingRequestById(id: number): Promise<BookingRequest> {
+  const { data } = await api.get(`/api/booking/requests/${id}/`);
+  return (data?.result ?? data) as BookingRequest;
+}
+
 // ── Confirmar agendamento ────────────────────────────────────────────────────
 export interface ConfirmBookingPayload {
   use_chosen_slot: boolean;
