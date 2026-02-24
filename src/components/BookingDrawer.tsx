@@ -651,11 +651,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     handleSendMessage();
                   }
                 }}
-                disabled={sendMsgMutation.isPending}
+                disabled={isBotOn || sendMsgMutation.isPending}
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!messageText.trim() || sendMsgMutation.isPending}
+                disabled={isBotOn || !messageText.trim() || sendMsgMutation.isPending}
                 className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {sendMsgMutation.isPending ? (
