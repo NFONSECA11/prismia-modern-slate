@@ -582,16 +582,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               ) : messages.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">Nenhuma mensagem encontrada.</p>
               ) : (
-                messages.map((msg) => {
+                messages.map((msg, idx) => {
                   const role = (msg.role ?? "").toLowerCase();
-                  const isBot = role.includes("assistant") || role.includes("system") || role.includes("bot");
+                  const isBot = role.includes("assistant") || role.includes("system") || role.includes("bot") || role === "out" || role === "outbound";
+                  const isUser = role.includes("user") || role.includes("lead") || role.includes("client") || role === "in" || role === "inbound";
+                  // If neither matched, log for debugging
+                  if (idx === 0) console.log("[BookingDrawer] messages sample roles:", messages.slice(0, 5).map(m => m.role));
+                  // Final: if not explicitly user → treat as bot (OUT)
+                  const isBotFinal = isBot || !isUser;
                   const content = (msg.content ?? "").toString().trim();
 
                   return (
-                    <div key={msg.id} className={`flex flex-col gap-0.5 ${isBot ? "items-end" : "items-start"}`}>
+                    <div key={msg.id} className={`flex flex-col gap-0.5 ${isBotFinal ? "items-end" : "items-start"}`}>
                       <div
                         className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-words ${
-                          isBot
+                          isBotFinal
                             ? "gradient-primary text-foreground"
                             : "bg-surface-elevated text-foreground border border-border"
                         }`}
