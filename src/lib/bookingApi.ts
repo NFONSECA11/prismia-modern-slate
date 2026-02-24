@@ -255,6 +255,18 @@ export async function fetchBookingMessages(bookingId: number, limit = 30): Promi
   return raw.map((m, i) => normalizeBookingMessage(m, i));
 }
 
+// ── Enviar mensagem em um booking ─────────────────────────────────────────────
+export async function sendBookingMessage(
+  bookingId: number,
+  content: string
+): Promise<BookingMessage> {
+  await fetchCsrf();
+  const { data } = await api.post(`/api/booking/requests/${bookingId}/messages/`, {
+    content,
+  });
+  return normalizeBookingMessage(data?.result ?? data, 0);
+}
+
 // ── Criar novo agendamento ───────────────────────────────────────────────────
 export interface CreateBookingPayload {
   lead_name: string;
