@@ -312,19 +312,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
                       {/* Status */}
                       <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-1">
-                          <StatusBadge status={booking.status} />
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border ${
-                              isBotOn
-                                ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
-                                : "text-status-pending border-status-pending/30 bg-status-pending-bg/40"
-                            }`}
-                          >
-                            {isBotOn ? <PhoneForwarded className="h-3 w-3" /> : <PhoneOff className="h-3 w-3" />}
-                            Bot {isBotOn ? "ON" : "OFF"}
-                          </span>
-                        </div>
+                        <StatusBadge status={booking.status} />
                       </td>
 
                       {/* Profissional */}
