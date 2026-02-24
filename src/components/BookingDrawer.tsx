@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
@@ -17,6 +17,7 @@ import {
   fetchProfessionalsByUnit,
   fetchBookingRequestById,
   fetchBookingMessages,
+  sendBookingMessage,
 } from "@/lib/bookingApi";
 import type { BookingMessage } from "@/lib/bookingApi";
 import {
@@ -43,6 +44,7 @@ import {
   CalendarClock,
   Bot,
   MessageSquare,
+  Send,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -128,8 +130,11 @@ function ActionButton({
 }
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
+  const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
 
@@ -161,8 +166,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     queryKey: ["booking-messages", booking?.id],
     queryFn: () => fetchBookingMessages(booking!.id, 30),
     enabled: !!booking,
-    staleTime: 30_000,
   });
+
+  const sendMsgMutation = useMutation({
+    mutationFn: (text: string) => sendBookingMessage(booking!.id, text),
+    onSuccess: () => {
+      setMessageText("");
+      queryClient.invalidateQueries({ queryKey: ["booking-messages", booking?.id] });
+    },
+  });
+
+  const handleSendMessage = () => {
+    const trimmed = messageText.trim();
+    if (!trimmed || sendMsgMutation.isPending) return;
+    sendMsgMutation.mutate(trimmed);
+  };
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
@@ -617,6 +635,35 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   );
                 })
               )}
+              <div ref={messagesEndRef} />
+            </div>
+            {/* Input de mensagem */}
+            <div className="px-3 py-2 border-t border-border flex items-center gap-2 bg-surface-elevated">
+              <input
+                type="text"
+                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Digite uma mensagem..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                disabled={sendMsgMutation.isPending}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!messageText.trim() || sendMsgMutation.isPending}
+                className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {sendMsgMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
