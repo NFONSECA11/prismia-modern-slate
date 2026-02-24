@@ -404,7 +404,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
                       isBotOn
                         ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
-                        : "text-muted-foreground border-border bg-surface-elevated"
+                        : "text-status-pending border-status-pending/30 bg-status-pending-bg/40"
                     }`}
                   >
                     {isBotOn ? (
