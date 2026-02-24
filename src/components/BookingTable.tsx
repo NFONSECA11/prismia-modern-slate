@@ -274,11 +274,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Contato */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
-                            <BookingModeIcon mode={booking.booking_mode} />
-                          </div>
+                          <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <BookingModeIcon mode={booking.booking_mode} />
                             <Phone className="h-3 w-3" />
                             {booking.contact_phone || booking.phone || "Sem telefone"}
                           </span>
