@@ -227,6 +227,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const mode = booking.booking_mode as BookingMode;
 
+  const rawBotMode =
+    booking.conversation_bot_mode ??
+    booking.vars_snapshot?.conversation_bot_mode;
+
+  const normalizedBotMode =
+    typeof rawBotMode === "string"
+      ? rawBotMode.trim().toLowerCase()
+      : "off";
+
+  const isBotOn = normalizedBotMode === "on";
+  const botLabel = isBotOn ? "ON" : "OFF";
+
   const formattedCreated = (() => {
     try {
       return format(new Date(booking.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
@@ -387,22 +399,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               </div>
               <div className="flex flex-col items-end gap-1.5">
                 <StatusBadge status={booking.status} size="md" />
-                {booking.conversation_bot_mode && (
+                
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
-                      booking.conversation_bot_mode === "on"
+                      isBotOn
                         ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10"
                         : "text-muted-foreground border-border bg-surface-elevated"
                     }`}
                   >
-                    {booking.conversation_bot_mode === "on" ? (
+                    {isBotOn ? (
                       <BotMessageSquare className="h-3 w-3" />
                     ) : (
                       <BotOff className="h-3 w-3" />
                     )}
-                    Bot {booking.conversation_bot_mode.toUpperCase()}
+                    Bot {botLabel}
                   </span>
-                )}
               </div>
             </div>
           </div>
