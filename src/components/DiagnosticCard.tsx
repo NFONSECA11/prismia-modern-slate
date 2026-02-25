@@ -150,12 +150,7 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
             ? professionalsPayload
             : (professionalsPayload?.results ?? []);
 
-          const issues: UnitHealth["issues"] = [
-            {
-              code: "health_endpoint_unauthorized",
-              message: "Diagnóstico detalhado indisponível nesta sessão.",
-            },
-          ];
+          const issues: UnitHealth["issues"] = [];
 
           if (professionals.length === 0) {
             issues.push({
@@ -172,7 +167,7 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
           }
 
           return {
-            status: "warn",
+            status: issues.length > 0 ? "warn" : "ok",
             can_enable_auto: (settingsPayload?.default_booking_mode === "auto_slots_bot") && professionals.length > 0,
             issues,
             stats: {
