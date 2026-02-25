@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 import DiagnosticCard from "@/components/DiagnosticCard";
+import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -330,10 +331,13 @@ export default function Settings() {
         </Collapsible>
 
         {/* Itens futuros */}
+        {/* Serviços & Mapeamentos */}
+        <ProfessionalProceduresSection />
+
+        {/* Itens futuros */}
         <div className="grid gap-3">
           {[
             { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
-            { label: "Serviços & Mapeamentos", description: "Vincular serviços e configurar mapeamentos" },
             { label: "Agenda", description: "Configurar horários e disponibilidade" },
             { label: "Bloqueios", description: "Gerenciar bloqueios de horários e datas" },
             { label: "Roadmap", description: "Próximas funcionalidades em desenvolvimento" },
