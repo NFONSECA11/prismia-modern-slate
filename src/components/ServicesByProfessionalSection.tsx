@@ -88,19 +88,6 @@ export default function ServicesByProfessionalSection() {
     onError: () => toast.error("Erro ao remover vínculo"),
   });
 
-  // Group by professional
-  const grouped: Record<string, { profName: string; items: ProfessionalProcedure[] }> = {};
-  (items as ProfessionalProcedure[]).forEach((item) => {
-    const key = String(item.professional ?? "unknown");
-    if (!grouped[key]) {
-      grouped[key] = {
-        profName: item.professional_name ?? `Profissional #${item.professional ?? "—"}`,
-        items: [],
-      };
-    }
-    grouped[key].items.push(item);
-  });
-
   return (
     <Collapsible defaultOpen={false} id="section-servicos-profissional">
       <CollapsibleTrigger
@@ -110,70 +97,55 @@ export default function ServicesByProfessionalSection() {
         <div className="text-left">
           <span className="text-sm font-bold text-foreground">Serviços por Profissional</span>
           <p className="text-xs text-muted-foreground">
-            Procedimentos agrupados por profissional
+            Vínculos entre profissionais e serviços
           </p>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-4"
+        className="mt-2 rounded-xl border border-border p-4 space-y-1"
         style={{ background: "hsl(var(--surface))" }}
       >
+        {/* Header */}
+        <div className="grid grid-cols-[1fr_1fr_auto_2rem] gap-2 px-3 py-1 items-center">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Serviço</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">Status</span>
+          <span />
+        </div>
+
         {isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
         ) : items.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhum serviço encontrado.</p>
         ) : (
-          Object.entries(grouped).map(([profId, group]) => (
-            <div key={profId} className="space-y-1">
-              <span className="text-xs font-bold text-foreground px-3">
-                {group.profName}
-              </span>
-
-              <div className="grid grid-cols-[1fr_1fr_auto_2rem] gap-2 px-3 py-1 items-center">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Procedimento
+          (items as ProfessionalProcedure[]).map((item) => {
+            const active = item.is_active !== false && item.status !== "inactive";
+            return (
+              <div
+                key={item.id}
+                className="grid grid-cols-[1fr_1fr_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                style={{ background: "hsl(var(--surface-elevated))" }}
+              >
+                <span className="text-sm font-medium text-foreground truncate">
+                  {item.professional_name ?? `#${item.professional ?? "—"}`}
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Unidade
+                <span className="text-sm text-foreground truncate">
+                  {item.procedure_name ?? item.procedure_slug ?? `#${item.procedure ?? "—"}`}
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">
-                  Status
+                <span className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}>
+                  {active ? "Ativo" : "Inativo"}
                 </span>
-                <span />
+                <button
+                  onClick={() => deleteItem.mutate(item.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover vínculo"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-
-              {group.items.map((item) => {
-                const active = item.is_active !== false && item.status !== "inactive";
-                return (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-[1fr_1fr_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-                    style={{ background: "hsl(var(--surface-elevated))" }}
-                  >
-                    <span className="text-sm font-medium text-foreground truncate">
-                      {item.procedure_name ?? item.procedure_slug ?? `#${item.procedure ?? "—"}`}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {item.unit_name ?? (item.unit ? `Unidade #${item.unit}` : "—")}
-                    </span>
-                    <span
-                      className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}
-                    >
-                      {active ? "Ativo" : "Inativo"}
-                    </span>
-                    <button
-                      onClick={() => deleteItem.mutate(item.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                      title="Remover vínculo"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Create */}
