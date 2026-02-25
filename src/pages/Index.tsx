@@ -29,6 +29,7 @@ type View = "table" | "agenda";
 type FilterStatus = BookingStatus | "all" | "today";
 
 const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
+  { value: "today" as FilterStatus, label: "Hoje" },
   { value: "all", label: "Todos" },
   { value: "handoff", label: "Handoff" },
   { value: "assisted", label: "Assisted" },
@@ -36,7 +37,6 @@ const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
   { value: "pending", label: "Pendente" },
   { value: "confirmed", label: "Confirmado" },
   { value: "canceled", label: "Cancelado" },
-  { value: "today" as FilterStatus, label: "Hoje" },
 ];
 
 export default function Index() {
@@ -44,7 +44,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("today");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
