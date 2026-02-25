@@ -79,10 +79,7 @@ export default function ScheduleBlocksSection() {
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
       >
-        <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Bloqueios de Agenda</span>
-          <p className="text-xs text-muted-foreground">Gerenciar bloqueios e folgas de profissionais</p>
-        </div>
+        <span className="text-sm font-bold text-foreground">Bloqueios de Agenda</span>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
