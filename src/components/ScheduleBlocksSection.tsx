@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function ScheduleBlocksSection() {
-  const { units, activeUnit, professionals } = useAuth() as any;
+  const { company, units, activeUnit } = useAuth();
   const queryClient = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
@@ -88,11 +88,13 @@ export default function ScheduleBlocksSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_2rem] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_2rem] gap-2 px-3 py-1 items-center">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Fim</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Motivo</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
           <span />
         </div>
 
@@ -101,25 +103,32 @@ export default function ScheduleBlocksSection() {
         ) : blocks.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhum bloqueio encontrado.</p>
         ) : (
-          blocks.map((b: any) => (
-            <div
-              key={b.id}
-              className="grid grid-cols-[1fr_1fr_1fr_1fr_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-              style={{ background: "hsl(var(--surface-elevated))" }}
-            >
-              <span className="text-sm font-medium text-foreground">{b.professional_name ?? getProfName(b.professional)}</span>
-              <span className="text-xs text-muted-foreground">{b.start ? new Date(b.start).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
-              <span className="text-xs text-muted-foreground">{b.end ? new Date(b.end).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
-              <span className="text-xs text-muted-foreground truncate">{b.reason ?? "—"}</span>
-              <button
-                onClick={() => deleteBlock.mutate(b.id)}
-                className="text-muted-foreground hover:text-destructive transition-colors"
-                title="Remover bloqueio"
+          blocks.map((b: any) => {
+            const isActive = b.is_active !== false && b.status !== "inactive";
+            return (
+              <div
+                key={b.id}
+                className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                style={{ background: "hsl(var(--surface-elevated))" }}
               >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))
+                <span className="text-xs text-muted-foreground">{b.company_name ?? company?.name ?? "—"}</span>
+                <span className="text-sm font-medium text-foreground">{b.professional_name ?? getProfName(b.professional)}</span>
+                <span className="text-xs text-muted-foreground">{b.start ? new Date(b.start).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
+                <span className="text-xs text-muted-foreground">{b.end ? new Date(b.end).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
+                <span className="text-xs text-muted-foreground truncate">{b.reason ?? "—"}</span>
+                <span className={`text-xs font-medium ${isActive ? "text-green-400" : "text-muted-foreground"}`}>
+                  {isActive ? "Ativo" : "Inativo"}
+                </span>
+                <button
+                  onClick={() => deleteBlock.mutate(b.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover bloqueio"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            );
+          })
         )}
 
         {/* Create */}
