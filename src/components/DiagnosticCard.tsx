@@ -66,10 +66,15 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
     queryKey: ["health", unit.id],
     queryFn: async () => {
       const token = localStorage.getItem("auth_token");
-      const authHeader = token ? (token.includes(".") ? `Bearer ${token}` : `Token ${token}`) : undefined;
+      console.log("[Diag] token from localStorage:", token ? `${token.substring(0, 8)}...` : "NULL");
+      console.log("[Diag] user from context:", !!user);
+      if (!token) {
+        throw new Error("No auth token available");
+      }
+      const authHeader = token.includes(".") ? `Bearer ${token}` : `Token ${token}`;
       const { data } = await api.get(`/api/settings/health/`, {
         params: { unit: unit.id },
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: { Authorization: authHeader },
       });
       return data?.result ?? data;
     },
