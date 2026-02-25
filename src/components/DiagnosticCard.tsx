@@ -150,12 +150,29 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
             ? professionalsPayload
             : (professionalsPayload?.results ?? []);
 
+          const activeProfessionals = professionals.filter(
+            (p: any) => p.is_active !== false && p.status !== "inactive"
+          );
+          const inactiveProfessionals = professionals.filter(
+            (p: any) => p.is_active === false || p.status === "inactive"
+          );
+
           const issues: UnitHealth["issues"] = [];
 
           if (professionals.length === 0) {
             issues.push({
               code: "professional_missing",
-              message: "Nenhum profissional ativo encontrado para esta unidade.",
+              message: "Nenhum profissional cadastrado para esta unidade.",
+            });
+          } else if (activeProfessionals.length === 0) {
+            issues.push({
+              code: "all_professionals_inactive",
+              message: "Todos os profissionais estão inativos nesta unidade.",
+            });
+          } else if (inactiveProfessionals.length > 0) {
+            issues.push({
+              code: "some_professionals_inactive",
+              message: `${inactiveProfessionals.length} profissional(is) inativo(s) nesta unidade.`,
             });
           }
 
@@ -167,11 +184,11 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
           }
 
           return {
-            status: issues.length > 0 ? "warn" : "ok",
-            can_enable_auto: (settingsPayload?.default_booking_mode === "auto_slots_bot") && professionals.length > 0,
+            status: activeProfessionals.length === 0 ? "error" : issues.length > 0 ? "warn" : "ok",
+            can_enable_auto: (settingsPayload?.default_booking_mode === "auto_slots_bot") && activeProfessionals.length > 0,
             issues,
             stats: {
-              professionals: professionals.length,
+              professionals: activeProfessionals.length,
             },
           };
         }
