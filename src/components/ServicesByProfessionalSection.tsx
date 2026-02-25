@@ -23,39 +23,58 @@ interface ProfessionalProcedure {
 }
 
 export default function ServicesByProfessionalSection() {
-  const { user, activeUnit } = useAuth();
+  const { user, units } = useAuth();
   const queryClient = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
   const [newProfId, setNewProfId] = useState<number | "">("");
   const [newProcedureId, setNewProcedureId] = useState<number | "">("");
 
-  const { data: professionalsData = [] } = useQuery({
-    queryKey: ["professionals", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professionals/`, {
-        params: { unit: activeUnit!.id },
-      });
-      return Array.isArray(data) ? data : (data?.results ?? []);
-    },
-    enabled: !!activeUnit?.id,
-  });
+  // Fetch professionals from all units
+  const profQueries = units.map((unit) =>
+    useQuery({
+      queryKey: ["professionals", unit.id],
+      queryFn: async () => {
+        const { data } = await api.get(`/api/booking/professionals/`, { params: { unit: unit.id } });
+        return Array.isArray(data) ? data : (data?.results ?? []);
+      },
+      enabled: !!user,
+    })
+  );
+  const allProfessionals: any[] = [];
+  const seenProfIds = new Set<number>();
+  profQueries.forEach(({ data = [] }) =>
+    (data as any[]).forEach((p) => {
+      if (!seenProfIds.has(p.id)) { seenProfIds.add(p.id); allProfessionals.push(p); }
+    })
+  );
 
-  const { data: unitProcedures = [] } = useQuery({
-    queryKey: ["unit-procedures", activeUnit?.id],
-    queryFn: async () => {
-      await fetchCsrf();
-      const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: activeUnit!.id } });
-      if (Array.isArray(data)) return data;
-      if (data?.results) return data.results;
-      if (data?.data) return data.data;
-      const inner = data?.result;
-      if (Array.isArray(inner)) return inner;
-      if (inner?.results) return inner.results;
-      return [];
-    },
-    enabled: !!activeUnit?.id,
-  });
+  // Fetch procedures from all units
+  const procQueries = units.map((unit) =>
+    useQuery({
+      queryKey: ["unit-procedures", unit.id],
+      queryFn: async () => {
+        await fetchCsrf();
+        const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: unit.id } });
+        if (Array.isArray(data)) return data;
+        if (data?.results) return data.results;
+        if (data?.data) return data.data;
+        const inner = data?.result;
+        if (Array.isArray(inner)) return inner;
+        if (inner?.results) return inner.results;
+        return [];
+      },
+      enabled: !!user,
+    })
+  );
+  const allUnitProcedures: any[] = [];
+  const seenProcIds = new Set<number>();
+  procQueries.forEach(({ data = [] }) =>
+    (data as any[]).forEach((p) => {
+      const key = p.procedure ?? p.id;
+      if (!seenProcIds.has(key)) { seenProcIds.add(key); allUnitProcedures.push(p); }
+    })
+  );
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["services-by-professional"],
@@ -105,7 +124,7 @@ export default function ServicesByProfessionalSection() {
   });
 
   const getProfName = (id: number | undefined) =>
-    professionalsData.find((p: any) => p.id === id)?.name ?? `#${id ?? "—"}`;
+    allProfessionals.find((p: any) => p.id === id)?.name ?? `#${id ?? "—"}`;
 
   return (
     <Collapsible defaultOpen={false} id="section-servicos-profissional">
@@ -176,7 +195,7 @@ export default function ServicesByProfessionalSection() {
               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
             >
               <option value="">Profissional</option>
-              {professionalsData.map((p: any) => (
+              {allProfessionals.map((p: any) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
@@ -186,7 +205,7 @@ export default function ServicesByProfessionalSection() {
               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[140px]"
             >
               <option value="">Procedimento</option>
-              {(unitProcedures as any[]).map((p: any) => (
+              {allUnitProcedures.map((p: any) => (
                 <option key={p.id} value={p.procedure ?? p.id}>
                   {p.procedure_name ?? p.procedure_slug ?? `#${p.procedure ?? p.id}`}
                 </option>
