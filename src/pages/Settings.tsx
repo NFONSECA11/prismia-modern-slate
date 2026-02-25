@@ -2,10 +2,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
   const navigate = useNavigate();
+
+  const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ["booking-settings", activeUnit?.id],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
+      return data?.result ?? data;
+    },
+    enabled: !!activeUnit?.id,
+  });
 
   return (
     <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
@@ -110,12 +121,41 @@ export default function Settings() {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Modo de Atendimento - dados reais (collapsible) */}
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <div className="text-left">
+              <span className="text-sm font-bold text-foreground">Modo de Atendimento</span>
+              <p className="text-xs text-muted-foreground">Configurar modos e fluxos de atendimento</p>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+            {!activeUnit ? (
+              <p className="text-xs text-muted-foreground">Nenhuma unidade ativa selecionada.</p>
+            ) : isLoadingSettings ? (
+              <p className="text-xs text-muted-foreground">Carregando…</p>
+            ) : (
+              <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+                <span className="text-xs text-muted-foreground">Modo padrão</span>
+                <span className="text-sm font-medium text-foreground">
+                  {bookingSettings?.default_booking_mode
+                    ? {
+                        handoff_manual: "Handoff Manual",
+                        assisted_slots_dashboard: "Assistido (Dashboard)",
+                        auto_slots_bot: "Automático (Bot)",
+                      }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode
+                    : "—"}
+                </span>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Itens futuros */}
         <div className="grid gap-3">
           {[
             { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
-            
-            { label: "Modo de Atendimento", description: "Configurar modos e fluxos de atendimento" },
             { label: "Diagnóstico", description: "Verificar integrações e saúde do sistema" },
             { label: "Profissionais", description: "Gerenciar profissionais da equipe" },
             { label: "Serviços & Mapeamentos", description: "Vincular serviços e configurar mapeamentos" },
