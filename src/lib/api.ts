@@ -1,7 +1,22 @@
 import axios from "axios";
 
+const AUTH_TOKEN_STORAGE_KEYS = ["auth_token", "token", "authToken", "access", "access_token", "key"] as const;
+
+function readPersistedAuthToken(): string | null {
+  for (const key of AUTH_TOKEN_STORAGE_KEYS) {
+    const token = localStorage.getItem(key);
+    if (token) {
+      if (key !== "auth_token") {
+        localStorage.setItem("auth_token", token);
+      }
+      return token;
+    }
+  }
+  return null;
+}
+
 // ── Token storage ────────────────────────────────────────────────────────────
-let _authToken: string | null = localStorage.getItem("auth_token");
+let _authToken: string | null = readPersistedAuthToken();
 
 export function setAuthToken(token: string | null) {
   _authToken = token;
@@ -44,7 +59,7 @@ function buildAuthHeader(token: string) {
 
 // Interceptor: inject Auth Token + CSRF on mutating requests
 api.interceptors.request.use((config) => {
-  const token = _authToken || localStorage.getItem("auth_token");
+  const token = _authToken || readPersistedAuthToken();
   if (token) {
     _authToken = token;
     const hasAuthorization = Boolean((config.headers as any)?.Authorization || (config.headers as any)?.authorization);
