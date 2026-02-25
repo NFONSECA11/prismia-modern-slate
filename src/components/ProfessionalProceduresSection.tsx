@@ -41,16 +41,18 @@ export default function ProfessionalProceduresSection() {
     enabled: !!user,
   });
 
-  // Group by unit
-  const grouped: Record<number, { unitName: string; items: ProfessionalProcedure[] }> = {};
+  // Group by unit (skip grouping if no unit info)
+  const hasUnitInfo = (items as ProfessionalProcedure[]).some((item) => item.unit != null && item.unit !== 0);
+  const grouped: Record<string, { unitName: string; items: ProfessionalProcedure[] }> = {};
   (items as ProfessionalProcedure[]).forEach((item) => {
-    const unitId = item.unit ?? 0;
-    if (!grouped[unitId]) {
-      const unitName =
-        item.unit_name ?? units.find((u) => u.id === unitId)?.name ?? `Unidade ${unitId}`;
-      grouped[unitId] = { unitName, items: [] };
+    const unitKey = hasUnitInfo ? String(item.unit ?? "none") : "all";
+    if (!grouped[unitKey]) {
+      const unitName = hasUnitInfo
+        ? (item.unit_name ?? units.find((u) => u.id === item.unit)?.name ?? `Unidade ${item.unit}`)
+        : "";
+      grouped[unitKey] = { unitName, items: [] };
     }
-    grouped[unitId].items.push(item);
+    grouped[unitKey].items.push(item);
   });
 
   return (
@@ -78,9 +80,11 @@ export default function ProfessionalProceduresSection() {
         ) : (
           Object.entries(grouped).map(([unitId, group]) => (
             <div key={unitId} className="space-y-1">
-              <span className="text-xs font-bold text-foreground px-3">
-                {group.unitName}
-              </span>
+              {group.unitName && (
+                <span className="text-xs font-bold text-foreground px-3">
+                  {group.unitName}
+                </span>
+              )}
 
               {/* Header */}
               <div className="grid grid-cols-[1fr_1fr_auto] gap-2 px-3 py-1 items-center">
