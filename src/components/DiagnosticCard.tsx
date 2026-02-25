@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api, { getAuthToken } from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,9 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
   } = useQuery<UnitHealth>({
     queryKey: ["health", unit.id],
     queryFn: async () => {
+      // Ensure CSRF + session cookies are fresh
+      await fetchCsrf();
+
       const requestHealth = async (options?: { authHeader?: string; withUnitParam?: boolean }) => {
         const { data } = await api.get(`/api/settings/health/`, {
           ...(options?.withUnitParam === false ? {} : { params: { unit: unit.id } }),
@@ -123,6 +127,7 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
       try {
         return await requestHealth();
       } catch (error: any) {
+        console.warn("[Diag] /api/settings/health/ failed:", error?.response?.status, error?.response?.data);
         if (error?.response?.status !== 401) {
           throw error;
         }
