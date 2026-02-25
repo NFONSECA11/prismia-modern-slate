@@ -10,27 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-const WEEKDAYS = [
-  { value: 0, label: "Segunda" },
-  { value: 1, label: "Terça" },
-  { value: 2, label: "Quarta" },
-  { value: 3, label: "Quinta" },
-  { value: 4, label: "Sexta" },
-  { value: 5, label: "Sábado" },
-  { value: 6, label: "Domingo" },
+const DAY_KEYS: { key: string; label: string }[] = [
+  { key: "mon", label: "Segunda" },
+  { key: "tue", label: "Terça" },
+  { key: "wed", label: "Quarta" },
+  { key: "thu", label: "Quinta" },
+  { key: "fri", label: "Sexta" },
+  { key: "sat", label: "Sábado" },
+  { key: "sun", label: "Domingo" },
 ];
 
+const dayLabel = (key: string) => DAY_KEYS.find((d) => d.key === key)?.label ?? key;
+
 export default function ProfessionalAvailabilitySection() {
-  const { units, activeUnit } = useAuth();
+  const { company, units } = useAuth();
   const queryClient = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
   const [newProfId, setNewProfId] = useState<number | "">("");
-  const [newWeekday, setNewWeekday] = useState<number | "">("");
+  const [newDay, setNewDay] = useState("");
   const [newStart, setNewStart] = useState("");
   const [newEnd, setNewEnd] = useState("");
+  const [newSlot, setNewSlot] = useState("60");
+  const [newBuffer, setNewBuffer] = useState("0");
 
-  // Fetch professionals from all units
   const { data: allProfessionals = [] } = useQuery({
     queryKey: ["professionals-all-units", units.map((u) => u.id).join(",")],
     queryFn: async () => {
@@ -52,14 +55,12 @@ export default function ProfessionalAvailabilitySection() {
     queryKey: ["professional-availabilities"],
     queryFn: async () => {
       const { data } = await api.get("/api/settings/professional-availabilities/");
-      const list = Array.isArray(data) ? data : (data?.results ?? []);
-      if (list.length > 0) console.log("[availabilities] sample keys:", Object.keys(list[0]), "sample:", list[0]);
-      return list;
+      return Array.isArray(data) ? data : (data?.results ?? []);
     },
   });
 
   const createAvailability = useMutation({
-    mutationFn: async (payload: { professional: number; weekday?: number; start_time?: string; end_time?: string }) => {
+    mutationFn: async (payload: any) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/professional-availabilities/", payload);
       return data;
@@ -68,9 +69,11 @@ export default function ProfessionalAvailabilitySection() {
       queryClient.invalidateQueries({ queryKey: ["professional-availabilities"] });
       setShowNew(false);
       setNewProfId("");
-      setNewWeekday("");
+      setNewDay("");
       setNewStart("");
       setNewEnd("");
+      setNewSlot("60");
+      setNewBuffer("0");
       toast.success("Disponibilidade criada com sucesso");
     },
     onError: () => toast.error("Erro ao criar disponibilidade"),
@@ -79,13 +82,13 @@ export default function ProfessionalAvailabilitySection() {
   const toggleAvailability = useMutation({
     mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/settings/professional-availabilities/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
+      await api.patch(`/api/settings/professional-availabilities/${id}/`, { is_active });
     },
     onMutate: async ({ id, is_active }) => {
       await queryClient.cancelQueries({ queryKey: ["professional-availabilities"] });
       const prev = queryClient.getQueryData(["professional-availabilities"]);
       queryClient.setQueryData(["professional-availabilities"], (old: any[]) =>
-        old?.map((a: any) => a.id === id ? { ...a, is_active, status: is_active ? "active" : "inactive" } : a)
+        old?.map((a: any) => a.id === id ? { ...a, is_active } : a)
       );
       return { prev };
     },
@@ -113,10 +116,22 @@ export default function ProfessionalAvailabilitySection() {
   const getProfName = (id: number) =>
     allProfessionals.find((p: any) => p.id === id)?.name ?? `#${id}`;
 
-  const getWeekdayLabel = (val: any) => {
-    const num = typeof val === "number" ? val : parseInt(val, 10);
-    return WEEKDAYS.find((w) => w.value === num)?.label ?? val ?? "—";
-  };
+  // Flatten weekly object into rows for display
+  const flatRows: { avail: any; dayKey: string; start: string; end: string }[] = [];
+  availabilities.forEach((a: any) => {
+    const weekly = a.weekly ?? {};
+    Object.entries(weekly).forEach(([dayKey, slots]: [string, any]) => {
+      if (Array.isArray(slots)) {
+        slots.forEach((slot: any) => {
+          flatRows.push({ avail: a, dayKey, start: slot.start ?? "—", end: slot.end ?? "—" });
+        });
+      }
+    });
+    // If no weekly data, show a single row
+    if (Object.keys(weekly).length === 0) {
+      flatRows.push({ avail: a, dayKey: "—", start: "—", end: "—" });
+    }
+  });
 
   return (
     <Collapsible defaultOpen={false} id="section-disponibilidade">
@@ -135,37 +150,39 @@ export default function ProfessionalAvailabilitySection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[1fr_1fr_5rem_5rem_auto_2rem] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Fim</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Slot</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Buffer</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
           <span />
         </div>
 
         {isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : availabilities.length === 0 ? (
+        ) : flatRows.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhuma disponibilidade encontrada.</p>
         ) : (
-          availabilities.map((a: any) => {
-            const active = a.is_active !== false && a.status !== "inactive";
-            const startTime = a.start_time ?? a.start ?? a.time_start ?? "—";
-            const endTime = a.end_time ?? a.end ?? a.time_end ?? "—";
-            const weekday = a.weekday ?? a.day_of_week ?? a.day;
+          flatRows.map((row, idx) => {
+            const a = row.avail;
+            const active = a.is_active !== false;
             return (
               <div
-                key={a.id}
-                className="grid grid-cols-[1fr_1fr_5rem_5rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                key={`${a.id}-${row.dayKey}-${idx}`}
+                className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-sm font-medium text-foreground">
                   {a.professional_name ?? getProfName(a.professional)}
                 </span>
-                <span className="text-xs text-muted-foreground">{getWeekdayLabel(weekday)}</span>
-                <span className="text-xs text-muted-foreground">{startTime}</span>
-                <span className="text-xs text-muted-foreground">{endTime}</span>
+                <span className="text-xs text-muted-foreground">{dayLabel(row.dayKey)}</span>
+                <span className="text-xs text-muted-foreground">{row.start}</span>
+                <span className="text-xs text-muted-foreground">{row.end}</span>
+                <span className="text-xs text-muted-foreground">{a.slot_minutes ?? "—"}min</span>
+                <span className="text-xs text-muted-foreground">{a.buffer_minutes ?? 0}min</span>
                 <Switch
                   checked={active}
                   onCheckedChange={(checked) => toggleAvailability.mutate({ id: a.id, is_active: checked })}
@@ -197,37 +214,30 @@ export default function ProfessionalAvailabilitySection() {
               ))}
             </select>
             <select
-              value={newWeekday}
-              onChange={(e) => setNewWeekday(e.target.value !== "" ? Number(e.target.value) : "")}
+              value={newDay}
+              onChange={(e) => setNewDay(e.target.value)}
               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
             >
               <option value="">Dia</option>
-              {WEEKDAYS.map((w) => (
-                <option key={w.value} value={w.value}>{w.label}</option>
+              {DAY_KEYS.map((d) => (
+                <option key={d.key} value={d.key}>{d.label}</option>
               ))}
             </select>
-            <Input
-              type="time"
-              value={newStart}
-              onChange={(e) => setNewStart(e.target.value)}
-              className="h-8 text-sm w-28"
-            />
-            <Input
-              type="time"
-              value={newEnd}
-              onChange={(e) => setNewEnd(e.target.value)}
-              className="h-8 text-sm w-28"
-            />
+            <Input type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} className="h-8 text-sm w-28" placeholder="Início" />
+            <Input type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} className="h-8 text-sm w-28" placeholder="Fim" />
+            <Input type="number" value={newSlot} onChange={(e) => setNewSlot(e.target.value)} className="h-8 text-sm w-20" placeholder="Slot min" />
+            <Input type="number" value={newBuffer} onChange={(e) => setNewBuffer(e.target.value)} className="h-8 text-sm w-20" placeholder="Buffer" />
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newProfId || newWeekday === "" || !newStart || !newEnd || createAvailability.isPending}
+              disabled={!newProfId || !newDay || !newStart || !newEnd || createAvailability.isPending}
               onClick={() =>
                 createAvailability.mutate({
                   professional: newProfId as number,
-                  weekday: newWeekday as number,
-                  start_time: newStart,
-                  end_time: newEnd,
+                  company: company?.id,
+                  slot_minutes: parseInt(newSlot) || 60,
+                  buffer_minutes: parseInt(newBuffer) || 0,
+                  weekly: { [newDay]: [{ start: newStart, end: newEnd }] },
                 })
               }
             >
@@ -237,7 +247,7 @@ export default function ProfessionalAvailabilitySection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewProfId(""); setNewWeekday(""); setNewStart(""); setNewEnd(""); }}
+              onClick={() => { setShowNew(false); setNewProfId(""); setNewDay(""); setNewStart(""); setNewEnd(""); setNewSlot("60"); setNewBuffer("0"); }}
             >
               Cancelar
             </Button>
