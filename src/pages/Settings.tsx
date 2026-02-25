@@ -197,6 +197,7 @@ export default function Settings() {
             <div className="flex items-center justify-between px-3 py-1">
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
               <div className="flex items-center gap-6">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">Código</span>
               </div>
@@ -216,6 +217,7 @@ export default function Settings() {
                 >
                   <span className="text-sm font-medium text-foreground">{prof.name}</span>
                   <div className="flex items-center gap-6">
+                    <span className="text-xs text-muted-foreground">{prof.unit_name ?? prof.unit ?? "—"}</span>
                     <span className={`text-xs font-medium ${prof.is_active !== false && prof.status !== "inactive" ? "text-green-400" : "text-muted-foreground"}`}>
                       {prof.is_active !== false && prof.status !== "inactive" ? "Ativo" : "Inativo"}
                     </span>
