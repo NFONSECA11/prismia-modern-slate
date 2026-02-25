@@ -18,6 +18,7 @@ import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
 import ServicesByProfessionalSection from "@/components/ServicesByProfessionalSection";
 import ProfessionalAvailabilitySection from "@/components/ProfessionalAvailabilitySection";
+import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -349,6 +350,9 @@ export default function Settings() {
 
         {/* Disponibilidade de Profissionais */}
         <ProfessionalAvailabilitySection />
+
+        {/* Categorias dos Serviços */}
+        <ServiceCategoriesSection />
 
         {/* Especialidades */}
         <SpecialtiesSection />
