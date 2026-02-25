@@ -65,7 +65,12 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
   } = useQuery<UnitHealth>({
     queryKey: ["health", unit.id],
     queryFn: async () => {
-      const { data } = await api.get(`/api/settings/health/`, { params: { unit: unit.id } });
+      const token = localStorage.getItem("auth_token");
+      const authHeader = token ? (token.includes(".") ? `Bearer ${token}` : `Token ${token}`) : undefined;
+      const { data } = await api.get(`/api/settings/health/`, {
+        params: { unit: unit.id },
+        headers: authHeader ? { Authorization: authHeader } : undefined,
+      });
       return data?.result ?? data;
     },
     retry: 1,

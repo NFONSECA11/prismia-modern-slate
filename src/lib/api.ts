@@ -38,20 +38,28 @@ const api = axios.create({
   },
 });
 
+function buildAuthHeader(token: string) {
+  return token.includes(".") ? `Bearer ${token}` : `Token ${token}`;
+}
+
 // Interceptor: inject Auth Token + CSRF on mutating requests
 api.interceptors.request.use((config) => {
-  // Always add Token auth if available
-  if (_authToken) {
-    config.headers["Authorization"] = `Token ${_authToken}`;
+  const token = _authToken || localStorage.getItem("auth_token");
+  if (token) {
+    _authToken = token;
+    const hasAuthorization = Boolean((config.headers as any)?.Authorization || (config.headers as any)?.authorization);
+    if (!hasAuthorization) {
+      (config.headers as any)["Authorization"] = buildAuthHeader(token);
+    }
   }
 
   const method = (config.method ?? "get").toLowerCase();
   if (["post", "put", "patch", "delete"].includes(method)) {
     const csrf = _inMemoryCsrfToken || getCookie("csrftoken");
     if (csrf) {
-      config.headers["X-CSRFToken"] = csrf;
+      (config.headers as any)["X-CSRFToken"] = csrf;
     }
-    config.headers["Referer"] = window.location.origin + "/";
+    (config.headers as any)["Referer"] = window.location.origin + "/";
   }
   return config;
 });
