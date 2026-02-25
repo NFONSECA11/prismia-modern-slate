@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import DiagnosticCard from "@/components/DiagnosticCard";
 import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSection";
+import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -331,6 +332,9 @@ export default function Settings() {
         </Collapsible>
 
         {/* Itens futuros */}
+        {/* Procedimentos por Unidade */}
+        <ProceduresByUnitSection />
+
         {/* Serviços & Mapeamentos */}
         <ProfessionalProceduresSection />
 
