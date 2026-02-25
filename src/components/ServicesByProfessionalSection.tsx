@@ -88,6 +88,9 @@ export default function ServicesByProfessionalSection() {
     onError: () => toast.error("Erro ao remover vínculo"),
   });
 
+  const getProfName = (id: number | undefined) =>
+    professionalsData.find((p: any) => p.id === id)?.name ?? `#${id ?? "—"}`;
+
   return (
     <Collapsible defaultOpen={false} id="section-servicos-profissional">
       <CollapsibleTrigger
@@ -128,7 +131,7 @@ export default function ServicesByProfessionalSection() {
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-sm font-medium text-foreground truncate">
-                  {item.professional_name ?? `#${item.professional ?? "—"}`}
+                  {item.professional_name ?? getProfName(item.professional)}
                 </span>
                 <span className="text-sm text-foreground truncate">
                   {item.procedure_name ?? item.procedure_slug ?? `#${item.procedure ?? "—"}`}
