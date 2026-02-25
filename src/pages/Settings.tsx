@@ -73,9 +73,16 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 space-y-2">
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <div className="flex items-center justify-between px-3 py-1">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
+              <div className="flex items-center gap-6">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">ID</span>
+              </div>
+            </div>
             {units.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-4 py-3">Nenhuma unidade encontrada.</p>
+              <p className="text-xs text-muted-foreground px-3">Nenhuma unidade encontrada.</p>
             ) : (
               units.map((unit) => {
                 const u = unit as any;
@@ -83,36 +90,22 @@ export default function Settings() {
                 return (
                   <div
                     key={unit.id}
-                    className="rounded-xl border border-border p-4 space-y-2"
-                    style={{ background: "hsl(var(--surface))" }}
+                    className="flex items-center justify-between rounded-lg px-3 py-2 border border-border"
+                    style={{ background: "hsl(var(--surface-elevated))" }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-foreground">{unit.name}</span>
                       {isActive && (
                         <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
-                          Unidade ativa
+                          Ativa
                         </span>
                       )}
                     </div>
-                    <div className="grid gap-1.5">
-                      <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                        <span className="text-xs text-muted-foreground">ID</span>
-                        <span className="text-xs font-mono text-foreground">{unit.id}</span>
-                      </div>
-                      {u.timezone && (
-                        <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                          <span className="text-xs text-muted-foreground">Timezone</span>
-                          <span className="text-xs text-foreground">{u.timezone}</span>
-                        </div>
-                      )}
-                      {u.status !== undefined && (
-                        <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                          <span className="text-xs text-muted-foreground">Status</span>
-                          <span className={`text-xs font-medium ${u.status === "active" || u.is_active ? "text-green-400" : "text-muted-foreground"}`}>
-                            {u.status === "active" || u.is_active ? "Ativa" : "Inativa"}
-                          </span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-6">
+                      <span className={`text-xs font-medium ${u.status === "active" || u.is_active ? "text-green-400" : "text-muted-foreground"}`}>
+                        {u.status === "active" || u.is_active ? "Ativa" : u.status !== undefined ? "Inativa" : "—"}
+                      </span>
+                      <span className="text-xs font-mono text-muted-foreground w-16 text-right">{unit.id}</span>
                     </div>
                   </div>
                 );
