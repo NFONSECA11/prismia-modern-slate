@@ -36,7 +36,7 @@ const STATUS_CONFIG = {
 };
 
 const ISSUE_ROUTES: Record<string, { label: string; sectionId: string | null }> = {
-  procedure_without_professional: { label: "Serviços & Mapeamentos", sectionId: null },
+  procedure_without_professional: { label: "Serviços & Mapeamentos", sectionId: "section-servicos-mapeamentos" },
   professional_without_availability: { label: "Agenda", sectionId: null },
   unit_procedure_disabled: { label: "Config interna", sectionId: null },
   booking_settings_missing: { label: "Modo de Atendimento", sectionId: "section-modo-atendimento" },
