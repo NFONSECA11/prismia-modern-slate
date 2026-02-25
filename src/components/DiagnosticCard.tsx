@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import api, { getAuthToken } from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,6 +103,7 @@ function extractUnitHealth(payload: any, unitId: number): UnitHealth | null {
 
 export default function DiagnosticCard({ unit }: { unit: { id: number; name: string } }) {
   const [showAllIssues, setShowAllIssues] = useState(false);
+  const navigate = useNavigate();
 
   const { user } = useAuth();
 
@@ -323,10 +325,13 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
                 </div>
                 {route ? (
                   route.route ? (
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 shrink-0" asChild>
-                      <a href={route.route}>
-                        Corrigir <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] gap-1 shrink-0"
+                      onClick={() => navigate(route.route!)}
+                    >
+                      Corrigir <ExternalLink className="h-2.5 w-2.5" />
                     </Button>
                   ) : (
                     <Button
