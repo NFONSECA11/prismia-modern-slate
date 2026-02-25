@@ -66,13 +66,23 @@ export default function Settings() {
   const toggleProfessional = useMutation({
     mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/booking/professionals/${id}/`, { is_active });
+      // Try both field names the API might expect
+      await api.patch(`/api/booking/professionals/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+    onMutate: async ({ id, is_active }) => {
+      await queryClient.cancelQueries({ queryKey: ["professionals", activeUnit?.id] });
+      const prev = queryClient.getQueryData(["professionals", activeUnit?.id]);
+      queryClient.setQueryData(["professionals", activeUnit?.id], (old: any[]) =>
+        old?.map((p: any) => p.id === id ? { ...p, is_active, status: is_active ? "active" : "inactive" } : p)
+      );
+      return { prev };
     },
-    onError: () => {
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["professionals", activeUnit?.id], context?.prev);
       toast.error("Erro ao alterar status do profissional");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
     },
   });
 
