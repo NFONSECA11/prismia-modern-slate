@@ -1,11 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface UnitProcedure {
@@ -21,13 +20,14 @@ interface UnitProcedure {
   price_override?: string | number | null;
   duration?: number | null;
   price?: string | number | null;
+  code?: string;
+  slug?: string;
 }
 
 export default function ProceduresByUnitSection() {
   const { units, user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch for each unit
   const unitQueries = units.map((unit) => {
     const query = useQuery({
       queryKey: ["unit-procedures", unit.id],
@@ -45,6 +45,20 @@ export default function ProceduresByUnitSection() {
       enabled: !!user,
     });
     return { unit, ...query };
+  });
+
+  const allProcedures: (UnitProcedure & { unitId: number; unitName: string })[] = [];
+  let anyLoading = false;
+
+  unitQueries.forEach(({ unit, data = [], isLoading }) => {
+    if (isLoading) anyLoading = true;
+    (data as UnitProcedure[]).forEach((proc) => {
+      allProcedures.push({
+        ...proc,
+        unitId: unit.id,
+        unitName: proc.unit_name ?? unit.name,
+      });
+    });
   });
 
   const toggleEnabled = useMutation({
@@ -85,64 +99,49 @@ export default function ProceduresByUnitSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-4"
+        className="mt-2 rounded-xl border border-border p-4 space-y-1"
         style={{ background: "hsl(var(--surface))" }}
       >
-        {units.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-3">Nenhuma unidade encontrada.</p>
-        ) : (
-          unitQueries.map(({ unit, data: procedures = [], isLoading }) => (
-            <div key={unit.id} className="space-y-1">
-              <span className="text-xs font-bold text-foreground px-3">{unit.name}</span>
+        {/* Header */}
+        <div className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 px-3 py-1 items-center">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Unidade</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
+        </div>
 
-              {/* Header */}
-              <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-1 items-center">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Procedimento
+        {anyLoading ? (
+          <p className="text-xs text-muted-foreground px-3">Carregando…</p>
+        ) : allProcedures.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-3">Nenhum procedimento encontrado.</p>
+        ) : (
+          allProcedures.map((proc) => {
+            const active = proc.enabled !== false && proc.is_active !== false;
+            return (
+              <div
+                key={proc.id}
+                className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                style={{ background: "hsl(var(--surface-elevated))" }}
+              >
+                <span className="text-xs font-mono text-muted-foreground">{proc.unitId}</span>
+                <span className="text-xs text-muted-foreground">{proc.unitName}</span>
+                <span className="text-sm font-medium text-foreground truncate">
+                  {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-20 text-right">
-                  Duração
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">
-                  Ativo
+                <Switch
+                  checked={active}
+                  onCheckedChange={(checked) =>
+                    toggleEnabled.mutate({ id: proc.id, enabled: checked, unitId: proc.unitId })
+                  }
+                  className="scale-75"
+                />
+                <span className="text-xs font-mono text-muted-foreground text-right">
+                  {proc.code ?? proc.slug ?? proc.procedure_slug ?? "—"}
                 </span>
               </div>
-
-              {isLoading ? (
-                <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-              ) : (procedures as UnitProcedure[]).length === 0 ? (
-                <p className="text-xs text-muted-foreground px-3">Nenhum procedimento nesta unidade.</p>
-              ) : (
-                (procedures as UnitProcedure[]).map((proc) => {
-                  const active = proc.enabled !== false && proc.is_active !== false;
-                  const duration = proc.duration_override ?? proc.duration;
-                  return (
-                    <div
-                      key={proc.id}
-                      className="grid grid-cols-[1fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-                      style={{ background: "hsl(var(--surface-elevated))" }}
-                    >
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
-                      </span>
-                      <span className="text-xs text-muted-foreground w-20 text-right">
-                        {duration ? `${duration} min` : "—"}
-                      </span>
-                      <div className="w-16 flex justify-end">
-                        <Switch
-                          checked={active}
-                          onCheckedChange={(checked) =>
-                            toggleEnabled.mutate({ id: proc.id, enabled: checked, unitId: unit.id })
-                          }
-                          className="scale-75"
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </CollapsibleContent>
     </Collapsible>
