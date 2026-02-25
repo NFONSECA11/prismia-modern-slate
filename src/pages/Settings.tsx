@@ -190,8 +190,8 @@ export default function Settings() {
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          <ProceduresByUnitSection />
           <SpecialtiesSection />
+          <ProceduresByUnitSection />
           <ServiceCategoriesSection />
         </section>
 
