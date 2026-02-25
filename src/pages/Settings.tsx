@@ -178,7 +178,7 @@ export default function Settings() {
         </Collapsible>
 
         {/* Modo de Atendimento - dados reais (collapsible) */}
-        <Collapsible defaultOpen={false}>
+        <Collapsible defaultOpen={false} id="section-modo-atendimento">
           <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
             <div className="text-left">
               <span className="text-sm font-bold text-foreground">Modo de Atendimento</span>
@@ -213,7 +213,7 @@ export default function Settings() {
         </Collapsible>
 
         {/* Profissionais */}
-        <Collapsible defaultOpen={false}>
+        <Collapsible defaultOpen={false} id="section-profissionais">
           <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
             <div className="text-left">
               <span className="text-sm font-bold text-foreground">Profissionais</span>
