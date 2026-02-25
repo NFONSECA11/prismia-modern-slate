@@ -39,7 +39,10 @@ const ISSUE_ROUTES: Record<string, { label: string; route: string | null }> = {
   procedure_without_professional: { label: "Serviços & Mapeamentos", route: null },
   professional_without_availability: { label: "Agenda", route: null },
   unit_procedure_disabled: { label: "Config interna", route: null },
-  booking_settings_missing: { label: "Modo de Atendimento", route: null },
+  booking_settings_missing: { label: "Modo de Atendimento", route: "/settings" },
+  professional_missing: { label: "Profissionais", route: "/settings" },
+  all_professionals_inactive: { label: "Profissionais", route: "/settings" },
+  some_professionals_inactive: { label: "Profissionais", route: "/settings" },
 };
 
 const STAT_LABELS: Record<string, string> = {
