@@ -93,17 +93,10 @@ export default function Settings() {
                     className="flex items-center justify-between rounded-lg px-3 py-2 border border-border"
                     style={{ background: "hsl(var(--surface-elevated))" }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{unit.name}</span>
-                      {isActive && (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
-                          Ativa
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-sm font-medium text-foreground">{unit.name}</span>
                     <div className="flex items-center gap-6">
-                      <span className={`text-xs font-medium ${u.status === "active" || u.is_active ? "text-green-400" : "text-muted-foreground"}`}>
-                        {u.status === "active" || u.is_active ? "Ativa" : u.status !== undefined ? "Inativa" : "—"}
+                      <span className={`text-xs font-medium ${u.status === "active" || u.is_active || isActive ? "text-green-400" : "text-muted-foreground"}`}>
+                        {isActive ? "Ativa" : u.status === "active" || u.is_active ? "Ativa" : u.status !== undefined ? "Inativa" : "—"}
                       </span>
                       <span className="text-xs font-mono text-muted-foreground w-16 text-right">{unit.id}</span>
                     </div>
