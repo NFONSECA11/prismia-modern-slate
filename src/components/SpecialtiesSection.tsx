@@ -27,6 +27,7 @@ export default function SpecialtiesSection() {
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newCompanyId, setNewCompanyId] = useState<number | "">(company?.id ?? "");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["specialties"],
@@ -45,7 +46,7 @@ export default function SpecialtiesSection() {
   });
 
   const createSpecialty = useMutation({
-    mutationFn: async (payload: { name: string }) => {
+    mutationFn: async (payload: { name: string; company?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/specialties/", payload);
       return data;
@@ -54,6 +55,7 @@ export default function SpecialtiesSection() {
       queryClient.invalidateQueries({ queryKey: ["specialties"] });
       setShowNew(false);
       setNewName("");
+      setNewCompanyId(company?.id ?? "");
       toast.success("Especialidade criada com sucesso");
     },
     onError: () => toast.error("Erro ao criar especialidade"),
@@ -146,6 +148,12 @@ export default function SpecialtiesSection() {
         {showNew ? (
           <div className="flex items-center gap-2 pt-2 px-3">
             <Input
+              placeholder="Empresa"
+              value={company?.name ?? ""}
+              disabled
+              className="h-8 text-sm w-28"
+            />
+            <Input
               placeholder="Nome da especialidade"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -155,7 +163,7 @@ export default function SpecialtiesSection() {
               size="sm"
               className="h-8 text-xs"
               disabled={!newName.trim() || createSpecialty.isPending}
-              onClick={() => createSpecialty.mutate({ name: newName.trim() })}
+              onClick={() => createSpecialty.mutate({ name: newName.trim(), ...(company?.id ? { company: company.id } : {}) })}
             >
               {createSpecialty.isPending ? "…" : "Salvar"}
             </Button>
