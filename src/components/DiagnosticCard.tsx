@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import api, { getAuthToken } from "@/lib/api";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,8 @@ const MAX_ISSUES_COLLAPSED = 3;
 export default function DiagnosticCard({ unit }: { unit: { id: number; name: string } }) {
   const [showAllIssues, setShowAllIssues] = useState(false);
 
+  const { user } = useAuth();
+
   const {
     data: health,
     isLoading,
@@ -66,7 +69,7 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
       return data?.result ?? data;
     },
     retry: 1,
-    enabled: !!getAuthToken(),
+    enabled: !!user,
   });
 
   if (isLoading) {
