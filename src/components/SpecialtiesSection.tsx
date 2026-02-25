@@ -14,9 +14,12 @@ interface Specialty {
   id: number;
   name?: string;
   slug?: string;
+  code?: string;
   is_active?: boolean;
   status?: string;
   description?: string;
+  company?: number;
+  company_name?: string;
 }
 
 export default function SpecialtiesSection() {
@@ -107,11 +110,13 @@ export default function SpecialtiesSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[auto_1fr_auto_auto_5rem_5rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-12">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-8"></span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Empresa</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
         </div>
 
         {isLoading ? (
@@ -124,7 +129,7 @@ export default function SpecialtiesSection() {
             return (
               <div
                 key={item.id}
-                className="grid grid-cols-[auto_1fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[auto_1fr_auto_auto_5rem_5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs font-mono text-muted-foreground w-12">{item.id}</span>
@@ -144,6 +149,12 @@ export default function SpecialtiesSection() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+                <span className="text-xs font-mono text-muted-foreground text-right">
+                  {item.company_name ?? item.company ?? "—"}
+                </span>
+                <span className="text-xs font-mono text-muted-foreground text-right">
+                  {item.code ?? item.slug ?? "—"}
+                </span>
               </div>
             );
           })
