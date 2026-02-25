@@ -23,7 +23,7 @@ interface Specialty {
 }
 
 export default function SpecialtiesSection() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -133,7 +133,7 @@ export default function SpecialtiesSection() {
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs text-muted-foreground truncate">
-                  {item.company_name ?? item.company ?? "—"}
+                  {item.company_name ?? company?.name ?? "—"}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
                 <span className="text-sm font-medium text-foreground truncate">
