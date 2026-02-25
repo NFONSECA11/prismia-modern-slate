@@ -130,7 +130,55 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
         const token = resolveClientToken();
         if (!token) {
           console.warn("[Diag] 401 sem token local para fallback de auth");
-          throw error;
+
+          const [settingsResult, professionalsResult] = await Promise.allSettled([
+            api.get(`/api/booking/booking-settings/by-unit/${unit.id}/`),
+            api.get(`/api/booking/professionals/`, { params: { unit: unit.id } }),
+          ]);
+
+          const settingsPayload =
+            settingsResult.status === "fulfilled"
+              ? (settingsResult.value.data?.result ?? settingsResult.value.data)
+              : null;
+
+          const professionalsPayload =
+            professionalsResult.status === "fulfilled"
+              ? professionalsResult.value.data
+              : [];
+
+          const professionals = Array.isArray(professionalsPayload)
+            ? professionalsPayload
+            : (professionalsPayload?.results ?? []);
+
+          const issues: UnitHealth["issues"] = [
+            {
+              code: "health_endpoint_unauthorized",
+              message: "Diagnóstico detalhado indisponível nesta sessão.",
+            },
+          ];
+
+          if (professionals.length === 0) {
+            issues.push({
+              code: "professional_missing",
+              message: "Nenhum profissional ativo encontrado para esta unidade.",
+            });
+          }
+
+          if (!settingsPayload) {
+            issues.push({
+              code: "booking_settings_missing",
+              message: "Configuração de modo de atendimento não encontrada.",
+            });
+          }
+
+          return {
+            status: "warn",
+            can_enable_auto: (settingsPayload?.default_booking_mode === "auto_slots_bot") && professionals.length > 0,
+            issues,
+            stats: {
+              professionals: professionals.length,
+            },
+          };
         }
 
         const raw = token.replace(/^Bearer\s+/i, "").replace(/^Token\s+/i, "").trim();
