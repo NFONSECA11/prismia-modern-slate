@@ -4,9 +4,8 @@ import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 interface ProcedureSpecialty {
@@ -20,17 +19,18 @@ interface ProcedureSpecialty {
 }
 
 export default function ServiceCategoriesSection() {
-  const { user, company } = useAuth();
+  const { user, company, units, activeUnit } = useAuth();
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newCode, setNewCode] = useState("");
+  const [newSpecialtyId, setNewSpecialtyId] = useState<number | "">("");
+  const [newProcedureId, setNewProcedureId] = useState<number | "">("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["procedure-specialties"],
     queryFn: async () => {
       await fetchCsrf();
       const { data } = await api.get("/api/settings/procedure-specialties/");
+      console.log("[procedure-specialties] raw response:", data);
       if (Array.isArray(data)) return data;
       if (data?.results) return data.results;
       if (data?.data) return data.data;
@@ -42,8 +42,54 @@ export default function ServiceCategoriesSection() {
     enabled: !!user,
   });
 
+  // Fetch specialties for lookup & creation select
+  const { data: specialties = [] } = useQuery({
+    queryKey: ["specialties"],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/specialties/");
+      if (Array.isArray(data)) return data;
+      if (data?.results) return data.results;
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results) return inner.results;
+      return [];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch procedures for lookup & creation select
+  const { data: procedures = [] } = useQuery({
+    queryKey: ["all-unit-procedures"],
+    queryFn: async () => {
+      await fetchCsrf();
+      const all: any[] = [];
+      for (const u of units) {
+        try {
+          const { data } = await api.get(`/api/settings/unit-procedures/`, { params: { unit: u.id } });
+          const list = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? []);
+          list.forEach((p: any) => { if (!all.find((x) => x.id === p.id)) all.push(p); });
+        } catch {}
+      }
+      return all;
+    },
+    enabled: !!user && units.length > 0,
+  });
+
+  const specMap = useMemo(() => {
+    const m = new Map<number, string>();
+    specialties.forEach((s: any) => m.set(s.id, s.name ?? s.slug ?? `#${s.id}`));
+    return m;
+  }, [specialties]);
+
+  const procMap = useMemo(() => {
+    const m = new Map<number, string>();
+    procedures.forEach((p: any) => m.set(p.id, p.name ?? p.procedure_name ?? p.slug ?? `#${p.id}`));
+    return m;
+  }, [procedures]);
+
   const createCategory = useMutation({
-    mutationFn: async (payload: { name: string; company?: number; code?: string }) => {
+    mutationFn: async (payload: { specialty: number; procedure: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/procedure-specialties/", payload);
       return data;
@@ -51,8 +97,8 @@ export default function ServiceCategoriesSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["procedure-specialties"] });
       setShowNew(false);
-      setNewName("");
-      setNewCode("");
+      setNewSpecialtyId("");
+      setNewProcedureId("");
       toast.success("Categoria criada com sucesso");
     },
     onError: () => toast.error("Erro ao criar categoria"),
@@ -69,6 +115,12 @@ export default function ServiceCategoriesSection() {
     },
     onError: () => toast.error("Erro ao remover categoria"),
   });
+
+  const getSpecName = (item: ProcedureSpecialty) =>
+    item.specialty_name ?? (item.specialty ? specMap.get(item.specialty) ?? `#${item.specialty}` : "—");
+
+  const getProcName = (item: ProcedureSpecialty) =>
+    item.procedure_name ?? (item.procedure ? procMap.get(item.procedure) ?? `#${item.procedure}` : "—");
 
   return (
     <Collapsible defaultOpen={false} id="section-categorias-servicos">
@@ -108,12 +160,8 @@ export default function ServiceCategoriesSection() {
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
-              <span className="text-sm font-medium text-foreground truncate">
-                {item.specialty_name ?? (item.specialty ? `#${item.specialty}` : "—")}
-              </span>
-              <span className="text-sm text-foreground truncate">
-                {item.procedure_name ?? (item.procedure ? `#${item.procedure}` : "—")}
-              </span>
+              <span className="text-sm font-medium text-foreground truncate">{getSpecName(item)}</span>
+              <span className="text-sm text-foreground truncate">{getProcName(item)}</span>
               <button
                 onClick={() => deleteCategory.mutate(item.id)}
                 className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
@@ -128,29 +176,31 @@ export default function ServiceCategoriesSection() {
         {/* Criar categoria */}
         {showNew ? (
           <div className="flex items-center gap-2 pt-2 px-3">
-            <Input
-              placeholder="Empresa"
-              value={company?.name ?? ""}
-              disabled
-              className="h-8 text-sm w-28"
-            />
-            <Input
-              placeholder="Nome da categoria"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="h-8 text-sm flex-1"
-            />
-            <Input
-              placeholder="Código"
-              value={newCode}
-              onChange={(e) => setNewCode(e.target.value)}
-              className="h-8 text-sm w-28"
-            />
+            <select
+              value={newSpecialtyId}
+              onChange={(e) => setNewSpecialtyId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
+            >
+              <option value="">Especialidade</option>
+              {specialties.map((s: any) => (
+                <option key={s.id} value={s.id}>{s.name ?? s.slug ?? `#${s.id}`}</option>
+              ))}
+            </select>
+            <select
+              value={newProcedureId}
+              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
+            >
+              <option value="">Procedimento</option>
+              {procedures.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? p.slug ?? `#${p.id}`}</option>
+              ))}
+            </select>
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newName.trim() || createCategory.isPending}
-              onClick={() => createCategory.mutate({ name: newName.trim(), ...(company?.id ? { company: company.id } : {}), ...(newCode.trim() ? { code: newCode.trim() } : {}) })}
+              disabled={!newSpecialtyId || !newProcedureId || createCategory.isPending}
+              onClick={() => createCategory.mutate({ specialty: newSpecialtyId as number, procedure: newProcedureId as number })}
             >
               {createCategory.isPending ? "…" : "Salvar"}
             </Button>
@@ -158,7 +208,7 @@ export default function ServiceCategoriesSection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewName(""); setNewCode(""); }}
+              onClick={() => { setShowNew(false); setNewSpecialtyId(""); setNewProcedureId(""); }}
             >
               Cancelar
             </Button>
