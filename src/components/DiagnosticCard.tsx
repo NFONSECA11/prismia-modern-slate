@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { getAuthToken } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,45 @@ const STAT_LABELS: Record<string, string> = {
 };
 
 const MAX_ISSUES_COLLAPSED = 3;
+const AUTH_TOKEN_KEYS = ["auth_token", "token", "authToken", "access", "access_token", "key"] as const;
+
+function resolveClientToken(): string | null {
+  const inMemoryToken = getAuthToken();
+  if (inMemoryToken) return inMemoryToken;
+
+  for (const key of AUTH_TOKEN_KEYS) {
+    const token = localStorage.getItem(key);
+    if (token) return token;
+  }
+
+  return null;
+}
+
+function extractUnitHealth(payload: any, unitId: number): UnitHealth | null {
+  const data = payload?.result ?? payload;
+  if (!data) return null;
+
+  if (data.status && (Array.isArray(data.issues) || data.stats)) {
+    return data as UnitHealth;
+  }
+
+  const byUnit = data?.by_unit ?? data?.units;
+  if (byUnit && typeof byUnit === "object") {
+    const unitData = byUnit[unitId] ?? byUnit[String(unitId)];
+    if (unitData) {
+      const normalized = unitData?.result ?? unitData;
+      if (normalized?.status) return normalized as UnitHealth;
+    }
+  }
+
+  if (Array.isArray(data?.units)) {
+    const unitEntry = data.units.find((entry: any) => Number(entry?.id ?? entry?.unit ?? entry?.unit_id) === unitId);
+    const normalized = unitEntry?.health ?? unitEntry?.diagnostic ?? unitEntry;
+    if (normalized?.status) return normalized as UnitHealth;
+  }
+
+  return null;
+}
 
 export default function DiagnosticCard({ unit }: { unit: { id: number; name: string } }) {
   const [showAllIssues, setShowAllIssues] = useState(false);
@@ -65,10 +104,43 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
   } = useQuery<UnitHealth>({
     queryKey: ["health", unit.id],
     queryFn: async () => {
-      const { data } = await api.get(`/api/settings/health/`, {
-        params: { unit: unit.id },
-      });
-      return data?.result ?? data;
+      const requestHealth = async (options?: { authHeader?: string; withUnitParam?: boolean }) => {
+        const { data } = await api.get(`/api/settings/health/`, {
+          ...(options?.withUnitParam === false ? {} : { params: { unit: unit.id } }),
+          ...(options?.authHeader ? { headers: { Authorization: options.authHeader } } : {}),
+        });
+
+        const extracted = extractUnitHealth(data, unit.id);
+        return extracted ?? (data?.result ?? data);
+      };
+
+      try {
+        return await requestHealth();
+      } catch (error: any) {
+        if (error?.response?.status !== 401) {
+          throw error;
+        }
+
+        const token = resolveClientToken();
+        if (!token) {
+          console.warn("[Diag] 401 sem token local para fallback de auth");
+          throw error;
+        }
+
+        const raw = token.replace(/^Bearer\s+/i, "").replace(/^Token\s+/i, "").trim();
+        const authVariants = [`Token ${raw}`, `Bearer ${raw}`];
+
+        for (const authorization of authVariants) {
+          try {
+            return await requestHealth({ authHeader: authorization });
+          } catch (retryError: any) {
+            if (retryError?.response?.status !== 401) throw retryError;
+          }
+        }
+
+        // Fallback para backends que respondem sem filtro por unidade
+        return await requestHealth({ authHeader: `Token ${raw}`, withUnitParam: false });
+      }
     },
     retry: 1,
     enabled: !!user,
