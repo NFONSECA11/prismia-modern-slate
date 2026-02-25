@@ -136,6 +136,8 @@ export default function ProfessionalAvailabilitySection() {
   const getProfName = (id: number) =>
     allProfessionals.find((p: any) => p.id === id)?.name ?? `#${id}`;
 
+  const DAY_ORDER: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 };
+
   // Flatten weekly object into rows for display
   const flatRows: { avail: any; dayKey: string; start: string; end: string }[] = [];
   availabilities.forEach((a: any) => {
@@ -147,10 +149,17 @@ export default function ProfessionalAvailabilitySection() {
         });
       }
     });
-    // If no weekly data, show a single row
     if (Object.keys(weekly).length === 0) {
       flatRows.push({ avail: a, dayKey: "—", start: "—", end: "—" });
     }
+  });
+
+  // Sort by professional name, then weekday order
+  flatRows.sort((a, b) => {
+    const nameA = (a.avail.professional_name ?? getProfName(a.avail.professional)).toLowerCase();
+    const nameB = (b.avail.professional_name ?? getProfName(b.avail.professional)).toLowerCase();
+    if (nameA !== nameB) return nameA.localeCompare(nameB);
+    return (DAY_ORDER[a.dayKey] ?? 99) - (DAY_ORDER[b.dayKey] ?? 99);
   });
 
   return (
