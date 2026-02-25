@@ -11,10 +11,10 @@ import { toast } from "sonner";
 
 interface ProcedureSpecialty {
   id: number;
-  name?: string;
-  slug?: string;
-  code?: string;
-  description?: string;
+  specialty?: number;
+  specialty_name?: string;
+  procedure?: number;
+  procedure_name?: string;
   company?: number;
   company_name?: string;
 }
@@ -89,11 +89,10 @@ export default function ServiceCategoriesSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 px-3 py-1 items-center">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
+        <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Especialidade</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Ações</span>
         </div>
 
@@ -105,18 +104,15 @@ export default function ServiceCategoriesSection() {
           (items as ProcedureSpecialty[]).map((item) => (
             <div
               key={item.id}
-              className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
-              <span className="text-xs text-muted-foreground truncate">
-                {item.company_name ?? company?.name ?? "—"}
-              </span>
               <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
               <span className="text-sm font-medium text-foreground truncate">
-                {item.name ?? item.slug ?? `#${item.id}`}
+                {item.specialty_name ?? (item.specialty ? `#${item.specialty}` : "—")}
               </span>
-              <span className="text-xs font-mono text-muted-foreground">
-                {item.code ?? item.slug ?? "—"}
+              <span className="text-sm text-foreground truncate">
+                {item.procedure_name ?? (item.procedure ? `#${item.procedure}` : "—")}
               </span>
               <button
                 onClick={() => deleteCategory.mutate(item.id)}
