@@ -126,6 +126,11 @@ export default function ServicesByProfessionalSection() {
   const getProfName = (id: number | undefined) =>
     allProfessionals.find((p: any) => p.id === id)?.name ?? `#${id ?? "—"}`;
 
+  const getProcName = (id: number | undefined) => {
+    const found = allUnitProcedures.find((p: any) => (p.procedure ?? p.id) === id);
+    return found ? (found.procedure_name ?? found.procedure_slug ?? `#${id}`) : `#${id ?? "—"}`;
+  };
+
   return (
     <Collapsible defaultOpen={false} id="section-servicos-profissional">
       <CollapsibleTrigger
@@ -169,7 +174,7 @@ export default function ServicesByProfessionalSection() {
                   {item.professional_name ?? getProfName(item.professional)}
                 </span>
                 <span className="text-sm text-foreground truncate">
-                  {item.procedure_name ?? item.procedure_slug ?? `#${item.procedure ?? "—"}`}
+                  {item.procedure_name ?? item.procedure_slug ?? getProcName(item.procedure)}
                 </span>
                 <span className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}>
                   {active ? "Ativo" : "Inativo"}
