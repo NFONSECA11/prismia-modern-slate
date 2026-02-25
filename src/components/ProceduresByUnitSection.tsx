@@ -4,59 +4,70 @@ import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-interface Procedure {
+interface UnitProcedure {
   id: number;
-  name?: string;
-  slug?: string;
-  duration?: number;
-  price?: string | number;
+  procedure_name?: string;
+  procedure_slug?: string;
+  procedure?: number;
+  unit?: number;
+  unit_name?: string;
+  enabled?: boolean;
   is_active?: boolean;
-  status?: string;
-}
-
-interface UnitProcedures {
-  unitId: number;
-  unitName: string;
-  procedures: Procedure[];
+  duration_override?: number | null;
+  price_override?: string | number | null;
+  duration?: number | null;
+  price?: string | number | null;
 }
 
 export default function ProceduresByUnitSection() {
   const { units, user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { data: rawProcedures = [], isLoading } = useQuery({
-    queryKey: ["procedures-by-unit"],
-    queryFn: async () => {
+  // Fetch for each unit
+  const unitQueries = units.map((unit) => {
+    const query = useQuery({
+      queryKey: ["unit-procedures", unit.id],
+      queryFn: async () => {
+        await fetchCsrf();
+        const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: unit.id } });
+        if (Array.isArray(data)) return data;
+        if (data?.results) return data.results;
+        if (data?.data) return data.data;
+        const inner = data?.result;
+        if (Array.isArray(inner)) return inner;
+        if (inner?.results) return inner.results;
+        return [];
+      },
+      enabled: !!user,
+    });
+    return { unit, ...query };
+  });
+
+  const toggleEnabled = useMutation({
+    mutationFn: async ({ id, enabled, unitId }: { id: number; enabled: boolean; unitId: number }) => {
       await fetchCsrf();
-      const { data } = await api.get("/api/booking/procedures/");
-      if (Array.isArray(data)) return data;
-      if (data?.results && Array.isArray(data.results)) return data.results;
-      if (data?.data && Array.isArray(data.data)) return data.data;
-      const inner = data?.result;
-      if (Array.isArray(inner)) return inner;
-      if (inner?.results && Array.isArray(inner.results)) return inner.results;
-      return [];
+      await api.patch(`/api/settings/unit-procedures/${id}/`, { enabled });
     },
-    enabled: !!user,
-  });
-
-  // Group procedures by unit
-  const grouped: UnitProcedures[] = [];
-  const byUnit: Record<string, Procedure[]> = {};
-
-  (rawProcedures as any[]).forEach((proc) => {
-    const unitKey = String(proc.unit ?? "none");
-    if (!byUnit[unitKey]) byUnit[unitKey] = [];
-    byUnit[unitKey].push(proc);
-  });
-
-  Object.entries(byUnit).forEach(([unitKey, procs]) => {
-    const unitId = unitKey === "none" ? 0 : Number(unitKey);
-    const unitName =
-      (procs[0] as any)?.unit_name ??
-      units.find((u) => u.id === unitId)?.name ??
-      (unitKey === "none" ? "Sem unidade" : `Unidade ${unitKey}`);
-    grouped.push({ unitId, unitName, procedures: procs });
+    onMutate: async ({ id, enabled, unitId }) => {
+      const key = ["unit-procedures", unitId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData(key);
+      queryClient.setQueryData(key, (old: any[]) =>
+        old?.map((p: any) => (p.id === id ? { ...p, enabled } : p))
+      );
+      return { prev, unitId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context) queryClient.setQueryData(["unit-procedures", context.unitId], context.prev);
+      toast.error("Erro ao alterar status do procedimento");
+    },
+    onSettled: (_d, _e, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["unit-procedures", vars.unitId] });
+    },
   });
 
   return (
@@ -77,52 +88,59 @@ export default function ProceduresByUnitSection() {
         className="mt-2 rounded-xl border border-border p-4 space-y-4"
         style={{ background: "hsl(var(--surface))" }}
       >
-        {isLoading ? (
-          <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : rawProcedures.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-3">Nenhum procedimento encontrado.</p>
+        {units.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-3">Nenhuma unidade encontrada.</p>
         ) : (
-          grouped.map((group) => (
-            <div key={group.unitId} className="space-y-1">
-              <span className="text-xs font-bold text-foreground px-3">
-                {group.unitName}
-              </span>
+          unitQueries.map(({ unit, data: procedures = [], isLoading }) => (
+            <div key={unit.id} className="space-y-1">
+              <span className="text-xs font-bold text-foreground px-3">{unit.name}</span>
 
               {/* Header */}
               <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Nome
+                  Procedimento
                 </span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-20 text-right">
                   Duração
                 </span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">
-                  Status
+                  Ativo
                 </span>
               </div>
 
-              {group.procedures.map((proc) => {
-                const active = proc.is_active !== false && proc.status !== "inactive";
-                return (
-                  <div
-                    key={proc.id}
-                    className="grid grid-cols-[1fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-                    style={{ background: "hsl(var(--surface-elevated))" }}
-                  >
-                    <span className="text-sm font-medium text-foreground truncate">
-                      {proc.name ?? proc.slug ?? `#${proc.id}`}
-                    </span>
-                    <span className="text-xs text-muted-foreground w-20 text-right">
-                      {proc.duration ? `${proc.duration} min` : "—"}
-                    </span>
-                    <span
-                      className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}
+              {isLoading ? (
+                <p className="text-xs text-muted-foreground px-3">Carregando…</p>
+              ) : (procedures as UnitProcedure[]).length === 0 ? (
+                <p className="text-xs text-muted-foreground px-3">Nenhum procedimento nesta unidade.</p>
+              ) : (
+                (procedures as UnitProcedure[]).map((proc) => {
+                  const active = proc.enabled !== false && proc.is_active !== false;
+                  const duration = proc.duration_override ?? proc.duration;
+                  return (
+                    <div
+                      key={proc.id}
+                      className="grid grid-cols-[1fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                      style={{ background: "hsl(var(--surface-elevated))" }}
                     >
-                      {active ? "Ativo" : "Inativo"}
-                    </span>
-                  </div>
-                );
-              })}
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
+                      </span>
+                      <span className="text-xs text-muted-foreground w-20 text-right">
+                        {duration ? `${duration} min` : "—"}
+                      </span>
+                      <div className="w-16 flex justify-end">
+                        <Switch
+                          checked={active}
+                          onCheckedChange={(checked) =>
+                            toggleEnabled.mutate({ id: proc.id, enabled: checked, unitId: unit.id })
+                          }
+                          className="scale-75"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           ))
         )}
