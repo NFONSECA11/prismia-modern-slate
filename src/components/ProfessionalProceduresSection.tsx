@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
@@ -18,11 +19,12 @@ interface ProfessionalProcedure {
 }
 
 export default function ProfessionalProceduresSection() {
-  const { units } = useAuth();
+  const { units, user } = useAuth();
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["professional-procedures"],
     queryFn: async () => {
+      await fetchCsrf();
       const { data } = await api.get("/api/settings/professional-procedures/");
       console.log("[ProfProc] raw response:", JSON.stringify(data)?.slice(0, 500));
       if (Array.isArray(data)) return data;
@@ -36,6 +38,7 @@ export default function ProfessionalProceduresSection() {
       console.warn("[ProfProc] Unknown response structure:", data ? Object.keys(data) : "null");
       return [];
     },
+    enabled: !!user,
   });
 
   // Group by unit
