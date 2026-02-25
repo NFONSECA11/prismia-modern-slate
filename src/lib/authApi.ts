@@ -38,13 +38,15 @@ export async function fetchCsrf(): Promise<string> {
 export async function login(username: string, password: string): Promise<void> {
   await fetchCsrf();
   const { data } = await api.post("/api/auth/login/", { username, password });
-  // DRF returns { key: "..." } or { token: "..." }
-  const token = data?.token ?? data?.key ?? null;
+  const payload = data?.result ?? data;
+  // Accept DRF token payloads in flat or wrapped format
+  const token = payload?.token ?? payload?.key ?? payload?.auth_token ?? payload?.access ?? null;
+
   if (token) {
     setAuthToken(token);
     console.log("[Auth] Token stored successfully");
   } else {
-    console.warn("[Auth] No token in login response, falling back to session auth", data);
+    console.warn("[Auth] No token in login response, falling back to session auth", payload);
   }
 }
 
