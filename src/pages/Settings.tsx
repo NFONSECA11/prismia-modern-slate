@@ -33,16 +33,15 @@ export default function Settings() {
 
         <div className="grid gap-3">
           {[
-            { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
-            { label: "Conta", description: "Dados da empresa e informações gerais" },
+            { label: "Empresa", description: "Dados da empresa, logo e informações gerais" },
             { label: "Unidades", description: "Gerenciar unidades e locais de atendimento" },
-            { label: "Status do Agendamento", description: "Configurar status disponíveis para agendamentos" },
+            { label: "Modo de Atendimento", description: "Configurar modos e fluxos de atendimento" },
             { label: "Diagnóstico", description: "Verificar integrações e saúde do sistema" },
-            { label: "Equipe", description: "Gerenciar profissionais e membros da equipe" },
-            { label: "Serviços por Profissional", description: "Vincular serviços a cada profissional" },
+            { label: "Profissionais", description: "Gerenciar profissionais da equipe" },
+            { label: "Serviços & Mapeamentos", description: "Vincular serviços e configurar mapeamentos" },
             { label: "Agenda", description: "Configurar horários e disponibilidade" },
             { label: "Bloqueios", description: "Gerenciar bloqueios de horários e datas" },
-            { label: "Em breve", description: "Novas funcionalidades em desenvolvimento" },
+            { label: "Roadmap", description: "Próximas funcionalidades em desenvolvimento" },
           ].map((item) => (
             <div
               key={item.label}
