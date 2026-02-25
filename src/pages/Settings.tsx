@@ -52,14 +52,10 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>svg>&]:rotate-180" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4" style={{ background: "hsl(var(--surface))" }}>
             <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-              <span className="text-xs text-muted-foreground">Nome</span>
               <span className="text-sm font-medium text-foreground">{company?.name ?? "—"}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-              <span className="text-xs text-muted-foreground">ID</span>
-              <span className="text-sm font-medium text-foreground">{company?.id ?? "—"}</span>
+              <span className="text-xs text-muted-foreground">{company?.id ?? "—"}</span>
             </div>
           </CollapsibleContent>
         </Collapsible>
