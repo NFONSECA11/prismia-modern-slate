@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { getAuthToken } from "@/lib/api";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +66,7 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
       return data?.result ?? data;
     },
     retry: 1,
+    enabled: !!getAuthToken(),
   });
 
   if (isLoading) {
