@@ -15,6 +15,7 @@ import DiagnosticCard from "@/components/DiagnosticCard";
 import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSection";
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
+import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -332,7 +333,9 @@ export default function Settings() {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Itens futuros */}
+        {/* Bloqueios de Agenda */}
+        <ScheduleBlocksSection />
+
         {/* Procedimentos por Unidade */}
         <ProceduresByUnitSection />
 
