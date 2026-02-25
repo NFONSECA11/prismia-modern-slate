@@ -1,9 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface Specialty {
   id: number;
@@ -16,6 +21,9 @@ interface Specialty {
 
 export default function SpecialtiesSection() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["specialties"],
@@ -31,6 +39,53 @@ export default function SpecialtiesSection() {
       return [];
     },
     enabled: !!user,
+  });
+
+  const createSpecialty = useMutation({
+    mutationFn: async (payload: { name: string }) => {
+      await fetchCsrf();
+      const { data } = await api.post("/api/settings/specialties/", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["specialties"] });
+      setShowNew(false);
+      setNewName("");
+      toast.success("Especialidade criada com sucesso");
+    },
+    onError: () => toast.error("Erro ao criar especialidade"),
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
+      await fetchCsrf();
+      await api.patch(`/api/settings/specialties/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
+    },
+    onMutate: async ({ id, is_active }) => {
+      await queryClient.cancelQueries({ queryKey: ["specialties"] });
+      const prev = queryClient.getQueryData(["specialties"]);
+      queryClient.setQueryData(["specialties"], (old: any[]) =>
+        old?.map((s: any) => (s.id === id ? { ...s, is_active, status: is_active ? "active" : "inactive" } : s))
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx) queryClient.setQueryData(["specialties"], ctx.prev);
+      toast.error("Erro ao alterar status");
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["specialties"] }),
+  });
+
+  const deleteSpecialty = useMutation({
+    mutationFn: async (id: number) => {
+      await fetchCsrf();
+      await api.delete(`/api/settings/specialties/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["specialties"] });
+      toast.success("Especialidade removida");
+    },
+    onError: () => toast.error("Erro ao remover especialidade"),
   });
 
   return (
@@ -52,10 +107,11 @@ export default function SpecialtiesSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-12">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">Status</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-8"></span>
         </div>
 
         {isLoading ? (
@@ -68,21 +124,65 @@ export default function SpecialtiesSection() {
             return (
               <div
                 key={item.id}
-                className="grid grid-cols-[auto_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[auto_1fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs font-mono text-muted-foreground w-12">{item.id}</span>
                 <span className="text-sm font-medium text-foreground truncate">
                   {item.name ?? item.slug ?? `#${item.id}`}
                 </span>
-                <span
-                  className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}
+                <Switch
+                  checked={active}
+                  onCheckedChange={(checked) => toggleActive.mutate({ id: item.id, is_active: checked })}
+                  className="scale-75"
+                />
+                <button
+                  onClick={() => {
+                    if (confirm("Remover esta especialidade?")) deleteSpecialty.mutate(item.id);
+                  }}
+                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
                 >
-                  {active ? "Ativo" : "Inativo"}
-                </span>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })
+        )}
+
+        {/* Criar especialidade */}
+        {showNew ? (
+          <div className="flex items-center gap-2 pt-2 px-3">
+            <Input
+              placeholder="Nome da especialidade"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="h-8 text-sm flex-1"
+            />
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              disabled={!newName.trim() || createSpecialty.isPending}
+              onClick={() => createSpecialty.mutate({ name: newName.trim() })}
+            >
+              {createSpecialty.isPending ? "…" : "Salvar"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setShowNew(false); setNewName(""); }}
+            >
+              Cancelar
+            </Button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowNew(true)}
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-3"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Adicionar especialidade
+          </button>
         )}
       </CollapsibleContent>
     </Collapsible>
