@@ -17,11 +17,11 @@ interface UnitProcedure {
   enabled?: boolean;
   is_active?: boolean;
   duration_override?: number | null;
+  price_override_min?: string | number | null;
+  price_override_max?: string | number | null;
   price_override?: string | number | null;
   duration?: number | null;
   price?: string | number | null;
-  code?: string;
-  slug?: string;
 }
 
 export default function ProceduresByUnitSection() {
@@ -103,12 +103,14 @@ export default function ProceduresByUnitSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[3rem_1fr_1fr_auto_4.5rem_4.5rem_4.5rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Unidade</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Duração</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Preço Min</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Preço Max</span>
         </div>
 
         {anyLoading ? (
@@ -118,10 +120,13 @@ export default function ProceduresByUnitSection() {
         ) : (
           allProcedures.map((proc) => {
             const active = proc.enabled !== false && proc.is_active !== false;
+            const duration = proc.duration_override ?? proc.duration;
+            const priceMin = proc.price_override_min ?? proc.price_override ?? proc.price;
+            const priceMax = proc.price_override_max;
             return (
               <div
                 key={proc.id}
-                className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[3rem_1fr_1fr_auto_4.5rem_4.5rem_4.5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs font-mono text-muted-foreground">{proc.unitId}</span>
@@ -137,7 +142,13 @@ export default function ProceduresByUnitSection() {
                   className="scale-75"
                 />
                 <span className="text-xs font-mono text-muted-foreground text-right">
-                  {proc.code ?? proc.slug ?? proc.procedure_slug ?? "—"}
+                  {duration ? `${duration}m` : "—"}
+                </span>
+                <span className="text-xs font-mono text-muted-foreground text-right">
+                  {priceMin != null ? priceMin : "—"}
+                </span>
+                <span className="text-xs font-mono text-muted-foreground text-right">
+                  {priceMax != null ? priceMax : "—"}
                 </span>
               </div>
             );
