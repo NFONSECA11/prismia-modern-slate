@@ -18,6 +18,7 @@ export default function Settings() {
   const [showNewProfessional, setShowNewProfessional] = useState(false);
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
+  const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
@@ -40,11 +41,11 @@ export default function Settings() {
   });
 
   const createProfessional = useMutation({
-    mutationFn: async (payload: { name: string; code?: string }) => {
+    mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/booking/professionals/", {
         ...payload,
-        unit: activeUnit!.id,
+        unit: payload.unit ?? activeUnit!.id,
       });
       return data;
     },
@@ -53,6 +54,7 @@ export default function Settings() {
       setShowNewProfessional(false);
       setNewProfName("");
       setNewProfCode("");
+      setNewProfUnitId(activeUnit?.id ?? "");
       toast.success("Profissional criado com sucesso");
     },
     onError: () => {
@@ -228,6 +230,16 @@ export default function Settings() {
             {/* Criar profissional */}
             {showNewProfessional ? (
               <div className="flex items-center gap-2 pt-2">
+                <select
+                  value={newProfUnitId}
+                  onChange={(e) => setNewProfUnitId(e.target.value ? Number(e.target.value) : "")}
+                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground z-50"
+                >
+                  <option value="">Unidade</option>
+                  {units.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
                 <Input
                   placeholder="Nome"
                   value={newProfName}
@@ -243,8 +255,8 @@ export default function Settings() {
                 <Button
                   size="sm"
                   className="h-8 text-xs"
-                  disabled={!newProfName.trim() || createProfessional.isPending}
-                  onClick={() => createProfessional.mutate({ name: newProfName.trim(), ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
+                  disabled={!newProfName.trim() || !newProfUnitId || createProfessional.isPending}
+                  onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: newProfUnitId as number, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
                 >
                   {createProfessional.isPending ? "…" : "Salvar"}
                 </Button>
