@@ -34,7 +34,9 @@ export default function ScheduleBlocksSection() {
     queryKey: ["schedule-blocks"],
     queryFn: async () => {
       const { data } = await api.get("/api/settings/professional-time-offs/");
-      return Array.isArray(data) ? data : (data?.results ?? []);
+      const list = Array.isArray(data) ? data : (data?.results ?? []);
+      if (list.length > 0) console.log("[time-offs] sample keys:", Object.keys(list[0]), "sample:", list[0]);
+      return list;
     },
   });
 
@@ -105,6 +107,12 @@ export default function ScheduleBlocksSection() {
         ) : (
           blocks.map((b: any) => {
             const isActive = b.is_active !== false && b.status !== "inactive";
+            const startRaw = b.starts_at ?? b.start_date ?? b.start ?? b.start_datetime;
+            const endRaw = b.ends_at ?? b.end_date ?? b.end ?? b.end_datetime;
+            const fmtDate = (v: any) => {
+              if (!v) return "—";
+              try { return new Date(v).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); } catch { return String(v); }
+            };
             return (
               <div
                 key={b.id}
@@ -113,8 +121,8 @@ export default function ScheduleBlocksSection() {
               >
                 <span className="text-xs text-muted-foreground">{b.company_name ?? company?.name ?? "—"}</span>
                 <span className="text-sm font-medium text-foreground">{b.professional_name ?? getProfName(b.professional)}</span>
-                <span className="text-xs text-muted-foreground">{b.start ? new Date(b.start).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
-                <span className="text-xs text-muted-foreground">{b.end ? new Date(b.end).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</span>
+                <span className="text-xs text-muted-foreground">{fmtDate(startRaw)}</span>
+                <span className="text-xs text-muted-foreground">{fmtDate(endRaw)}</span>
                 <span className="text-xs text-muted-foreground truncate">{b.reason ?? "—"}</span>
                 <span className={`text-xs font-medium ${isActive ? "text-green-400" : "text-muted-foreground"}`}>
                   {isActive ? "Ativo" : "Inativo"}
