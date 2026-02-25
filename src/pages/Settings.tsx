@@ -8,6 +8,7 @@ import { fetchCsrf } from "@/lib/authApi";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -59,6 +60,19 @@ export default function Settings() {
     },
     onError: () => {
       toast.error("Erro ao criar profissional");
+    },
+  });
+
+  const toggleProfessional = useMutation({
+    mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
+      await fetchCsrf();
+      await api.patch(`/api/booking/professionals/${id}/`, { is_active });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+    },
+    onError: () => {
+      toast.error("Erro ao alterar status do profissional");
     },
   });
 
@@ -219,9 +233,11 @@ export default function Settings() {
                   <span className="text-xs font-mono text-muted-foreground">{prof.unit ?? "—"}</span>
                   <span className="text-xs text-muted-foreground">{prof.unit_name ?? units.find((u) => u.id === prof.unit)?.name ?? "—"}</span>
                   <span className="text-sm font-medium text-foreground">{prof.name}</span>
-                  <span className={`text-xs font-medium ${prof.is_active !== false && prof.status !== "inactive" ? "text-green-400" : "text-muted-foreground"}`}>
-                    {prof.is_active !== false && prof.status !== "inactive" ? "Ativo" : "Inativo"}
-                  </span>
+                  <Switch
+                    checked={prof.is_active !== false && prof.status !== "inactive"}
+                    onCheckedChange={(checked) => toggleProfessional.mutate({ id: prof.id, is_active: checked })}
+                    className="scale-75"
+                  />
                   <span className="text-xs font-mono text-muted-foreground text-right">{prof.code ?? prof.slug ?? "—"}</span>
                 </div>
               ))
