@@ -33,7 +33,8 @@ export default function Settings() {
 
         <div className="grid gap-3">
           {[
-            { label: "Empresa", description: "Dados da empresa, logo e informações gerais" },
+            { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
+            { label: "Empresa", description: "Dados da empresa e informações gerais" },
             { label: "Unidades", description: "Gerenciar unidades e locais de atendimento" },
             { label: "Modo de Atendimento", description: "Configurar modos e fluxos de atendimento" },
             { label: "Diagnóstico", description: "Verificar integrações e saúde do sistema" },
