@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 import DiagnosticCard from "@/components/DiagnosticCard";
-import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSection";
+// ProfessionalProceduresSection removed
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
@@ -297,7 +297,7 @@ export default function Settings() {
           </Collapsible>
 
           <ServicesByProfessionalSection />
-          <ProfessionalProceduresSection />
+          
         </section>
 
         {/* ─── 4) Agenda e bloqueios ─── */}
