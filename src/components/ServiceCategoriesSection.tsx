@@ -89,9 +89,12 @@ export default function ServiceCategoriesSection() {
   }, [procedures]);
 
   const createCategory = useMutation({
-    mutationFn: async (payload: { specialty: number; procedure: number }) => {
+    mutationFn: async (payload: { specialty: number; procedure: number; company?: number }) => {
       await fetchCsrf();
-      const { data } = await api.post("/api/settings/procedure-specialties/", payload);
+      const { data } = await api.post("/api/settings/procedure-specialties/", {
+        ...payload,
+        company: payload.company ?? company?.id,
+      });
       return data;
     },
     onSuccess: () => {
