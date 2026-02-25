@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import DiagnosticCard from "@/components/DiagnosticCard";
 import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSection";
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
+import SpecialtiesSection from "@/components/SpecialtiesSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -337,6 +338,9 @@ export default function Settings() {
 
         {/* Serviços & Mapeamentos */}
         <ProfessionalProceduresSection />
+
+        {/* Especialidades */}
+        <SpecialtiesSection />
 
         {/* Itens futuros */}
         <div className="grid gap-3">
