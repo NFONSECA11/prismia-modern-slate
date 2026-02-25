@@ -52,7 +52,11 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>svg>&]:rotate-180" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4" style={{ background: "hsl(var(--surface))" }}>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <div className="flex items-center justify-between px-3 py-1">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
+            </div>
             <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
               <span className="text-sm font-medium text-foreground">{company?.name ?? "—"}</span>
               <span className="text-xs text-muted-foreground">{company?.id ?? "—"}</span>
@@ -126,11 +130,15 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4" style={{ background: "hsl(var(--surface))" }}>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <div className="flex items-center justify-between px-3 py-1">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Modo</span>
+            </div>
             {!activeUnit ? (
-              <p className="text-xs text-muted-foreground">Nenhuma unidade ativa selecionada.</p>
+              <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
             ) : isLoadingSettings ? (
-              <p className="text-xs text-muted-foreground">Carregando…</p>
+              <p className="text-xs text-muted-foreground px-3">Carregando…</p>
             ) : (
               <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
                 <span className="text-sm font-medium text-foreground">{activeUnit.name}</span>
