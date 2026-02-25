@@ -41,7 +41,7 @@ export default function ScheduleBlocksSection() {
   });
 
   const createBlock = useMutation({
-    mutationFn: async (payload: { professional: number; start: string; end: string; reason?: string }) => {
+    mutationFn: async (payload: { professional: number; start: string; end: string; reason?: string; company?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/professional-time-offs/", payload);
       return data;
@@ -142,6 +142,12 @@ export default function ScheduleBlocksSection() {
         {/* Create */}
         {showNew ? (
           <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Input
+              placeholder="Empresa"
+              value={company?.name ?? ""}
+              disabled
+              className="h-8 text-sm w-28 opacity-70"
+            />
             <select
               value={newProfId}
               onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
@@ -180,6 +186,7 @@ export default function ScheduleBlocksSection() {
                   start: newStart,
                   end: newEnd,
                   ...(newReason.trim() ? { reason: newReason.trim() } : {}),
+                  ...(company?.id ? { company: company.id } : {}),
                 })
               }
             >
