@@ -31,10 +31,25 @@ export default function Settings() {
           Em breve você poderá gerenciar logo da empresa, profissionais, especialidades e mais.
         </p>
 
+        {/* Empresa - dados reais */}
+        <div className="rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
+          <h2 className="text-sm font-bold text-foreground">Empresa</h2>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+              <span className="text-xs text-muted-foreground">Nome</span>
+              <span className="text-sm font-medium text-foreground">{company?.name ?? "—"}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+              <span className="text-xs text-muted-foreground">ID</span>
+              <span className="text-sm font-medium text-foreground">{company?.id ?? "—"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Itens futuros */}
         <div className="grid gap-3">
           {[
             { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
-            { label: "Empresa", description: "Dados da empresa e informações gerais" },
             { label: "Unidades", description: "Gerenciar unidades e locais de atendimento" },
             { label: "Modo de Atendimento", description: "Configurar modos e fluxos de atendimento" },
             { label: "Diagnóstico", description: "Verificar integrações e saúde do sistema" },
