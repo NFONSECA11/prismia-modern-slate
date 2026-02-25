@@ -130,30 +130,24 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4" style={{ background: "hsl(var(--surface))" }}>
             {!activeUnit ? (
               <p className="text-xs text-muted-foreground">Nenhuma unidade ativa selecionada.</p>
             ) : isLoadingSettings ? (
               <p className="text-xs text-muted-foreground">Carregando…</p>
             ) : (
-              <>
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                  <span className="text-xs text-muted-foreground">Unidade</span>
-                  <span className="text-sm font-medium text-foreground">{activeUnit.name}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                  <span className="text-xs text-muted-foreground">Modo padrão</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {bookingSettings?.default_booking_mode
-                      ? {
-                          handoff_manual: "Handoff Manual",
-                          assisted_slots_dashboard: "Assistido (Dashboard)",
-                          auto_slots_bot: "Automático (Bot)",
-                        }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode
-                      : "—"}
-                  </span>
-                </div>
-              </>
+              <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+                <span className="text-sm font-medium text-foreground">{activeUnit.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {bookingSettings?.default_booking_mode
+                    ? {
+                        handoff_manual: "Handoff Manual",
+                        assisted_slots_dashboard: "Assistido (Dashboard)",
+                        auto_slots_bot: "Automático (Bot)",
+                      }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode
+                    : "—"}
+                </span>
+              </div>
             )}
           </CollapsibleContent>
         </Collapsible>
