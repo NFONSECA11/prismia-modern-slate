@@ -42,6 +42,7 @@ export default function Settings() {
             { label: "Serviços por Profissional", description: "Vincular serviços a cada profissional" },
             { label: "Agenda", description: "Configurar horários e disponibilidade" },
             { label: "Bloqueios", description: "Gerenciar bloqueios de horários e datas" },
+            { label: "Em breve", description: "Novas funcionalidades em desenvolvimento" },
           ].map((item) => (
             <div
               key={item.label}
