@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Settings() {
-  const { company } = useAuth();
+  const { company, units, activeUnit } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -53,11 +53,68 @@ export default function Settings() {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Unidades - dados reais (collapsible) */}
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <div className="text-left">
+              <span className="text-sm font-bold text-foreground">Unidades</span>
+              <p className="text-xs text-muted-foreground">Gerenciar unidades e locais de atendimento</p>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 space-y-2">
+            {units.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-4 py-3">Nenhuma unidade encontrada.</p>
+            ) : (
+              units.map((unit) => {
+                const u = unit as any;
+                const isActive = activeUnit?.id === unit.id;
+                return (
+                  <div
+                    key={unit.id}
+                    className="rounded-xl border border-border p-4 space-y-2"
+                    style={{ background: "hsl(var(--surface))" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">{unit.name}</span>
+                      {isActive && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                          Unidade ativa
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+                        <span className="text-xs text-muted-foreground">ID</span>
+                        <span className="text-xs font-mono text-foreground">{unit.id}</span>
+                      </div>
+                      {u.timezone && (
+                        <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+                          <span className="text-xs text-muted-foreground">Timezone</span>
+                          <span className="text-xs text-foreground">{u.timezone}</span>
+                        </div>
+                      )}
+                      {u.status !== undefined && (
+                        <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+                          <span className="text-xs text-muted-foreground">Status</span>
+                          <span className={`text-xs font-medium ${u.status === "active" || u.is_active ? "text-green-400" : "text-muted-foreground"}`}>
+                            {u.status === "active" || u.is_active ? "Ativa" : "Inativa"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Itens futuros */}
         <div className="grid gap-3">
           {[
             { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
-            { label: "Unidades", description: "Gerenciar unidades e locais de atendimento" },
+            
             { label: "Modo de Atendimento", description: "Configurar modos e fluxos de atendimento" },
             { label: "Diagnóstico", description: "Verificar integrações e saúde do sistema" },
             { label: "Profissionais", description: "Gerenciar profissionais da equipe" },
