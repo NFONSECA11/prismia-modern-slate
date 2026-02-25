@@ -16,6 +16,7 @@ import ProfessionalProceduresSection from "@/components/ProfessionalProceduresSe
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
+import ServicesByProfessionalSection from "@/components/ServicesByProfessionalSection";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -341,6 +342,9 @@ export default function Settings() {
 
         {/* Serviços & Mapeamentos */}
         <ProfessionalProceduresSection />
+
+        {/* Serviços por Profissional */}
+        <ServicesByProfessionalSection />
 
         {/* Especialidades */}
         <SpecialtiesSection />
