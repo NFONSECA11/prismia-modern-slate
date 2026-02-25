@@ -362,7 +362,6 @@ export default function Settings() {
           {[
             { label: "Logo da Empresa", description: "Upload e exibição do logo no dashboard" },
             { label: "Agenda", description: "Configurar horários e disponibilidade" },
-            { label: "Bloqueios", description: "Gerenciar bloqueios de horários e datas" },
             { label: "Roadmap", description: "Próximas funcionalidades em desenvolvimento" },
           ].map((item) => (
             <div
