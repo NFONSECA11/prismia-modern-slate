@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import api, { getAuthToken } from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,14 +35,14 @@ const STATUS_CONFIG = {
   error: { label: "ERROR", icon: XCircle, color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/30" },
 };
 
-const ISSUE_ROUTES: Record<string, { label: string; route: string | null }> = {
-  procedure_without_professional: { label: "Serviços & Mapeamentos", route: null },
-  professional_without_availability: { label: "Agenda", route: null },
-  unit_procedure_disabled: { label: "Config interna", route: null },
-  booking_settings_missing: { label: "Modo de Atendimento", route: "/settings" },
-  professional_missing: { label: "Profissionais", route: "/settings" },
-  all_professionals_inactive: { label: "Profissionais", route: "/settings" },
-  some_professionals_inactive: { label: "Profissionais", route: "/settings" },
+const ISSUE_ROUTES: Record<string, { label: string; sectionId: string | null }> = {
+  procedure_without_professional: { label: "Serviços & Mapeamentos", sectionId: null },
+  professional_without_availability: { label: "Agenda", sectionId: null },
+  unit_procedure_disabled: { label: "Config interna", sectionId: null },
+  booking_settings_missing: { label: "Modo de Atendimento", sectionId: "section-modo-atendimento" },
+  professional_missing: { label: "Profissionais", sectionId: "section-profissionais" },
+  all_professionals_inactive: { label: "Profissionais", sectionId: "section-profissionais" },
+  some_professionals_inactive: { label: "Profissionais", sectionId: "section-profissionais" },
 };
 
 const STAT_LABELS: Record<string, string> = {
@@ -103,7 +102,7 @@ function extractUnitHealth(payload: any, unitId: number): UnitHealth | null {
 
 export default function DiagnosticCard({ unit }: { unit: { id: number; name: string } }) {
   const [showAllIssues, setShowAllIssues] = useState(false);
-  const navigate = useNavigate();
+  
 
   const { user } = useAuth();
 
@@ -324,12 +323,22 @@ export default function DiagnosticCard({ unit }: { unit: { id: number; name: str
                   <span className="text-xs text-foreground truncate">{issue.message || issue.code}</span>
                 </div>
                 {route ? (
-                  route.route ? (
+                  route.sectionId ? (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-6 text-[10px] gap-1 shrink-0"
-                      onClick={() => navigate(route.route!)}
+                      onClick={() => {
+                        const el = document.getElementById(route.sectionId!);
+                        if (el) {
+                          el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          // Try to open the collapsible by clicking its trigger
+                          const trigger = el.querySelector("[data-state='closed']");
+                          if (trigger instanceof HTMLElement) trigger.click();
+                        } else {
+                          toast.info(`"${route.label}" — seção não encontrada`);
+                        }
+                      }}
                     >
                       Corrigir <ExternalLink className="h-2.5 w-2.5" />
                     </Button>
