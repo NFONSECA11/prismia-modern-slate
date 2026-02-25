@@ -1,0 +1,122 @@
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
+import { useAuth } from "@/contexts/AuthContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+
+interface ProfessionalProcedure {
+  id: number;
+  professional_name?: string;
+  professional?: number;
+  procedure_name?: string;
+  procedure_slug?: string;
+  procedure?: number;
+  unit?: number;
+  unit_name?: string;
+  is_active?: boolean;
+  status?: string;
+}
+
+export default function ServicesByProfessionalSection() {
+  const { user } = useAuth();
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["professional-procedures"],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/professional-procedures/");
+      if (Array.isArray(data)) return data;
+      if (data?.results && Array.isArray(data.results)) return data.results;
+      if (data?.data && Array.isArray(data.data)) return data.data;
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results && Array.isArray(inner.results)) return inner.results;
+      return [];
+    },
+    enabled: !!user,
+  });
+
+  // Group by professional
+  const grouped: Record<string, { profName: string; items: ProfessionalProcedure[] }> = {};
+  (items as ProfessionalProcedure[]).forEach((item) => {
+    const key = String(item.professional ?? "unknown");
+    if (!grouped[key]) {
+      grouped[key] = {
+        profName: item.professional_name ?? `Profissional #${item.professional ?? "—"}`,
+        items: [],
+      };
+    }
+    grouped[key].items.push(item);
+  });
+
+  return (
+    <Collapsible defaultOpen={false} id="section-servicos-profissional">
+      <CollapsibleTrigger
+        className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
+        style={{ background: "hsl(var(--surface))" }}
+      >
+        <div className="text-left">
+          <span className="text-sm font-bold text-foreground">Serviços por Profissional</span>
+          <p className="text-xs text-muted-foreground">
+            Procedimentos agrupados por profissional
+          </p>
+        </div>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+      </CollapsibleTrigger>
+      <CollapsibleContent
+        className="mt-2 rounded-xl border border-border p-4 space-y-4"
+        style={{ background: "hsl(var(--surface))" }}
+      >
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground px-3">Carregando…</p>
+        ) : items.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-3">Nenhum serviço encontrado.</p>
+        ) : (
+          Object.entries(grouped).map(([profId, group]) => (
+            <div key={profId} className="space-y-1">
+              <span className="text-xs font-bold text-foreground px-3">
+                {group.profName}
+              </span>
+
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 px-3 py-1 items-center">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Procedimento
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Unidade
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">
+                  Status
+                </span>
+              </div>
+
+              {group.items.map((item) => {
+                const active = item.is_active !== false && item.status !== "inactive";
+                return (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                    style={{ background: "hsl(var(--surface-elevated))" }}
+                  >
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {item.procedure_name ?? item.procedure_slug ?? `#${item.procedure ?? "—"}`}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {item.unit_name ?? (item.unit ? `Unidade #${item.unit}` : "—")}
+                    </span>
+                    <span
+                      className={`text-xs font-medium w-16 text-right ${active ? "text-green-400" : "text-muted-foreground"}`}
+                    >
+                      {active ? "Ativo" : "Inativo"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
