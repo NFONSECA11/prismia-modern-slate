@@ -3,20 +3,17 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 
-interface ServiceCategory {
+interface ProcedureSpecialty {
   id: number;
   name?: string;
   slug?: string;
   code?: string;
-  is_active?: boolean;
-  status?: string;
   description?: string;
   company?: number;
   company_name?: string;
@@ -30,10 +27,10 @@ export default function ServiceCategoriesSection() {
   const [newCode, setNewCode] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["service-categories"],
+    queryKey: ["procedure-specialties"],
     queryFn: async () => {
       await fetchCsrf();
-      const { data } = await api.get("/api/settings/service-categories/");
+      const { data } = await api.get("/api/settings/procedure-specialties/");
       if (Array.isArray(data)) return data;
       if (data?.results) return data.results;
       if (data?.data) return data.data;
@@ -48,11 +45,11 @@ export default function ServiceCategoriesSection() {
   const createCategory = useMutation({
     mutationFn: async (payload: { name: string; company?: number; code?: string }) => {
       await fetchCsrf();
-      const { data } = await api.post("/api/settings/service-categories/", payload);
+      const { data } = await api.post("/api/settings/procedure-specialties/", payload);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["service-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["procedure-specialties"] });
       setShowNew(false);
       setNewName("");
       setNewCode("");
@@ -61,24 +58,16 @@ export default function ServiceCategoriesSection() {
     onError: () => toast.error("Erro ao criar categoria"),
   });
 
-  const toggleActive = useMutation({
-    mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
+  const deleteCategory = useMutation({
+    mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.patch(`/api/settings/service-categories/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
+      await api.delete(`/api/settings/procedure-specialties/${id}/`);
     },
-    onMutate: async ({ id, is_active }) => {
-      await queryClient.cancelQueries({ queryKey: ["service-categories"] });
-      const prev = queryClient.getQueryData(["service-categories"]);
-      queryClient.setQueryData(["service-categories"], (old: any[]) =>
-        old?.map((s: any) => (s.id === id ? { ...s, is_active, status: is_active ? "active" : "inactive" } : s))
-      );
-      return { prev };
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["procedure-specialties"] });
+      toast.success("Categoria removida com sucesso");
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx) queryClient.setQueryData(["service-categories"], ctx.prev);
-      toast.error("Erro ao alterar status");
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["service-categories"] }),
+    onError: () => toast.error("Erro ao remover categoria"),
   });
 
   return (
@@ -105,40 +94,39 @@ export default function ServiceCategoriesSection() {
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Ações</span>
         </div>
 
         {isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : (items as ServiceCategory[]).length === 0 ? (
+        ) : (items as ProcedureSpecialty[]).length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhuma categoria encontrada.</p>
         ) : (
-          (items as ServiceCategory[]).map((item) => {
-            const active = item.is_active !== false && item.status !== "inactive";
-            return (
-              <div
-                key={item.id}
-                className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-                style={{ background: "hsl(var(--surface-elevated))" }}
+          (items as ProcedureSpecialty[]).map((item) => (
+            <div
+              key={item.id}
+              className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              style={{ background: "hsl(var(--surface-elevated))" }}
+            >
+              <span className="text-xs text-muted-foreground truncate">
+                {item.company_name ?? company?.name ?? "—"}
+              </span>
+              <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
+              <span className="text-sm font-medium text-foreground truncate">
+                {item.name ?? item.slug ?? `#${item.id}`}
+              </span>
+              <span className="text-xs font-mono text-muted-foreground">
+                {item.code ?? item.slug ?? "—"}
+              </span>
+              <button
+                onClick={() => deleteCategory.mutate(item.id)}
+                className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
+                title="Remover categoria"
               >
-                <span className="text-xs text-muted-foreground truncate">
-                  {item.company_name ?? company?.name ?? "—"}
-                </span>
-                <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
-                <span className="text-sm font-medium text-foreground truncate">
-                  {item.name ?? item.slug ?? `#${item.id}`}
-                </span>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {item.code ?? item.slug ?? "—"}
-                </span>
-                <Switch
-                  checked={active}
-                  onCheckedChange={(checked) => toggleActive.mutate({ id: item.id, is_active: checked })}
-                  className="scale-75"
-                />
-              </div>
-            );
-          })
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))
         )}
 
         {/* Criar categoria */}
