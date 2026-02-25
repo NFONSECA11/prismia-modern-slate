@@ -28,11 +28,37 @@ export default function ProfessionalAvailabilitySection() {
 
   const [showNew, setShowNew] = useState(false);
   const [newProfId, setNewProfId] = useState<number | "">("");
-  const [newDay, setNewDay] = useState("");
-  const [newStart, setNewStart] = useState("");
-  const [newEnd, setNewEnd] = useState("");
   const [newSlot, setNewSlot] = useState("60");
   const [newBuffer, setNewBuffer] = useState("0");
+  const [weeklyEntries, setWeeklyEntries] = useState<{ day: string; start: string; end: string }[]>([
+    { day: "", start: "", end: "" },
+  ]);
+
+  const addWeeklyEntry = () => setWeeklyEntries((prev) => [...prev, { day: "", start: "", end: "" }]);
+  const removeWeeklyEntry = (idx: number) => setWeeklyEntries((prev) => prev.filter((_, i) => i !== idx));
+  const updateWeeklyEntry = (idx: number, field: "day" | "start" | "end", value: string) =>
+    setWeeklyEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, [field]: value } : e)));
+
+  const resetForm = () => {
+    setShowNew(false);
+    setNewProfId("");
+    setNewSlot("60");
+    setNewBuffer("0");
+    setWeeklyEntries([{ day: "", start: "", end: "" }]);
+  };
+
+  const buildWeekly = () => {
+    const weekly: Record<string, { start: string; end: string }[]> = {};
+    for (const e of weeklyEntries) {
+      if (e.day && e.start && e.end) {
+        if (!weekly[e.day]) weekly[e.day] = [];
+        weekly[e.day].push({ start: e.start, end: e.end });
+      }
+    }
+    return weekly;
+  };
+
+  const canSave = newProfId && weeklyEntries.some((e) => e.day && e.start && e.end);
 
   const { data: allProfessionals = [] } = useQuery({
     queryKey: ["professionals-all-units", units.map((u) => u.id).join(",")],
@@ -67,13 +93,7 @@ export default function ProfessionalAvailabilitySection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professional-availabilities"] });
-      setShowNew(false);
-      setNewProfId("");
-      setNewDay("");
-      setNewStart("");
-      setNewEnd("");
-      setNewSlot("60");
-      setNewBuffer("0");
+      resetForm();
       toast.success("Disponibilidade criada com sucesso");
     },
     onError: () => toast.error("Erro ao criar disponibilidade"),
@@ -202,55 +222,76 @@ export default function ProfessionalAvailabilitySection() {
 
         {/* Create */}
         {showNew ? (
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <select
-              value={newProfId}
-              onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+          <div className="space-y-2 pt-2 rounded-lg border border-border p-3" style={{ background: "hsl(var(--surface-elevated))" }}>
+            {/* Top row: profissional, slot, buffer */}
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={newProfId}
+                onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
+                className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+              >
+                <option value="">Profissional</option>
+                {allProfessionals.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <Input type="number" value={newSlot} onChange={(e) => setNewSlot(e.target.value)} className="h-8 text-sm w-20" placeholder="Slot min" />
+              <Input type="number" value={newBuffer} onChange={(e) => setNewBuffer(e.target.value)} className="h-8 text-sm w-20" placeholder="Buffer" />
+            </div>
+
+            {/* Day/time entries */}
+            {weeklyEntries.map((entry, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <select
+                  value={entry.day}
+                  onChange={(e) => updateWeeklyEntry(idx, "day", e.target.value)}
+                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                >
+                  <option value="">Dia</option>
+                  {DAY_KEYS.map((d) => (
+                    <option key={d.key} value={d.key}>{d.label}</option>
+                  ))}
+                </select>
+                <Input type="time" value={entry.start} onChange={(e) => updateWeeklyEntry(idx, "start", e.target.value)} className="h-8 text-sm w-28" />
+                <Input type="time" value={entry.end} onChange={(e) => updateWeeklyEntry(idx, "end", e.target.value)} className="h-8 text-sm w-28" />
+                {weeklyEntries.length > 1 && (
+                  <button onClick={() => removeWeeklyEntry(idx)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <button
+              onClick={addWeeklyEntry}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
             >
-              <option value="">Profissional</option>
-              {allProfessionals.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <select
-              value={newDay}
-              onChange={(e) => setNewDay(e.target.value)}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
-            >
-              <option value="">Dia</option>
-              {DAY_KEYS.map((d) => (
-                <option key={d.key} value={d.key}>{d.label}</option>
-              ))}
-            </select>
-            <Input type="time" value={newStart} onChange={(e) => setNewStart(e.target.value)} className="h-8 text-sm w-28" placeholder="Início" />
-            <Input type="time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} className="h-8 text-sm w-28" placeholder="Fim" />
-            <Input type="number" value={newSlot} onChange={(e) => setNewSlot(e.target.value)} className="h-8 text-sm w-20" placeholder="Slot min" />
-            <Input type="number" value={newBuffer} onChange={(e) => setNewBuffer(e.target.value)} className="h-8 text-sm w-20" placeholder="Buffer" />
-            <Button
-              size="sm"
-              className="h-8 text-xs"
-              disabled={!newProfId || !newDay || !newStart || !newEnd || createAvailability.isPending}
-              onClick={() =>
-                createAvailability.mutate({
-                  professional: newProfId as number,
-                  company: company?.id,
-                  slot_minutes: parseInt(newSlot) || 60,
-                  buffer_minutes: parseInt(newBuffer) || 0,
-                  weekly: { [newDay]: [{ start: newStart, end: newEnd }] },
-                })
-              }
-            >
-              {createAvailability.isPending ? "…" : "Salvar"}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewProfId(""); setNewDay(""); setNewStart(""); setNewEnd(""); setNewSlot("60"); setNewBuffer("0"); }}
-            >
-              Cancelar
-            </Button>
+              <Plus className="h-3 w-3" />
+              Adicionar dia/horário
+            </button>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                disabled={!canSave || createAvailability.isPending}
+                onClick={() =>
+                  createAvailability.mutate({
+                    professional: newProfId as number,
+                    company: company?.id,
+                    slot_minutes: parseInt(newSlot) || 60,
+                    buffer_minutes: parseInt(newBuffer) || 0,
+                    weekly: buildWeekly(),
+                  })
+                }
+              >
+                {createAvailability.isPending ? "…" : "Salvar"}
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={resetForm}>
+                Cancelar
+              </Button>
+            </div>
           </div>
         ) : (
           <button
