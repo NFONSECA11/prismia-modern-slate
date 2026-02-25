@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -28,7 +28,7 @@ export default function ServicesByProfessionalSection() {
 
   const [showNew, setShowNew] = useState(false);
   const [newProfId, setNewProfId] = useState<number | "">("");
-  const [newProcedure, setNewProcedure] = useState("");
+  const [newProcedureId, setNewProcedureId] = useState<number | "">("");
 
   const { data: professionalsData = [] } = useQuery({
     queryKey: ["professionals", activeUnit?.id],
@@ -37,6 +37,22 @@ export default function ServicesByProfessionalSection() {
         params: { unit: activeUnit!.id },
       });
       return Array.isArray(data) ? data : (data?.results ?? []);
+    },
+    enabled: !!activeUnit?.id,
+  });
+
+  const { data: unitProcedures = [] } = useQuery({
+    queryKey: ["unit-procedures", activeUnit?.id],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: activeUnit!.id } });
+      if (Array.isArray(data)) return data;
+      if (data?.results) return data.results;
+      if (data?.data) return data.data;
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results) return inner.results;
+      return [];
     },
     enabled: !!activeUnit?.id,
   });
@@ -58,7 +74,7 @@ export default function ServicesByProfessionalSection() {
   });
 
   const createItem = useMutation({
-    mutationFn: async (payload: { professional: number; procedure: string }) => {
+    mutationFn: async (payload: { professional: number; procedure: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/professional-procedures/", payload);
       return data;
@@ -67,7 +83,7 @@ export default function ServicesByProfessionalSection() {
       queryClient.invalidateQueries({ queryKey: ["services-by-professional"] });
       setShowNew(false);
       setNewProfId("");
-      setNewProcedure("");
+      setNewProcedureId("");
       toast.success("Serviço vinculado com sucesso");
     },
     onError: (err: any) => {
@@ -164,20 +180,26 @@ export default function ServicesByProfessionalSection() {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <Input
-              placeholder="Procedimento (nome ou ID)"
-              value={newProcedure}
-              onChange={(e) => setNewProcedure(e.target.value)}
-              className="h-8 text-sm flex-1 min-w-[140px]"
-            />
+            <select
+              value={newProcedureId}
+              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[140px]"
+            >
+              <option value="">Procedimento</option>
+              {(unitProcedures as any[]).map((p: any) => (
+                <option key={p.id} value={p.procedure ?? p.id}>
+                  {p.procedure_name ?? p.procedure_slug ?? `#${p.procedure ?? p.id}`}
+                </option>
+              ))}
+            </select>
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newProfId || !newProcedure.trim() || createItem.isPending}
+              disabled={!newProfId || !newProcedureId || createItem.isPending}
               onClick={() =>
                 createItem.mutate({
                   professional: newProfId as number,
-                  procedure: newProcedure.trim(),
+                  procedure: newProcedureId as number,
                 })
               }
             >
@@ -187,7 +209,7 @@ export default function ServicesByProfessionalSection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewProfId(""); setNewProcedure(""); }}
+              onClick={() => { setShowNew(false); setNewProfId(""); setNewProcedureId(""); }}
             >
               Cancelar
             </Button>
