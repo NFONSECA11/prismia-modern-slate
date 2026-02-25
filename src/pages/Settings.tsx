@@ -194,13 +194,11 @@ export default function Settings() {
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
-            <div className="flex items-center justify-between px-3 py-1">
+            <div className="grid grid-cols-[1fr_1fr_auto_5rem] gap-2 px-3 py-1 items-center">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
-              <div className="flex items-center gap-6">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">Código</span>
-              </div>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
             </div>
             {!activeUnit ? (
               <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
@@ -212,17 +210,15 @@ export default function Settings() {
               professionals.map((prof: any) => (
                 <div
                   key={prof.id}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 border border-border"
+                  className="grid grid-cols-[1fr_1fr_auto_5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                   style={{ background: "hsl(var(--surface-elevated))" }}
                 >
+                  <span className="text-xs text-muted-foreground">{prof.unit_name ?? prof.unit ?? "—"}</span>
                   <span className="text-sm font-medium text-foreground">{prof.name}</span>
-                  <div className="flex items-center gap-6">
-                    <span className="text-xs text-muted-foreground">{prof.unit_name ?? prof.unit ?? "—"}</span>
-                    <span className={`text-xs font-medium ${prof.is_active !== false && prof.status !== "inactive" ? "text-green-400" : "text-muted-foreground"}`}>
-                      {prof.is_active !== false && prof.status !== "inactive" ? "Ativo" : "Inativo"}
-                    </span>
-                    <span className="text-xs font-mono text-muted-foreground w-16 text-right">{prof.code ?? prof.slug ?? "—"}</span>
-                  </div>
+                  <span className={`text-xs font-medium ${prof.is_active !== false && prof.status !== "inactive" ? "text-green-400" : "text-muted-foreground"}`}>
+                    {prof.is_active !== false && prof.status !== "inactive" ? "Ativo" : "Inativo"}
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground text-right">{prof.code ?? prof.slug ?? "—"}</span>
                 </div>
               ))
             )}
