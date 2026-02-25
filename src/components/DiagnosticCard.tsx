@@ -61,6 +61,12 @@ function resolveClientToken(): string | null {
     if (token) return token;
   }
 
+  for (const key of AUTH_TOKEN_KEYS) {
+    const cookieMatch = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]+)`));
+    const cookieToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+    if (cookieToken) return cookieToken;
+  }
+
   return null;
 }
 
