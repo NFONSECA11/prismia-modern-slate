@@ -11,33 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-function DiagnosticRow({ unit }: { unit: { id: number; name: string } }) {
-  const { data: health, isLoading } = useQuery({
-    queryKey: ["health", unit.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/settings/health/`, { params: { unit: unit.id } });
-      return data?.result ?? data;
-    },
-  });
-
-  const isHealthy = health?.status === "ok" || health?.status === "healthy" || health?.healthy === true;
-  const statusLabel = isLoading ? "Verificando…" : isHealthy ? "Ativa" : health?.status ?? "Inativa";
-
-  return (
-    <div
-      className="flex items-center justify-between rounded-lg px-3 py-2 border border-border"
-      style={{ background: "hsl(var(--surface-elevated))" }}
-    >
-      <span className="text-sm font-medium text-foreground">{unit.name}</span>
-      <div className="flex items-center gap-6">
-        <span className={`text-xs font-medium ${isLoading ? "text-muted-foreground" : isHealthy ? "text-green-400" : "text-red-400"}`}>
-          {statusLabel}
-        </span>
-        <span className="text-xs font-mono text-muted-foreground w-16 text-right">{unit.id}</span>
-      </div>
-    </div>
-  );
-}
+import DiagnosticCard from "@/components/DiagnosticCard";
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
@@ -344,19 +318,12 @@ export default function Settings() {
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
-            <div className="flex items-center justify-between px-3 py-1">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
-              <div className="flex items-center gap-6">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground w-16 text-right">ID</span>
-              </div>
-            </div>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
             {units.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3">Nenhuma unidade encontrada.</p>
             ) : (
               units.map((unit) => (
-                <DiagnosticRow key={unit.id} unit={unit} />
+                <DiagnosticCard key={unit.id} unit={unit} />
               ))
             )}
           </CollapsibleContent>
