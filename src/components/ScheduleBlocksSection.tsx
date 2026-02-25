@@ -41,16 +41,10 @@ export default function ScheduleBlocksSection() {
   });
 
   const createBlock = useMutation({
-    mutationFn: async (payload: { professional: number; start: string; end: string; reason?: string; company?: number }) => {
+    mutationFn: async (payload: { professional: number; starts_at: string; ends_at: string; reason?: string; company?: number }) => {
       await fetchCsrf();
-      console.log("[time-offs] POST payload:", JSON.stringify(payload));
-      try {
-        const { data } = await api.post("/api/settings/professional-time-offs/", payload);
-        return data;
-      } catch (err: any) {
-        console.error("[time-offs] POST error response:", JSON.stringify(err?.response?.data));
-        throw err;
-      }
+      const { data } = await api.post("/api/settings/professional-time-offs/", payload);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule-blocks"] });
@@ -189,8 +183,8 @@ export default function ScheduleBlocksSection() {
               onClick={() =>
                 createBlock.mutate({
                   professional: newProfId as number,
-                  start: newStart,
-                  end: newEnd,
+                  starts_at: newStart,
+                  ends_at: newEnd,
                   ...(newReason.trim() ? { reason: newReason.trim() } : {}),
                   ...(company?.id ? { company: company.id } : {}),
                 })
