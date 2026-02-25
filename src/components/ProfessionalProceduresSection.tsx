@@ -24,7 +24,17 @@ export default function ProfessionalProceduresSection() {
     queryKey: ["professional-procedures"],
     queryFn: async () => {
       const { data } = await api.get("/api/settings/professional-procedures/");
-      return Array.isArray(data) ? data : (data?.results ?? []);
+      console.log("[ProfProc] raw response:", JSON.stringify(data)?.slice(0, 500));
+      if (Array.isArray(data)) return data;
+      if (data?.results && Array.isArray(data.results)) return data.results;
+      if (data?.data && Array.isArray(data.data)) return data.data;
+      if (data?.items && Array.isArray(data.items)) return data.items;
+      // If wrapped in { result: ... }
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results && Array.isArray(inner.results)) return inner.results;
+      console.warn("[ProfProc] Unknown response structure:", data ? Object.keys(data) : "null");
+      return [];
     },
   });
 
