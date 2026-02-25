@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Settings() {
   const { company } = useAuth();
@@ -31,10 +32,16 @@ export default function Settings() {
           Em breve você poderá gerenciar logo da empresa, profissionais, especialidades e mais.
         </p>
 
-        {/* Empresa - dados reais */}
-        <div className="rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
-          <h2 className="text-sm font-bold text-foreground">Empresa</h2>
-          <div className="grid gap-2">
+        {/* Empresa - dados reais (collapsible) */}
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <div className="text-left">
+              <span className="text-sm font-bold text-foreground">Empresa</span>
+              <p className="text-xs text-muted-foreground">Dados da empresa e informações gerais</p>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>svg>&]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
             <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
               <span className="text-xs text-muted-foreground">Nome</span>
               <span className="text-sm font-medium text-foreground">{company?.name ?? "—"}</span>
@@ -43,8 +50,8 @@ export default function Settings() {
               <span className="text-xs text-muted-foreground">ID</span>
               <span className="text-sm font-medium text-foreground">{company?.id ?? "—"}</span>
             </div>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Itens futuros */}
         <div className="grid gap-3">
