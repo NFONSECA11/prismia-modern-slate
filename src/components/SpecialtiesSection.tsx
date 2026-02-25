@@ -28,6 +28,7 @@ export default function SpecialtiesSection() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCompanyId, setNewCompanyId] = useState<number | "">(company?.id ?? "");
+  const [newCode, setNewCode] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["specialties"],
@@ -46,7 +47,7 @@ export default function SpecialtiesSection() {
   });
 
   const createSpecialty = useMutation({
-    mutationFn: async (payload: { name: string; company?: number }) => {
+    mutationFn: async (payload: { name: string; company?: number; code?: string }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/specialties/", payload);
       return data;
@@ -159,11 +160,17 @@ export default function SpecialtiesSection() {
               onChange={(e) => setNewName(e.target.value)}
               className="h-8 text-sm flex-1"
             />
+            <Input
+              placeholder="Código"
+              value={newCode}
+              onChange={(e) => setNewCode(e.target.value)}
+              className="h-8 text-sm w-28"
+            />
             <Button
               size="sm"
               className="h-8 text-xs"
               disabled={!newName.trim() || createSpecialty.isPending}
-              onClick={() => createSpecialty.mutate({ name: newName.trim(), ...(company?.id ? { company: company.id } : {}) })}
+              onClick={() => createSpecialty.mutate({ name: newName.trim(), ...(company?.id ? { company: company.id } : {}), ...(newCode.trim() ? { code: newCode.trim() } : {}) })}
             >
               {createSpecialty.isPending ? "…" : "Salvar"}
             </Button>
@@ -171,7 +178,7 @@ export default function SpecialtiesSection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewName(""); }}
+              onClick={() => { setShowNew(false); setNewName(""); setNewCode(""); }}
             >
               Cancelar
             </Button>
