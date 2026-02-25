@@ -61,6 +61,20 @@ export async function fetchMe(): Promise<MeResponse> {
   const { data } = await api.get("/api/me/");
   // Handle wrapped response: { ok, result: { user, role, ... } }
   const payload = data?.result ?? data;
+
+  const token =
+    payload?.token ??
+    payload?.key ??
+    payload?.auth_token ??
+    payload?.access ??
+    payload?.user?.token ??
+    payload?.user?.auth_token ??
+    null;
+
+  if (token) {
+    setAuthToken(token);
+  }
+
   return payload as MeResponse;
 }
 
