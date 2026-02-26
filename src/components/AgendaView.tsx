@@ -206,10 +206,10 @@ function EmptyCell({
   if (!available) {
     return (
       <div
-        className={`absolute inset-0 flex items-center justify-center ${className}`}
-        style={{ background: "hsl(var(--muted) / 0.15)" }}
+        className={`absolute inset-0 z-0 flex items-center justify-center ${className}`}
+        style={{ background: "rgba(0,0,0,0.04)" }}
       >
-        <Ban className="h-3 w-3 text-muted-foreground/20" />
+        <Ban className="h-3 w-3" style={{ color: "#ccc" }} />
       </div>
     );
   }
