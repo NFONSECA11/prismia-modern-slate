@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://inherited-telecom-films-steering.trycloudflare.com",
+  baseURL: "https://clay-league-dawn-rest.trycloudflare.com",
   timeout: 10_000,
   withCredentials: true,
   headers: {
