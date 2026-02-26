@@ -255,12 +255,12 @@ function DayView({
 
   return (
     <div className="overflow-x-auto">
-      <div style={{ minWidth: `${Math.max(professionals.length * 200, 400) + 60}px` }}>
+      <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
         <div className="flex border-b border-border surface-elevated sticky top-0 z-10">
           <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
           {professionals.map((prof) => (
-            <div key={prof.id} className="flex-1 border-r border-border/40 last:border-r-0 px-3 py-2.5">
+            <div key={prof.id} className="w-[200px] border-r border-border/40 last:border-r-0 px-3 py-2.5">
               <p className="text-xs font-semibold text-foreground truncate">{prof.name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{prof.specialty}</p>
             </div>
@@ -288,7 +288,7 @@ function DayView({
               {professionals.map((prof) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
-                  <div key={prof.id} className="flex-1 border-r border-border/20 last:border-r-0 relative">
+                  <div key={prof.id} className="w-[200px] border-r border-border/20 last:border-r-0 relative">
                     <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
