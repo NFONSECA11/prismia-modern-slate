@@ -216,12 +216,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1800);
     },
     onError: (err: any) => {
+      const status = err?.response?.status;
       const data = err?.response?.data;
       const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
-      const isDuplicate = raw?.toString().includes("duplicate key") || raw?.toString().includes("uniq_confirmed") || raw?.toString().includes("already exists");
+      const rawStr = raw?.toString() || "";
+      const isDuplicate = status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists");
       const msg = isDuplicate
         ? "Esse horário já está confirmado para este profissional. Escolha outro horário."
-        : (typeof data === "string" ? data : (data?.detail || data?.error || "Erro ao confirmar."));
+        : (typeof data === "string" && data.length > 200) || rawStr.includes("<!") 
+          ? "Erro ao processar a ação. Tente novamente."
+          : (data?.detail || data?.error || "Erro ao confirmar.");
       toast.error(msg);
       setActionDone(null);
     },
@@ -388,11 +392,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
     const err = errorMutation.error as any;
     const data = err?.response?.data;
-    // data pode ser string direta ou objeto
+    const status = err?.response?.status;
     const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
+    const rawStr = raw?.toString() || "";
+    // Detecta conflito de horário duplicado
+    const isDuplicate = status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists");
+    if (isDuplicate) return "Esse horário já está confirmado para este profissional. Escolha outro horário.";
     if (raw === "missing_slots")
       return "Não há disponibilidades para esse profissional e esse procedimento.";
-    if (typeof data === "string") return data;
+    // Nunca mostrar HTML bruto do Django ou strings longas
+    if ((typeof data === "string" && data.length > 200) || rawStr.includes("<!"))
+      return "Erro ao processar a ação. Tente novamente.";
     if (data?.detail) return data.detail;
     if (data?.error) return data.error;
     if (data?.code) return `Erro: ${data.code}`;
