@@ -70,15 +70,28 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
     booking.chosen_slot?.start_at,
     booking.vars_snapshot?.chosen_slot?.start_at,
   ];
+
   for (const raw of candidates) {
     if (!raw) continue;
-    try {
-      const d = parseISO(raw);
-      if (!isNaN(d.getTime())) {
-        return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+
+    const normalized = raw.includes(" ") && !raw.includes("T") ? raw.replace(" ", "T") : raw;
+    for (const value of [normalized, raw]) {
+      try {
+        const d = parseISO(value);
+        if (!isNaN(d.getTime())) {
+          return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+        }
+      } catch {
+        // continue to native parsing fallback
       }
-    } catch { /* try next */ }
+
+      const native = new Date(value);
+      if (!isNaN(native.getTime())) {
+        return { date: format(native, "yyyy-MM-dd"), hour: native.getHours(), minute: native.getMinutes() };
+      }
+    }
   }
+
   return null;
 }
 

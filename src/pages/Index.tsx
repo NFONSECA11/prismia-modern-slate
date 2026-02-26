@@ -90,6 +90,9 @@ export default function Index() {
     return matchStatus && matchSearch;
   });
 
+  // Agenda must always include all confirmed bookings (using scheduled_at/chosen slot in AgendaView)
+  const agendaBookings = bookings.filter((b) => b.status === "confirmed");
+
   const stats = {
     total: bookings.length,
     handoff: bookings.filter((b) => b.status === "handoff").length,
@@ -352,7 +355,7 @@ export default function Index() {
             />
           ) : (
             <AgendaView
-              bookings={filteredBookings}
+              bookings={agendaBookings}
               professionals={professionals}
               onSelectBooking={setSelectedBooking}
               onSaveBooking={handleSaveBooking}
