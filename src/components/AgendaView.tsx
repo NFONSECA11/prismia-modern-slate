@@ -7,12 +7,15 @@ import {
   startOfWeek,
   isToday,
   parseISO,
+  getDay,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban } from "lucide-react";
 
 interface AgendaViewProps {
   bookings: BookingRequest[];
@@ -25,6 +28,40 @@ type AgendaMode = "day" | "week";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00–19:00
 const CELL_HEIGHT = 56; // px per hour
+
+// Day-of-week index (JS getDay: 0=Sun) → availability key
+const DOW_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+interface AvailabilitySlot { start: string; end: string; }
+interface ProfAvailability {
+  professional: number;
+  weekly: Record<string, AvailabilitySlot[]>;
+  is_active: boolean;
+}
+
+/** Check if a professional is available at a given date+hour */
+function isProfAvailable(
+  availMap: Record<number, ProfAvailability>,
+  profId: number,
+  date: Date,
+  hour: number,
+): boolean {
+  const avail = availMap[profId];
+  if (!avail || !avail.is_active) return false; // no availability configured → unavailable
+  const dayKey = DOW_TO_KEY[getDay(date)];
+  const slots = avail.weekly?.[dayKey];
+  if (!slots || slots.length === 0) return false;
+  // Check if the hour falls within any slot
+  for (const slot of slots) {
+    const [startH, startM] = slot.start.split(":").map(Number);
+    const [endH, endM] = slot.end.split(":").map(Number);
+    const startMinutes = startH * 60 + (startM || 0);
+    const endMinutes = endH * 60 + (endM || 0);
+    const hourMinutes = hour * 60;
+    if (hourMinutes >= startMinutes && hourMinutes < endMinutes) return true;
+  }
+  return false;
+}
 
 function getSlotDateTime(booking: BookingRequest): { date: string; hour: number; minute: number } | null {
   const slot = booking.vars_snapshot?.chosen_slot;
@@ -107,12 +144,24 @@ function BookingCard({
 // ── Clickable empty cell ───────────────────────────────────────────────────
 function EmptyCell({
   onClick,
+  available,
   className = "",
 }: {
   onClick: () => void;
+  available: boolean;
   className?: string;
 }) {
   const [hover, setHover] = useState(false);
+  if (!available) {
+    return (
+      <div
+        className={`absolute inset-0 flex items-center justify-center ${className}`}
+        style={{ background: "hsl(var(--muted) / 0.15)" }}
+      >
+        <Ban className="h-3 w-3 text-muted-foreground/20" />
+      </div>
+    );
+  }
   return (
     <div
       onClick={onClick}
@@ -136,12 +185,14 @@ function DayView({
   day,
   professionals,
   bookings,
+  availMap,
   onSelectBooking,
   onCellClick,
 }: {
   day: Date;
   professionals: Professional[];
   bookings: BookingRequest[];
+  availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
 }) {
@@ -197,7 +248,7 @@ function DayView({
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
                   <div key={prof.id} className="flex-1 border-r border-border/20 last:border-r-0 relative">
-                    <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} />
+                    <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
                       return (
@@ -225,12 +276,14 @@ function WeekView({
   weekStart,
   professionals,
   bookings,
+  availMap,
   onSelectBooking,
   onCellClick,
 }: {
   weekStart: Date;
   professionals: Professional[];
   bookings: BookingRequest[];
+  availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
 }) {
@@ -313,7 +366,7 @@ function WeekView({
                       const cellBookings = (byProfDay[key] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                       return (
                         <div key={prof.id} className={`flex-1 relative ${pi > 0 ? "border-l border-border/10" : ""}`}>
-                          <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} />
+                          <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
                             return (
@@ -346,6 +399,27 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Fetch professional availabilities
+  const { data: rawAvailabilities = [] } = useQuery({
+    queryKey: ["professional-availabilities"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/professional-availabilities/");
+      return Array.isArray(data) ? data : (data?.results ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  // Build lookup: profId → availability
+  const availMap = useMemo(() => {
+    const map: Record<number, ProfAvailability> = {};
+    for (const a of rawAvailabilities) {
+      if (a.is_active !== false) {
+        map[a.professional] = a;
+      }
+    }
+    return map;
+  }, [rawAvailabilities]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = (HOURS[0] - 6) * CELL_HEIGHT;
@@ -415,6 +489,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
               day={currentDate}
               professionals={professionals}
               bookings={bookings}
+              availMap={availMap}
               onSelectBooking={onSelectBooking}
               onCellClick={setNewSlot}
             />
@@ -423,6 +498,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
               weekStart={weekStart}
               professionals={professionals}
               bookings={bookings}
+              availMap={availMap}
               onSelectBooking={onSelectBooking}
               onCellClick={setNewSlot}
             />
