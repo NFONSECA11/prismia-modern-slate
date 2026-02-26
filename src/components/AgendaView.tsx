@@ -255,7 +255,7 @@ function DayView({
 
   return (
     <div className="overflow-x-auto">
-      <div style={{ minWidth: `${Math.max(professionals.length, 1) * 7 * 110 + 60}px` }}>
+      <div style={{ minWidth: `${Math.max(professionals.length * 200, 400) + 60}px` }}>
         {/* Prof headers */}
         <div className="flex border-b border-border surface-elevated sticky top-0 z-10">
           <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
