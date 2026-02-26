@@ -54,8 +54,35 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const { data } = await api.get("/api/booking/requests/");
-  const normalized = normalizeBookingListResponse(data);
+  // Busca todas as páginas para não ficar limitado ao page_size padrão da API
+  let allResults: any[] = [];
+  let allProfessionals: any[] = [];
+  let page = 1;
+  let totalCount = 0;
+
+  while (true) {
+    const { data } = await api.get("/api/booking/requests/", {
+      params: { page, page_size: 100 },
+    });
+    const normalized = normalizeBookingListResponse(data);
+    totalCount = normalized.count;
+    allResults = allResults.concat(normalized.results);
+    if (normalized.professionals.length > 0) {
+      allProfessionals = normalized.professionals;
+    }
+
+    // Se já buscou todos ou a página veio vazia/incompleta, para
+    if (allResults.length >= totalCount || normalized.results.length === 0) {
+      break;
+    }
+    page++;
+  }
+
+  const normalized: BookingListResponse = {
+    count: totalCount,
+    results: allResults,
+    professionals: allProfessionals,
+  };
 
   const missingPhone = normalized.results.filter(
     (booking) => !booking.contact_phone && !booking.phone
