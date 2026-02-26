@@ -121,7 +121,7 @@ export default function Index() {
 
       const existing = professionals.find((p) => String(p.id).trim() === idKey);
       byId.set(idKey, {
-        id: Number(idKey),
+        id: booking.professional_id as unknown as number,
         name: booking.professional_name || existing?.name || `Profissional #${idKey}`,
         specialty: existing?.specialty || "-",
       });
