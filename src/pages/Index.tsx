@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus } from "@/types/booking";
-import { fetchBookingRequests, createBooking } from "@/lib/bookingApi";
+import { fetchBookingRequests, createBooking, fetchProfessionalsByUnit } from "@/lib/bookingApi";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
@@ -60,7 +60,16 @@ export default function Index() {
   });
 
   const bookings = data?.results ?? [];
-  const professionals = data?.professionals ?? [];
+
+  // Fetch professionals by active unit for the agenda view
+  const { data: unitProfessionals } = useQuery({
+    queryKey: ["professionals-by-unit", activeUnit?.id],
+    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
+    enabled: !!activeUnit && view === "agenda",
+    staleTime: 60_000,
+  });
+
+  const professionals = unitProfessionals ?? data?.professionals ?? [];
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const filteredBookings = bookings.filter((b) => {
