@@ -164,8 +164,8 @@ function AppointmentCard({
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
 
-  const bgColor = isPast ? "hsl(var(--muted))" : "hsl(var(--status-confirmed-bg))";
-  const textColor = isPast ? "hsl(var(--muted-foreground))" : "hsl(var(--status-confirmed))";
+  const bgColor = isPast ? "hsl(var(--muted))" : "hsl(var(--status-confirmed))";
+  const textColor = isPast ? "hsl(var(--muted-foreground))" : "hsl(var(--primary-foreground))";
   const borderColor = isPast ? "hsl(var(--muted-foreground) / 0.4)" : "hsl(var(--status-confirmed))";
 
   return (
