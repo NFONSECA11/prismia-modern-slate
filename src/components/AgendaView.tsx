@@ -537,8 +537,8 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
   return (
     <>
       <div
-        className="rounded-xl border border-border surface-raised shadow-md flex flex-col overflow-hidden"
-        style={{ maxHeight: "calc(100vh - 220px)" }}
+        className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
+        style={{ maxHeight: "calc(100vh - 220px)", background: "#ffffff" }}
       >
         {/* Toolbar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2">
