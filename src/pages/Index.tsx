@@ -64,7 +64,8 @@ export default function Index() {
   // Debug: mostrar quais status existem nos dados
   if (bookings.length > 0) {
     const uniqueStatuses = [...new Set(bookings.map(b => b.status))];
-    console.log("[Debug] Unique statuses:", uniqueStatuses, "Total:", bookings.length);
+    const sample = bookings[0];
+    console.warn("[DEBUG-STATUS]", JSON.stringify(uniqueStatuses), "total:", bookings.length, "sample-keys:", Object.keys(sample));
   }
   // Fetch professionals by active unit for the agenda view
   const { data: unitProfessionals } = useQuery({
