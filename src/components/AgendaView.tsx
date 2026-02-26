@@ -64,14 +64,22 @@ function isProfAvailable(
 }
 
 function getSlotDateTime(booking: BookingRequest): { date: string; hour: number; minute: number } | null {
-  const slot = booking.vars_snapshot?.chosen_slot;
-  if (!slot) return null;
-  try {
-    const d = parseISO(slot.start_at);
-    return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
-  } catch {
-    return null;
+  // Try multiple date sources: scheduled_at (confirmed), chosen_slot (root), vars_snapshot.chosen_slot
+  const candidates = [
+    booking.scheduled_at,
+    booking.chosen_slot?.start_at,
+    booking.vars_snapshot?.chosen_slot?.start_at,
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    try {
+      const d = parseISO(raw);
+      if (!isNaN(d.getTime())) {
+        return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+      }
+    } catch { /* try next */ }
   }
+  return null;
 }
 
 function getStatusColors(status: string) {
