@@ -327,11 +327,18 @@ function WeekView({
             <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
             {days.map((day) => (
               <div key={format(day, "yyyy-MM-dd")} className="flex-1 border-r border-border/40 last:border-r-0 flex">
-                {professionals.map((prof, pi) => (
-                  <div key={prof.id} className={`flex-1 px-1 py-1 text-center ${pi > 0 ? "border-l border-border/20" : ""}`} title={prof.name}>
-                    <span className="text-[11px] font-semibold text-foreground/90 truncate block" title={`${prof.name} (${prof.specialty})`}>{prof.name}</span>
+                {professionals.length === 0 ? (
+                  <div className="flex-1 px-1 py-1.5 text-center">
+                    <span className="text-[10px] text-muted-foreground italic">Sem profissionais</span>
                   </div>
-                ))}
+                ) : (
+                  professionals.map((prof, pi) => (
+                    <div key={prof.id} className={`flex-1 px-1 py-1.5 text-center min-w-[80px] ${pi > 0 ? "border-l border-border/20" : ""}`} title={`${prof.name} (${prof.specialty})`}>
+                      <span className="text-[11px] font-semibold text-foreground block whitespace-nowrap overflow-hidden text-ellipsis">{prof.name}</span>
+                      <span className="text-[9px] text-muted-foreground/60 block whitespace-nowrap overflow-hidden text-ellipsis">{prof.specialty}</span>
+                    </div>
+                  ))
+                )}
               </div>
             ))}
           </div>
