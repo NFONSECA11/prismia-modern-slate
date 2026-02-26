@@ -87,17 +87,31 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     let repeatedPageDetected = false;
     let pagesFetched = 0;
     let page = 1;
+    let useCursor = false;
+    let nextCursor: string | null = null;
+    const seenCursors = new Set<string>();
 
-    while (page <= MAX_PAGES) {
+    while (pagesFetched < MAX_PAGES) {
       let data: any;
       try {
-        const response = await api.get("/api/booking/requests/", {
-          params: { page, page_size: PAGE_SIZE },
-        });
-        data = response.data;
+        if (useCursor && nextCursor) {
+          if (seenCursors.has(nextCursor)) {
+            repeatedPageDetected = true;
+            break;
+          }
+          seenCursors.add(nextCursor);
+          const response = await api.get(nextCursor);
+          data = response.data;
+        } else {
+          const response = await api.get("/api/booking/requests/", {
+            params: { page, page_size: PAGE_SIZE },
+          });
+          data = response.data;
+        }
       } catch (error) {
         const status = (error as any)?.response?.status;
-        if (status === 404 && page > 1) break;
+        if (status === 404 && !useCursor && page > 1) break;
+        if ((status === 400 || status === 404) && useCursor) break;
         throw error;
       }
 
@@ -110,16 +124,30 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         professionals = normalizedPage.professionals;
       }
 
-      const nextCursor =
-        typeof data?.next === "string"
-          ? data.next
-          : typeof data?.result?.next === "string"
-            ? data.result.next
-            : null;
+      const hasTopNextField =
+        !!data &&
+        typeof data === "object" &&
+        Object.prototype.hasOwnProperty.call(data, "next");
+      const hasNestedNextField =
+        !!data?.result &&
+        typeof data.result === "object" &&
+        Object.prototype.hasOwnProperty.call(data.result, "next");
+      const hasNextField = hasTopNextField || hasNestedNextField;
+
+      const rawNext = hasTopNextField ? data?.next : hasNestedNextField ? data?.result?.next : null;
+      const resolvedNextCursor =
+        typeof rawNext === "string" && rawNext.trim().length > 0 ? rawNext : null;
 
       if (normalizedPage.results.length === 0) break;
 
-      if (!nextCursor && page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
+      if (hasNextField) {
+        useCursor = true;
+        if (!resolvedNextCursor) break;
+        nextCursor = resolvedNextCursor;
+        continue;
+      }
+
+      if (page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
         repeatedPageDetected = true;
         break;
       }
@@ -177,9 +205,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
   const shouldTryOffsetFallback =
     pageResult.repeatedPageDetected ||
-    (pageResult.pagesFetched <= 1 &&
-      pageResult.totalCount > 0 &&
-      pageResult.bookingsById.size < pageResult.totalCount);
+    (pageResult.pagesFetched === 1 && pageResult.bookingsById.size >= 20) ||
+    (pageResult.totalCount > 0 && pageResult.bookingsById.size < pageResult.totalCount);
 
   if (shouldTryOffsetFallback) {
     const offsetResult = await fetchWithOffsetLimit();
