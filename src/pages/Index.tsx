@@ -107,8 +107,8 @@ export default function Index() {
       booking.vars_snapshot?.chosen_slot?.label
     );
 
-  // Agenda must include confirmed bookings and any booking that already has slot/date assigned
-  const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status) || hasAgendaSlot(b));
+  // Agenda shows only confirmed bookings that have a scheduled date (appointments)
+  const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status) && hasAgendaSlot(b));
 
   const agendaProfessionals = useMemo(() => {
     if (agendaBookings.length === 0) return professionals;
