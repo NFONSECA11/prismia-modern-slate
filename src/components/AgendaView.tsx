@@ -304,7 +304,7 @@ function WeekView({
 
   return (
     <div className="overflow-x-auto">
-      <div style={{ minWidth: `${days.length * professionals.length * 110 + 60}px` }}>
+      <div style={{ minWidth: `${days.length * professionals.length * 140 + 60}px` }}>
         {/* Day + Prof header */}
         <div className="sticky top-0 z-10 surface-elevated border-b border-border">
           <div className="flex border-b border-border/40">
@@ -329,7 +329,7 @@ function WeekView({
               <div key={format(day, "yyyy-MM-dd")} className="flex-1 border-r border-border/40 last:border-r-0 flex">
                 {professionals.map((prof, pi) => (
                   <div key={prof.id} className={`flex-1 px-1 py-1 text-center ${pi > 0 ? "border-l border-border/20" : ""}`} title={prof.name}>
-                    <span className="text-[9px] text-muted-foreground/70 truncate block" title={`${prof.name} (${prof.specialty})`}>{prof.name}</span>
+                    <span className="text-[11px] font-semibold text-foreground/90 truncate block" title={`${prof.name} (${prof.specialty})`}>{prof.name}</span>
                   </div>
                 ))}
               </div>
