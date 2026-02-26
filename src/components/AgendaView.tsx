@@ -329,7 +329,7 @@ function WeekView({
               <div key={format(day, "yyyy-MM-dd")} className="flex-1 border-r border-border/40 last:border-r-0 flex">
                 {professionals.map((prof, pi) => (
                   <div key={prof.id} className={`flex-1 px-1 py-1 text-center ${pi > 0 ? "border-l border-border/20" : ""}`} title={prof.name}>
-                    <span className="text-[9px] text-muted-foreground/70 truncate block">{prof.name.split(" ")[0]}</span>
+                    <span className="text-[9px] text-muted-foreground/70 truncate block" title={`${prof.name} (${prof.specialty})`}>{prof.name}</span>
                   </div>
                 ))}
               </div>
