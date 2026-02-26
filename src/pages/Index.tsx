@@ -101,21 +101,24 @@ export default function Index() {
   const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status));
 
   const agendaProfessionals = useMemo(() => {
-    const base = [...professionals];
-    const seen = new Set(base.map((p) => p.id));
+    if (agendaBookings.length === 0) return professionals;
+
+    const byId = new Map<string, { id: number; name: string; specialty: string }>();
 
     for (const booking of agendaBookings) {
-      if (seen.has(booking.professional_id)) continue;
-      base.push({
-        id: booking.professional_id,
-        name: booking.professional_name || `Profissional #${booking.professional_id}`,
-        specialty: "-",
+      const idKey = String(booking.professional_id).trim();
+      if (!idKey || byId.has(idKey)) continue;
+
+      const existing = professionals.find((p) => String(p.id).trim() === idKey);
+      byId.set(idKey, {
+        id: Number(idKey),
+        name: booking.professional_name || existing?.name || `Profissional #${idKey}`,
+        specialty: existing?.specialty || "-",
       });
-      seen.add(booking.professional_id);
     }
 
-    return base;
-  }, [professionals, agendaBookings]);
+    return Array.from(byId.values());
+  }, [agendaBookings, professionals]);
 
   const stats = {
     total: bookings.length,
