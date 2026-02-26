@@ -82,26 +82,29 @@ export default function Index() {
   };
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const filteredBookings = bookings.filter((b) => {
-    let matchStatus: boolean;
-    if (statusFilter === "all") {
-      matchStatus = true;
-    } else if (statusFilter === "today") {
-      matchStatus = getBookingDate(b) === todayStr;
-    } else {
-      const s = (b.status ?? "").toLowerCase();
-      const f = statusFilter.toLowerCase();
-      matchStatus = s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
-    }
+
+  // Step 1: Apply search filter first
+  const searchedBookings = bookings.filter((b) => {
     const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
+    if (!q) return true;
+    return (
       (b.lead_name ?? "").toLowerCase().includes(q) ||
       (b.procedure_name ?? "").toLowerCase().includes(q) ||
       (b.professional_name ?? "").toLowerCase().includes(q) ||
-      (b.contact_phone ?? "").toLowerCase().includes(q);
-    return matchStatus && matchSearch;
+      (b.contact_phone ?? "").toLowerCase().includes(q)
+    );
   });
+
+  // Step 2: Apply status filter on searched results
+  const matchStatusFn = (b: BookingRequest, filter: FilterStatus): boolean => {
+    if (filter === "all") return true;
+    if (filter === "today") return getBookingDate(b) === todayStr;
+    const s = (b.status ?? "").toLowerCase();
+    const f = filter.toLowerCase();
+    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
+  };
+
+  const filteredBookings = searchedBookings.filter((b) => matchStatusFn(b, statusFilter));
 
   const isConfirmedStatus = (status: unknown) => {
     const normalized = String(status ?? "").trim().toLowerCase();
@@ -141,18 +144,19 @@ export default function Index() {
     return Array.from(byId.values());
   }, [agendaBookings, professionals]);
 
-  const matchStatus = (b: BookingRequest, filter: string) => {
+  const matchStatusHelper = (b: BookingRequest, filter: string) => {
     const s = (b.status ?? "").toLowerCase();
     const f = filter.toLowerCase();
     return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
   };
 
+  // Stats based on searched results (respects search but not status filter)
   const stats = {
-    total: bookings.length,
-    handoff: bookings.filter((b) => matchStatus(b, "handoff")).length,
-    assisted: bookings.filter((b) => matchStatus(b, "assisted")).length,
-    pending: bookings.filter((b) => matchStatus(b, "pending")).length,
-    confirmed: bookings.filter((b) => matchStatus(b, "confirmed")).length,
+    total: searchedBookings.length,
+    handoff: searchedBookings.filter((b) => matchStatusHelper(b, "handoff")).length,
+    assisted: searchedBookings.filter((b) => matchStatusHelper(b, "assisted")).length,
+    pending: searchedBookings.filter((b) => matchStatusHelper(b, "pending")).length,
+    confirmed: searchedBookings.filter((b) => matchStatusHelper(b, "confirmed")).length,
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
@@ -386,8 +390,8 @@ export default function Index() {
                 {f.value !== "all" && (
                   <span className="ml-1 opacity-60">
                     {f.value === "today"
-                      ? bookings.filter((b) => getBookingDate(b) === todayStr).length
-                      : bookings.filter((b) => matchStatus(b, f.value)).length}
+                      ? searchedBookings.filter((b) => getBookingDate(b) === todayStr).length
+                      : searchedBookings.filter((b) => matchStatusHelper(b, f.value)).length}
                   </span>
                 )}
               </button>
