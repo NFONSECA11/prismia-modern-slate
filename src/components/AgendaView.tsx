@@ -64,7 +64,7 @@ function isProfAvailable(
 }
 
 function getSlotDateTime(booking: BookingRequest): { date: string; hour: number; minute: number } | null {
-  // Try multiple date sources: scheduled_at (confirmed), chosen_slot (root), vars_snapshot.chosen_slot
+  // Primary date sources from booking list payload
   const candidates = [
     booking.scheduled_at,
     booking.chosen_slot?.start_at,
@@ -88,6 +88,26 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
       const native = new Date(value);
       if (!isNaN(native.getTime())) {
         return { date: format(native, "yyyy-MM-dd"), hour: native.getHours(), minute: native.getMinutes() };
+      }
+    }
+  }
+
+  // Fallback for label-only formats like "27/02/2026 às 15:00" or "27/02 15:00"
+  const labelCandidate = booking.chosen_slot_label || booking.chosen_slot?.label || booking.vars_snapshot?.chosen_slot?.label;
+  if (labelCandidate) {
+    const m = labelCandidate.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?.*?(\d{1,2}):(\d{2})/);
+    if (m) {
+      const day = Number(m[1]);
+      const month = Number(m[2]);
+      const yearFromLabel = m[3] ? Number(m[3]) : undefined;
+      const yearFromWindow = booking.preferred_window?.match(/(\d{4})[-/]/)?.[1];
+      const year = yearFromLabel ?? (yearFromWindow ? Number(yearFromWindow) : new Date().getFullYear());
+      const hour = Number(m[4]);
+      const minute = Number(m[5]);
+
+      const d = new Date(year, month - 1, day, hour, minute);
+      if (!isNaN(d.getTime())) {
+        return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
       }
     }
   }
