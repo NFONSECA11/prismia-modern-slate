@@ -22,11 +22,28 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const AUTH_FALLBACK: AuthContextType = {
+  user: null,
+  company: null,
+  role: null,
+  units: [],
+  activeUnit: null,
+  isLoading: false,
+  isAuthenticated: false,
+  login: async () => {
+    throw new Error("AuthProvider indisponível");
+  },
+  logout: async () => {},
+  setActiveUnit: () => {},
+  canManage: false,
+  bootstrap: async () => {},
+};
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    console.error("[Auth] useAuth called outside AuthProvider — returning safe defaults");
-    throw new Error("useAuth must be used within AuthProvider");
+    console.error("[Auth] useAuth called outside AuthProvider — fallback mode enabled");
+    return AUTH_FALLBACK;
   }
   return ctx;
 }
