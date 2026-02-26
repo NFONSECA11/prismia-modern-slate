@@ -304,44 +304,55 @@ function WeekView({
 
   return (
     <div className="overflow-x-auto">
-      <div style={{ minWidth: `${days.length * professionals.length * 140 + 60}px` }}>
-        {/* Day + Prof header */}
+      <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
+        {/* Header grouped by professional */}
         <div className="sticky top-0 z-10 surface-elevated border-b border-border">
-          <div className="flex border-b border-border/40">
-            <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
-            {days.map((day) => {
-              const today = isToday(day);
-              return (
-                <div key={format(day, "yyyy-MM-dd")} className={`flex-1 border-r border-border/40 last:border-r-0 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}>
-                  <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground/60"}`}>
-                    {format(day, "EEE", { locale: ptBR })}
-                  </p>
-                  <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
-                    {format(day, "dd")}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex">
-            <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
-            {days.map((day) => (
-              <div key={format(day, "yyyy-MM-dd")} className="flex-1 border-r border-border/40 last:border-r-0 flex">
-                {professionals.length === 0 ? (
-                  <div className="flex-1 px-1 py-1.5 text-center">
-                    <span className="text-[10px] text-muted-foreground italic">Sem profissionais</span>
+          {professionals.length === 0 ? (
+            <div className="flex">
+              <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+              <div className="flex-1 px-3 py-2 text-xs text-muted-foreground italic">Sem profissionais</div>
+            </div>
+          ) : (
+            <>
+              <div className="flex border-b border-border/40">
+                <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+                {professionals.map((prof, pi) => (
+                  <div
+                    key={prof.id}
+                    className={`flex-1 px-2 py-1.5 text-center ${pi > 0 ? "border-l border-border/20" : ""}`}
+                    title={`${prof.name} (${prof.specialty})`}
+                  >
+                    <p className="text-[11px] font-semibold text-foreground leading-tight truncate">{prof.name}</p>
+                    <p className="text-[9px] text-muted-foreground/70 truncate">{prof.specialty}</p>
                   </div>
-                ) : (
-                  professionals.map((prof, pi) => (
-                    <div key={prof.id} className={`flex-1 px-1 py-1.5 text-center min-w-[80px] ${pi > 0 ? "border-l border-border/20" : ""}`} title={`${prof.name} (${prof.specialty})`}>
-                      <span className="text-[11px] font-semibold text-foreground block whitespace-nowrap overflow-hidden text-ellipsis">{prof.name}</span>
-                      <span className="text-[9px] text-muted-foreground/60 block whitespace-nowrap overflow-hidden text-ellipsis">{prof.specialty}</span>
-                    </div>
-                  ))
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div className="flex">
+                <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+                {professionals.map((prof, pi) => (
+                  <div key={`days_${prof.id}`} className={`flex-1 flex ${pi > 0 ? "border-l border-border/20" : ""}`}>
+                    {days.map((day, di) => {
+                      const today = isToday(day);
+                      return (
+                        <div
+                          key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
+                          className={`flex-1 px-2 py-2 text-center ${di > 0 ? "border-l border-border/20" : ""} ${today ? "bg-primary/10" : ""}`}
+                        >
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground/60"}`}>
+                            {format(day, "EEE", { locale: ptBR })}
+                          </p>
+                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
+                            {format(day, "dd")}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Grid */}
@@ -363,16 +374,19 @@ function WeekView({
                 <span className="text-[10px] text-muted-foreground/50 font-mono">{String(hour).padStart(2, "0")}:00</span>
               </div>
 
-              {days.map((day) => {
-                const dateKey = format(day, "yyyy-MM-dd");
-                const today = isToday(day);
-                return (
-                  <div key={dateKey} className={`flex-1 border-r border-border/20 last:border-r-0 flex ${today ? "bg-primary/[0.03]" : ""}`}>
-                    {professionals.map((prof, pi) => {
-                      const key = `${prof.id}_${dateKey}`;
-                      const cellBookings = (byProfDay[key] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
+              {professionals.length === 0 ? (
+                <div className="flex-1" />
+              ) : (
+                professionals.map((prof, pi) => (
+                  <div key={prof.id} className={`flex-1 flex ${pi > 0 ? "border-l border-border/20" : ""}`}>
+                    {days.map((day, di) => {
+                      const dateKey = format(day, "yyyy-MM-dd");
+                      const today = isToday(day);
+                      const bookingKey = `${prof.id}_${dateKey}`;
+                      const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
+
                       return (
-                        <div key={prof.id} className={`flex-1 relative ${pi > 0 ? "border-l border-border/10" : ""}`}>
+                        <div key={bookingKey} className={`flex-1 relative ${di > 0 ? "border-l border-border/10" : ""} ${today ? "bg-primary/[0.03]" : ""}`}>
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
@@ -390,8 +404,8 @@ function WeekView({
                       );
                     })}
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           ))}
         </div>
