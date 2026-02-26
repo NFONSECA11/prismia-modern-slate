@@ -4,6 +4,7 @@ import { BookingListResponse, BookingRequest, Professional } from "@/types/booki
 
 // ── Listagem ─────────────────────────────────────────────────────────────────
 const bookingPhoneCache = new Map<number, string>();
+const bookingScheduleCache = new Map<number, string>();
 
 function normalizeBookingListResponse(payload: any): BookingListResponse {
   if (payload && typeof payload === "object") {
@@ -40,15 +41,25 @@ function normalizeBookingListResponse(payload: any): BookingListResponse {
   return { count: 0, results: [], professionals: [] };
 }
 
-async function fetchBookingPhoneById(id: number): Promise<string | null> {
+async function fetchBookingDetailById(id: number): Promise<void> {
   try {
     const { data } = await api.get(`/api/booking/requests/${id}/`);
     const detail = data?.result ?? data;
+
     const phone = detail?.contact_phone ?? detail?.phone ?? null;
     if (phone) bookingPhoneCache.set(id, phone);
-    return phone;
+
+    const scheduledAt =
+      detail?.scheduled_at ??
+      detail?.scheduledAt ??
+      detail?.chosen_slot?.start_at ??
+      detail?.vars_snapshot?.chosen_slot?.start_at ??
+      null;
+    if (typeof scheduledAt === "string" && scheduledAt.trim()) {
+      bookingScheduleCache.set(id, scheduledAt);
+    }
   } catch {
-    return null;
+    // best effort enrichment
   }
 }
 
@@ -56,22 +67,43 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const { data } = await api.get("/api/booking/requests/");
   const normalized = normalizeBookingListResponse(data);
 
-  const missingPhone = normalized.results.filter(
-    (booking) => !booking.contact_phone && !booking.phone
-  );
+  const needsDetails = normalized.results.filter((booking) => {
+    const missingPhone = !booking.contact_phone && !booking.phone && !bookingPhoneCache.has(booking.id);
 
-  const needFetch = missingPhone.filter((booking) => !bookingPhoneCache.has(booking.id));
-  if (needFetch.length > 0) {
-    await Promise.all(needFetch.map((booking) => fetchBookingPhoneById(booking.id)));
-  }
+    const statusNormalized = String(booking.status ?? "").trim().toLowerCase();
+    const isConfirmed = statusNormalized === "confirmed" || statusNormalized === "confirmado";
+    const hasSchedule = Boolean(
+      booking.scheduled_at ||
+      booking.chosen_slot?.start_at ||
+      booking.vars_snapshot?.chosen_slot?.start_at ||
+      bookingScheduleCache.has(booking.id)
+    );
 
-  const resultsWithPhone = normalized.results.map((booking) => {
-    const cachedPhone = bookingPhoneCache.get(booking.id);
-    if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
-    return { ...booking, contact_phone: cachedPhone };
+    return missingPhone || (isConfirmed && !hasSchedule);
   });
 
-  return { ...normalized, results: resultsWithPhone };
+  if (needsDetails.length > 0) {
+    await Promise.all(needsDetails.map((booking) => fetchBookingDetailById(booking.id)));
+  }
+
+  const resultsEnriched = normalized.results.map((booking) => {
+    const cachedPhone = bookingPhoneCache.get(booking.id);
+    const cachedSchedule = bookingScheduleCache.get(booking.id);
+
+    const hasSchedule = Boolean(
+      booking.scheduled_at ||
+      booking.chosen_slot?.start_at ||
+      booking.vars_snapshot?.chosen_slot?.start_at
+    );
+
+    return {
+      ...booking,
+      ...(cachedPhone && !booking.contact_phone && !booking.phone ? { contact_phone: cachedPhone } : {}),
+      ...(cachedSchedule && !hasSchedule ? { scheduled_at: cachedSchedule } : {}),
+    };
+  });
+
+  return { ...normalized, results: resultsEnriched };
 }
 
 export async function fetchBookingRequestById(id: number): Promise<BookingRequest> {
