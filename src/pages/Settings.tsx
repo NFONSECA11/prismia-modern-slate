@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -92,6 +92,25 @@ export default function Settings() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+    },
+  });
+
+  const deleteProfessional = useMutation({
+    mutationFn: async (id: number) => {
+      await fetchCsrf();
+      await api.delete(`/api/booking/professionals/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+      toast.success("Profissional removido com sucesso");
+    },
+    onError: (err: any) => {
+      const status = err?.response?.status;
+      if (status === 405) {
+        toast.error("A API não suporta exclusão de profissionais. Use o toggle ativo/inativo.");
+      } else {
+        toast.error("Erro ao remover profissional");
+      }
     },
   });
 
@@ -209,12 +228,13 @@ export default function Settings() {
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
-              <div className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 px-3 py-1 items-center">
+              <div className="grid grid-cols-[3rem_1fr_1fr_auto_5rem_2rem] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Unidade</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
+                <span />
               </div>
               {!activeUnit ? (
                 <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
@@ -226,7 +246,7 @@ export default function Settings() {
                 professionals.map((prof: any) => (
                   <div
                     key={prof.id}
-                    className="grid grid-cols-[3rem_1fr_1fr_auto_5rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                    className="grid grid-cols-[3rem_1fr_1fr_auto_5rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                     style={{ background: "hsl(var(--surface-elevated))" }}
                   >
                     <span className="text-xs font-mono text-muted-foreground">{prof.unit ?? "—"}</span>
@@ -238,6 +258,13 @@ export default function Settings() {
                       className="scale-75"
                     />
                     <span className="text-xs font-mono text-muted-foreground text-right">{prof.code ?? prof.slug ?? "—"}</span>
+                    <button
+                      onClick={() => deleteProfessional.mutate(prof.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      title="Remover profissional"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 ))
               )}
