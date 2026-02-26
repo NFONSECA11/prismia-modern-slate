@@ -267,12 +267,12 @@ function DayView({
     <div className="overflow-x-auto">
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
-        <div className="flex border-b border-border surface-elevated sticky top-0 z-10">
-          <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+        <div className="flex border-b sticky top-0 z-10" style={{ borderColor: "#e0e0e0", background: "#f5f5f5" }}>
+          <div className="w-[60px] flex-shrink-0 border-r" style={{ borderColor: "#e0e0e0" }} />
           {professionals.map((prof) => (
-            <div key={prof.id} className="w-[200px] border-r border-border/40 last:border-r-0 px-3 py-2.5">
-              <p className="text-xs font-semibold text-foreground truncate">{prof.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{prof.specialty}</p>
+            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5" style={{ borderColor: "#e0e0e0" }}>
+              <p className="text-xs font-semibold truncate" style={{ color: "#222" }}>{prof.name}</p>
+              <p className="text-[10px] truncate" style={{ color: "#888" }}>{prof.specialty}</p>
             </div>
           ))}
         </div>
@@ -291,14 +291,14 @@ function DayView({
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border/20" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 border-r border-border/20 flex items-start justify-end pr-2 pt-1.5">
-                <span className="text-[10px] text-muted-foreground/50 font-mono">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid #e0e0e0" }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid #e0e0e0" }}>
+                <span className="text-[10px] font-mono" style={{ color: "#999" }}>{String(hour).padStart(2, "0")}:00</span>
               </div>
               {professionals.map((prof) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
-                  <div key={prof.id} className="w-[200px] border-r border-border/20 last:border-r-0 relative">
+                  <div key={prof.id} className="w-[200px] last:border-r-0 relative" style={{ borderRight: "1px solid #e0e0e0" }}>
                     <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
@@ -357,43 +357,45 @@ function WeekView({
     <div className="overflow-x-auto">
       <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
         {/* Header grouped by professional */}
-        <div className="sticky top-0 z-10 surface-elevated border-b border-border">
+        <div className="sticky top-0 z-10" style={{ background: "#f5f5f5", borderBottom: "1px solid #e0e0e0" }}>
           {professionals.length === 0 ? (
             <div className="flex">
-              <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
-              <div className="flex-1 px-3 py-2 text-xs text-muted-foreground italic">Sem profissionais</div>
+              <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
+              <div className="flex-1 px-3 py-2 text-xs italic" style={{ color: "#888" }}>Sem profissionais</div>
             </div>
           ) : (
             <>
-              <div className="flex border-b border-border/40">
-                <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+              <div className="flex" style={{ borderBottom: "1px solid #e0e0e0" }}>
+                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
-                    className={`flex-1 px-2 py-1.5 text-center ${pi > 0 ? "border-l border-border/20" : ""}`}
+                    className={`flex-1 px-2 py-1.5 text-center`}
+                    style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}
                     title={`${prof.name} (${prof.specialty})`}
                   >
-                    <p className="text-[11px] font-semibold text-foreground leading-tight truncate">{prof.name}</p>
-                    <p className="text-[9px] text-muted-foreground/70 truncate">{prof.specialty}</p>
+                    <p className="text-[11px] font-semibold leading-tight truncate" style={{ color: "#222" }}>{prof.name}</p>
+                    <p className="text-[9px] truncate" style={{ color: "#888" }}>{prof.specialty}</p>
                   </div>
                 ))}
               </div>
 
               <div className="flex">
-                <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
+                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
                 {professionals.map((prof, pi) => (
-                  <div key={`days_${prof.id}`} className={`flex-1 flex ${pi > 0 ? "border-l border-border/20" : ""}`}>
+                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}>
                     {days.map((day, di) => {
                       const today = isToday(day);
                       return (
                         <div
                           key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
-                          className={`flex-1 px-2 py-2 text-center ${di > 0 ? "border-l border-border/20" : ""} ${today ? "bg-primary/10" : ""}`}
+                          className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
+                          style={{ borderLeft: di > 0 ? "1px solid #e8e8e8" : undefined }}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground/60"}`}>
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : ""}`} style={{ color: today ? undefined : "#999" }}>
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
+                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : ""}`} style={{ color: today ? undefined : "#222" }}>
                             {format(day, "dd")}
                           </p>
                         </div>
@@ -420,16 +422,16 @@ function WeekView({
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border/20" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 border-r border-border/20 flex items-start justify-end pr-2 pt-1.5">
-                <span className="text-[10px] text-muted-foreground/50 font-mono">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid #e0e0e0" }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid #e0e0e0" }}>
+                <span className="text-[10px] font-mono" style={{ color: "#999" }}>{String(hour).padStart(2, "0")}:00</span>
               </div>
 
               {professionals.length === 0 ? (
                 <div className="flex-1" />
               ) : (
                 professionals.map((prof, pi) => (
-                  <div key={prof.id} className={`flex-1 flex ${pi > 0 ? "border-l border-border/20" : ""}`}>
+                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}>
                     {days.map((day, di) => {
                       const dateKey = format(day, "yyyy-MM-dd");
                       const today = isToday(day);
@@ -437,7 +439,7 @@ function WeekView({
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${di > 0 ? "border-l border-border/10" : ""} ${today ? "bg-primary/[0.03]" : ""}`}>
+                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid #e8e8e8" : undefined }}>
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
