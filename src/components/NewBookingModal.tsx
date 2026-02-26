@@ -220,7 +220,7 @@ function ModalBody({
               <Calendar className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Novo Agendamento</h2>
+              <h2 className="text-sm font-semibold text-foreground">Agendamento</h2>
               <p className="text-[11px] text-muted-foreground">
                 {format(slot.date, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                 {" · "}
