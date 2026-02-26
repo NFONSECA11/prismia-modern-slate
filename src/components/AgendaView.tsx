@@ -390,7 +390,7 @@ function WeekView({
                         <div
                           key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
                           className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
-                          style={{ borderLeft: di > 0 ? "1px solid #e8e8e8" : undefined }}
+                          style={{ borderLeft: di > 0 ? "1px solid #d0d0d0" : undefined }}
                         >
                           <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : ""}`} style={{ color: today ? undefined : "#999" }}>
                             {format(day, "EEE", { locale: ptBR })}
@@ -439,7 +439,7 @@ function WeekView({
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid #e8e8e8" : undefined }}>
+                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid #d0d0d0" : undefined }}>
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
