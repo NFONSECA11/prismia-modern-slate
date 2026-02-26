@@ -73,12 +73,8 @@ export default function Index() {
     ? unitProfessionals
     : (data?.professionals ?? []);
 
-  const getBookingDate = (b: BookingRequest): string => {
-    const scheduled = b.scheduled_at
-      ?? b.chosen_slot?.start_at
-      ?? b.vars_snapshot?.chosen_slot?.start_at
-      ?? "";
-    return scheduled.slice(0, 10) || b.created_at?.slice(0, 10) || "";
+  const getCreatedDate = (b: BookingRequest): string => {
+    return b.created_at?.slice(0, 10) || "";
   };
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -98,7 +94,7 @@ export default function Index() {
   // Step 2: Apply status filter on searched results
   const matchStatusFn = (b: BookingRequest, filter: FilterStatus): boolean => {
     if (filter === "all") return true;
-    if (filter === "today") return getBookingDate(b) === todayStr;
+    if (filter === "today") return getCreatedDate(b) === todayStr;
     const s = (b.status ?? "").toLowerCase();
     const f = filter.toLowerCase();
     return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
@@ -390,7 +386,7 @@ export default function Index() {
                 {f.value !== "all" && (
                   <span className="ml-1 opacity-60">
                     {f.value === "today"
-                      ? searchedBookings.filter((b) => getBookingDate(b) === todayStr).length
+                      ? searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length
                       : searchedBookings.filter((b) => matchStatusHelper(b, f.value)).length}
                   </span>
                 )}
