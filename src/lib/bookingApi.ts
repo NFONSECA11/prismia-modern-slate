@@ -54,8 +54,8 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  // Busca todas as páginas para não ficar limitado ao page_size padrão da API
-  let allResults: any[] = [];
+  // Busca todas as páginas e deduplica por id para evitar linhas duplicadas na UI
+  const bookingsById = new Map<number, BookingRequest>();
   let allProfessionals: any[] = [];
   let page = 1;
   let totalCount = 0;
@@ -64,23 +64,42 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     const { data } = await api.get("/api/booking/requests/", {
       params: { page, page_size: 100 },
     });
-    const normalized = normalizeBookingListResponse(data);
-    totalCount = normalized.count;
-    allResults = allResults.concat(normalized.results);
-    if (normalized.professionals.length > 0) {
-      allProfessionals = normalized.professionals;
+
+    const normalizedPage = normalizeBookingListResponse(data);
+    totalCount = normalizedPage.count;
+
+    for (const booking of normalizedPage.results) {
+      const id = Number(booking?.id);
+      if (Number.isNaN(id)) continue;
+
+      const existing = bookingsById.get(id);
+      if (!existing) {
+        bookingsById.set(id, booking);
+        continue;
+      }
+
+      const existingTs = Date.parse(existing.updated_at ?? existing.created_at ?? "");
+      const nextTs = Date.parse(booking.updated_at ?? booking.created_at ?? "");
+      if (!Number.isNaN(nextTs) && (Number.isNaN(existingTs) || nextTs >= existingTs)) {
+        bookingsById.set(id, booking);
+      }
     }
 
-    // Se já buscou todos ou a página veio vazia/incompleta, para
-    if (allResults.length >= totalCount || normalized.results.length === 0) {
-      break;
+    if (normalizedPage.professionals.length > 0) {
+      allProfessionals = normalizedPage.professionals;
     }
-    page++;
+
+    const reachedCount = totalCount > 0 && bookingsById.size >= totalCount;
+    const pageEmpty = normalizedPage.results.length === 0;
+    if (reachedCount || pageEmpty) break;
+
+    page += 1;
+    if (page > 200) break;
   }
 
   const normalized: BookingListResponse = {
-    count: totalCount,
-    results: allResults,
+    count: Math.max(totalCount, bookingsById.size),
+    results: Array.from(bookingsById.values()),
     professionals: allProfessionals,
   };
 

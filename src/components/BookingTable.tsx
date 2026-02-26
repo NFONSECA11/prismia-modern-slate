@@ -266,7 +266,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                   </td>
                 </tr>
               ) : (
-                bookings.map((booking) => {
+                bookings.map((booking, index) => {
                   const actions = getQuickActions(booking);
                   const rawBotMode = booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode;
                   const normalizedBotMode = typeof rawBotMode === "string" ? rawBotMode.trim().toLowerCase() : "off";
@@ -276,7 +276,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
                   return (
                     <tr
-                      key={booking.id}
+                      key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
                       onClick={() => onSelectBooking(booking)}
                       className="border-b border-border/40 hover:bg-surface-elevated/60 cursor-pointer transition-colors group relative"
                     >
