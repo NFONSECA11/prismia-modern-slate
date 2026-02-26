@@ -96,7 +96,12 @@ export default function ProfessionalAvailabilitySection() {
       resetForm();
       toast.success("Disponibilidade criada com sucesso");
     },
-    onError: () => toast.error("Erro ao criar disponibilidade"),
+    onError: (err: any) => {
+      const detail = err?.response?.data;
+      const msg = typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : "Erro desconhecido";
+      console.error("[create-availability] 400 response:", detail);
+      toast.error("Erro ao criar disponibilidade", { description: msg });
+    },
   });
 
   const toggleAvailability = useMutation({
