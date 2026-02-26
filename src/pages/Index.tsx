@@ -90,8 +90,13 @@ export default function Index() {
     return matchStatus && matchSearch;
   });
 
+  const isConfirmedStatus = (status: unknown) => {
+    const normalized = String(status ?? "").trim().toLowerCase();
+    return normalized === "confirmed" || normalized === "confirmado";
+  };
+
   // Agenda must always include all confirmed bookings (using scheduled_at/chosen slot in AgendaView)
-  const agendaBookings = bookings.filter((b) => b.status === "confirmed");
+  const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status));
 
   const stats = {
     total: bookings.length,
