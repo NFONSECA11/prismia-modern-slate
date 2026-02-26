@@ -61,12 +61,6 @@ export default function Index() {
 
   const bookings = data?.results ?? [];
 
-  // Debug: mostrar quais status existem nos dados
-  if (bookings.length > 0) {
-    const uniqueStatuses = [...new Set(bookings.map(b => b.status))];
-    const sample = bookings[0];
-    console.warn("[DEBUG-STATUS]", JSON.stringify(uniqueStatuses), "total:", bookings.length, "sample-keys:", Object.keys(sample));
-  }
   // Fetch professionals by active unit for the agenda view
   const { data: unitProfessionals } = useQuery({
     queryKey: ["professionals-by-unit", activeUnit?.id],
@@ -79,15 +73,25 @@ export default function Index() {
     ? unitProfessionals
     : (data?.professionals ?? []);
 
+  const getBookingDate = (b: BookingRequest): string => {
+    const scheduled = b.scheduled_at
+      ?? b.chosen_slot?.start_at
+      ?? b.vars_snapshot?.chosen_slot?.start_at
+      ?? "";
+    return scheduled.slice(0, 10) || b.created_at?.slice(0, 10) || "";
+  };
+
   const todayStr = new Date().toISOString().slice(0, 10);
   const filteredBookings = bookings.filter((b) => {
     let matchStatus: boolean;
     if (statusFilter === "all") {
       matchStatus = true;
     } else if (statusFilter === "today") {
-      matchStatus = b.created_at.slice(0, 10) === todayStr;
+      matchStatus = getBookingDate(b) === todayStr;
     } else {
-      matchStatus = b.status === statusFilter || (statusFilter === "canceled" && b.status === "cancelled");
+      const s = (b.status ?? "").toLowerCase();
+      const f = statusFilter.toLowerCase();
+      matchStatus = s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
     }
     const q = search.toLowerCase();
     const matchSearch =
@@ -137,12 +141,18 @@ export default function Index() {
     return Array.from(byId.values());
   }, [agendaBookings, professionals]);
 
+  const matchStatus = (b: BookingRequest, filter: string) => {
+    const s = (b.status ?? "").toLowerCase();
+    const f = filter.toLowerCase();
+    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
+  };
+
   const stats = {
     total: bookings.length,
-    handoff: bookings.filter((b) => b.status === "handoff").length,
-    assisted: bookings.filter((b) => b.status === "assisted").length,
-    pending: bookings.filter((b) => b.status === "pending").length,
-    confirmed: bookings.filter((b) => b.status === "confirmed").length,
+    handoff: bookings.filter((b) => matchStatus(b, "handoff")).length,
+    assisted: bookings.filter((b) => matchStatus(b, "assisted")).length,
+    pending: bookings.filter((b) => matchStatus(b, "pending")).length,
+    confirmed: bookings.filter((b) => matchStatus(b, "confirmed")).length,
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
@@ -376,8 +386,8 @@ export default function Index() {
                 {f.value !== "all" && (
                   <span className="ml-1 opacity-60">
                     {f.value === "today"
-                      ? bookings.filter((b) => b.created_at.slice(0, 10) === todayStr).length
-                      : bookings.filter((b) => b.status === f.value || (f.value === "canceled" && b.status === "cancelled")).length}
+                      ? bookings.filter((b) => getBookingDate(b) === todayStr).length
+                      : bookings.filter((b) => matchStatus(b, f.value)).length}
                   </span>
                 )}
               </button>
