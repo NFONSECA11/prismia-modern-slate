@@ -145,7 +145,7 @@ function useCurrentTimeTop(startHour: number) {
 }
 
 // ── Shared booking event card ──────────────────────────────────────────────
-function BookingCard({
+function AppointmentCard({
   booking,
   topOffset,
   compact,
@@ -157,17 +157,17 @@ function BookingCard({
   onClick: () => void;
 }) {
   const dt = getSlotDateTime(booking)!;
-  const colors = getStatusColors(booking.status);
+  const phone = booking.contact_phone || booking.phone || "";
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className="absolute left-1 right-1 rounded-md px-2 py-1 text-left transition-all hover:brightness-110 hover:z-10 hover:scale-[1.01] z-10"
       style={{
         top: `${topOffset + 2}px`,
-        minHeight: compact ? "36px" : "44px",
-        background: colors.bg,
-        color: colors.text,
-        borderLeft: `3px solid ${colors.border}`,
+        minHeight: compact ? "36px" : "48px",
+        background: "hsl(var(--status-confirmed-bg))",
+        color: "hsl(var(--status-confirmed))",
+        borderLeft: "3px solid hsl(var(--status-confirmed))",
       }}
     >
       <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight">
@@ -175,8 +175,8 @@ function BookingCard({
         {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
       </span>
       <span className="block text-[11px] font-medium truncate leading-tight mt-0.5">{booking.lead_name}</span>
-      {!compact && (
-        <span className="block text-[9px] opacity-70 truncate">{booking.procedure_name}</span>
+      {!compact && phone && (
+        <span className="block text-[9px] opacity-70 truncate">{phone}</span>
       )}
     </button>
   );
@@ -293,7 +293,7 @@ function DayView({
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
                       return (
-                        <BookingCard
+                        <AppointmentCard
                           key={booking.id}
                           booking={booking}
                           topOffset={(dt.minute / 60) * CELL_HEIGHT}
@@ -432,7 +432,7 @@ function WeekView({
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
                             return (
-                              <BookingCard
+                              <AppointmentCard
                                 key={booking.id}
                                 booking={booking}
                                 topOffset={(dt.minute / 60) * CELL_HEIGHT}
