@@ -21,6 +21,14 @@ export interface NewBookingSlot {
   hour: number;
   minute: number;
   professional: Professional;
+  // Pre-fill from existing appointment
+  prefill?: {
+    lead_name?: string;
+    phone?: string;
+    procedure_name?: string;
+    unit_name?: string;
+    notes?: string;
+  };
 }
 
 interface NewBookingModalProps {
@@ -166,15 +174,15 @@ function ModalBody({
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState<NewBookingFormData>({
-    lead_name: "",
-    phone: "",
-    procedure_name: "",
-    unit_name: UNITS[0],
+    lead_name: slot.prefill?.lead_name ?? "",
+    phone: slot.prefill?.phone ?? "",
+    procedure_name: slot.prefill?.procedure_name ?? "",
+    unit_name: slot.prefill?.unit_name ?? UNITS[0],
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
     time_end: defaultTimeEnd,
-    notes: "",
+    notes: slot.prefill?.notes ?? "",
     period: PERIODS[0],
   });
 
