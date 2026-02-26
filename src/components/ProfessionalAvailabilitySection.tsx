@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, Pencil } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -27,6 +27,7 @@ export default function ProfessionalAvailabilitySection() {
   const queryClient = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [newProfId, setNewProfId] = useState<number | "">("");
   const [newSlot, setNewSlot] = useState("60");
   const [newBuffer, setNewBuffer] = useState("0");
@@ -41,10 +42,29 @@ export default function ProfessionalAvailabilitySection() {
 
   const resetForm = () => {
     setShowNew(false);
+    setEditingId(null);
     setNewProfId("");
     setNewSlot("60");
     setNewBuffer("0");
     setWeeklyEntries([{ day: "", start: "", end: "" }]);
+  };
+
+  const startEditing = (avail: any) => {
+    setEditingId(avail.id);
+    setNewProfId(avail.professional);
+    setNewSlot(String(avail.slot_minutes ?? 60));
+    setNewBuffer(String(avail.buffer_minutes ?? 0));
+    const weekly = avail.weekly ?? {};
+    const entries: { day: string; start: string; end: string }[] = [];
+    Object.entries(weekly).forEach(([dayKey, slots]: [string, any]) => {
+      if (Array.isArray(slots)) {
+        slots.forEach((slot: any) => {
+          entries.push({ day: dayKey, start: slot.start ?? "", end: slot.end ?? "" });
+        });
+      }
+    });
+    setWeeklyEntries(entries.length > 0 ? entries : [{ day: "", start: "", end: "" }]);
+    setShowNew(true);
   };
 
   const buildWeekly = () => {
@@ -101,6 +121,24 @@ export default function ProfessionalAvailabilitySection() {
       const msg = typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : "Erro desconhecido";
       console.error("[create-availability] 400 response:", detail);
       toast.error("Erro ao criar disponibilidade", { description: msg });
+    },
+  });
+
+  const updateAvailability = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: any }) => {
+      await fetchCsrf();
+      const { data } = await api.patch(`/api/settings/professional-availabilities/${id}/`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professional-availabilities"] });
+      resetForm();
+      toast.success("Disponibilidade atualizada com sucesso");
+    },
+    onError: (err: any) => {
+      const detail = err?.response?.data;
+      const msg = typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : "Erro desconhecido";
+      toast.error("Erro ao atualizar disponibilidade", { description: msg });
     },
   });
 
@@ -184,7 +222,7 @@ export default function ProfessionalAvailabilitySection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
@@ -192,6 +230,7 @@ export default function ProfessionalAvailabilitySection() {
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Slot</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Buffer</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span />
           <span />
         </div>
 
@@ -206,7 +245,7 @@ export default function ProfessionalAvailabilitySection() {
             return (
               <div
                 key={`${a.id}-${row.dayKey}-${idx}`}
-                className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-sm font-medium text-foreground">
@@ -222,6 +261,13 @@ export default function ProfessionalAvailabilitySection() {
                   onCheckedChange={(checked) => toggleAvailability.mutate({ id: a.id, is_active: checked })}
                   className="scale-75"
                 />
+                <button
+                  onClick={() => startEditing(a)}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  title="Editar disponibilidade"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={() => deleteAvailability.mutate(a.id)}
                   className="text-muted-foreground hover:text-destructive transition-colors"
@@ -242,7 +288,8 @@ export default function ProfessionalAvailabilitySection() {
               <select
                 value={newProfId}
                 onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
-                className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                disabled={!!editingId}
+                className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground disabled:opacity-60"
               >
                 <option value="">Profissional</option>
                 {allProfessionals.map((p: any) => (
@@ -289,18 +336,23 @@ export default function ProfessionalAvailabilitySection() {
               <Button
                 size="sm"
                 className="h-8 text-xs"
-                disabled={!canSave || createAvailability.isPending}
-                onClick={() =>
-                  createAvailability.mutate({
+                disabled={!canSave || createAvailability.isPending || updateAvailability.isPending}
+                onClick={() => {
+                  const payload = {
                     professional: newProfId as number,
                     company: company?.id,
                     slot_minutes: parseInt(newSlot) || 60,
                     buffer_minutes: parseInt(newBuffer) || 0,
                     weekly: buildWeekly(),
-                  })
-                }
+                  };
+                  if (editingId) {
+                    updateAvailability.mutate({ id: editingId, payload });
+                  } else {
+                    createAvailability.mutate(payload);
+                  }
+                }}
               >
-                {createAvailability.isPending ? "…" : "Salvar"}
+                {(createAvailability.isPending || updateAvailability.isPending) ? "…" : editingId ? "Atualizar" : "Salvar"}
               </Button>
               <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={resetForm}>
                 Cancelar
