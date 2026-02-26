@@ -158,16 +158,26 @@ function AppointmentCard({
 }) {
   const dt = getSlotDateTime(booking)!;
   const phone = booking.contact_phone || booking.phone || "";
+
+  // Check if this appointment is in the past
+  const now = new Date();
+  const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
+  const isPast = slotDate < now;
+
+  const bgColor = isPast ? "hsl(var(--muted))" : "hsl(var(--status-confirmed-bg))";
+  const textColor = isPast ? "hsl(var(--muted-foreground))" : "hsl(var(--status-confirmed))";
+  const borderColor = isPast ? "hsl(var(--muted-foreground) / 0.4)" : "hsl(var(--status-confirmed))";
+
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="absolute left-1 right-1 rounded-md px-2 py-1 text-left transition-all hover:brightness-110 hover:z-10 hover:scale-[1.01] z-10"
+      className={`absolute left-1 right-1 rounded-md px-2 py-1 text-left transition-all hover:brightness-110 hover:z-10 hover:scale-[1.01] z-10 ${isPast ? "opacity-60" : ""}`}
       style={{
         top: `${topOffset + 2}px`,
         minHeight: compact ? "36px" : "48px",
-        background: "hsl(var(--status-confirmed-bg))",
-        color: "hsl(var(--status-confirmed))",
-        borderLeft: "3px solid hsl(var(--status-confirmed))",
+        background: bgColor,
+        color: textColor,
+        borderLeft: `3px solid ${borderColor}`,
       }}
     >
       <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight">
