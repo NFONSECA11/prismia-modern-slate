@@ -207,14 +207,19 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       }
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
     } catch (err: any) {
+      const status = err?.response?.status;
       const data = err?.response?.data;
       const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
-      const isDuplicate = raw?.toString().includes("duplicate key") || raw?.toString().includes("uniq_confirmed") || raw?.toString().includes("already exists");
+      const rawStr = raw?.toString() || "";
+      const isDuplicate = status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists");
+      const isHtmlOrLong = (typeof data === "string" && data.length > 200) || rawStr.includes("<!");
       const msg = isDuplicate
         ? "Esse horário já está confirmado para este profissional. Escolha outro horário."
         : raw === "missing_slots"
           ? "Sem disponibilidades para esse profissional/procedimento."
-          : (typeof data === "string" ? data : (data?.detail || data?.error || "Erro ao executar ação."));
+          : isHtmlOrLong
+            ? "Erro ao processar a ação. Tente novamente."
+            : (data?.detail || data?.error || "Erro ao executar ação.");
       toast.error(msg);
       console.error(`[QuickAction] ${key} error:`, msg);
     } finally {
