@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus } from "@/types/booking";
 import { fetchBookingRequests, createBooking, fetchProfessionalsByUnit } from "@/lib/bookingApi";
@@ -69,7 +69,9 @@ export default function Index() {
     staleTime: 60_000,
   });
 
-  const professionals = unitProfessionals ?? data?.professionals ?? [];
+  const professionals = (unitProfessionals && unitProfessionals.length > 0)
+    ? unitProfessionals
+    : (data?.professionals ?? []);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const filteredBookings = bookings.filter((b) => {
@@ -97,6 +99,23 @@ export default function Index() {
 
   // Agenda must always include all confirmed bookings (using scheduled_at/chosen slot in AgendaView)
   const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status));
+
+  const agendaProfessionals = useMemo(() => {
+    const base = [...professionals];
+    const seen = new Set(base.map((p) => p.id));
+
+    for (const booking of agendaBookings) {
+      if (seen.has(booking.professional_id)) continue;
+      base.push({
+        id: booking.professional_id,
+        name: booking.professional_name || `Profissional #${booking.professional_id}`,
+        specialty: "-",
+      });
+      seen.add(booking.professional_id);
+    }
+
+    return base;
+  }, [professionals, agendaBookings]);
 
   const stats = {
     total: bookings.length,
@@ -361,7 +380,7 @@ export default function Index() {
           ) : (
             <AgendaView
               bookings={agendaBookings}
-              professionals={professionals}
+              professionals={agendaProfessionals}
               onSelectBooking={setSelectedBooking}
               onSaveBooking={handleSaveBooking}
             />
