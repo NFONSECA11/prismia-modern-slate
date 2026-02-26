@@ -208,6 +208,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
     } catch (err: any) {
       const status = err?.response?.status;
+      const url = err?.config?.url || "unknown";
       const data = err?.response?.data;
       const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
       const rawStr = raw?.toString() || "";
@@ -218,10 +219,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
         : raw === "missing_slots"
           ? "Sem disponibilidades para esse profissional/procedimento."
           : isHtmlOrLong
-            ? "Erro ao processar a ação. Tente novamente."
-            : (data?.detail || data?.error || "Erro ao executar ação.");
+            ? `Erro ${status || ""} do servidor ao processar "${key}". Verifique os logs do backend.`
+            : (data?.detail || data?.error || `Erro ${status || ""} ao executar ação.`);
       toast.error(msg);
-      console.error(`[QuickAction] ${key} error:`, msg);
+      console.error(`[QuickAction] ${key} error:`, { status, url, detail: typeof data === "string" ? data.substring(0, 500) : data });
     } finally {
       setBusyBookingId(null);
       setBusyActionKey(null);
