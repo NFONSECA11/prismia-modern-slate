@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -208,9 +209,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     } catch (err: any) {
       const data = err?.response?.data;
       const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
-      const msg = raw === "missing_slots"
-        ? "Sem disponibilidades para esse profissional/procedimento."
-        : (typeof data === "string" ? data : (data?.detail || data?.error || "Erro ao executar ação."));
+      const isDuplicate = raw?.toString().includes("duplicate key") || raw?.toString().includes("uniq_confirmed") || raw?.toString().includes("already exists");
+      const msg = isDuplicate
+        ? "Esse horário já está confirmado para este profissional. Escolha outro horário."
+        : raw === "missing_slots"
+          ? "Sem disponibilidades para esse profissional/procedimento."
+          : (typeof data === "string" ? data : (data?.detail || data?.error || "Erro ao executar ação."));
+      toast.error(msg);
       console.error(`[QuickAction] ${key} error:`, msg);
     } finally {
       setBusyBookingId(null);

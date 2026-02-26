@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -213,6 +214,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         if (successMsg === "Confirmado!" || successMsg === "Cancelado!") onClose();
         setActionDone(null);
       }, 1800);
+    },
+    onError: (err: any) => {
+      const data = err?.response?.data;
+      const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
+      const isDuplicate = raw?.toString().includes("duplicate key") || raw?.toString().includes("uniq_confirmed") || raw?.toString().includes("already exists");
+      const msg = isDuplicate
+        ? "Esse horário já está confirmado para este profissional. Escolha outro horário."
+        : (typeof data === "string" ? data : (data?.detail || data?.error || "Erro ao confirmar."));
+      toast.error(msg);
+      setActionDone(null);
     },
   });
 
