@@ -67,6 +67,17 @@ const PROCEDURES = [
 const UNITS = ["Unidade Centro", "Unidade Zona Sul", "Unidade Norte"];
 const PERIODS = ["Manhã", "Tarde", "Noite"];
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 13) {
+    return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 9)} ${digits.slice(9)}`;
+  }
+  if (digits.length === 11) {
+    return `${digits.slice(0, 2)} ${digits.slice(2, 7)} ${digits.slice(7)}`;
+  }
+  return raw;
+}
+
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -281,7 +292,7 @@ function ModalBody({
             <FieldLabel>
               <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
             </FieldLabel>
-            <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" disabled={readOnly} />
+            <TextInput value={readOnly ? formatPhone(form.phone) : form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" disabled={readOnly} />
           </div>
 
           {/* Procedimento */}
