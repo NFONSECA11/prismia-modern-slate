@@ -86,9 +86,10 @@ export default function Index() {
     const q = search.toLowerCase();
     const matchSearch =
       !q ||
-      b.lead_name.toLowerCase().includes(q) ||
-      b.procedure_name.toLowerCase().includes(q) ||
-      b.professional_name.toLowerCase().includes(q);
+      (b.lead_name ?? "").toLowerCase().includes(q) ||
+      (b.procedure_name ?? "").toLowerCase().includes(q) ||
+      (b.professional_name ?? "").toLowerCase().includes(q) ||
+      (b.contact_phone ?? "").toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
 
