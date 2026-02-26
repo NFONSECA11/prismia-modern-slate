@@ -97,8 +97,18 @@ export default function Index() {
     return normalized === "confirmed" || normalized === "confirmado";
   };
 
-  // Agenda must always include all confirmed bookings (using scheduled_at/chosen slot in AgendaView)
-  const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status));
+  const hasAgendaSlot = (booking: BookingRequest) =>
+    Boolean(
+      booking.scheduled_at ||
+      booking.chosen_slot?.start_at ||
+      booking.vars_snapshot?.chosen_slot?.start_at ||
+      booking.chosen_slot_label ||
+      booking.chosen_slot?.label ||
+      booking.vars_snapshot?.chosen_slot?.label
+    );
+
+  // Agenda must include confirmed bookings and any booking that already has slot/date assigned
+  const agendaBookings = bookings.filter((b) => isConfirmedStatus(b.status) || hasAgendaSlot(b));
 
   const agendaProfessionals = useMemo(() => {
     if (agendaBookings.length === 0) return professionals;
