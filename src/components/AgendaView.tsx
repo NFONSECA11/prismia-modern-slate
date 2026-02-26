@@ -460,6 +460,20 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
   const [mode, setMode] = useState<AgendaMode>("day");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
+
+  // When clicking an existing appointment, open the creation modal pre-filled
+  const handleAppointmentClick = (booking: BookingRequest) => {
+    const dt = getSlotDateTime(booking);
+    if (!dt) return;
+    const prof = professionals.find((p) => String(p.id) === String(booking.professional_id));
+    const slotDate = parseISO(dt.date);
+    setNewSlot({
+      date: slotDate,
+      hour: dt.hour,
+      minute: dt.minute,
+      professional: prof ?? { id: booking.professional_id as unknown as number, name: booking.professional_name, specialty: "" },
+    });
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch professional availabilities
@@ -552,7 +566,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
               professionals={professionals}
               bookings={bookings}
               availMap={availMap}
-              onSelectBooking={onSelectBooking}
+              onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
           ) : (
@@ -561,7 +575,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
               professionals={professionals}
               bookings={bookings}
               availMap={availMap}
-              onSelectBooking={onSelectBooking}
+              onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
           )}
