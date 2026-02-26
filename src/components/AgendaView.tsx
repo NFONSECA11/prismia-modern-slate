@@ -255,7 +255,7 @@ function DayView({
 
   return (
     <div className="overflow-x-auto">
-      <div style={{ minWidth: `${Math.max(professionals.length * 180, 480) + 60}px` }}>
+      <div style={{ minWidth: `${Math.max(professionals.length, 1) * 7 * 110 + 60}px` }}>
         {/* Prof headers */}
         <div className="flex border-b border-border surface-elevated sticky top-0 z-10">
           <div className="w-[60px] flex-shrink-0 border-r border-border/40" />
@@ -587,16 +587,6 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
           )}
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-border surface-elevated flex-shrink-0 flex-wrap gap-y-1">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Legenda:</span>
-          {(["handoff", "assisted", "confirmed", "pending"] as const).map((s) => (
-            <StatusBadge key={s} status={s} size="sm" />
-          ))}
-          <span className="ml-auto text-[10px] text-muted-foreground/50 flex items-center gap-1">
-            <Plus className="h-3 w-3" /> Clique em um horário para agendar
-          </span>
-        </div>
       </div>
 
       {/* New Booking Modal — keyed to force re-mount on each new slot */}
