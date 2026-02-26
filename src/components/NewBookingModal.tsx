@@ -69,11 +69,13 @@ const PERIODS = ["Manhã", "Tarde", "Noite"];
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
-  if (digits.length === 13) {
-    return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 9)} ${digits.slice(9)}`;
+  // Remove country code (55) if present
+  const local = digits.startsWith("55") && digits.length >= 12 ? digits.slice(2) : digits;
+  if (local.length === 11) {
+    return `${local.slice(0, 2)} ${local.slice(2, 7)} ${local.slice(7, 9)} ${local.slice(9)}`;
   }
-  if (digits.length === 11) {
-    return `${digits.slice(0, 2)} ${digits.slice(2, 7)} ${digits.slice(7)}`;
+  if (local.length === 10) {
+    return `${local.slice(0, 2)} ${local.slice(2, 6)} ${local.slice(6, 8)} ${local.slice(8)}`;
   }
   return raw;
 }
