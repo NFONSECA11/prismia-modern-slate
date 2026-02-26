@@ -54,21 +54,13 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  // Busca todas as páginas e deduplica por id para evitar linhas duplicadas na UI
-  const bookingsById = new Map<number, BookingRequest>();
-  let allProfessionals: any[] = [];
-  let page = 1;
-  let totalCount = 0;
+  const PAGE_SIZE = 100;
+  const MAX_PAGES = 200;
 
-  while (true) {
-    const { data } = await api.get("/api/booking/requests/", {
-      params: { page, page_size: 100 },
-    });
+  const mergePage = (bookingsById: Map<number, BookingRequest>, pageResults: BookingRequest[]) => {
+    const before = bookingsById.size;
 
-    const normalizedPage = normalizeBookingListResponse(data);
-    totalCount = normalizedPage.count;
-
-    for (const booking of normalizedPage.results) {
+    for (const booking of pageResults) {
       const id = Number(booking?.id);
       if (Number.isNaN(id)) continue;
 
@@ -85,22 +77,123 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       }
     }
 
-    if (normalizedPage.professionals.length > 0) {
-      allProfessionals = normalizedPage.professionals;
+    return bookingsById.size - before;
+  };
+
+  const fetchWithPageNumber = async () => {
+    const bookingsById = new Map<number, BookingRequest>();
+    let professionals: Professional[] = [];
+    let totalCount = 0;
+    let repeatedPageDetected = false;
+    let pagesFetched = 0;
+    let page = 1;
+
+    while (page <= MAX_PAGES) {
+      let data: any;
+      try {
+        const response = await api.get("/api/booking/requests/", {
+          params: { page, page_size: PAGE_SIZE },
+        });
+        data = response.data;
+      } catch (error) {
+        const status = (error as any)?.response?.status;
+        if (status === 404 && page > 1) break;
+        throw error;
+      }
+
+      const normalizedPage = normalizeBookingListResponse(data);
+      pagesFetched += 1;
+      totalCount = Math.max(totalCount, normalizedPage.count || 0);
+
+      const addedCount = mergePage(bookingsById, normalizedPage.results);
+      if (normalizedPage.professionals.length > 0) {
+        professionals = normalizedPage.professionals;
+      }
+
+      const nextCursor =
+        typeof data?.next === "string"
+          ? data.next
+          : typeof data?.result?.next === "string"
+            ? data.result.next
+            : null;
+
+      if (normalizedPage.results.length === 0) break;
+
+      if (!nextCursor && page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
+        repeatedPageDetected = true;
+        break;
+      }
+
+      page += 1;
     }
 
-    const reachedCount = totalCount > 0 && bookingsById.size >= totalCount;
-    const pageEmpty = normalizedPage.results.length === 0;
-    if (reachedCount || pageEmpty) break;
+    return { bookingsById, professionals, totalCount, repeatedPageDetected, pagesFetched };
+  };
 
-    page += 1;
-    if (page > 200) break;
+  const fetchWithOffsetLimit = async () => {
+    const bookingsById = new Map<number, BookingRequest>();
+    let professionals: Professional[] = [];
+    let totalCount = 0;
+    let offset = 0;
+
+    for (let step = 0; step < MAX_PAGES; step += 1) {
+      let data: any;
+      try {
+        const response = await api.get("/api/booking/requests/", {
+          params: { limit: PAGE_SIZE, offset },
+        });
+        data = response.data;
+      } catch (error) {
+        const status = (error as any)?.response?.status;
+        if (status === 400 || status === 404) {
+          if (offset === 0) {
+            return { bookingsById, professionals, totalCount };
+          }
+          break;
+        }
+        throw error;
+      }
+
+      const normalizedPage = normalizeBookingListResponse(data);
+      totalCount = Math.max(totalCount, normalizedPage.count || 0);
+
+      const addedCount = mergePage(bookingsById, normalizedPage.results);
+      if (normalizedPage.professionals.length > 0) {
+        professionals = normalizedPage.professionals;
+      }
+
+      if (normalizedPage.results.length === 0 || addedCount === 0) break;
+      offset += PAGE_SIZE;
+    }
+
+    return { bookingsById, professionals, totalCount };
+  };
+
+  const pageResult = await fetchWithPageNumber();
+
+  let finalById = pageResult.bookingsById;
+  let finalProfessionals = pageResult.professionals;
+  let finalTotalCount = pageResult.totalCount;
+
+  const shouldTryOffsetFallback =
+    pageResult.repeatedPageDetected ||
+    (pageResult.pagesFetched <= 1 &&
+      pageResult.totalCount > 0 &&
+      pageResult.bookingsById.size < pageResult.totalCount);
+
+  if (shouldTryOffsetFallback) {
+    const offsetResult = await fetchWithOffsetLimit();
+    if (offsetResult.bookingsById.size > finalById.size) {
+      finalById = offsetResult.bookingsById;
+      finalProfessionals = offsetResult.professionals;
+      finalTotalCount = Math.max(finalTotalCount, offsetResult.totalCount);
+    }
   }
 
   const normalized: BookingListResponse = {
-    count: Math.max(totalCount, bookingsById.size),
-    results: Array.from(bookingsById.values()),
-    professionals: allProfessionals,
+    count: Math.max(finalTotalCount, finalById.size),
+    results: Array.from(finalById.values()),
+    professionals: finalProfessionals,
   };
 
   const missingPhone = normalized.results.filter(
