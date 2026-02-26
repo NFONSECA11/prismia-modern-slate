@@ -80,11 +80,13 @@ function TextInput({
   onChange,
   placeholder,
   type = "text",
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <input
@@ -92,7 +94,8 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
+      disabled={disabled}
+      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all disabled:opacity-70 disabled:cursor-default"
     />
   );
 }
@@ -170,6 +173,7 @@ function ModalBody({
   onClose: () => void;
   onSave: (data: NewBookingFormData) => Promise<void>;
 }) {
+  const readOnly = !!slot.prefill;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -192,7 +196,7 @@ function ModalBody({
   const isValid = !!form.lead_name.trim() && !!form.procedure_name;
 
   const handleSave = async () => {
-    if (!isValid) return;
+    if (!isValid || readOnly) return;
     setSaving(true);
     try {
       await onSave(form);
@@ -210,6 +214,8 @@ function ModalBody({
   const procedureOptions = PROCEDURES.map((p) => ({ value: p, label: p }));
   const unitOptions = UNITS.map((u) => ({ value: u, label: u }));
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
+
+  const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
 
   return (
     <>
@@ -254,7 +260,7 @@ function ModalBody({
             </span>
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-elevated text-foreground border border-border">
               <Calendar className="h-3 w-3 text-muted-foreground" />
-              {format(slot.date, "dd/MM/yyyy", { locale: ptBR })}
+              {displayDate}
             </span>
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-elevated text-foreground border border-border">
               <User className="h-3 w-3 text-muted-foreground" />
@@ -265,9 +271,9 @@ function ModalBody({
           {/* Paciente */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Paciente *</span>
+              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Paciente {!readOnly && "*"}</span>
             </FieldLabel>
-            <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" />
+            <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" disabled={readOnly} />
           </div>
 
           {/* Telefone */}
@@ -275,20 +281,24 @@ function ModalBody({
             <FieldLabel>
               <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
             </FieldLabel>
-            <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" />
+            <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" disabled={readOnly} />
           </div>
 
           {/* Procedimento */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1.5"><Stethoscope className="h-3 w-3" /> Procedimento *</span>
+              <span className="flex items-center gap-1.5"><Stethoscope className="h-3 w-3" /> Procedimento {!readOnly && "*"}</span>
             </FieldLabel>
-            <SelectInput
-              value={form.procedure_name}
-              onChange={set("procedure_name")}
-              options={procedureOptions}
-              placeholder="Selecione o procedimento"
-            />
+            {readOnly ? (
+              <TextInput value={form.procedure_name} onChange={() => {}} placeholder="" disabled />
+            ) : (
+              <SelectInput
+                value={form.procedure_name}
+                onChange={set("procedure_name")}
+                options={procedureOptions}
+                placeholder="Selecione o procedimento"
+              />
+            )}
           </div>
 
           {/* Profissional */}
@@ -296,19 +306,23 @@ function ModalBody({
             <FieldLabel>
               <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Profissional</span>
             </FieldLabel>
-            <SelectInput
-              value={String(form.professional_id)}
-              onChange={(v) => set("professional_id")(Number(v))}
-              options={profOptions}
-            />
+            {readOnly ? (
+              <TextInput value={slot.professional.name} onChange={() => {}} placeholder="" disabled />
+            ) : (
+              <SelectInput
+                value={String(form.professional_id)}
+                onChange={(v) => set("professional_id")(Number(v))}
+                options={profOptions}
+              />
+            )}
           </div>
 
-          {/* Data e Hora */}
+          {/* Data */}
           <div>
             <FieldLabel>
               <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
             </FieldLabel>
-            <TextInput value={form.date} onChange={set("date")} placeholder="AAAA-MM-DD" />
+            <TextInput value={displayDate} onChange={readOnly ? () => {} : set("date")} placeholder="DD/MM/AAAA" disabled={readOnly} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -316,13 +330,13 @@ function ModalBody({
               <FieldLabel>
                 <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Início</span>
               </FieldLabel>
-              <TextInput value={form.time} onChange={set("time")} placeholder="HH:MM" />
+              <TextInput value={form.time} onChange={set("time")} placeholder="HH:MM" disabled={readOnly} />
             </div>
             <div>
               <FieldLabel>
                 <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Término</span>
               </FieldLabel>
-              <TextInput value={form.time_end} onChange={set("time_end")} placeholder="HH:MM" />
+              <TextInput value={form.time_end} onChange={set("time_end")} placeholder="HH:MM" disabled={readOnly} />
             </div>
           </div>
 
@@ -332,63 +346,75 @@ function ModalBody({
               <FieldLabel>
                 <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
               </FieldLabel>
-              <SelectInput value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
+              {readOnly ? (
+                <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
+              ) : (
+                <SelectInput value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
+              )}
             </div>
             <div>
               <FieldLabel>Período</FieldLabel>
-              <SelectInput value={form.period} onChange={set("period")} options={periodOptions} />
+              {readOnly ? (
+                <TextInput value={form.period} onChange={() => {}} placeholder="" disabled />
+              ) : (
+                <SelectInput value={form.period} onChange={set("period")} options={periodOptions} />
+              )}
             </div>
           </div>
 
           {/* Observações */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Observações</span>
-            </FieldLabel>
-            <textarea
-              value={form.notes}
-              onChange={(e) => set("notes")(e.target.value)}
-              placeholder="Informações adicionais, preferências do paciente..."
-              rows={3}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-border surface-elevated rounded-b-2xl flex-shrink-0 flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-all"
-          >
-            Cancelar
-          </button>
-
-          {saved ? (
-            <div className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-status-confirmed-bg text-status-confirmed border border-status-confirmed/30 text-sm font-semibold animate-fade-in">
-              <CheckCircle2 className="h-4 w-4" />
-              Agendado!
+          {!readOnly && (
+            <div>
+              <FieldLabel>
+                <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Observações</span>
+              </FieldLabel>
+              <textarea
+                value={form.notes}
+                onChange={(e) => set("notes")(e.target.value)}
+                placeholder="Informações adicionais, preferências do paciente..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
+              />
             </div>
-          ) : (
-            <button
-              onClick={handleSave}
-              disabled={!isValid || saving}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Confirmar Agendamento
-                </>
-              )}
-            </button>
           )}
         </div>
+
+        {/* Footer — only for new bookings */}
+        {!readOnly && (
+          <div className="px-5 py-4 border-t border-border surface-elevated rounded-b-2xl flex-shrink-0 flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-all"
+            >
+              Cancelar
+            </button>
+
+            {saved ? (
+              <div className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-status-confirmed-bg text-status-confirmed border border-status-confirmed/30 text-sm font-semibold animate-fade-in">
+                <CheckCircle2 className="h-4 w-4" />
+                Agendado!
+              </div>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={!isValid || saving}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Confirmar Agendamento
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
