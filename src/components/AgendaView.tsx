@@ -472,6 +472,12 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
       hour: dt.hour,
       minute: dt.minute,
       professional: prof ?? { id: booking.professional_id as unknown as number, name: booking.professional_name, specialty: "" },
+      prefill: {
+        lead_name: booking.lead_name,
+        phone: booking.contact_phone || booking.phone || "",
+        procedure_name: booking.procedure_name,
+        unit_name: booking.unit_name,
+      },
     });
   };
   const scrollRef = useRef<HTMLDivElement>(null);
