@@ -134,10 +134,7 @@ function useCurrentTimeTop(startHour: number) {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const hoursElapsed = now.getHours() - startHour + now.getMinutes() / 60;
-      // Each row has a 1px border-bottom, so we need to account for the accumulated borders
-      const fullHoursPassed = Math.floor(now.getHours() - startHour);
-      const offset = hoursElapsed * CELL_HEIGHT + fullHoursPassed; // +1px per completed hour row border
+      const offset = (now.getHours() - startHour + now.getMinutes() / 60) * CELL_HEIGHT;
       setTop(offset);
     };
     update();
@@ -292,11 +289,11 @@ function DayView({
         {/* Time grid */}
         <div className="relative">
           {showNow && currentTimeTop !== null && currentTimeTop >= 0 && (
-            <div className="absolute left-0 right-0 z-20 flex items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
+            <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
               <div className="w-[60px] flex-shrink-0 pr-2 text-right">
                 <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-[2px] flex-1 bg-primary/70 relative">
+              <div className="h-px flex-1 bg-primary/70 relative">
                 <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
               </div>
             </div>
@@ -423,11 +420,11 @@ function WeekView({
         {/* Grid */}
         <div className="relative">
           {currentTimeTop !== null && days.some((d) => isToday(d)) && currentTimeTop >= 0 && (
-            <div className="absolute left-0 right-0 z-20 flex items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
+            <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
               <div className="w-[60px] flex-shrink-0 pr-2 text-right">
                 <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-[2px] flex-1 bg-primary/70 relative">
+              <div className="h-px flex-1 bg-primary/70 relative">
                 <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
               </div>
             </div>
