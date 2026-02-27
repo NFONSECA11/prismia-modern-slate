@@ -134,8 +134,10 @@ function useCurrentTimeTop(startHour: number) {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      // Add small offset (6px) to align with hour labels that have pt-1.5
-      const offset = (now.getHours() - startHour + now.getMinutes() / 60) * CELL_HEIGHT + 6;
+      const hoursElapsed = now.getHours() - startHour + now.getMinutes() / 60;
+      // Each row has a 1px border-bottom, so we need to account for the accumulated borders
+      const fullHoursPassed = Math.floor(now.getHours() - startHour);
+      const offset = hoursElapsed * CELL_HEIGHT + fullHoursPassed; // +1px per completed hour row border
       setTop(offset);
     };
     update();
