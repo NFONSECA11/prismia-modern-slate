@@ -163,10 +163,19 @@ function AppointmentCard({
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
+  const isConfirmed = booking.status === "confirmed";
 
-  const bgColor = isPast ? "hsl(var(--muted-foreground))" : "hsl(var(--status-confirmed))";
+  const bgColor = isPast
+    ? "hsl(var(--muted-foreground))"
+    : isConfirmed
+      ? "hsl(var(--status-confirmed))"
+      : "hsl(var(--status-handoff))";
   const textColor = "hsl(var(--primary-foreground))";
-  const borderColor = isPast ? "hsl(var(--muted-foreground) / 0.7)" : "hsl(var(--status-confirmed))";
+  const borderColor = isPast
+    ? "hsl(var(--muted-foreground) / 0.7)"
+    : isConfirmed
+      ? "hsl(var(--status-confirmed))"
+      : "hsl(var(--status-handoff))";
 
   return (
     <button
