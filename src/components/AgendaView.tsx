@@ -134,7 +134,8 @@ function useCurrentTimeTop(startHour: number) {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const offset = (now.getHours() - startHour + now.getMinutes() / 60) * CELL_HEIGHT;
+      // Add small offset (6px) to align with hour labels that have pt-1.5
+      const offset = (now.getHours() - startHour + now.getMinutes() / 60) * CELL_HEIGHT + 6;
       setTop(offset);
     };
     update();
