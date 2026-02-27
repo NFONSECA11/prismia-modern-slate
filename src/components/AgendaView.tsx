@@ -573,7 +573,7 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
             {(["day", "week"] as AgendaMode[]).map((m) => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
+                onClick={() => { setMode(m); if (m === "day") setCurrentDate(new Date()); }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                   mode === m ? "bg-surface-raised text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
