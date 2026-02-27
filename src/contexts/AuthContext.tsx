@@ -20,7 +20,11 @@ interface AuthContextType extends AuthState {
   bootstrap: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Persist context across HMR reloads to avoid "outside AuthProvider" errors
+const AUTH_CTX_KEY = "__PRISMIA_AUTH_CTX__";
+const AuthContext: React.Context<AuthContextType | null> =
+  (globalThis as any)[AUTH_CTX_KEY] ??
+  ((globalThis as any)[AUTH_CTX_KEY] = createContext<AuthContextType | null>(null));
 
 const AUTH_FALLBACK: AuthContextType = {
   user: null,
