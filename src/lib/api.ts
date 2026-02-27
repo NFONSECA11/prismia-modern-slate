@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://herein-beef-evanescence-lying.trycloudflare.com",
+  baseURL: "https://affect-albums-nam-covers.trycloudflare.com",
   timeout: 10_000,
   withCredentials: true,
   headers: {
