@@ -124,6 +124,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         professionals = normalizedPage.professionals;
       }
 
+      console.log(`[bookingApi] page=${page} fetched=${normalizedPage.results.length} added=${addedCount} total=${bookingsById.size} count=${totalCount}`);
+
       const hasTopNextField =
         !!data &&
         typeof data === "object" &&
@@ -147,7 +149,16 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         continue;
       }
 
+      // If total count indicates more data exists, keep paginating even if no new unique IDs
+      if (totalCount > 0 && bookingsById.size >= totalCount) break;
+
+      // Only stop on repeated data if we've already fetched enough
       if (page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
+        // If count says there's more, try next page anyway
+        if (totalCount > bookingsById.size) {
+          page += 1;
+          continue;
+        }
         repeatedPageDetected = true;
         break;
       }
@@ -155,6 +166,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       page += 1;
     }
 
+    console.log(`[bookingApi] pageNumber done: ${bookingsById.size} unique bookings, totalCount=${totalCount}, pages=${pagesFetched}`);
     return { bookingsById, professionals, totalCount, repeatedPageDetected, pagesFetched };
   };
 
