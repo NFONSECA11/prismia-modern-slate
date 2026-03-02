@@ -71,7 +71,7 @@ export default function ProceduresByUnitSection() {
   });
 
   const createProcedure = useMutation({
-    mutationFn: async (payload: { procedure_name: string; company: number }) => {
+    mutationFn: async (payload: { name: string; company: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/procedures/", payload);
       return data;
@@ -164,7 +164,7 @@ export default function ProceduresByUnitSection() {
               disabled={!company?.id || !newName.trim() || createProcedure.isPending}
               onClick={() =>
                 createProcedure.mutate({
-                  procedure_name: newName.trim(),
+                  name: newName.trim(),
                   company: company?.id as number,
                 })
               }
