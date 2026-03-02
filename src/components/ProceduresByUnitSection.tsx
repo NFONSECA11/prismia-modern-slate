@@ -27,6 +27,9 @@ export default function ProceduresByUnitSection() {
 
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newDuration, setNewDuration] = useState("");
+  const [newPriceMin, setNewPriceMin] = useState("");
+  const [newPriceMax, setNewPriceMax] = useState("");
 
   const proceduresQuery = useQuery({
     queryKey: ["procedures"],
@@ -71,7 +74,7 @@ export default function ProceduresByUnitSection() {
   });
 
   const createProcedure = useMutation({
-    mutationFn: async (payload: { name: string; company: number }) => {
+    mutationFn: async (payload: { name: string; company: number; duration_min?: number; price_min?: string; price_max?: string }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/procedures/", payload);
       return data;
@@ -80,6 +83,9 @@ export default function ProceduresByUnitSection() {
       queryClient.invalidateQueries({ queryKey: ["procedures"] });
       setShowNew(false);
       setNewName("");
+      setNewDuration("");
+      setNewPriceMin("");
+      setNewPriceMax("");
       toast.success("Procedimento adicionado com sucesso");
     },
     onError: (err: any) => {
@@ -152,7 +158,7 @@ export default function ProceduresByUnitSection() {
 
         {/* Criar procedimento */}
         {showNew ? (
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <div className="h-8 px-3 rounded-md border border-border bg-background inline-flex items-center">
               <span className="text-xs text-muted-foreground">
                 Empresa: <span className="text-foreground font-medium">{company?.name ?? "—"}</span>
@@ -162,7 +168,30 @@ export default function ProceduresByUnitSection() {
               placeholder="Nome do procedimento"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="h-8 text-sm flex-1"
+              className="h-8 text-sm flex-1 min-w-[140px]"
+            />
+            <Input
+              placeholder="Duração (min)"
+              type="number"
+              value={newDuration}
+              onChange={(e) => setNewDuration(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço mín"
+              type="number"
+              step="0.01"
+              value={newPriceMin}
+              onChange={(e) => setNewPriceMin(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço máx"
+              type="number"
+              step="0.01"
+              value={newPriceMax}
+              onChange={(e) => setNewPriceMax(e.target.value)}
+              className="h-8 text-sm w-24"
             />
             <Button
               size="sm"
@@ -172,6 +201,9 @@ export default function ProceduresByUnitSection() {
                 createProcedure.mutate({
                   name: newName.trim(),
                   company: company?.id as number,
+                  ...(newDuration ? { duration_min: Number(newDuration) } : {}),
+                  ...(newPriceMin ? { price_min: newPriceMin } : {}),
+                  ...(newPriceMax ? { price_max: newPriceMax } : {}),
                 })
               }
             >
@@ -181,7 +213,7 @@ export default function ProceduresByUnitSection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewName(""); }}
+              onClick={() => { setShowNew(false); setNewName(""); setNewDuration(""); setNewPriceMin(""); setNewPriceMax(""); }}
             >
               Cancelar
             </Button>
