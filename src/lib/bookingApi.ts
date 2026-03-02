@@ -382,6 +382,66 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return bestResult;
   };
 
+  const fetchWithStatusSharding = async () => {
+    const bookingsById = new Map<number, BookingRequest>();
+    let professionals: Professional[] = [];
+    let totalCount = 0;
+
+    const statuses = [
+      "handoff",
+      "assisted",
+      "pending",
+      "confirmed",
+      "canceled",
+      "cancelled",
+      "failed",
+      "awaiting_choice",
+    ];
+
+    const statusParamVariants: Array<(status: string) => Record<string, string | number>> = [
+      (status) => ({ status, limit: 1000 }),
+      (status) => ({ status, page_size: 1000 }),
+      (status) => ({ status, page: 1, page_size: 1000 }),
+      (status) => ({ status, page: 1, limit: 1000 }),
+      (status) => ({ booking_status: status, limit: 1000 }),
+    ];
+
+    for (const status of statuses) {
+      let bestPage: BookingListResponse | null = null;
+
+      for (const buildParams of statusParamVariants) {
+        try {
+          const response = await api.get("/api/booking/requests/", {
+            params: buildParams(status),
+          });
+
+          const normalizedPage = normalizeBookingListResponse(response.data);
+          const headerTotalCount = extractTotalCountFromHeaders(response.headers);
+          totalCount = Math.max(totalCount, normalizedPage.count || 0, headerTotalCount ?? 0);
+
+          if (normalizedPage.professionals.length > 0) {
+            professionals = normalizedPage.professionals;
+          }
+
+          if (!bestPage || normalizedPage.results.length > bestPage.results.length) {
+            bestPage = normalizedPage;
+          }
+        } catch {
+          // ignore unsupported status param variants
+        }
+      }
+
+      if (bestPage && bestPage.results.length > 0) {
+        const addedCount = mergePage(bookingsById, bestPage.results);
+        console.log(
+          `[bookingApi] shard status=${status} fetched=${bestPage.results.length} added=${addedCount} unique=${bookingsById.size}`
+        );
+      }
+    }
+
+    return { bookingsById, professionals, totalCount };
+  };
+
   const pageResultWithPageSize = await fetchWithPageNumber(true);
 
   let pageResult = pageResultWithPageSize;
@@ -415,6 +475,18 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       finalById = offsetResult.bookingsById;
       finalProfessionals = offsetResult.professionals;
       finalTotalCount = Math.max(finalTotalCount, offsetResult.totalCount);
+    }
+  }
+
+  const shouldTryStatusSharding =
+    finalTotalCount > 0 && finalById.size < finalTotalCount;
+
+  if (shouldTryStatusSharding) {
+    const statusShardResult = await fetchWithStatusSharding();
+    if (statusShardResult.bookingsById.size > finalById.size) {
+      finalById = statusShardResult.bookingsById;
+      finalProfessionals = statusShardResult.professionals;
+      finalTotalCount = Math.max(finalTotalCount, statusShardResult.totalCount);
     }
   }
 
