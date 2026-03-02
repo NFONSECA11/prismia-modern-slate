@@ -48,16 +48,16 @@ export default function ProceduresByUnitSection() {
   const anyLoading = proceduresQuery.isLoading;
 
   const toggleEnabled = useMutation({
-    mutationFn: async ({ id, enabled }: { id: number; enabled: boolean }) => {
+    mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/settings/procedures/${id}/`, { enabled });
+      await api.patch(`/api/settings/procedures/${id}/`, { is_active });
     },
-    onMutate: async ({ id, enabled }) => {
+    onMutate: async ({ id, is_active }) => {
       const key = ["procedures"];
       await queryClient.cancelQueries({ queryKey: key });
       const prev = queryClient.getQueryData(key);
       queryClient.setQueryData(key, (old: any[]) =>
-        old?.map((p: any) => (p.id === id ? { ...p, enabled } : p))
+        old?.map((p: any) => (p.id === id ? { ...p, is_active } : p))
       );
       return { prev };
     },
@@ -123,7 +123,7 @@ export default function ProceduresByUnitSection() {
           <p className="text-xs text-muted-foreground px-3">Nenhum procedimento encontrado.</p>
         ) : (
           allProcedures.map((proc) => {
-            const active = proc.enabled !== false && proc.is_active !== false;
+            const active = proc.is_active !== false;
             return (
               <div
                 key={proc.id}
@@ -141,7 +141,7 @@ export default function ProceduresByUnitSection() {
                 <Switch
                   checked={active}
                   onCheckedChange={(checked) =>
-                    toggleEnabled.mutate({ id: proc.id, enabled: checked })
+                    toggleEnabled.mutate({ id: proc.id, is_active: checked })
                   }
                   className="scale-75"
                 />
