@@ -210,8 +210,8 @@ export default function Settings() {
           </div>
 
           <SpecialtiesSection />
-          <ServiceCategoriesSection />
           <ProceduresByUnitSection />
+          <ServiceCategoriesSection />
         </section>
 
         {/* ─── 3) Equipe e responsabilidades ─── */}
