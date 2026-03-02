@@ -87,16 +87,15 @@ export default function ProceduresByUnitSection() {
   });
 
   const createProcedure = useMutation({
-    mutationFn: async (payload: { procedure_name: string; unit: number }) => {
+    mutationFn: async (payload: { procedure_name: string; company: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/unit-procedures/", payload);
       return data;
     },
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["unit-procedures", vars.unit] });
+    onSuccess: () => {
+      units.forEach((u) => queryClient.invalidateQueries({ queryKey: ["unit-procedures", u.id] }));
       setShowNew(false);
       setNewName("");
-      setNewUnitId(activeUnit?.id ?? "");
       toast.success("Procedimento adicionado com sucesso");
     },
     onError: () => {
@@ -163,16 +162,6 @@ export default function ProceduresByUnitSection() {
         {/* Criar procedimento */}
         {showNew ? (
           <div className="flex items-center gap-2 pt-2">
-            <select
-              value={newUnitId}
-              onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground z-50"
-            >
-              <option value="">Unidade</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
             <Input
               placeholder="Nome do procedimento"
               value={newName}
@@ -182,11 +171,11 @@ export default function ProceduresByUnitSection() {
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newName.trim() || !newUnitId || createProcedure.isPending}
+              disabled={!newName.trim() || createProcedure.isPending}
               onClick={() =>
                 createProcedure.mutate({
                   procedure_name: newName.trim(),
-                  unit: newUnitId as number,
+                  company: company?.id as number,
                 })
               }
             >
