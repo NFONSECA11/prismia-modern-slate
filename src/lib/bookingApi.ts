@@ -56,6 +56,7 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const PAGE_SIZE = 100;
   const MAX_PAGES = 200;
+  const MAX_NO_PROGRESS_PAGES = 3;
 
   const mergePage = (bookingsById: Map<number, BookingRequest>, pageResults: BookingRequest[]) => {
     const before = bookingsById.size;
@@ -90,17 +91,29 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     let useCursor = false;
     let nextCursor: string | null = null;
     const seenCursors = new Set<string>();
+    let noProgressPages = 0;
+
+    const normalizeCursorRequestPath = (cursor: string): string => {
+      try {
+        const base = typeof api.defaults.baseURL === "string" ? api.defaults.baseURL : window.location.origin;
+        const parsed = new URL(cursor, base);
+        return `${parsed.pathname}${parsed.search}`;
+      } catch {
+        return cursor;
+      }
+    };
 
     while (pagesFetched < MAX_PAGES) {
       let data: any;
       try {
         if (useCursor && nextCursor) {
-          if (seenCursors.has(nextCursor)) {
+          const normalizedCursorPath = normalizeCursorRequestPath(nextCursor);
+          if (seenCursors.has(normalizedCursorPath)) {
             repeatedPageDetected = true;
             break;
           }
-          seenCursors.add(nextCursor);
-          const response = await api.get(nextCursor);
+          seenCursors.add(normalizedCursorPath);
+          const response = await api.get(normalizedCursorPath);
           data = response.data;
         } else {
           const response = await api.get("/api/booking/requests/", {
@@ -122,6 +135,12 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       const addedCount = mergePage(bookingsById, normalizedPage.results);
       if (normalizedPage.professionals.length > 0) {
         professionals = normalizedPage.professionals;
+      }
+
+      if (addedCount === 0 && normalizedPage.results.length > 0) {
+        noProgressPages += 1;
+      } else {
+        noProgressPages = 0;
       }
 
       const hasTopNextField =
@@ -148,7 +167,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         continue;
       }
 
-      if (page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
+      if (noProgressPages >= MAX_NO_PROGRESS_PAGES && normalizedPage.results.length > 0) {
         repeatedPageDetected = true;
         break;
       }
