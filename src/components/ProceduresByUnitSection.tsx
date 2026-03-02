@@ -91,7 +91,7 @@ export default function ProceduresByUnitSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Procedimentos por Unidade</span>
+          <span className="text-sm font-bold text-foreground">Procedimentos</span>
           <p className="text-xs text-muted-foreground">
             Procedimentos cadastrados em cada unidade
           </p>
