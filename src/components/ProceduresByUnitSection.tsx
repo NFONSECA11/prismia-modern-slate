@@ -28,71 +28,56 @@ export default function ProceduresByUnitSection() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
 
-  const unitQueries = units.map((unit) => {
-    const query = useQuery({
-      queryKey: ["unit-procedures", unit.id],
-      queryFn: async () => {
-        await fetchCsrf();
-        const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: unit.id } });
-        if (Array.isArray(data)) return data;
-        if (data?.results) return data.results;
-        if (data?.data) return data.data;
-        const inner = data?.result;
-        if (Array.isArray(inner)) return inner;
-        if (inner?.results) return inner.results;
-        return [];
-      },
-      enabled: !!user,
-    });
-    return { unit, ...query };
+  const proceduresQuery = useQuery({
+    queryKey: ["procedures"],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/procedures/");
+      if (Array.isArray(data)) return data;
+      if (data?.results) return data.results;
+      if (data?.data) return data.data;
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results) return inner.results;
+      return [];
+    },
+    enabled: !!user,
   });
 
-  const allProcedures: (UnitProcedure & { unitId: number; companyId: number | null; companyName: string })[] = [];
-  let anyLoading = false;
-
-  unitQueries.forEach(({ unit, data = [], isLoading }) => {
-    if (isLoading) anyLoading = true;
-    (data as any[]).forEach((proc) => {
-      allProcedures.push({
-        ...proc,
-        unitId: unit.id,
-        companyId: proc.company_id ?? proc.company ?? company?.id ?? null,
-        companyName: proc.company_name ?? company?.name ?? "—",
-      });
-    });
-  });
+  const allProcedures = (proceduresQuery.data ?? []) as any[];
+  const anyLoading = proceduresQuery.isLoading;
 
   const toggleEnabled = useMutation({
-    mutationFn: async ({ id, enabled, unitId }: { id: number; enabled: boolean; unitId: number }) => {
+    mutationFn: async ({ id, enabled }: { id: number; enabled: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/settings/unit-procedures/${id}/`, { enabled });
+      await api.patch(`/api/settings/procedures/${id}/`, { enabled });
     },
-    onMutate: async ({ id, enabled, unitId }) => {
-      const key = ["unit-procedures", unitId];
+    onMutate: async ({ id, enabled }) => {
+      const key = ["procedures"];
       await queryClient.cancelQueries({ queryKey: key });
       const prev = queryClient.getQueryData(key);
       queryClient.setQueryData(key, (old: any[]) =>
         old?.map((p: any) => (p.id === id ? { ...p, enabled } : p))
       );
-      return { prev, unitId };
+      return { prev };
     },
     onError: (_err, _vars, context) => {
-      if (context) queryClient.setQueryData(["unit-procedures", context.unitId], context.prev);
+      if (context) queryClient.setQueryData(["procedures"], context.prev);
       toast.error("Erro ao alterar status do procedimento");
     },
-    onSettled: (_d, _e, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["unit-procedures", vars.unitId] });
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["procedures"] });
     },
   });
 
   const createProcedure = useMutation({
     mutationFn: async (payload: { procedure_name: string; company: number }) => {
       await fetchCsrf();
-      const { data } = await api.post("/api/settings/unit-procedures/", payload);
+      const { data } = await api.post("/api/settings/procedures/", payload);
       return data;
     },
     onSuccess: () => {
-      units.forEach((u) => queryClient.invalidateQueries({ queryKey: ["unit-procedures", u.id] }));
+      queryClient.invalidateQueries({ queryKey: ["procedures"] });
       setShowNew(false);
       setNewName("");
       toast.success("Procedimento adicionado com sucesso");
@@ -142,15 +127,15 @@ export default function ProceduresByUnitSection() {
                 className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
-                <span className="text-xs font-mono text-muted-foreground">{proc.companyId ?? "—"}</span>
-                <span className="text-xs text-muted-foreground">{proc.companyName}</span>
+                <span className="text-xs font-mono text-muted-foreground">{proc.company_id ?? proc.company ?? company?.id ?? "—"}</span>
+                <span className="text-xs text-muted-foreground">{proc.company_name ?? company?.name ?? "—"}</span>
                 <span className="text-sm font-medium text-foreground truncate">
-                  {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
+                  {proc.procedure_name ?? proc.name ?? proc.procedure_slug ?? `#${proc.id}`}
                 </span>
                 <Switch
                   checked={active}
                   onCheckedChange={(checked) =>
-                    toggleEnabled.mutate({ id: proc.id, enabled: checked, unitId: proc.unitId })
+                    toggleEnabled.mutate({ id: proc.id, enabled: checked })
                   }
                   className="scale-75"
                 />
