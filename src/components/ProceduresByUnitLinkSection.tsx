@@ -123,8 +123,8 @@ export default function ProceduresByUnitLinkSection() {
         {/* Header */}
         <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Ações</span>
         </div>
 
@@ -140,8 +140,8 @@ export default function ProceduresByUnitLinkSection() {
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
-              <span className="text-sm font-medium text-foreground truncate">{getProcName(item)}</span>
               <span className="text-sm text-foreground truncate">{getUnitName(item)}</span>
+              <span className="text-sm font-medium text-foreground truncate">{getProcName(item)}</span>
               <button
                 onClick={() => deleteLink.mutate(item.id)}
                 className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
