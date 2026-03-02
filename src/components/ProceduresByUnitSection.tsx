@@ -25,7 +25,7 @@ interface UnitProcedure {
 }
 
 export default function ProceduresByUnitSection() {
-  const { units, user } = useAuth();
+  const { units, user, company } = useAuth();
   const queryClient = useQueryClient();
 
   const unitQueries = units.map((unit) => {
@@ -52,12 +52,12 @@ export default function ProceduresByUnitSection() {
 
   unitQueries.forEach(({ unit, data = [], isLoading }) => {
     if (isLoading) anyLoading = true;
-    (data as UnitProcedure[]).forEach((proc) => {
+    (data as any[]).forEach((proc) => {
       allProcedures.push({
         ...proc,
         unitId: unit.id,
-        companyId: (proc as any).company_id ?? null,
-        companyName: (proc as any).company_name ?? "",
+        companyId: proc.company_id ?? proc.company ?? company?.id ?? null,
+        companyName: proc.company_name ?? company?.name ?? "",
       });
     });
   });
