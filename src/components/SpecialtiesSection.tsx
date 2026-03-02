@@ -3,7 +3,7 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,17 @@ export default function SpecialtiesSection() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["specialties"] }),
   });
 
-
+  const deleteSpecialty = useMutation({
+    mutationFn: async (id: number) => {
+      await fetchCsrf();
+      await api.delete(`/api/settings/specialties/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["specialties"] });
+      toast.success("Especialidade removida com sucesso");
+    },
+    onError: () => toast.error("Erro ao remover especialidade"),
+  });
 
 
   return (
@@ -104,12 +114,13 @@ export default function SpecialtiesSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[5rem_3rem_1fr_8rem_auto_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span />
         </div>
 
         {isLoading ? (
@@ -122,7 +133,7 @@ export default function SpecialtiesSection() {
             return (
               <div
                 key={item.id}
-                className="grid grid-cols-[5rem_3rem_1fr_8rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[5rem_3rem_1fr_8rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs text-muted-foreground truncate">
@@ -140,6 +151,13 @@ export default function SpecialtiesSection() {
                   onCheckedChange={(checked) => toggleActive.mutate({ id: item.id, is_active: checked })}
                   className="scale-75"
                 />
+                <button
+                  onClick={() => deleteSpecialty.mutate(item.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover especialidade"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })
