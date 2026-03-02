@@ -172,6 +172,9 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         professionals = normalizedPage.professionals;
       }
 
+      // Diagnostic log — captures raw API shape
+      console.log(`[bookingApi] strategy=${withPageSize ? "page+size" : "page"} page=${page} fetched=${normalizedPage.results.length} added=${addedCount} unique=${bookingsById.size} apiCount=${totalCount} nextCursor=${extractNextCursor(data) ?? "null"} rawKeys=${data ? Object.keys(data).join(",") : "null"} resultKeys=${data?.result ? Object.keys(data.result).join(",") : "null"}`);
+
       if (addedCount === 0 && normalizedPage.results.length > 0) {
         noProgressPages += 1;
       } else {
