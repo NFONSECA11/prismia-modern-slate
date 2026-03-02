@@ -6,38 +6,73 @@ import { BookingListResponse, BookingRequest, Professional } from "@/types/booki
 const bookingPhoneCache = new Map<number, string>();
 
 function normalizeBookingListResponse(payload: any): BookingListResponse {
-  if (payload && typeof payload === "object") {
-    if (Array.isArray(payload.results)) {
-      return {
-        count: typeof payload.count === "number" ? payload.count : payload.results.length,
-        results: payload.results,
-        professionals: Array.isArray(payload.professionals) ? payload.professionals : [],
-      };
-    }
+  const resultNode = payload?.result;
 
-    if (Array.isArray(payload.result?.results)) {
-      return {
-        count:
-          typeof payload.result.count === "number"
-            ? payload.result.count
-            : payload.result.results.length,
-        results: payload.result.results,
-        professionals: Array.isArray(payload.result.professionals)
-          ? payload.result.professionals
-          : [],
-      };
-    }
+  const results = Array.isArray(payload?.results)
+    ? payload.results
+    : Array.isArray(resultNode?.results)
+      ? resultNode.results
+      : Array.isArray(resultNode)
+        ? resultNode
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(resultNode?.data)
+            ? resultNode.data
+            : [];
 
-    if (Array.isArray(payload.result)) {
-      return {
-        count: payload.result.length,
-        results: payload.result,
-        professionals: [],
-      };
+  const rawCount =
+    payload?.count ??
+    resultNode?.count ??
+    payload?.total ??
+    resultNode?.total ??
+    payload?.total_count ??
+    resultNode?.total_count ??
+    payload?.pagination?.count ??
+    resultNode?.pagination?.count;
+
+  const parsedCount =
+    typeof rawCount === "number"
+      ? rawCount
+      : typeof rawCount === "string"
+        ? Number(rawCount)
+        : NaN;
+
+  return {
+    count: Number.isFinite(parsedCount) ? parsedCount : results.length,
+    results,
+    professionals: Array.isArray(payload?.professionals)
+      ? payload.professionals
+      : Array.isArray(resultNode?.professionals)
+        ? resultNode.professionals
+        : [],
+  };
+}
+
+function extractNextCursor(payload: any): string | null {
+  const candidates = [
+    payload?.next,
+    payload?.result?.next,
+    payload?.pagination?.next,
+    payload?.result?.pagination?.next,
+    payload?.links?.next,
+    payload?.result?.links?.next,
+    payload?.meta?.next,
+    payload?.result?.meta?.next,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) return candidate;
+    if (
+      candidate &&
+      typeof candidate === "object" &&
+      typeof (candidate.url ?? candidate.href) === "string" &&
+      (candidate.url ?? candidate.href).trim().length > 0
+    ) {
+      return (candidate.url ?? candidate.href) as string;
     }
   }
 
-  return { count: 0, results: [], professionals: [] };
+  return null;
 }
 
 async function fetchBookingPhoneById(id: number): Promise<string | null> {
@@ -143,26 +178,13 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         noProgressPages = 0;
       }
 
-      const hasTopNextField =
-        !!data &&
-        typeof data === "object" &&
-        Object.prototype.hasOwnProperty.call(data, "next");
-      const hasNestedNextField =
-        !!data?.result &&
-        typeof data.result === "object" &&
-        Object.prototype.hasOwnProperty.call(data.result, "next");
-      const hasNextField = hasTopNextField || hasNestedNextField;
-
-      const rawNext = hasTopNextField ? data?.next : hasNestedNextField ? data?.result?.next : null;
-      const resolvedNextCursor =
-        typeof rawNext === "string" && rawNext.trim().length > 0 ? rawNext : null;
+      const resolvedNextCursor = extractNextCursor(data);
 
       if (normalizedPage.results.length === 0) break;
       if (totalCount > 0 && bookingsById.size >= totalCount) break;
 
-      if (hasNextField) {
+      if (resolvedNextCursor) {
         useCursor = true;
-        if (!resolvedNextCursor) break;
         nextCursor = resolvedNextCursor;
         continue;
       }
