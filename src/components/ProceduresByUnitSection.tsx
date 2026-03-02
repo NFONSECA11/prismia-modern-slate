@@ -47,7 +47,7 @@ export default function ProceduresByUnitSection() {
     return { unit, ...query };
   });
 
-  const allProcedures: (UnitProcedure & { unitId: number; unitName: string })[] = [];
+  const allProcedures: (UnitProcedure & { unitId: number; companyId: number | null; companyName: string })[] = [];
   let anyLoading = false;
 
   unitQueries.forEach(({ unit, data = [], isLoading }) => {
@@ -56,7 +56,8 @@ export default function ProceduresByUnitSection() {
       allProcedures.push({
         ...proc,
         unitId: unit.id,
-        unitName: proc.unit_name ?? unit.name,
+        companyId: (proc as any).company_id ?? null,
+        companyName: (proc as any).company_name ?? "",
       });
     });
   });
@@ -104,8 +105,8 @@ export default function ProceduresByUnitSection() {
       >
         {/* Header */}
         <div className="grid grid-cols-[3rem_1fr_1fr_4.5rem_4.5rem_4.5rem_auto] gap-2 px-3 py-1 items-center">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Unidade</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Empresa</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Duração</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Preço Min</span>
@@ -129,8 +130,8 @@ export default function ProceduresByUnitSection() {
                 className="grid grid-cols-[3rem_1fr_1fr_4.5rem_4.5rem_4.5rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
-                <span className="text-xs font-mono text-muted-foreground">{proc.unitId}</span>
-                <span className="text-xs text-muted-foreground">{proc.unitName}</span>
+                <span className="text-xs font-mono text-muted-foreground">{proc.companyId ?? "—"}</span>
+                <span className="text-xs text-muted-foreground">{proc.companyName}</span>
                 <span className="text-sm font-medium text-foreground truncate">
                   {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
                 </span>
