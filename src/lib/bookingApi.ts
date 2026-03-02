@@ -48,7 +48,71 @@ function normalizeBookingListResponse(payload: any): BookingListResponse {
   };
 }
 
-function extractNextCursor(payload: any): string | null {
+function getHeaderValue(headers: any, key: string): string | null {
+  const direct = headers?.[key] ?? headers?.[key.toLowerCase()] ?? headers?.get?.(key);
+  if (typeof direct === "string" && direct.trim().length > 0) return direct;
+  return null;
+}
+
+function extractNextFromLinkHeader(linkHeader: string | null): string | null {
+  if (!linkHeader) return null;
+
+  const entries = linkHeader.split(",");
+  for (const entry of entries) {
+    const [urlPart, ...params] = entry.split(";");
+    const isNext = params.some((param) => /rel\s*=\s*"?next"?/i.test(param));
+    if (!isNext) continue;
+
+    const match = urlPart.match(/<([^>]+)>/);
+    if (match?.[1]) return match[1].trim();
+  }
+
+  return null;
+}
+
+function extractTotalCountFromHeaders(headers: any): number | null {
+  const directCandidates = [
+    getHeaderValue(headers, "x-total-count"),
+    getHeaderValue(headers, "x-pagination-count"),
+    getHeaderValue(headers, "x-pagination-total"),
+    getHeaderValue(headers, "x-total"),
+  ];
+
+  for (const candidate of directCandidates) {
+    if (!candidate) continue;
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  const contentRange = getHeaderValue(headers, "content-range");
+  if (contentRange) {
+    const match = contentRange.match(/\/(\d+)\s*$/);
+    if (match?.[1]) {
+      const parsed = Number(match[1]);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+
+  return null;
+}
+
+function extractNextCursor(payload: any, headers?: any): string | null {
+  const linkHeaderNext = extractNextFromLinkHeader(getHeaderValue(headers, "link"));
+  if (linkHeaderNext) return linkHeaderNext;
+
+  const headerCandidates = [
+    getHeaderValue(headers, "x-next"),
+    getHeaderValue(headers, "next"),
+    getHeaderValue(headers, "x-pagination-next"),
+  ];
+
+  for (const candidate of headerCandidates) {
+    if (!candidate) continue;
+    if (candidate.startsWith("/") || candidate.startsWith("http") || candidate.startsWith("?")) {
+      return candidate;
+    }
+  }
+
   const candidates = [
     payload?.next,
     payload?.result?.next,
@@ -140,6 +204,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
     while (pagesFetched < MAX_PAGES) {
       let data: any;
+      let responseHeaders: any;
       try {
         if (useCursor && nextCursor) {
           const normalizedCursorPath = normalizeCursorRequestPath(nextCursor);
@@ -150,11 +215,13 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
           seenCursors.add(normalizedCursorPath);
           const response = await api.get(normalizedCursorPath);
           data = response.data;
+          responseHeaders = response.headers;
         } else {
           const response = await api.get("/api/booking/requests/", {
             params: withPageSize ? { page, page_size: PAGE_SIZE } : { page },
           });
           data = response.data;
+          responseHeaders = response.headers;
         }
       } catch (error) {
         const status = (error as any)?.response?.status;
@@ -165,23 +232,24 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
       const normalizedPage = normalizeBookingListResponse(data);
       pagesFetched += 1;
-      totalCount = Math.max(totalCount, normalizedPage.count || 0);
+      const headerTotalCount = extractTotalCountFromHeaders(responseHeaders);
+      totalCount = Math.max(totalCount, normalizedPage.count || 0, headerTotalCount ?? 0);
 
       const addedCount = mergePage(bookingsById, normalizedPage.results);
       if (normalizedPage.professionals.length > 0) {
         professionals = normalizedPage.professionals;
       }
 
+      const resolvedNextCursor = extractNextCursor(data, responseHeaders);
+
       // Diagnostic log — captures raw API shape
-      console.log(`[bookingApi] strategy=${withPageSize ? "page+size" : "page"} page=${page} fetched=${normalizedPage.results.length} added=${addedCount} unique=${bookingsById.size} apiCount=${totalCount} nextCursor=${extractNextCursor(data) ?? "null"} rawKeys=${data ? Object.keys(data).join(",") : "null"} resultKeys=${data?.result ? Object.keys(data.result).join(",") : "null"}`);
+      console.log(`[bookingApi] strategy=${withPageSize ? "page+size" : "page"} page=${page} fetched=${normalizedPage.results.length} added=${addedCount} unique=${bookingsById.size} apiCount=${totalCount} headerCount=${headerTotalCount ?? "null"} nextCursor=${resolvedNextCursor ?? "null"} rawKeys=${data ? Object.keys(data).join(",") : "null"} resultKeys=${data?.result ? Object.keys(data.result).join(",") : "null"}`);
 
       if (addedCount === 0 && normalizedPage.results.length > 0) {
         noProgressPages += 1;
       } else {
         noProgressPages = 0;
       }
-
-      const resolvedNextCursor = extractNextCursor(data);
 
       if (normalizedPage.results.length === 0) break;
       if (totalCount > 0 && bookingsById.size >= totalCount) break;
