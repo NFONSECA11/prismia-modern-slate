@@ -53,7 +53,7 @@ export default function Index() {
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests"],
     queryFn: fetchBookingRequests,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
     refetchOnWindowFocus: true,
     staleTime: 20_000,
     retry: 2,
