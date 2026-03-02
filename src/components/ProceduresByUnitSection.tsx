@@ -97,7 +97,8 @@ export default function ProceduresByUnitSection() {
       setNewName("");
       toast.success("Procedimento adicionado com sucesso");
     },
-    onError: () => {
+    onError: (err: any) => {
+      console.error("[create-procedure] response:", JSON.stringify(err?.response?.data), "status:", err?.response?.status);
       toast.error("Erro ao adicionar procedimento");
     },
   });
