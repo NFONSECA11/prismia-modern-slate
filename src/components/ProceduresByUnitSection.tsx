@@ -34,13 +34,17 @@ export default function ProceduresByUnitSection() {
       queryFn: async () => {
         await fetchCsrf();
         const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: unit.id } });
-        if (Array.isArray(data)) return data;
-        if (data?.results) return data.results;
-        if (data?.data) return data.data;
-        const inner = data?.result;
-        if (Array.isArray(inner)) return inner;
-        if (inner?.results) return inner.results;
-        return [];
+        let list: any[] = [];
+        if (Array.isArray(data)) list = data;
+        else if (data?.results) list = data.results;
+        else if (data?.data) list = data.data;
+        else {
+          const inner = data?.result;
+          if (Array.isArray(inner)) list = inner;
+          else if (inner?.results) list = inner.results;
+        }
+        if (list.length > 0) console.log("[ProcByUnit] sample keys:", JSON.stringify(Object.keys(list[0])), "sample:", JSON.stringify(list[0]));
+        return list;
       },
       enabled: !!user,
     });
