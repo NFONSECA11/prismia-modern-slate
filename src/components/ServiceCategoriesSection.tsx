@@ -132,9 +132,9 @@ export default function ServiceCategoriesSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Categorias dos Serviços</span>
+          <span className="text-sm font-bold text-foreground">Especialidade X Procedimento</span>
           <p className="text-xs text-muted-foreground">
-            Gerenciar categorias para organização dos serviços
+            Gerenciar vínculos entre especialidades e procedimentos
           </p>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
