@@ -80,7 +80,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return bookingsById.size - before;
   };
 
-  const fetchWithPageNumber = async () => {
+  const fetchWithPageNumber = async (withPageSize: boolean) => {
     const bookingsById = new Map<number, BookingRequest>();
     let professionals: Professional[] = [];
     let totalCount = 0;
@@ -104,7 +104,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
           data = response.data;
         } else {
           const response = await api.get("/api/booking/requests/", {
-            params: { page, page_size: PAGE_SIZE },
+            params: withPageSize ? { page, page_size: PAGE_SIZE } : { page },
           });
           data = response.data;
         }
@@ -124,8 +124,6 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         professionals = normalizedPage.professionals;
       }
 
-      console.log(`[bookingApi] page=${page} fetched=${normalizedPage.results.length} added=${addedCount} total=${bookingsById.size} count=${totalCount}`);
-
       const hasTopNextField =
         !!data &&
         typeof data === "object" &&
@@ -141,6 +139,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         typeof rawNext === "string" && rawNext.trim().length > 0 ? rawNext : null;
 
       if (normalizedPage.results.length === 0) break;
+      if (totalCount > 0 && bookingsById.size >= totalCount) break;
 
       if (hasNextField) {
         useCursor = true;
@@ -149,16 +148,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         continue;
       }
 
-      // If total count indicates more data exists, keep paginating even if no new unique IDs
-      if (totalCount > 0 && bookingsById.size >= totalCount) break;
-
-      // Only stop on repeated data if we've already fetched enough
       if (page >= 2 && addedCount === 0 && normalizedPage.results.length > 0) {
-        // If count says there's more, try next page anyway
-        if (totalCount > bookingsById.size) {
-          page += 1;
-          continue;
-        }
         repeatedPageDetected = true;
         break;
       }
@@ -166,7 +156,6 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       page += 1;
     }
 
-    console.log(`[bookingApi] pageNumber done: ${bookingsById.size} unique bookings, totalCount=${totalCount}, pages=${pagesFetched}`);
     return { bookingsById, professionals, totalCount, repeatedPageDetected, pagesFetched };
   };
 
@@ -180,7 +169,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       let data: any;
       try {
         const response = await api.get("/api/booking/requests/", {
-          params: { limit: PAGE_SIZE, offset },
+          params: { limit: PAGE_SIZE, offset, page_size: PAGE_SIZE },
         });
         data = response.data;
       } catch (error) {
@@ -202,14 +191,31 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         professionals = normalizedPage.professionals;
       }
 
-      if (normalizedPage.results.length === 0 || addedCount === 0) break;
-      offset += PAGE_SIZE;
+      if (normalizedPage.results.length === 0) break;
+      if (totalCount > 0 && bookingsById.size >= totalCount) break;
+      if (addedCount === 0) break;
+
+      offset += Math.max(normalizedPage.results.length, 1);
     }
 
     return { bookingsById, professionals, totalCount };
   };
 
-  const pageResult = await fetchWithPageNumber();
+  const pageResultWithPageSize = await fetchWithPageNumber(true);
+
+  let pageResult = pageResultWithPageSize;
+  const shouldRetryWithoutPageSize =
+    (pageResultWithPageSize.repeatedPageDetected ||
+      (pageResultWithPageSize.totalCount > 0 &&
+        pageResultWithPageSize.bookingsById.size < pageResultWithPageSize.totalCount)) &&
+    pageResultWithPageSize.pagesFetched >= 2;
+
+  if (shouldRetryWithoutPageSize) {
+    const pageResultWithoutPageSize = await fetchWithPageNumber(false);
+    if (pageResultWithoutPageSize.bookingsById.size > pageResult.bookingsById.size) {
+      pageResult = pageResultWithoutPageSize;
+    }
+  }
 
   let finalById = pageResult.bookingsById;
   let finalProfessionals = pageResult.professionals;
