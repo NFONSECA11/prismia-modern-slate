@@ -3,7 +3,7 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,18 @@ export default function ProceduresByUnitSection() {
     },
   });
 
+  const deleteProcedure = useMutation({
+    mutationFn: async (id: number) => {
+      await fetchCsrf();
+      await api.delete(`/api/settings/procedures/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["procedures"] });
+      toast.success("Procedimento removido com sucesso");
+    },
+    onError: () => toast.error("Erro ao remover procedimento"),
+  });
+
   return (
     <Collapsible defaultOpen={false} id="section-procedimentos-unidade">
       <CollapsibleTrigger
@@ -113,7 +125,7 @@ export default function ProceduresByUnitSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_auto_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Empresa</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
@@ -121,6 +133,7 @@ export default function ProceduresByUnitSection() {
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Mín</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Máx</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span />
         </div>
 
         {anyLoading ? (
@@ -133,7 +146,7 @@ export default function ProceduresByUnitSection() {
             return (
               <div
                 key={proc.id}
-                className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs font-mono text-muted-foreground">{proc.company_id ?? proc.company ?? company?.id ?? "—"}</span>
@@ -151,6 +164,13 @@ export default function ProceduresByUnitSection() {
                   }
                   className="scale-75"
                 />
+                <button
+                  onClick={() => deleteProcedure.mutate(proc.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover procedimento"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })
