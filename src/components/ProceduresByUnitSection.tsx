@@ -34,17 +34,13 @@ export default function ProceduresByUnitSection() {
       queryFn: async () => {
         await fetchCsrf();
         const { data } = await api.get("/api/settings/unit-procedures/", { params: { unit: unit.id } });
-        let list: any[] = [];
-        if (Array.isArray(data)) list = data;
-        else if (data?.results) list = data.results;
-        else if (data?.data) list = data.data;
-        else {
-          const inner = data?.result;
-          if (Array.isArray(inner)) list = inner;
-          else if (inner?.results) list = inner.results;
-        }
-        if (list.length > 0) console.log("[ProcByUnit] sample keys:", JSON.stringify(Object.keys(list[0])), "sample:", JSON.stringify(list[0]));
-        return list;
+        if (Array.isArray(data)) return data;
+        if (data?.results) return data.results;
+        if (data?.data) return data.data;
+        const inner = data?.result;
+        if (Array.isArray(inner)) return inner;
+        if (inner?.results) return inner.results;
+        return [];
       },
       enabled: !!user,
     });
@@ -89,6 +85,52 @@ export default function ProceduresByUnitSection() {
     },
   });
 
+  const pickFirst = (obj: any, keys: string[]) => {
+    for (const key of keys) {
+      const value = obj?.[key];
+      if (value !== undefined && value !== null && value !== "") return value;
+    }
+    return null;
+  };
+
+  const getDuration = (proc: any) =>
+    pickFirst(proc, [
+      "duration_override",
+      "duration",
+      "duration_min",
+      "duration_minutes",
+      "procedure_duration",
+      "duracao",
+    ]) ??
+    pickFirst(proc?.procedure_data, ["duration", "duration_min", "duration_minutes", "duracao"]) ??
+    pickFirst(proc?.procedure_obj, ["duration", "duration_min", "duration_minutes", "duracao"]);
+
+  const getPriceMin = (proc: any) =>
+    pickFirst(proc, [
+      "price_override_min",
+      "price_override",
+      "price_min",
+      "min_price",
+      "preco_min",
+      "valor_min",
+      "price",
+      "preco",
+      "valor",
+    ]) ??
+    pickFirst(proc?.procedure_data, ["price_min", "min_price", "preco_min", "price", "preco"]) ??
+    pickFirst(proc?.procedure_obj, ["price_min", "min_price", "preco_min", "price", "preco"]);
+
+  const getPriceMax = (proc: any) =>
+    pickFirst(proc, [
+      "price_override_max",
+      "price_max",
+      "max_price",
+      "preco_max",
+      "valor_max",
+    ]) ??
+    pickFirst(proc?.procedure_data, ["price_max", "max_price", "preco_max"]) ??
+    pickFirst(proc?.procedure_obj, ["price_max", "max_price", "preco_max"]);
+
   return (
     <Collapsible defaultOpen={false} id="section-procedimentos-unidade">
       <CollapsibleTrigger
@@ -125,9 +167,9 @@ export default function ProceduresByUnitSection() {
         ) : (
           allProcedures.map((proc) => {
             const active = proc.enabled !== false && proc.is_active !== false;
-            const duration = proc.duration_override ?? proc.duration;
-            const priceMin = proc.price_override_min ?? proc.price_override ?? proc.price;
-            const priceMax = proc.price_override_max;
+            const duration = getDuration(proc);
+            const priceMin = getPriceMin(proc);
+            const priceMax = getPriceMax(proc);
             return (
               <div
                 key={proc.id}
@@ -140,7 +182,7 @@ export default function ProceduresByUnitSection() {
                   {proc.procedure_name ?? proc.procedure_slug ?? `#${proc.procedure ?? proc.id}`}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground text-right">
-                  {duration ? `${duration}m` : "—"}
+                  {duration != null ? `${duration}m` : "—"}
                 </span>
                 <span className="text-xs font-mono text-muted-foreground text-right">
                   {priceMin != null ? priceMin : "—"}
