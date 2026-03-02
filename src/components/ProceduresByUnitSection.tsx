@@ -85,6 +85,12 @@ export default function ProceduresByUnitSection() {
     },
   });
 
+  const normalizeKey = (key: string) =>
+    key
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
   const pickFirst = (obj: any, keys: string[]) => {
     for (const key of keys) {
       const value = obj?.[key];
@@ -93,43 +99,66 @@ export default function ProceduresByUnitSection() {
     return null;
   };
 
+  const pickFirstDeep = (obj: any, aliases: string[]) => {
+    if (!obj || typeof obj !== "object") return null;
+    const wanted = aliases.map(normalizeKey);
+    const queue: any[] = [obj];
+    const seen = new Set<any>();
+
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current || typeof current !== "object" || seen.has(current)) continue;
+      seen.add(current);
+
+      for (const [rawKey, rawValue] of Object.entries(current)) {
+        const key = normalizeKey(rawKey);
+        const isMatch = wanted.some((w) => key === w || key.includes(w));
+
+        if (isMatch && rawValue !== undefined && rawValue !== null && rawValue !== "" && typeof rawValue !== "object") {
+          return rawValue;
+        }
+
+        if (rawValue && typeof rawValue === "object") {
+          queue.push(rawValue);
+        }
+      }
+    }
+
+    return null;
+  };
+
   const getDuration = (proc: any) =>
-    pickFirst(proc, [
-      "duration_override",
-      "duration",
+    pickFirst(proc, ["duration_override", "duration"]) ??
+    pickFirstDeep(proc, [
       "duration_min",
       "duration_minutes",
+      "duration_in_minutes",
       "procedure_duration",
+      "default_duration",
       "duracao",
-    ]) ??
-    pickFirst(proc?.procedure_data, ["duration", "duration_min", "duration_minutes", "duracao"]) ??
-    pickFirst(proc?.procedure_obj, ["duration", "duration_min", "duration_minutes", "duracao"]);
+      "duracao_min",
+      "tempo",
+    ]);
 
   const getPriceMin = (proc: any) =>
-    pickFirst(proc, [
-      "price_override_min",
-      "price_override",
+    pickFirst(proc, ["price_override_min", "price_override", "price"]) ??
+    pickFirstDeep(proc, [
       "price_min",
       "min_price",
+      "default_price",
+      "starting_price",
+      "price_from",
       "preco_min",
       "valor_min",
-      "price",
+      "preco_inicial",
+      "valor_inicial",
       "preco",
       "valor",
-    ]) ??
-    pickFirst(proc?.procedure_data, ["price_min", "min_price", "preco_min", "price", "preco"]) ??
-    pickFirst(proc?.procedure_obj, ["price_min", "min_price", "preco_min", "price", "preco"]);
+    ]);
 
   const getPriceMax = (proc: any) =>
-    pickFirst(proc, [
-      "price_override_max",
-      "price_max",
-      "max_price",
-      "preco_max",
-      "valor_max",
-    ]) ??
-    pickFirst(proc?.procedure_data, ["price_max", "max_price", "preco_max"]) ??
-    pickFirst(proc?.procedure_obj, ["price_max", "max_price", "preco_max"]);
+    pickFirst(proc, ["price_override_max"]) ??
+    pickFirstDeep(proc, ["price_max", "max_price", "preco_max", "valor_max"]);
 
   return (
     <Collapsible defaultOpen={false} id="section-procedimentos-unidade">
