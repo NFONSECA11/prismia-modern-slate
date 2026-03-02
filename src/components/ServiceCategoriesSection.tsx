@@ -60,20 +60,18 @@ export default function ServiceCategoriesSection() {
 
   // Fetch procedures for lookup & creation select
   const { data: procedures = [] } = useQuery({
-    queryKey: ["all-unit-procedures"],
+    queryKey: ["procedures"],
     queryFn: async () => {
       await fetchCsrf();
-      const all: any[] = [];
-      for (const u of units) {
-        try {
-          const { data } = await api.get(`/api/settings/unit-procedures/`, { params: { unit: u.id } });
-          const list = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? []);
-          list.forEach((p: any) => { if (!all.find((x) => x.id === p.id)) all.push(p); });
-        } catch {}
-      }
-      return all;
+      const { data } = await api.get("/api/settings/procedures/");
+      if (Array.isArray(data)) return data;
+      if (data?.results) return data.results;
+      const inner = data?.result;
+      if (Array.isArray(inner)) return inner;
+      if (inner?.results) return inner.results;
+      return [];
     },
-    enabled: !!user && units.length > 0,
+    enabled: !!user,
   });
 
   const specMap = useMemo(() => {
