@@ -271,46 +271,115 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return { bookingsById, professionals, totalCount, repeatedPageDetected, pagesFetched };
   };
 
-  const fetchWithOffsetLimit = async () => {
-    const bookingsById = new Map<number, BookingRequest>();
-    let professionals: Professional[] = [];
-    let totalCount = 0;
-    let offset = 0;
+  const fetchWithParamStrategies = async () => {
+    const strategies: Array<{
+      name: string;
+      buildParams: (cursor: number) => Record<string, number>;
+    }> = [
+      { name: "offset+limit", buildParams: (cursor) => ({ offset: cursor, limit: PAGE_SIZE }) },
+      { name: "skip+limit", buildParams: (cursor) => ({ skip: cursor, limit: PAGE_SIZE }) },
+      { name: "start+limit", buildParams: (cursor) => ({ start: cursor, limit: PAGE_SIZE }) },
+      { name: "from+size", buildParams: (cursor) => ({ from: cursor, size: PAGE_SIZE }) },
+      {
+        name: "page+limit",
+        buildParams: (cursor) => ({ page: Math.floor(cursor / PAGE_SIZE) + 1, limit: PAGE_SIZE }),
+      },
+      {
+        name: "page+per_page",
+        buildParams: (cursor) => ({ page: Math.floor(cursor / PAGE_SIZE) + 1, per_page: PAGE_SIZE }),
+      },
+      {
+        name: "pageNumber+pageSize",
+        buildParams: (cursor) => ({
+          pageNumber: Math.floor(cursor / PAGE_SIZE) + 1,
+          pageSize: PAGE_SIZE,
+        }),
+      },
+    ];
 
-    for (let step = 0; step < MAX_PAGES; step += 1) {
-      let data: any;
-      try {
-        const response = await api.get("/api/booking/requests/", {
-          params: { limit: PAGE_SIZE, offset },
-        });
-        data = response.data;
-      } catch (error) {
-        const status = (error as any)?.response?.status;
-        if (status === 400 || status === 404) {
-          if (offset === 0) {
-            return { bookingsById, professionals, totalCount };
+    let bestResult = {
+      bookingsById: new Map<number, BookingRequest>(),
+      professionals: [] as Professional[],
+      totalCount: 0,
+    };
+
+    for (const strategy of strategies) {
+      const bookingsById = new Map<number, BookingRequest>();
+      let professionals: Professional[] = [];
+      let totalCount = 0;
+      let cursor = 0;
+      let noProgressPages = 0;
+
+      for (let step = 0; step < MAX_PAGES; step += 1) {
+        let data: any;
+        let responseHeaders: any;
+
+        try {
+          const response = await api.get("/api/booking/requests/", {
+            params: strategy.buildParams(cursor),
+          });
+          data = response.data;
+          responseHeaders = response.headers;
+        } catch (error) {
+          const status = (error as any)?.response?.status;
+          if (status === 400 || status === 404) {
+            if (step === 0) {
+              break;
+            }
+            break;
           }
-          break;
+          throw error;
         }
-        throw error;
+
+        const normalizedPage = normalizeBookingListResponse(data);
+        const headerTotalCount = extractTotalCountFromHeaders(responseHeaders);
+        totalCount = Math.max(totalCount, normalizedPage.count || 0, headerTotalCount ?? 0);
+
+        const addedCount = mergePage(bookingsById, normalizedPage.results);
+        if (normalizedPage.professionals.length > 0) {
+          professionals = normalizedPage.professionals;
+        }
+
+        const returnedRaw = data?.returned ?? data?.result?.returned;
+        const returnedCount =
+          typeof returnedRaw === "number"
+            ? returnedRaw
+            : typeof returnedRaw === "string"
+              ? Number(returnedRaw)
+              : NaN;
+
+        console.log(
+          `[bookingApi] alt=${strategy.name} step=${step + 1} cursor=${cursor} fetched=${normalizedPage.results.length} added=${addedCount} unique=${bookingsById.size} apiCount=${totalCount} returned=${Number.isFinite(returnedCount) ? returnedCount : "null"}`
+        );
+
+        if (normalizedPage.results.length === 0) break;
+        if (totalCount > 0 && bookingsById.size >= totalCount) break;
+
+        if (addedCount === 0) {
+          noProgressPages += 1;
+        } else {
+          noProgressPages = 0;
+        }
+
+        if (noProgressPages >= MAX_NO_PROGRESS_PAGES) break;
+
+        const advanceBy =
+          Number.isFinite(returnedCount) && returnedCount > 0
+            ? returnedCount
+            : Math.max(normalizedPage.results.length, PAGE_SIZE);
+        cursor += advanceBy;
       }
 
-      const normalizedPage = normalizeBookingListResponse(data);
-      totalCount = Math.max(totalCount, normalizedPage.count || 0);
-
-      const addedCount = mergePage(bookingsById, normalizedPage.results);
-      if (normalizedPage.professionals.length > 0) {
-        professionals = normalizedPage.professionals;
+      if (bookingsById.size > bestResult.bookingsById.size) {
+        bestResult = { bookingsById, professionals, totalCount };
       }
 
-      if (normalizedPage.results.length === 0) break;
-      if (totalCount > 0 && bookingsById.size >= totalCount) break;
-      if (addedCount === 0) break;
-
-      offset += Math.max(normalizedPage.results.length, 1);
+      if (bestResult.totalCount > 0 && bestResult.bookingsById.size >= bestResult.totalCount) {
+        break;
+      }
     }
 
-    return { bookingsById, professionals, totalCount };
+    return bestResult;
   };
 
   const pageResultWithPageSize = await fetchWithPageNumber(true);
@@ -341,7 +410,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     (pageResult.totalCount > 0 && pageResult.bookingsById.size < pageResult.totalCount);
 
   if (shouldTryOffsetFallback) {
-    const offsetResult = await fetchWithOffsetLimit();
+    const offsetResult = await fetchWithParamStrategies();
     if (offsetResult.bookingsById.size > finalById.size) {
       finalById = offsetResult.bookingsById;
       finalProfessionals = offsetResult.professionals;
