@@ -169,7 +169,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       let data: any;
       try {
         const response = await api.get("/api/booking/requests/", {
-          params: { limit: PAGE_SIZE, offset, page_size: PAGE_SIZE },
+          params: { limit: PAGE_SIZE, offset },
         });
         data = response.data;
       } catch (error) {
@@ -207,8 +207,10 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const shouldRetryWithoutPageSize =
     (pageResultWithPageSize.repeatedPageDetected ||
       (pageResultWithPageSize.totalCount > 0 &&
-        pageResultWithPageSize.bookingsById.size < pageResultWithPageSize.totalCount)) &&
-    pageResultWithPageSize.pagesFetched >= 2;
+        pageResultWithPageSize.bookingsById.size < pageResultWithPageSize.totalCount) ||
+      (pageResultWithPageSize.pagesFetched === 1 &&
+        pageResultWithPageSize.bookingsById.size >= PAGE_SIZE)) &&
+    pageResultWithPageSize.pagesFetched >= 1;
 
   if (shouldRetryWithoutPageSize) {
     const pageResultWithoutPageSize = await fetchWithPageNumber(false);
