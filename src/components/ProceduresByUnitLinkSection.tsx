@@ -157,16 +157,6 @@ export default function ProceduresByUnitLinkSection() {
         {showNew ? (
           <div className="flex items-center gap-2 pt-2 px-3">
             <select
-              value={newProcedureId}
-              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
-            >
-              <option value="">Procedimento</option>
-              {procedures.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? `#${p.id}`}</option>
-              ))}
-            </select>
-            <select
               value={newUnitId}
               onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
@@ -174,6 +164,16 @@ export default function ProceduresByUnitLinkSection() {
               <option value="">Unidade</option>
               {units.map((u: any) => (
                 <option key={u.id} value={u.id}>{u.name ?? `#${u.id}`}</option>
+              ))}
+            </select>
+            <select
+              value={newProcedureId}
+              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
+            >
+              <option value="">Procedimento</option>
+              {procedures.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? `#${p.id}`}</option>
               ))}
             </select>
             <Button
