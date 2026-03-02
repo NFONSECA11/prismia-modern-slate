@@ -22,12 +22,11 @@ interface UnitProcedure {
 }
 
 export default function ProceduresByUnitSection() {
-  const { units, user, company, activeUnit } = useAuth();
+  const { units, user, company } = useAuth();
   const queryClient = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newUnitId, setNewUnitId] = useState<number | "">(activeUnit?.id ?? "");
 
   const unitQueries = units.map((unit) => {
     const query = useQuery({
@@ -58,7 +57,7 @@ export default function ProceduresByUnitSection() {
         ...proc,
         unitId: unit.id,
         companyId: proc.company_id ?? proc.company ?? company?.id ?? null,
-        companyName: proc.company_name ?? company?.name ?? "",
+        companyName: proc.company_name ?? company?.name ?? "—",
       });
     });
   });
@@ -162,6 +161,11 @@ export default function ProceduresByUnitSection() {
         {/* Criar procedimento */}
         {showNew ? (
           <div className="flex items-center gap-2 pt-2">
+            <div className="h-8 px-3 rounded-md border border-border bg-background inline-flex items-center">
+              <span className="text-xs text-muted-foreground">
+                Empresa: <span className="text-foreground font-medium">{company?.name ?? "—"}</span>
+              </span>
+            </div>
             <Input
               placeholder="Nome do procedimento"
               value={newName}
@@ -171,7 +175,7 @@ export default function ProceduresByUnitSection() {
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newName.trim() || createProcedure.isPending}
+              disabled={!company?.id || !newName.trim() || createProcedure.isPending}
               onClick={() =>
                 createProcedure.mutate({
                   procedure_name: newName.trim(),
