@@ -135,7 +135,7 @@ export default function ProceduresByUnitSection() {
                 <span className="text-sm font-medium text-foreground truncate">
                   {proc.procedure_name ?? proc.name ?? proc.procedure_slug ?? `#${proc.id}`}
                 </span>
-                <span className="text-xs text-muted-foreground">{proc.duration ? `${proc.duration} min` : "—"}</span>
+                <span className="text-xs text-muted-foreground">{proc.duration_min ? `${proc.duration_min} min` : "—"}</span>
                 <span className="text-xs text-muted-foreground">{proc.price_min != null ? `R$ ${Number(proc.price_min).toFixed(2)}` : "—"}</span>
                 <span className="text-xs text-muted-foreground">{proc.price_max != null ? `R$ ${Number(proc.price_max).toFixed(2)}` : "—"}</span>
                 <Switch
