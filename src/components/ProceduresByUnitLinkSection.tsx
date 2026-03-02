@@ -109,9 +109,9 @@ export default function ProceduresByUnitLinkSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Procedimento X Unidade</span>
+          <span className="text-sm font-bold text-foreground">Unidade X Procedimento</span>
           <p className="text-xs text-muted-foreground">
-            Gerenciar vínculos entre procedimentos e unidades
+            Gerenciar vínculos entre unidades e procedimentos
           </p>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
