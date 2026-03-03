@@ -153,41 +153,97 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const PAGE_SIZE = 50;
-  const MAX_PAGES = 5;
+  const REQUEST_PAGE_SIZE = 100;
+  const MAX_REQUESTS = 15;
 
   const deduped = new Map<number, BookingRequest>();
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
 
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const response = await api.get(`/api/booking/requests/`, {
-      params: { page, page_size: PAGE_SIZE },
-    });
+  const normalizeTarget = (cursor: string | null): string | null => {
+    if (!cursor) return null;
+    const value = cursor.trim();
+    if (!value) return null;
 
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      try {
+        const u = new URL(value);
+        return `${u.pathname}${u.search}`;
+      } catch {
+        return value;
+      }
+    }
+
+    if (value.startsWith("/")) return value;
+    if (value.startsWith("?")) return `/api/booking/requests/${value}`;
+    if (/^\d+$/.test(value)) return `/api/booking/requests/?page=${value}&page_size=${REQUEST_PAGE_SIZE}`;
+
+    return null;
+  };
+
+  let page = 1;
+  let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
+  const visitedTargets = new Set<string>();
+
+  for (let i = 0; i < MAX_REQUESTS && nextTarget; i += 1) {
+    const target = nextTarget;
+    if (visitedTargets.has(target)) break;
+    visitedTargets.add(target);
+
+    const response = await api.get(target);
     const normalized = normalizeBookingListResponse(response.data);
     const headerCount = extractTotalCountFromHeaders(response.headers);
 
-    if (normalized.professionals.length > 0) professionals = normalized.professionals;
+    if (normalized.professionals.length > 0) {
+      professionals = normalized.professionals;
+    }
 
     const candidateCounts = [normalized.count, headerCount].filter(
       (n): n is number => typeof n === "number" && Number.isFinite(n)
     );
+
     if (candidateCounts.length > 0) {
       const best = Math.max(...candidateCounts);
       totalCount = totalCount === null ? best : Math.max(totalCount, best);
     }
 
-    const items = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
-    for (const b of items) deduped.set(b.id, b);
+    const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
 
-    // Stop if we got fewer than a full page or reached total
-    if (items.length < PAGE_SIZE) break;
-    if (totalCount !== null && deduped.size >= totalCount) break;
+    let newItems = 0;
+    for (const booking of pageResults) {
+      if (!deduped.has(booking.id)) newItems += 1;
+      deduped.set(booking.id, booking);
+    }
+
+    if (totalCount !== null && deduped.size >= totalCount) {
+      nextTarget = null;
+      break;
+    }
+
+    const cursorTarget = normalizeTarget(extractNextCursor(response.data, response.headers));
+    if (cursorTarget && !visitedTargets.has(cursorTarget)) {
+      nextTarget = cursorTarget;
+      continue;
+    }
+
+    if (pageResults.length === 0 || newItems === 0) {
+      nextTarget = null;
+      break;
+    }
+
+    page += 1;
+    nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
   }
 
-  const results = Array.from(deduped.values());
-  console.log(`[bookingApi] Fetched ${results.length} bookings (totalHint=${totalCount ?? "n/a"})`);
+  const results = Array.from(deduped.values()).map((booking) => {
+    const cachedPhone = bookingPhoneCache.get(booking.id);
+    if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
+    return { ...booking, contact_phone: cachedPhone } as BookingRequest;
+  });
+
+  console.log(
+    `[bookingApi] Fetched ${results.length} bookings (targets=${visitedTargets.size}, totalHint=${totalCount ?? "n/a"})`
+  );
 
   return {
     count: totalCount !== null ? Math.max(totalCount, results.length) : results.length,
