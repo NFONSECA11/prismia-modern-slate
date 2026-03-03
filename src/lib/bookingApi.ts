@@ -154,27 +154,13 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const REQUEST_PAGE_SIZE = 100;
-  const MAX_CURSOR_REQUESTS = 20;
-  const MAX_OFFSET_FALLBACK_REQUESTS = 2;
-  const MAX_SHARD_REQUESTS = 10;
-  const SHARD_STATUSES = [
-    "handoff",
-    "assisted",
-    "awaiting_choice",
-    "pending",
-    "confirmed",
-    "canceled",
-    "cancelled",
-    "failed",
-  ] as const;
+  const MAX_TOTAL_REQUESTS = 18;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
-  let cursorRequests = 0;
-  let offsetRequests = 0;
-  let shardRequests = 0;
+  let totalRequests = 0;
   let partialError = false;
 
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -258,84 +244,141 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     };
   };
 
-  const looksTruncatedAtTwenty = () => deduped.size === 20 && (totalCount === null || totalCount <= 20);
+  const hasReliableTotal = () => totalCount !== null && totalCount > 20;
+  const reachedReliableTotal = () => hasReliableTotal() && deduped.size >= (totalCount as number);
 
-  // 1) Cursor/page pagination (principal)
-  let page = 1;
-  let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
-
-  while (cursorRequests < MAX_CURSOR_REQUESTS && nextTarget) {
-    const target = nextTarget;
-    if (visitedTargets.has(target)) break;
-    visitedTargets.add(target);
-
-    let response: { data: unknown; headers: any } | null = null;
+  const safeGet = async (url: string, params?: Record<string, unknown>) => {
+    if (totalRequests >= MAX_TOTAL_REQUESTS) return null;
     try {
-      response = await api.get(target);
-      cursorRequests += 1;
+      const response = await api.get(url, params ? { params } : undefined);
+      totalRequests += 1;
+      return response;
     } catch (error) {
       partialError = true;
       if (deduped.size === 0) throw error;
-      break;
+      return null;
     }
+  };
 
-    if (!response) break;
-    const { pageResults, newItems, cursorTarget } = mergeResponse(response.data, response.headers);
-
-    // Só respeita totalCount se vier acima de 20 (evita falso cap de primeira página)
-    if (totalCount !== null && totalCount > 20 && deduped.size >= totalCount) break;
-    if (pageResults.length === 0 || newItems === 0) break;
-
-    if (cursorTarget && !visitedTargets.has(cursorTarget)) {
-      nextTarget = cursorTarget;
-      continue;
-    }
-
-    page += 1;
-    nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
+  // 1) Primeira página
+  const firstResponse = await safeGet("/api/booking/requests/", { page: 1, page_size: REQUEST_PAGE_SIZE });
+  if (!firstResponse) {
+    return { count: 0, results: [], professionals: [] };
   }
 
-  // 2) Fallback leve de offset (somente quando parece truncado em 20)
-  if (looksTruncatedAtTwenty()) {
-    const fallbackParams = [
-      { offset: deduped.size, limit: REQUEST_PAGE_SIZE },
-      { page: 2, page_size: REQUEST_PAGE_SIZE },
-    ];
+  const firstMerged = mergeResponse(firstResponse.data, firstResponse.headers);
 
-    for (let i = 0; i < Math.min(fallbackParams.length, MAX_OFFSET_FALLBACK_REQUESTS); i += 1) {
-      try {
-        const response = await api.get("/api/booking/requests/", { params: fallbackParams[i] });
-        offsetRequests += 1;
-        mergeResponse(response.data, response.headers);
-      } catch {
-        partialError = true;
+  // 2) Seguir cursor/next quando existir
+  let nextCursor = firstMerged.cursorTarget;
+  while (nextCursor && totalRequests < MAX_TOTAL_REQUESTS) {
+    if (visitedTargets.has(nextCursor)) break;
+    visitedTargets.add(nextCursor);
+
+    const response = await safeGet(nextCursor);
+    if (!response) break;
+
+    const merged = mergeResponse(response.data, response.headers);
+    if (reachedReliableTotal()) break;
+    if (merged.pageResults.length === 0 || merged.newItems === 0) break;
+
+    nextCursor = merged.cursorTarget;
+    await sleep(120);
+  }
+
+  // 3) Se ainda travou em 20, detectar estratégia de paginação aceitada pela API
+  type ProbeStrategy = {
+    name: string;
+    probeParams: Record<string, number>;
+    nextValue: number;
+    step: number;
+    buildParams: (value: number) => Record<string, number>;
+  };
+
+  const probeStrategies: ProbeStrategy[] = [
+    {
+      name: "page",
+      probeParams: { page: 2 },
+      nextValue: 3,
+      step: 1,
+      buildParams: (value) => ({ page: value }),
+    },
+    {
+      name: "page+size",
+      probeParams: { page: 2, page_size: REQUEST_PAGE_SIZE },
+      nextValue: 3,
+      step: 1,
+      buildParams: (value) => ({ page: value, page_size: REQUEST_PAGE_SIZE }),
+    },
+    {
+      name: "offset+limit",
+      probeParams: { offset: 20, limit: 20 },
+      nextValue: 40,
+      step: 20,
+      buildParams: (value) => ({ offset: value, limit: 20 }),
+    },
+    {
+      name: "offset",
+      probeParams: { offset: 20 },
+      nextValue: 40,
+      step: 20,
+      buildParams: (value) => ({ offset: value }),
+    },
+    {
+      name: "skip+limit",
+      probeParams: { skip: 20, limit: 20 },
+      nextValue: 40,
+      step: 20,
+      buildParams: (value) => ({ skip: value, limit: 20 }),
+    },
+    {
+      name: "page_number",
+      probeParams: { page_number: 2 },
+      nextValue: 3,
+      step: 1,
+      buildParams: (value) => ({ page_number: value }),
+    },
+    {
+      name: "p",
+      probeParams: { p: 2 },
+      nextValue: 3,
+      step: 1,
+      buildParams: (value) => ({ p: value }),
+    },
+  ];
+
+  const looksTruncatedAtTwenty = () => deduped.size === 20 && (totalCount === null || totalCount <= 20);
+
+  let discoveredStrategy: ProbeStrategy | null = null;
+  if (looksTruncatedAtTwenty()) {
+    for (const strategy of probeStrategies) {
+      const response = await safeGet("/api/booking/requests/", strategy.probeParams);
+      if (!response) continue;
+
+      const merged = mergeResponse(response.data, response.headers);
+      if (merged.newItems > 0) {
+        discoveredStrategy = strategy;
+        break;
       }
 
-      if (!looksTruncatedAtTwenty()) break;
+      if (reachedReliableTotal()) break;
       await sleep(120);
     }
   }
 
-  // 3) Fallback de sharding com limite rígido de requests
-  if (looksTruncatedAtTwenty()) {
-    outer: for (const status of SHARD_STATUSES) {
-      for (const statusKey of ["status", "booking_status"] as const) {
-        if (shardRequests >= MAX_SHARD_REQUESTS) break outer;
+  // 4) Paginar com a estratégia descoberta
+  if (discoveredStrategy) {
+    let cursor = discoveredStrategy.nextValue;
 
-        try {
-          const response = await api.get("/api/booking/requests/", {
-            params: { [statusKey]: status, page: 1, page_size: REQUEST_PAGE_SIZE },
-          });
-          shardRequests += 1;
-          mergeResponse(response.data, response.headers);
-        } catch {
-          partialError = true;
-        }
+    while (totalRequests < MAX_TOTAL_REQUESTS) {
+      const response = await safeGet("/api/booking/requests/", discoveredStrategy.buildParams(cursor));
+      if (!response) break;
 
-        if (totalCount !== null && totalCount > 20 && deduped.size >= totalCount) break outer;
-        if (!looksTruncatedAtTwenty()) break outer;
-        await sleep(120);
-      }
+      const merged = mergeResponse(response.data, response.headers);
+      if (reachedReliableTotal()) break;
+      if (merged.pageResults.length === 0 || merged.newItems === 0) break;
+
+      cursor += discoveredStrategy.step;
+      await sleep(120);
     }
   }
 
@@ -346,7 +389,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (cursor=${cursorRequests}, offset=${offsetRequests}, shard=${shardRequests}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
+    `[bookingApi] Fetched ${results.length} bookings (requests=${totalRequests}, strategy=${discoveredStrategy?.name ?? "cursor-only"}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
   );
 
   return {
