@@ -387,10 +387,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
     }
 
-    // Encerrar Conversa for conversation bookings — turns Bot ON
+    // Conversation bookings (human/prices): Reabrir + Bot ON
     if (isConvo && !terminal && !isBotOn) {
       actions.push(
-        <ActionButton key="end-convo" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={Bot} label="Encerrar Conversa" variant="danger" />,
+        <ActionButton key="reopen-convo" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
+        <ActionButton key="bot-on" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={Bot} label="Bot ON" variant="primary" />,
       );
     }
 
