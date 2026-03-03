@@ -120,6 +120,11 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
     }
   }
 
+  // Encerrar Conversa for conversation bookings
+  if (isConvo && !terminal) {
+    actions.push({ key: "handoff_off", icon: PhoneOff, label: "Encerrar Conversa", variant: "danger" });
+  }
+
   // Reopen for terminal
   if (terminal) {
     actions.push({ key: "reopen", icon: RotateCcw, label: "Reabrir", variant: "default" });

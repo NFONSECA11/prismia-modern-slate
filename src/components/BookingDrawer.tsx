@@ -386,6 +386,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
     }
 
+    // Encerrar Conversa for conversation bookings
+    if (isConvo && !terminal) {
+      actions.push(
+        <ActionButton key="end-convo" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={PhoneOff} label="Encerrar Conversa" variant="danger" />,
+      );
+    }
+
     // Reopen for terminal
     if (terminal) {
       actions.push(
