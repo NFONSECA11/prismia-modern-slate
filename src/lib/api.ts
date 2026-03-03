@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://primary-surrey-lows-bass.trycloudflare.com",
+  baseURL: "https://browse-latino-trademark-limitation.trycloudflare.com",
   timeout: 30_000,
   withCredentials: true,
   headers: {
