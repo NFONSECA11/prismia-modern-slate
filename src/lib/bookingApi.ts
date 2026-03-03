@@ -258,6 +258,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     };
   };
 
+  const looksTruncatedAtTwenty = () => deduped.size === 20 && (totalCount === null || totalCount <= 20);
+
   // 1) Cursor/page pagination (principal)
   let page = 1;
   let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
@@ -280,7 +282,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     if (!response) break;
     const { pageResults, newItems, cursorTarget } = mergeResponse(response.data, response.headers);
 
-    if (totalCount !== null && deduped.size >= totalCount) break;
+    // Só respeita totalCount se vier acima de 20 (evita falso cap de primeira página)
+    if (totalCount !== null && totalCount > 20 && deduped.size >= totalCount) break;
     if (pageResults.length === 0 || newItems === 0) break;
 
     if (cursorTarget && !visitedTargets.has(cursorTarget)) {
@@ -292,8 +295,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
   }
 
-  // 2) Fallback leve de offset (somente se ainda travou em 20)
-  if (deduped.size <= 20 && totalCount === null) {
+  // 2) Fallback leve de offset (somente quando parece truncado em 20)
+  if (looksTruncatedAtTwenty()) {
     const fallbackParams = [
       { offset: deduped.size, limit: REQUEST_PAGE_SIZE },
       { page: 2, page_size: REQUEST_PAGE_SIZE },
@@ -308,13 +311,13 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         partialError = true;
       }
 
-      if (deduped.size > 20) break;
+      if (!looksTruncatedAtTwenty()) break;
       await sleep(120);
     }
   }
 
   // 3) Fallback de sharding com limite rígido de requests
-  if (deduped.size <= 20 && totalCount === null) {
+  if (looksTruncatedAtTwenty()) {
     outer: for (const status of SHARD_STATUSES) {
       for (const statusKey of ["status", "booking_status"] as const) {
         if (shardRequests >= MAX_SHARD_REQUESTS) break outer;
@@ -329,7 +332,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
           partialError = true;
         }
 
-        if (totalCount !== null && deduped.size >= totalCount) break outer;
+        if (totalCount !== null && totalCount > 20 && deduped.size >= totalCount) break outer;
+        if (!looksTruncatedAtTwenty()) break outer;
         await sleep(120);
       }
     }
