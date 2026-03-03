@@ -153,22 +153,71 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const response = await api.get("/api/booking/requests/", {
-    params: { page: 1, page_size: 1000 },
-  });
-  const normalized = normalizeBookingListResponse(response.data);
+  const PAGE_SIZE = 100;
+  let allResults: any[] = [];
+  let allProfessionals: any[] = [];
+  let totalCount = 0;
+  let page = 1;
+  let hasMore = true;
 
-  // Fill cached phones (no extra requests)
-  const results = normalized.results.map((booking) => {
+  while (hasMore) {
+    const response = await api.get("/api/booking/requests/", {
+      params: { page, page_size: PAGE_SIZE },
+    });
+
+    const normalized = normalizeBookingListResponse(response.data);
+    allResults = allResults.concat(normalized.results);
+    if (normalized.professionals.length > 0) {
+      allProfessionals = normalized.professionals;
+    }
+    totalCount = normalized.count;
+
+    // Also check headers for total
+    const headerCount = extractTotalCountFromHeaders(response.headers);
+    if (headerCount !== null && headerCount > totalCount) {
+      totalCount = headerCount;
+    }
+
+    // Check if there are more pages
+    const nextCursor = extractNextCursor(response.data, response.headers);
+    if (nextCursor || normalized.results.length >= PAGE_SIZE) {
+      page++;
+      // Safety: stop if we already have all based on count
+      if (totalCount > 0 && allResults.length >= totalCount) {
+        hasMore = false;
+      }
+    } else {
+      hasMore = false;
+    }
+
+    // Safety limit to avoid infinite loops
+    if (page > 50) {
+      console.warn("[bookingApi] Safety limit reached at page 50");
+      hasMore = false;
+    }
+  }
+
+  // Deduplicate by id
+  const seen = new Set<number>();
+  const uniqueResults = allResults.filter((b) => {
+    if (seen.has(b.id)) return false;
+    seen.add(b.id);
+    return true;
+  });
+
+  // Fill cached phones
+  const results = uniqueResults.map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
     return { ...booking, contact_phone: cachedPhone };
   });
 
+  console.log(`[bookingApi] Fetched ${results.length} bookings in ${page} pages`);
+
   return {
-    count: normalized.count,
+    count: totalCount > results.length ? totalCount : results.length,
     results,
-    professionals: normalized.professionals,
+    professionals: allProfessionals,
   };
 }
 
