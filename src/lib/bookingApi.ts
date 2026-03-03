@@ -154,37 +154,45 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const EFFECTIVE_PAGE_SIZE = 20;
-  const MAX_PAGES = 50;
+  const MAX_REQUESTS = 80;
 
-  const deduped = new Map<number, any>();
+  const deduped = new Map<number, BookingRequest>();
+  const visitedTargets = new Set<string>();
+
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
   let page = 1;
-  let fetchedPages = 0;
+  let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${EFFECTIVE_PAGE_SIZE}`;
   let fallbackRequests = 0;
 
-  const mergeResults = (items: any[]): number => {
-    let newItems = 0;
-    for (const booking of items) {
-      const existing = deduped.get(booking.id);
-      if (!existing) {
-        deduped.set(booking.id, booking);
-        newItems += 1;
-      } else {
-        deduped.set(booking.id, {
-          ...existing,
-          ...booking,
-          contact_phone: booking.contact_phone ?? existing.contact_phone,
-          phone: booking.phone ?? existing.phone,
-        });
+  const normalizeTarget = (cursor: string | null): string | null => {
+    if (!cursor) return null;
+    const value = cursor.trim();
+    if (!value) return null;
+
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      try {
+        const u = new URL(value);
+        return `${u.pathname}${u.search}`;
+      } catch {
+        return value;
       }
     }
-    return newItems;
+
+    if (value.startsWith("/")) return value;
+    if (value.startsWith("?")) return `/api/booking/requests/${value}`;
+    if (/^\d+$/.test(value)) return `/api/booking/requests/?page=${value}&page_size=${EFFECTIVE_PAGE_SIZE}`;
+
+    return null;
   };
 
-  const updateMeta = (normalizedCount: number, headerCount: number | null, newProfessionals: Professional[]) => {
-    if (newProfessionals.length > 0) {
-      professionals = newProfessionals;
+  const updateMeta = (
+    normalizedCount: number,
+    headerCount: number | null,
+    nextProfessionals: Professional[]
+  ) => {
+    if (nextProfessionals.length > 0) {
+      professionals = nextProfessionals;
     }
 
     const candidateCounts = [normalizedCount, headerCount].filter(
@@ -197,78 +205,91 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     }
   };
 
-  // Estratégia 1: paginação page/page_size
-  while (fetchedPages < MAX_PAGES) {
-    const response = await api.get("/api/booking/requests/", {
-      params: { page, page_size: EFFECTIVE_PAGE_SIZE },
-    });
+  const mergeResults = (items: BookingRequest[]): number => {
+    let newItems = 0;
 
-    fetchedPages += 1;
+    for (const booking of items) {
+      const existing = deduped.get(booking.id);
+      if (!existing) {
+        deduped.set(booking.id, booking);
+        newItems += 1;
+      } else {
+        deduped.set(booking.id, {
+          ...existing,
+          ...booking,
+          contact_phone: booking.contact_phone ?? existing.contact_phone,
+          phone: booking.phone ?? existing.phone,
+        } as BookingRequest);
+      }
+    }
+
+    return newItems;
+  };
+
+  for (let i = 0; i < MAX_REQUESTS && nextTarget; i += 1) {
+    const target = nextTarget;
+    if (visitedTargets.has(target)) break;
+    visitedTargets.add(target);
+
+    const response = await api.get(target);
     const normalized = normalizeBookingListResponse(response.data);
-    const pageResults = Array.isArray(normalized.results) ? normalized.results : [];
+    const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
 
     updateMeta(normalized.count, extractTotalCountFromHeaders(response.headers), normalized.professionals);
 
     const newItems = mergeResults(pageResults);
-    const nextCursor = extractNextCursor(response.data, response.headers);
-
-    const hasMoreByCursor = Boolean(nextCursor);
+    const cursorTarget = normalizeTarget(extractNextCursor(response.data, response.headers));
     const hasMoreByCount = totalCount !== null && deduped.size < totalCount;
-    const hasMoreByFill = pageResults.length === EFFECTIVE_PAGE_SIZE;
 
-    if (!hasMoreByCursor && !hasMoreByCount && !hasMoreByFill) break;
+    if (cursorTarget && !visitedTargets.has(cursorTarget)) {
+      nextTarget = cursorTarget;
+      continue;
+    }
 
-    // API ignorando "page" costuma repetir a mesma página -> para e ativa fallback.
-    if (newItems === 0) break;
+    if (hasMoreByCount && pageResults.length === EFFECTIVE_PAGE_SIZE && newItems > 0) {
+      page += 1;
+      nextTarget = `/api/booking/requests/?page=${page}&page_size=${EFFECTIVE_PAGE_SIZE}`;
+      continue;
+    }
 
-    page += 1;
+    nextTarget = null;
   }
 
-  // Estratégia 2: fallback offset/limit (para APIs que ignoram `page`)
-  const needsOffsetFallback =
-    (totalCount !== null && deduped.size < totalCount) ||
-    (deduped.size > 0 && deduped.size % EFFECTIVE_PAGE_SIZE === 0);
-
-  if (needsOffsetFallback) {
-    let offset = deduped.size;
-    const fallbackParamSets = [
-      (o: number) => ({ offset: o, limit: EFFECTIVE_PAGE_SIZE }),
-      (o: number) => ({ offset: o, page_size: EFFECTIVE_PAGE_SIZE }),
-      (o: number) => ({ skip: o, limit: EFFECTIVE_PAGE_SIZE }),
+  // Fallback: APIs que ignoram `page` mas aceitam offset/limit.
+  if (totalCount !== null && deduped.size < totalCount) {
+    const paramSets = [
+      (offset: number) => ({ offset, limit: EFFECTIVE_PAGE_SIZE }),
+      (offset: number) => ({ offset, page_size: EFFECTIVE_PAGE_SIZE }),
+      (offset: number) => ({ skip: offset, limit: EFFECTIVE_PAGE_SIZE }),
     ];
 
-    let fallbackPages = 0;
+    let offset = deduped.size;
 
-    while (fallbackPages < MAX_PAGES) {
-      fallbackPages += 1;
-      let gotNewItems = false;
-      let lastBatchLength = 0;
+    for (let i = 0; i < MAX_REQUESTS; i += 1) {
+      let bestNewItems = 0;
+      let bestBatchLength = 0;
 
-      for (const buildParams of fallbackParamSets) {
+      for (const buildParams of paramSets) {
         const response = await api.get("/api/booking/requests/", {
           params: buildParams(offset),
         });
         fallbackRequests += 1;
 
         const normalized = normalizeBookingListResponse(response.data);
-        const pageResults = Array.isArray(normalized.results) ? normalized.results : [];
-        lastBatchLength = pageResults.length;
+        const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
 
         updateMeta(normalized.count, extractTotalCountFromHeaders(response.headers), normalized.professionals);
 
-        const before = deduped.size;
         const newItems = mergeResults(pageResults);
-        const after = deduped.size;
-
-        if (newItems > 0 && after > before) {
-          gotNewItems = true;
-          break;
+        if (newItems > bestNewItems) {
+          bestNewItems = newItems;
+          bestBatchLength = pageResults.length;
         }
       }
 
-      if (!gotNewItems) break;
+      if (bestNewItems === 0) break;
       if (totalCount !== null && deduped.size >= totalCount) break;
-      if (lastBatchLength < EFFECTIVE_PAGE_SIZE) break;
+      if (bestBatchLength < EFFECTIVE_PAGE_SIZE) break;
 
       offset += EFFECTIVE_PAGE_SIZE;
     }
@@ -277,11 +298,11 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
-    return { ...booking, contact_phone: cachedPhone };
+    return { ...booking, contact_phone: cachedPhone } as BookingRequest;
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (pages=${fetchedPages}, fallbackRequests=${fallbackRequests})`
+    `[bookingApi] Fetched ${results.length} bookings (targets=${visitedTargets.size}, fallbackRequests=${fallbackRequests})`
   );
 
   return {
