@@ -154,13 +154,25 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const REQUEST_PAGE_SIZE = 100;
-  const MAX_TOTAL_REQUESTS = 18;
+  const MAX_TOTAL_REQUESTS = 24;
+  const SHARD_STATUSES = [
+    "handoff",
+    "assisted",
+    "awaiting_choice",
+    "pending",
+    "confirmed",
+    "canceled",
+    "cancelled",
+    "failed",
+  ] as const;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
   let totalRequests = 0;
+  let probeRequests = 0;
+  let shardRequests = 0;
   let partialError = false;
 
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -357,6 +369,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     for (const strategy of probeStrategies) {
       const response = await safeGet("/api/booking/requests/", strategy.probeParams);
       if (!response) continue;
+      probeRequests += 1;
 
       const merged = mergeResponse(response.data, response.headers);
       if (merged.newItems > 0) {
@@ -386,6 +399,41 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     }
   }
 
+  const shouldShardByStatus = () => {
+    if (reachedReliableTotal()) return false;
+    if (hasReliableTotal()) return deduped.size < (totalCount as number);
+    return deduped.size <= 20;
+  };
+
+  // 5) Fallback final: shard por status com paginação curta
+  if (shouldShardByStatus()) {
+    const statusParamBuilders = [
+      (status: string, page: number) => ({ status, page, page_size: REQUEST_PAGE_SIZE }),
+      (status: string, page: number) => ({ booking_status: status, page, page_size: REQUEST_PAGE_SIZE }),
+    ];
+
+    outer: for (const status of SHARD_STATUSES) {
+      if (totalRequests >= MAX_TOTAL_REQUESTS || reachedReliableTotal()) break;
+
+      for (const buildParams of statusParamBuilders) {
+        for (const page of [1, 2] as const) {
+          if (totalRequests >= MAX_TOTAL_REQUESTS || reachedReliableTotal()) break outer;
+
+          const response = await safeGet("/api/booking/requests/", buildParams(status, page));
+          if (!response) continue;
+
+          shardRequests += 1;
+          const merged = mergeResponse(response.data, response.headers);
+
+          if (merged.pageResults.length === 0) break;
+          if (page === 2 && merged.newItems === 0) break;
+
+          await sleep(120);
+        }
+      }
+    }
+  }
+
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
@@ -393,7 +441,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (requests=${totalRequests}, strategy=${discoveredStrategy?.name ?? "cursor-only"}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
+    `[bookingApi] Fetched ${results.length} bookings (requests=${totalRequests}, probe=${probeRequests}, shard=${shardRequests}, strategy=${discoveredStrategy?.name ?? "cursor-only"}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
   );
 
   return {
