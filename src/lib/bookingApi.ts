@@ -139,6 +139,21 @@ function extractNextCursor(payload: any, headers?: any): string | null {
   return null;
 }
 
+function isHtmlPayload(payload: unknown): boolean {
+  if (typeof payload !== "string") return false;
+  const trimmed = payload.trim().toLowerCase();
+  return trimmed.startsWith("<!doctype") || trimmed.startsWith("<html") || trimmed.includes("<body");
+}
+
+function isTunnelHtmlBadRequest(error: unknown): boolean {
+  const err = error as any;
+  const status = err?.response?.status;
+  const contentType = String(getHeaderValue(err?.response?.headers, "content-type") ?? "").toLowerCase();
+  const payload = err?.response?.data;
+
+  return status === 400 && (contentType.includes("text/html") || isHtmlPayload(payload));
+}
+
 async function fetchBookingPhoneById(id: number): Promise<string | null> {
   try {
     const { data } = await api.get(`/api/booking/requests/${id}/`);
@@ -153,7 +168,7 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const MAX_REQUESTS = 64;
+  const MAX_REQUESTS = 40;
   const MAX_RETRIES = 1;
 
   const deduped = new Map<number, BookingRequest>();
@@ -165,6 +180,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   let shardRequests = 0;
   let partialError = false;
   let inferredPageSize = 20;
+  let tunnelDegraded = false;
 
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -250,7 +266,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     request: () => Promise<{ data: unknown; headers: any }>,
     options?: { markPartialOnFail?: boolean }
   ): Promise<{ data: unknown; headers: any } | null> => {
-    if (requestCount >= MAX_REQUESTS) return null;
+    if (tunnelDegraded || requestCount >= MAX_REQUESTS) return null;
 
     const markPartialOnFail = options?.markPartialOnFail ?? true;
 
@@ -261,6 +277,18 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         return response;
       } catch (error) {
         retriesUsed += 1;
+
+        const hardTunnelFailure = isTunnelHtmlBadRequest(error);
+        if (hardTunnelFailure) {
+          tunnelDegraded = true;
+          if (markPartialOnFail) partialError = true;
+
+          if (deduped.size === 0) {
+            throw new Error("Conexão do túnel indisponível no momento (resposta HTML 400). Tente novamente em alguns segundos.");
+          }
+          return null;
+        }
+
         if (attempt === MAX_RETRIES) {
           if (markPartialOnFail) partialError = true;
           if (deduped.size === 0) throw error;
@@ -290,7 +318,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
   // 2) Seguir cursor/next sem abortar cedo por duplicatas
   let nextCursor = firstCursor;
-  while (nextCursor && requestCount < MAX_REQUESTS) {
+  while (nextCursor && requestCount < MAX_REQUESTS && !tunnelDegraded) {
     if (visitedTargets.has(nextCursor)) break;
     visitedTargets.add(nextCursor);
 
@@ -311,7 +339,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     (totalCount !== null && deduped.size < totalCount) ||
     (totalCount === null && deduped.size >= inferredPageSize);
 
-  if (shouldPaginateByPage && requestCount < MAX_REQUESTS) {
+  if (shouldPaginateByPage && requestCount < MAX_REQUESTS && !tunnelDegraded) {
     const maxPagesByCount =
       totalCount !== null
         ? Math.min(80, Math.ceil(totalCount / Math.max(1, inferredPageSize)) + 4)
@@ -357,7 +385,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   }
 
   // 4) Sweep por offset como fallback adicional
-  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
+  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS && !tunnelDegraded) {
     const step = Math.max(1, inferredPageSize);
     let missStreak = 0;
 
@@ -389,7 +417,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   }
 
   // 5) Fallback final por status usando APENAS status já vistos (evita invalid_status)
-  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
+  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS && !tunnelDegraded) {
     const knownStatuses = Array.from(
       new Set(
         Array.from(deduped.values())
@@ -456,7 +484,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, shard=${shardRequests}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
+    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, shard=${shardRequests}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError}, tunnelDegraded=${tunnelDegraded})`
   );
 
   return {

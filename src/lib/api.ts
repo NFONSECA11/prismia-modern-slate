@@ -79,12 +79,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor: log errors
+// Interceptor: sanitize tunnel errors (avoid leaking long HTML payloads)
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const contentType = String((res.headers as any)?.["content-type"] ?? "").toLowerCase();
+    if (contentType.includes("text/html") && String(res.config?.url ?? "").includes("/api/")) {
+      return Promise.reject(new Error("API retornou HTML em vez de JSON. Verifique se o túnel está ativo."));
+    }
+    return res;
+  },
   (err) => {
     const status = err?.response?.status;
-    const msg = err?.response?.data?.detail ?? err?.response?.data?.error ?? err?.message ?? "Erro desconhecido";
+    const contentType = String(err?.response?.headers?.["content-type"] ?? "").toLowerCase();
+    const rawData = err?.response?.data;
+    const isHtml =
+      contentType.includes("text/html") ||
+      (typeof rawData === "string" && /<!doctype|<html|<body/i.test(rawData));
+
+    const msg = isHtml
+      ? `Túnel indisponível (${status ?? "sem status"})`
+      : err?.response?.data?.detail ?? err?.response?.data?.error ?? err?.message ?? "Erro desconhecido";
+
     console.error("[API]", err?.config?.url, "→", status, msg);
     return Promise.reject(err);
   }
