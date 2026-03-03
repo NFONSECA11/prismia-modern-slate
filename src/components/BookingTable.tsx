@@ -75,52 +75,50 @@ interface QuickAction {
   action: () => Promise<void>;
 }
 
+function isConversationBooking(booking: BookingRequest): boolean {
+  const code = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
+  return code === "human" || code === "prices";
+}
+
 function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[] {
   const mode = booking.booking_mode as BookingMode;
   const terminal = isTerminal(booking.status);
   const hasChosenSlot = !!(booking.vars_snapshot?.chosen_slot || booking.chosen_slot);
   const actions: Omit<QuickAction, "action">[] = [];
+  const isConvo = isConversationBooking(booking);
 
   if (mode === "handoff_manual") {
     if (booking.status === "handoff") {
-      actions.push(
-        { key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" },
-        { key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" },
-      );
+      if (!isConvo) actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
+      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
     }
   } else if (mode === "assisted_slots_dashboard") {
     if (booking.status === "handoff" && !hasChosenSlot) {
-      actions.push(
-        { key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" },
-        { key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" },
-      );
+      if (!isConvo) actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" });
+      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
     } else if (booking.status === "awaiting_choice") {
-      actions.push(
-        { key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" },
-      );
+      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
     } else if (hasChosenSlot && (booking.status === "handoff" || booking.status === "pending")) {
-      actions.push(
-        { key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" },
-        { key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" },
-      );
+      if (!isConvo) actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
+      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
     }
   } else if (mode === "auto_slots_bot") {
     if (!terminal) {
-      if (hasChosenSlot) {
+      if (hasChosenSlot && !isConvo) {
         actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
       }
       actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
     }
   } else {
     if (!terminal) {
-      actions.push(
-        { key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "default" },
-        { key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" },
-      );
+      if (!isConvo) {
+        actions.push(
+          { key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "default" },
+          { key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" },
+        );
+      }
     }
   }
-
-  // Handoff toggle removed from quick actions per user request
 
   // Reopen for terminal
   if (terminal) {

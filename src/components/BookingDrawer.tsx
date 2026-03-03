@@ -330,34 +330,42 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     }
 
     const actions: React.ReactNode[] = [];
+    const isConvo = ["human", "prices"].includes(
+      ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
+    );
 
     if (mode === "handoff_manual") {
       if (booking.status === "handoff") {
-        actions.push(
+        if (!isConvo) actions.push(
           <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+        );
+        actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       }
     } else if (mode === "assisted_slots_dashboard") {
       if (booking.status === "handoff" && !hasChosenSlot) {
-        actions.push(
+        if (!isConvo) actions.push(
           <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
+        );
+        actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       } else if (booking.status === "awaiting_choice") {
-        // show waiting state + cancel
         actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       } else if (hasChosenSlot && (booking.status === "handoff" || booking.status === "pending")) {
-        actions.push(
+        if (!isConvo) actions.push(
           <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+        );
+        actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       }
     } else if (mode === "auto_slots_bot") {
       if (!terminal) {
-        if (hasChosenSlot) {
+        if (hasChosenSlot && !isConvo) {
           actions.push(
             <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
           );
@@ -369,10 +377,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     } else {
       // fallback — generic
       if (!terminal) {
-        actions.push(
-          <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
-          <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
-        );
+        if (!isConvo) {
+          actions.push(
+            <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
+            <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
+          );
+        }
       }
     }
 
