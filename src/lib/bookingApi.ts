@@ -153,7 +153,7 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const MAX_REQUESTS = 36;
+  const MAX_REQUESTS = 48;
   const MAX_RETRIES = 1;
   const SHARD_STATUSES = [
     "handoff",
@@ -280,12 +280,25 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return null;
   };
 
-  // 1) Primeira página (sem forcing de params)
-  const firstResponse = await safeGet(() => api.get("/api/booking/requests/"));
+  // 1) Primeira página (tenta forçar page size maior quando suportado)
+  const firstCandidates = [
+    { page_size: 500 },
+    { limit: 500 },
+    {},
+  ];
+
+  let firstResponse: { data: unknown; headers: any } | null = null;
+  for (const params of firstCandidates) {
+    firstResponse = await safeGet(() => api.get("/api/booking/requests/", { params }));
+    if (!firstResponse) continue;
+
+    const preview = normalizeBookingListResponse(firstResponse.data);
+    if (preview.results.length > 20 || totalCount === null) break;
+  }
+
   if (!firstResponse) {
     return { count: 0, results: [], professionals: [] };
   }
-
   const firstMerged = mergeResponse(firstResponse.data, firstResponse.headers);
 
   // 2) Seguir cursor/next quando existir
@@ -370,6 +383,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       await sleep(100);
     }
   }
+
+  // 5) Fallback final por status (quando endpoint global repete os mesmos itens)
 
   // 5) Fallback por status (quando endpoint global repete sempre os mesmos 20)
   if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
