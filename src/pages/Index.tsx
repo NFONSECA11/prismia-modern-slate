@@ -53,10 +53,10 @@ export default function Index() {
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests"],
     queryFn: fetchBookingRequests,
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
-    staleTime: 20_000,
-    retry: 2,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: false,
+    staleTime: 55_000,
+    retry: 1,
   });
 
   const bookings = data?.results ?? [];
