@@ -153,27 +153,17 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const REQUEST_PAGE_SIZE = 100;
-  const MAX_TOTAL_REQUESTS = 24;
-  const SHARD_STATUSES = [
-    "handoff",
-    "assisted",
-    "awaiting_choice",
-    "pending",
-    "confirmed",
-    "canceled",
-    "cancelled",
-    "failed",
-  ] as const;
+  const MAX_REQUESTS = 14;
+  const MAX_RETRIES = 1;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
-  let totalRequests = 0;
-  let probeRequests = 0;
-  let shardRequests = 0;
+  let requestCount = 0;
+  let retriesUsed = 0;
   let partialError = false;
+  let inferredPageSize = 20;
 
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -193,7 +183,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
     if (value.startsWith("/")) return value;
     if (value.startsWith("?")) return `/api/booking/requests/${value}`;
-    if (/^\d+$/.test(value)) return `/api/booking/requests/?page=${value}&page_size=${REQUEST_PAGE_SIZE}`;
+    if (/^\d+$/.test(value)) return `/api/booking/requests/?page=${value}`;
 
     return null;
   };
@@ -226,9 +216,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const mergeResponse = (data: unknown, headers: any) => {
     const normalized = normalizeBookingListResponse(data);
 
-    if (normalized.professionals.length > 0) {
-      professionals = normalized.professionals;
-    }
+    if (normalized.professionals.length > 0) professionals = normalized.professionals;
 
     const payloadTotal = extractPayloadTotalCount(data);
     const headerTotal = extractTotalCountFromHeaders(headers);
@@ -242,6 +230,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     }
 
     const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
+    if (pageResults.length > 0) inferredPageSize = Math.max(1, Math.min(100, pageResults.length));
 
     let newItems = 0;
     for (const booking of pageResults) {
@@ -256,24 +245,32 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     };
   };
 
-  const hasReliableTotal = () => totalCount !== null && totalCount > 20;
-  const reachedReliableTotal = () => hasReliableTotal() && deduped.size >= (totalCount as number);
+  const safeGet = async (
+    request: () => Promise<{ data: unknown; headers: any }>
+  ): Promise<{ data: unknown; headers: any } | null> => {
+    if (requestCount >= MAX_REQUESTS) return null;
 
-  const safeGet = async (url: string, params?: Record<string, unknown>) => {
-    if (totalRequests >= MAX_TOTAL_REQUESTS) return null;
-    try {
-      const response = await api.get(url, params ? { params } : undefined);
-      totalRequests += 1;
-      return response;
-    } catch (error) {
-      partialError = true;
-      if (deduped.size === 0) throw error;
-      return null;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+      try {
+        const response = await request();
+        requestCount += 1;
+        return response;
+      } catch (error) {
+        retriesUsed += 1;
+        if (attempt === MAX_RETRIES) {
+          partialError = true;
+          if (deduped.size === 0) throw error;
+          return null;
+        }
+        await sleep(200 * (attempt + 1));
+      }
     }
+
+    return null;
   };
 
-  // 1) Primeira página
-  const firstResponse = await safeGet("/api/booking/requests/", { page: 1, page_size: REQUEST_PAGE_SIZE });
+  // 1) Primeira página (sem forcing de params)
+  const firstResponse = await safeGet(() => api.get("/api/booking/requests/"));
   if (!firstResponse) {
     return { count: 0, results: [], professionals: [] };
   }
@@ -282,155 +279,84 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
   // 2) Seguir cursor/next quando existir
   let nextCursor = firstMerged.cursorTarget;
-  while (nextCursor && totalRequests < MAX_TOTAL_REQUESTS) {
+  while (nextCursor && requestCount < MAX_REQUESTS) {
     if (visitedTargets.has(nextCursor)) break;
     visitedTargets.add(nextCursor);
 
-    const response = await safeGet(nextCursor);
+    const response = await safeGet(() => api.get(nextCursor as string));
     if (!response) break;
 
     const merged = mergeResponse(response.data, response.headers);
-    if (reachedReliableTotal()) break;
+    if (totalCount !== null && deduped.size >= totalCount) break;
     if (merged.pageResults.length === 0 || merged.newItems === 0) break;
 
     nextCursor = merged.cursorTarget;
-    await sleep(120);
+    await sleep(100);
   }
 
-  // 3) Se ainda travou em 20, detectar estratégia de paginação aceitada pela API
-  type ProbeStrategy = {
-    name: string;
-    probeParams: Record<string, number>;
-    nextValue: number;
-    step: number;
-    buildParams: (value: number) => Record<string, number>;
-  };
+  // 3) Paginação por página numérica (quando count indica mais dados)
+  const shouldPaginateByPage =
+    (totalCount !== null && deduped.size < totalCount) ||
+    (totalCount === null && deduped.size >= inferredPageSize);
 
-  const probeStrategies: ProbeStrategy[] = [
-    {
-      name: "page",
-      probeParams: { page: 2 },
-      nextValue: 3,
-      step: 1,
-      buildParams: (value) => ({ page: value }),
-    },
-    {
-      name: "page+size",
-      probeParams: { page: 2, page_size: REQUEST_PAGE_SIZE },
-      nextValue: 3,
-      step: 1,
-      buildParams: (value) => ({ page: value, page_size: REQUEST_PAGE_SIZE }),
-    },
-    {
-      name: "offset+limit",
-      probeParams: { offset: 20, limit: 20 },
-      nextValue: 40,
-      step: 20,
-      buildParams: (value) => ({ offset: value, limit: 20 }),
-    },
-    {
-      name: "offset",
-      probeParams: { offset: 20 },
-      nextValue: 40,
-      step: 20,
-      buildParams: (value) => ({ offset: value }),
-    },
-    {
-      name: "skip+limit",
-      probeParams: { skip: 20, limit: 20 },
-      nextValue: 40,
-      step: 20,
-      buildParams: (value) => ({ skip: value, limit: 20 }),
-    },
-    {
-      name: "page_number",
-      probeParams: { page_number: 2 },
-      nextValue: 3,
-      step: 1,
-      buildParams: (value) => ({ page_number: value }),
-    },
-    {
-      name: "p",
-      probeParams: { p: 2 },
-      nextValue: 3,
-      step: 1,
-      buildParams: (value) => ({ p: value }),
-    },
-  ];
+  if (shouldPaginateByPage && requestCount < MAX_REQUESTS) {
+    let emptyStreak = 0;
+    const maxPagesByCount = totalCount !== null
+      ? Math.min(40, Math.ceil(totalCount / Math.max(1, inferredPageSize)) + 2)
+      : 8;
 
-  const shouldProbePagination = () => {
-    if (reachedReliableTotal()) return false;
-    if (hasReliableTotal()) return deduped.size < (totalCount as number);
-    return deduped.size <= 20;
-  };
+    for (let page = 2; page <= maxPagesByCount && requestCount < MAX_REQUESTS; page += 1) {
+      if (totalCount !== null && deduped.size >= totalCount) break;
 
-  let discoveredStrategy: ProbeStrategy | null = null;
-  if (shouldProbePagination()) {
-    for (const strategy of probeStrategies) {
-      const response = await safeGet("/api/booking/requests/", strategy.probeParams);
-      if (!response) continue;
-      probeRequests += 1;
-
-      const merged = mergeResponse(response.data, response.headers);
-      if (merged.newItems > 0) {
-        discoveredStrategy = strategy;
-        break;
-      }
-
-      if (reachedReliableTotal()) break;
-      await sleep(120);
-    }
-  }
-
-  // 4) Paginar com a estratégia descoberta
-  if (discoveredStrategy) {
-    let cursor = discoveredStrategy.nextValue;
-
-    while (totalRequests < MAX_TOTAL_REQUESTS) {
-      const response = await safeGet("/api/booking/requests/", discoveredStrategy.buildParams(cursor));
+      const response = await safeGet(() =>
+        api.get("/api/booking/requests/", {
+          params: { page, page_size: inferredPageSize },
+        })
+      );
       if (!response) break;
 
       const merged = mergeResponse(response.data, response.headers);
-      if (reachedReliableTotal()) break;
-      if (merged.pageResults.length === 0 || merged.newItems === 0) break;
+      if (merged.pageResults.length === 0) break;
 
-      cursor += discoveredStrategy.step;
-      await sleep(120);
+      if (merged.newItems === 0) {
+        emptyStreak += 1;
+        if (emptyStreak >= 2) break;
+      } else {
+        emptyStreak = 0;
+      }
+
+      await sleep(100);
     }
   }
 
-  const shouldShardByStatus = () => {
-    if (reachedReliableTotal()) return false;
-    if (hasReliableTotal()) return deduped.size < (totalCount as number);
-    return deduped.size <= 20;
-  };
+  // 4) Fallback offset/limit (somente se ainda faltar pelo count)
+  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
+    let emptyStreak = 0;
 
-  // 5) Fallback final: shard por status com paginação curta
-  if (shouldShardByStatus()) {
-    const statusParamBuilders = [
-      (status: string, page: number) => ({ status, page, page_size: REQUEST_PAGE_SIZE }),
-      (status: string, page: number) => ({ booking_status: status, page, page_size: REQUEST_PAGE_SIZE }),
-    ];
+    for (
+      let offset = deduped.size;
+      offset < totalCount && requestCount < MAX_REQUESTS;
+      offset += Math.max(1, inferredPageSize)
+    ) {
+      const response = await safeGet(() =>
+        api.get("/api/booking/requests/", {
+          params: { offset, limit: inferredPageSize },
+        })
+      );
+      if (!response) break;
 
-    outer: for (const status of SHARD_STATUSES) {
-      if (totalRequests >= MAX_TOTAL_REQUESTS || reachedReliableTotal()) break;
+      const merged = mergeResponse(response.data, response.headers);
+      if (merged.pageResults.length === 0) break;
 
-      for (const buildParams of statusParamBuilders) {
-        for (const page of [1, 2] as const) {
-          if (totalRequests >= MAX_TOTAL_REQUESTS || reachedReliableTotal()) break outer;
-
-          const response = await safeGet("/api/booking/requests/", buildParams(status, page));
-          if (!response) continue;
-
-          shardRequests += 1;
-          const merged = mergeResponse(response.data, response.headers);
-
-          if (merged.pageResults.length === 0) break;
-          if (page === 2 && merged.newItems === 0) break;
-
-          await sleep(120);
-        }
+      if (merged.newItems === 0) {
+        emptyStreak += 1;
+        if (emptyStreak >= 2) break;
+      } else {
+        emptyStreak = 0;
       }
+
+      if (deduped.size >= totalCount) break;
+      await sleep(100);
     }
   }
 
@@ -441,7 +367,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (requests=${totalRequests}, probe=${probeRequests}, shard=${shardRequests}, strategy=${discoveredStrategy?.name ?? "cursor-only"}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
+    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
   );
 
   return {
