@@ -346,10 +346,14 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     },
   ];
 
-  const looksTruncatedAtTwenty = () => deduped.size === 20 && (totalCount === null || totalCount <= 20);
+  const shouldProbePagination = () => {
+    if (reachedReliableTotal()) return false;
+    if (hasReliableTotal()) return deduped.size < (totalCount as number);
+    return deduped.size <= 20;
+  };
 
   let discoveredStrategy: ProbeStrategy | null = null;
-  if (looksTruncatedAtTwenty()) {
+  if (shouldProbePagination()) {
     for (const strategy of probeStrategies) {
       const response = await safeGet("/api/booking/requests/", strategy.probeParams);
       if (!response) continue;
