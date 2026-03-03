@@ -154,11 +154,26 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const REQUEST_PAGE_SIZE = 100;
-  const MAX_REQUESTS = 15;
+  const MAX_CURSOR_REQUESTS = 10;
+  const MAX_OFFSET_REQUESTS_PER_STRATEGY = 6;
+  const SHARD_STATUSES = [
+    "handoff",
+    "assisted",
+    "awaiting_choice",
+    "pending",
+    "confirmed",
+    "canceled",
+    "cancelled",
+    "failed",
+  ] as const;
 
   const deduped = new Map<number, BookingRequest>();
+  const visitedTargets = new Set<string>();
   let professionals: Professional[] = [];
   let totalCount: number | null = null;
+  let cursorRequests = 0;
+  let offsetRequests = 0;
+  let shardRequests = 0;
 
   const normalizeTarget = (cursor: string | null): string | null => {
     if (!cursor) return null;
@@ -181,18 +196,9 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return null;
   };
 
-  let page = 1;
-  let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
-  const visitedTargets = new Set<string>();
-
-  for (let i = 0; i < MAX_REQUESTS && nextTarget; i += 1) {
-    const target = nextTarget;
-    if (visitedTargets.has(target)) break;
-    visitedTargets.add(target);
-
-    const response = await api.get(target);
-    const normalized = normalizeBookingListResponse(response.data);
-    const headerCount = extractTotalCountFromHeaders(response.headers);
+  const mergeResponse = (data: unknown, headers: any) => {
+    const normalized = normalizeBookingListResponse(data);
+    const headerCount = extractTotalCountFromHeaders(headers);
 
     if (normalized.professionals.length > 0) {
       professionals = normalized.professionals;
@@ -215,24 +221,108 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       deduped.set(booking.id, booking);
     }
 
-    if (totalCount !== null && deduped.size >= totalCount) {
-      nextTarget = null;
-      break;
-    }
+    return {
+      pageResults,
+      newItems,
+      cursorTarget: normalizeTarget(extractNextCursor(data, headers)),
+    };
+  };
 
-    const cursorTarget = normalizeTarget(extractNextCursor(response.data, response.headers));
+  const needsMoreData = () => {
+    if (totalCount !== null) return deduped.size < totalCount;
+    return deduped.size <= 20;
+  };
+
+  // 1) Cursor/page pagination
+  let page = 1;
+  let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
+
+  while (cursorRequests < MAX_CURSOR_REQUESTS && nextTarget) {
+    const target = nextTarget;
+    if (visitedTargets.has(target)) break;
+    visitedTargets.add(target);
+
+    const response = await api.get(target);
+    cursorRequests += 1;
+
+    const { pageResults, newItems, cursorTarget } = mergeResponse(response.data, response.headers);
+
+    if (totalCount !== null && deduped.size >= totalCount) break;
+
     if (cursorTarget && !visitedTargets.has(cursorTarget)) {
       nextTarget = cursorTarget;
       continue;
     }
 
-    if (pageResults.length === 0 || newItems === 0) {
-      nextTarget = null;
-      break;
+    if (pageResults.length === REQUEST_PAGE_SIZE && newItems > 0) {
+      page += 1;
+      nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
+      continue;
     }
 
-    page += 1;
-    nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
+    break;
+  }
+
+  // 2) Offset fallback (safe + bounded)
+  if (needsMoreData()) {
+    const offsetStrategies = [
+      (offset: number) => ({ offset, limit: REQUEST_PAGE_SIZE }),
+      (offset: number) => ({ offset, page_size: REQUEST_PAGE_SIZE }),
+      (offset: number) => ({ skip: offset, limit: REQUEST_PAGE_SIZE }),
+    ];
+
+    for (const buildParams of offsetStrategies) {
+      let offset = deduped.size;
+      let strategyNewItems = 0;
+
+      for (let i = 0; i < MAX_OFFSET_REQUESTS_PER_STRATEGY; i += 1) {
+        const response = await api.get("/api/booking/requests/", {
+          params: buildParams(offset),
+        });
+        offsetRequests += 1;
+
+        const { pageResults, newItems } = mergeResponse(response.data, response.headers);
+        if (newItems === 0) break;
+
+        strategyNewItems += newItems;
+        if (totalCount !== null && deduped.size >= totalCount) break;
+        if (pageResults.length < REQUEST_PAGE_SIZE) break;
+
+        offset += REQUEST_PAGE_SIZE;
+      }
+
+      if (strategyNewItems > 0 || (totalCount !== null && deduped.size >= totalCount)) {
+        break;
+      }
+    }
+  }
+
+  // 3) Status sharding fallback (safe: 1 call per status, +alt only if needed)
+  if (needsMoreData()) {
+    const statusBuilders = [
+      (status: string) => ({ status, page: 1, page_size: REQUEST_PAGE_SIZE }),
+      (status: string) => ({ booking_status: status, page: 1, page_size: REQUEST_PAGE_SIZE }),
+    ];
+
+    for (const status of SHARD_STATUSES) {
+      let gotNewForStatus = false;
+
+      for (const buildParams of statusBuilders) {
+        const response = await api.get("/api/booking/requests/", {
+          params: buildParams(status),
+        });
+        shardRequests += 1;
+
+        const { newItems } = mergeResponse(response.data, response.headers);
+        if (newItems > 0) {
+          gotNewForStatus = true;
+          break;
+        }
+      }
+
+      if (totalCount !== null && deduped.size >= totalCount) break;
+      if (!needsMoreData() && gotNewForStatus) break;
+    }
   }
 
   const results = Array.from(deduped.values()).map((booking) => {
@@ -242,7 +332,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (targets=${visitedTargets.size}, totalHint=${totalCount ?? "n/a"})`
+    `[bookingApi] Fetched ${results.length} bookings (cursor=${cursorRequests}, offset=${offsetRequests}, shard=${shardRequests}, totalHint=${totalCount ?? "n/a"})`
   );
 
   return {
