@@ -152,104 +152,23 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
   }
 }
 
-// Track if we've already done a full deep fetch and know the total
-let _lastDeepFetchSize = 0;
-
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const mergePage = (bookingsById: Map<number, BookingRequest>, pageResults: BookingRequest[]) => {
-    for (const booking of pageResults) {
-      const id = Number(booking?.id);
-      if (Number.isNaN(id)) continue;
-      const existing = bookingsById.get(id);
-      if (!existing) {
-        bookingsById.set(id, booking);
-        continue;
-      }
-      const existingTs = Date.parse(existing.updated_at ?? existing.created_at ?? "");
-      const nextTs = Date.parse(booking.updated_at ?? booking.created_at ?? "");
-      if (!Number.isNaN(nextTs) && (Number.isNaN(existingTs) || nextTs >= existingTs)) {
-        bookingsById.set(id, booking);
-      }
-    }
-  };
+  const response = await api.get("/api/booking/requests/", {
+    params: { page: 1, page_size: 1000 },
+  });
+  const normalized = normalizeBookingListResponse(response.data);
 
-  const bookingsById = new Map<number, BookingRequest>();
-  let professionals: Professional[] = [];
-  let totalCount = 0;
-
-  // 1) Single fast call — try to get everything at once
-  try {
-    const response = await api.get("/api/booking/requests/", {
-      params: { page: 1, page_size: 1000 },
-    });
-    const normalized = normalizeBookingListResponse(response.data);
-    const headerCount = extractTotalCountFromHeaders(response.headers);
-    totalCount = Math.max(normalized.count || 0, headerCount ?? 0);
-    mergePage(bookingsById, normalized.results);
-    if (normalized.professionals.length > 0) professionals = normalized.professionals;
-  } catch {
-    // fallback below
-  }
-
-  // 2) If we got fewer than expected and we haven't done a deep fetch yet,
-  //    or the total grew, do a quick offset+limit sweep
-  if (totalCount > 0 && bookingsById.size < totalCount && bookingsById.size < _lastDeepFetchSize + 10) {
-    // Try offset+limit which showed best results in logs
-    let cursor = bookingsById.size;
-    for (let step = 0; step < 20; step++) {
-      try {
-        const response = await api.get("/api/booking/requests/", {
-          params: { offset: cursor, limit: 100 },
-        });
-        const page = normalizeBookingListResponse(response.data);
-        if (page.results.length === 0) break;
-        const before = bookingsById.size;
-        mergePage(bookingsById, page.results);
-        if (bookingsById.size === before) break; // no progress
-        cursor = bookingsById.size;
-        if (bookingsById.size >= totalCount) break;
-      } catch { break; }
-    }
-  }
-
-  // 3) Status sharding — only if still missing records
-  if (totalCount > 0 && bookingsById.size < totalCount) {
-    const statuses = ["handoff", "assisted", "pending", "confirmed", "canceled", "cancelled", "failed", "awaiting_choice"];
-    for (const status of statuses) {
-      try {
-        const response = await api.get("/api/booking/requests/", {
-          params: { status, limit: 1000 },
-        });
-        const page = normalizeBookingListResponse(response.data);
-        mergePage(bookingsById, page.results);
-        if (page.professionals.length > 0) professionals = page.professionals;
-      } catch {
-        // skip invalid statuses
-      }
-    }
-  }
-
-  _lastDeepFetchSize = bookingsById.size;
-
-  const results = Array.from(bookingsById.values());
-
-  // Fill missing phones from cache
-  const missingPhone = results.filter((b) => !b.contact_phone && !b.phone);
-  const needFetch = missingPhone.filter((b) => !bookingPhoneCache.has(b.id));
-  if (needFetch.length > 0) {
-    await Promise.all(needFetch.map((b) => fetchBookingPhoneById(b.id)));
-  }
-
-  const resultsWithPhone = results.map((booking) => {
+  // Fill cached phones (no extra requests)
+  const results = normalized.results.map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
     return { ...booking, contact_phone: cachedPhone };
   });
 
   return {
-    count: Math.max(totalCount, bookingsById.size),
-    results: resultsWithPhone,
-    professionals,
+    count: normalized.count,
+    results,
+    professionals: normalized.professionals,
   };
 }
 
