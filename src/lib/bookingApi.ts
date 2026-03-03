@@ -303,7 +303,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     if (!merged.cursorTarget || merged.cursorTarget === currentTarget) break;
 
     nextCursor = merged.cursorTarget;
-    await sleep(80);
+    await sleep(200);
   }
 
   // 3) Sweep por paginação numérica com múltiplos formatos de parâmetro
@@ -352,7 +352,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         missStreak = 0;
       }
 
-      await sleep(70);
+      await sleep(200);
     }
   }
 
@@ -384,7 +384,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         missStreak = 0;
       }
 
-      await sleep(70);
+      await sleep(200);
     }
   }
 
@@ -443,7 +443,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
           const merged = mergeResponse(response.data, response.headers);
           if (merged.pageResults.length === 0) break;
 
-          await sleep(70);
+          await sleep(200);
         }
       }
     }
