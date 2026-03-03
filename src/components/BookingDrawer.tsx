@@ -281,7 +281,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   );
 
   const handoffOffMut = useMutation(
-    makeMutation(() => handoffOff(booking!.id), "Handoff desativado!")
+    makeMutation(() => handoffOff(booking!.id), "Conversa encerrada — Bot ON!")
   );
 
   const suggestMut = useMutation(
@@ -386,10 +386,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
     }
 
-    // Encerrar Conversa for conversation bookings
-    if (isConvo && !terminal) {
+    // Encerrar Conversa for conversation bookings — turns Bot ON
+    if (isConvo && !terminal && !isBotOn) {
       actions.push(
-        <ActionButton key="end-convo" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={PhoneOff} label="Encerrar Conversa" variant="danger" />,
+        <ActionButton key="end-convo" onClick={() => handoffOffMut.mutate()} disabled={busy} loading={handoffOffMut.isPending} icon={Bot} label="Encerrar Conversa" variant="danger" />,
       );
     }
 
