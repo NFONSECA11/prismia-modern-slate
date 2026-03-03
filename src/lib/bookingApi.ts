@@ -274,22 +274,14 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   };
 
   // 1) Primeira página com tentativas de page size maior
-  const firstCandidates = [{ page_size: 500 }, { limit: 500 }, {}];
   let firstCursor: string | null = null;
   let hasAnyResponse = false;
 
-  for (const params of firstCandidates) {
-    if (requestCount >= MAX_REQUESTS) break;
-
-    const response = await safeGet(() => api.get("/api/booking/requests/", { params }));
-    if (!response) continue;
-
+  const firstResponse = await safeGet(() => api.get("/api/booking/requests/", { params: { limit: 500 } }));
+  if (firstResponse) {
     hasAnyResponse = true;
-    const merged = mergeResponse(response.data, response.headers);
-    if (!firstCursor) firstCursor = merged.cursorTarget;
-
-    const isFinalCandidate = Object.keys(params).length === 0;
-    if (merged.pageResults.length > 20 || isFinalCandidate) break;
+    const merged = mergeResponse(firstResponse.data, firstResponse.headers);
+    firstCursor = merged.cursorTarget;
   }
 
   if (!hasAnyResponse) {
