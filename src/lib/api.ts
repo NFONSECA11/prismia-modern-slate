@@ -45,7 +45,7 @@ function getCookie(name: string): string | null {
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: "https://dallas-dna-monitoring-mirrors.trycloudflare.com",
-  timeout: 10_000,
+  timeout: 30_000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
