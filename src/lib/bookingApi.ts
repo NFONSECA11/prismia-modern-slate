@@ -292,7 +292,9 @@ export async function handoffOn(id: number): Promise<void> {
 
 export async function handoffOff(id: number): Promise<void> {
   await fetchCsrf();
-  await api.post(`/api/booking/requests/${id}/handoff_off/`);
+  await api.post(`/api/booking/requests/${id}/handoff_off/`, {
+    resume_to: { flow_key: "booking", version: 1, state: "BOOKING_PROCEDURE" },
+  });
 }
 
 // ── Sugerir horários ─────────────────────────────────────────────────────────
