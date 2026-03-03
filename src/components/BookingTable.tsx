@@ -285,7 +285,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
                             <BookingModeIcon mode={booking.booking_mode} />
-                            {["human", "prices"].includes(booking.procedure_slug) ? (
+                            {["human", "prices"].includes((booking.procedure_slug || booking.procedure_name || "").trim().toLowerCase()) ? (
                               <span className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight">
                                 <MessageCircle className="h-4 w-4 text-primary" />
                                 Conversa
