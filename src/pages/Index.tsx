@@ -44,7 +44,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("today");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
@@ -396,7 +396,7 @@ export default function Index() {
           </div>
 
           <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-            {filteredBookings.length} registro{filteredBookings.length !== 1 ? "s" : ""}
+            {filteredBookings.length} filtrado{filteredBookings.length !== 1 ? "s" : ""} • {bookings.length} carregado{bookings.length !== 1 ? "s" : ""}
           </span>
         </div>
 
