@@ -154,8 +154,9 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const REQUEST_PAGE_SIZE = 100;
-  const MAX_CURSOR_REQUESTS = 10;
-  const MAX_OFFSET_REQUESTS_PER_STRATEGY = 6;
+  const MAX_CURSOR_REQUESTS = 20;
+  const MAX_OFFSET_FALLBACK_REQUESTS = 2;
+  const MAX_SHARD_REQUESTS = 10;
   const SHARD_STATUSES = [
     "handoff",
     "assisted",
@@ -174,6 +175,9 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   let cursorRequests = 0;
   let offsetRequests = 0;
   let shardRequests = 0;
+  let partialError = false;
+
+  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
   const normalizeTarget = (cursor: string | null): string | null => {
     if (!cursor) return null;
@@ -196,15 +200,41 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return null;
   };
 
+  const extractPayloadTotalCount = (payload: any): number | null => {
+    const resultNode = payload?.result;
+    const rawCandidates = [
+      payload?.count,
+      resultNode?.count,
+      payload?.total,
+      resultNode?.total,
+      payload?.total_count,
+      resultNode?.total_count,
+      payload?.pagination?.count,
+      resultNode?.pagination?.count,
+      payload?.pagination?.total,
+      resultNode?.pagination?.total,
+      payload?.meta?.total,
+      resultNode?.meta?.total,
+    ];
+
+    for (const raw of rawCandidates) {
+      const parsed = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+      if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+    }
+
+    return null;
+  };
+
   const mergeResponse = (data: unknown, headers: any) => {
     const normalized = normalizeBookingListResponse(data);
-    const headerCount = extractTotalCountFromHeaders(headers);
 
     if (normalized.professionals.length > 0) {
       professionals = normalized.professionals;
     }
 
-    const candidateCounts = [normalized.count, headerCount].filter(
+    const payloadTotal = extractPayloadTotalCount(data);
+    const headerTotal = extractTotalCountFromHeaders(headers);
+    const candidateCounts = [payloadTotal, headerTotal].filter(
       (n): n is number => typeof n === "number" && Number.isFinite(n)
     );
 
@@ -228,12 +258,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     };
   };
 
-  const needsMoreData = () => {
-    if (totalCount !== null) return deduped.size < totalCount;
-    return deduped.size <= 20;
-  };
-
-  // 1) Cursor/page pagination
+  // 1) Cursor/page pagination (principal)
   let page = 1;
   let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
 
@@ -242,86 +267,71 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     if (visitedTargets.has(target)) break;
     visitedTargets.add(target);
 
-    const response = await api.get(target);
-    cursorRequests += 1;
+    let response: { data: unknown; headers: any } | null = null;
+    try {
+      response = await api.get(target);
+      cursorRequests += 1;
+    } catch (error) {
+      partialError = true;
+      if (deduped.size === 0) throw error;
+      break;
+    }
 
+    if (!response) break;
     const { pageResults, newItems, cursorTarget } = mergeResponse(response.data, response.headers);
 
     if (totalCount !== null && deduped.size >= totalCount) break;
+    if (pageResults.length === 0 || newItems === 0) break;
 
     if (cursorTarget && !visitedTargets.has(cursorTarget)) {
       nextTarget = cursorTarget;
       continue;
     }
 
-    if (pageResults.length === REQUEST_PAGE_SIZE && newItems > 0) {
-      page += 1;
-      nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
-      continue;
-    }
-
-    break;
+    page += 1;
+    nextTarget = `/api/booking/requests/?page=${page}&page_size=${REQUEST_PAGE_SIZE}`;
   }
 
-  // 2) Offset fallback (safe + bounded)
-  if (needsMoreData()) {
-    const offsetStrategies = [
-      (offset: number) => ({ offset, limit: REQUEST_PAGE_SIZE }),
-      (offset: number) => ({ offset, page_size: REQUEST_PAGE_SIZE }),
-      (offset: number) => ({ skip: offset, limit: REQUEST_PAGE_SIZE }),
+  // 2) Fallback leve de offset (somente se ainda travou em 20)
+  if (deduped.size <= 20 && totalCount === null) {
+    const fallbackParams = [
+      { offset: deduped.size, limit: REQUEST_PAGE_SIZE },
+      { page: 2, page_size: REQUEST_PAGE_SIZE },
     ];
 
-    for (const buildParams of offsetStrategies) {
-      let offset = deduped.size;
-      let strategyNewItems = 0;
-
-      for (let i = 0; i < MAX_OFFSET_REQUESTS_PER_STRATEGY; i += 1) {
-        const response = await api.get("/api/booking/requests/", {
-          params: buildParams(offset),
-        });
+    for (let i = 0; i < Math.min(fallbackParams.length, MAX_OFFSET_FALLBACK_REQUESTS); i += 1) {
+      try {
+        const response = await api.get("/api/booking/requests/", { params: fallbackParams[i] });
         offsetRequests += 1;
-
-        const { pageResults, newItems } = mergeResponse(response.data, response.headers);
-        if (newItems === 0) break;
-
-        strategyNewItems += newItems;
-        if (totalCount !== null && deduped.size >= totalCount) break;
-        if (pageResults.length < REQUEST_PAGE_SIZE) break;
-
-        offset += REQUEST_PAGE_SIZE;
+        mergeResponse(response.data, response.headers);
+      } catch {
+        partialError = true;
       }
 
-      if (strategyNewItems > 0 || (totalCount !== null && deduped.size >= totalCount)) {
-        break;
-      }
+      if (deduped.size > 20) break;
+      await sleep(120);
     }
   }
 
-  // 3) Status sharding fallback (safe: 1 call per status, +alt only if needed)
-  if (needsMoreData()) {
-    const statusBuilders = [
-      (status: string) => ({ status, page: 1, page_size: REQUEST_PAGE_SIZE }),
-      (status: string) => ({ booking_status: status, page: 1, page_size: REQUEST_PAGE_SIZE }),
-    ];
+  // 3) Fallback de sharding com limite rígido de requests
+  if (deduped.size <= 20 && totalCount === null) {
+    outer: for (const status of SHARD_STATUSES) {
+      for (const statusKey of ["status", "booking_status"] as const) {
+        if (shardRequests >= MAX_SHARD_REQUESTS) break outer;
 
-    for (const status of SHARD_STATUSES) {
-      let gotNewForStatus = false;
-
-      for (const buildParams of statusBuilders) {
-        const response = await api.get("/api/booking/requests/", {
-          params: buildParams(status),
-        });
-        shardRequests += 1;
-
-        const { newItems } = mergeResponse(response.data, response.headers);
-        if (newItems > 0) {
-          gotNewForStatus = true;
-          break;
+        try {
+          const response = await api.get("/api/booking/requests/", {
+            params: { [statusKey]: status, page: 1, page_size: REQUEST_PAGE_SIZE },
+          });
+          shardRequests += 1;
+          mergeResponse(response.data, response.headers);
+        } catch {
+          partialError = true;
         }
-      }
 
-      if (totalCount !== null && deduped.size >= totalCount) break;
-      if (!needsMoreData() && gotNewForStatus) break;
+        if (totalCount !== null && deduped.size >= totalCount) break outer;
+        await sleep(120);
+      }
     }
   }
 
@@ -332,7 +342,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (cursor=${cursorRequests}, offset=${offsetRequests}, shard=${shardRequests}, totalHint=${totalCount ?? "n/a"})`
+    `[bookingApi] Fetched ${results.length} bookings (cursor=${cursorRequests}, offset=${offsetRequests}, shard=${shardRequests}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
   );
 
   return {
