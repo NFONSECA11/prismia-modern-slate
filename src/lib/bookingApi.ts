@@ -153,8 +153,18 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const MAX_REQUESTS = 14;
+  const MAX_REQUESTS = 36;
   const MAX_RETRIES = 1;
+  const SHARD_STATUSES = [
+    "handoff",
+    "assisted",
+    "awaiting_choice",
+    "pending",
+    "confirmed",
+    "canceled",
+    "cancelled",
+    "failed",
+  ] as const;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
@@ -162,6 +172,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   let totalCount: number | null = null;
   let requestCount = 0;
   let retriesUsed = 0;
+  let shardRequests = 0;
   let partialError = false;
   let inferredPageSize = 20;
 
@@ -360,6 +371,52 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     }
   }
 
+  // 5) Fallback por status (quando endpoint global repete sempre os mesmos 20)
+  if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
+    const fetchStatusPages = async (statusKey: "status" | "booking_status", status: string) => {
+      let localNewItems = 0;
+      let emptyStreak = 0;
+
+      for (let page = 1; page <= 6 && requestCount < MAX_REQUESTS; page += 1) {
+        if (deduped.size >= totalCount) break;
+
+        const response = await safeGet(() =>
+          api.get("/api/booking/requests/", {
+            params: { [statusKey]: status, page, page_size: inferredPageSize },
+          })
+        );
+        if (!response) break;
+
+        shardRequests += 1;
+        const merged = mergeResponse(response.data, response.headers);
+        localNewItems += merged.newItems;
+
+        if (merged.pageResults.length === 0) break;
+        if (merged.newItems === 0) {
+          emptyStreak += 1;
+          if (emptyStreak >= 2) break;
+        } else {
+          emptyStreak = 0;
+        }
+
+        await sleep(90);
+      }
+
+      return localNewItems;
+    };
+
+    for (const status of SHARD_STATUSES) {
+      if (requestCount >= MAX_REQUESTS || deduped.size >= totalCount) break;
+
+      const withStatus = await fetchStatusPages("status", status);
+      if (requestCount >= MAX_REQUESTS || deduped.size >= totalCount) break;
+
+      if (withStatus === 0) {
+        await fetchStatusPages("booking_status", status);
+      }
+    }
+  }
+
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
@@ -367,7 +424,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
+    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, shard=${shardRequests}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError})`
   );
 
   return {
