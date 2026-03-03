@@ -153,71 +153,76 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const PAGE_SIZE = 100;
-  let allResults: any[] = [];
-  let allProfessionals: any[] = [];
-  let totalCount = 0;
-  let page = 1;
-  let hasMore = true;
+  const EFFECTIVE_PAGE_SIZE = 20;
+  const MAX_PAGES = 50;
 
-  while (hasMore) {
+  const deduped = new Map<number, any>();
+  let professionals: Professional[] = [];
+  let totalCount: number | null = null;
+  let page = 1;
+  let fetchedPages = 0;
+
+  while (fetchedPages < MAX_PAGES) {
     const response = await api.get("/api/booking/requests/", {
-      params: { page, page_size: PAGE_SIZE },
+      params: { page, page_size: EFFECTIVE_PAGE_SIZE },
     });
 
+    fetchedPages += 1;
     const normalized = normalizeBookingListResponse(response.data);
-    allResults = allResults.concat(normalized.results);
+    const pageResults = Array.isArray(normalized.results) ? normalized.results : [];
+
     if (normalized.professionals.length > 0) {
-      allProfessionals = normalized.professionals;
+      professionals = normalized.professionals;
     }
-    totalCount = normalized.count;
 
-    // Also check headers for total
     const headerCount = extractTotalCountFromHeaders(response.headers);
-    if (headerCount !== null && headerCount > totalCount) {
-      totalCount = headerCount;
+    const candidateCounts = [normalized.count, headerCount].filter((n): n is number => Number.isFinite(n as number));
+    if (candidateCounts.length > 0) {
+      const bestCount = Math.max(...candidateCounts);
+      totalCount = totalCount === null ? bestCount : Math.max(totalCount, bestCount);
     }
 
-    // Check if there are more pages
-    const nextCursor = extractNextCursor(response.data, response.headers);
-    if (nextCursor || normalized.results.length >= PAGE_SIZE) {
-      page++;
-      // Safety: stop if we already have all based on count
-      if (totalCount > 0 && allResults.length >= totalCount) {
-        hasMore = false;
+    let newItems = 0;
+    for (const booking of pageResults) {
+      const existing = deduped.get(booking.id);
+      if (!existing) {
+        deduped.set(booking.id, booking);
+        newItems += 1;
+      } else {
+        deduped.set(booking.id, {
+          ...existing,
+          ...booking,
+          contact_phone: booking.contact_phone ?? existing.contact_phone,
+          phone: booking.phone ?? existing.phone,
+        });
       }
-    } else {
-      hasMore = false;
     }
 
-    // Safety limit to avoid infinite loops
-    if (page > 50) {
-      console.warn("[bookingApi] Safety limit reached at page 50");
-      hasMore = false;
-    }
+    const nextCursor = extractNextCursor(response.data, response.headers);
+    const hasMoreByCount = totalCount !== null && deduped.size < totalCount;
+    const hasMoreByPageFill = pageResults.length === EFFECTIVE_PAGE_SIZE && newItems > 0;
+    const hasMore = Boolean(nextCursor) || hasMoreByCount || hasMoreByPageFill;
+
+    if (!hasMore) break;
+
+    // If API repeats the same page even when page increments, stop to avoid request storms.
+    if (newItems === 0 && !nextCursor) break;
+
+    page += 1;
   }
 
-  // Deduplicate by id
-  const seen = new Set<number>();
-  const uniqueResults = allResults.filter((b) => {
-    if (seen.has(b.id)) return false;
-    seen.add(b.id);
-    return true;
-  });
-
-  // Fill cached phones
-  const results = uniqueResults.map((booking) => {
+  const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
     return { ...booking, contact_phone: cachedPhone };
   });
 
-  console.log(`[bookingApi] Fetched ${results.length} bookings in ${page} pages`);
+  console.log(`[bookingApi] Fetched ${results.length} bookings in ${fetchedPages} pages`);
 
   return {
-    count: totalCount > results.length ? totalCount : results.length,
+    count: totalCount !== null ? Math.max(totalCount, results.length) : results.length,
     results,
-    professionals: allProfessionals,
+    professionals,
   };
 }
 
