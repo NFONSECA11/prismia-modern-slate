@@ -153,18 +153,8 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 }
 
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const MAX_REQUESTS = 48;
+  const MAX_REQUESTS = 64;
   const MAX_RETRIES = 1;
-  const SHARD_STATUSES = [
-    "handoff",
-    "assisted",
-    "awaiting_choice",
-    "pending",
-    "confirmed",
-    "canceled",
-    "cancelled",
-    "failed",
-  ] as const;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
@@ -257,9 +247,12 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   };
 
   const safeGet = async (
-    request: () => Promise<{ data: unknown; headers: any }>
+    request: () => Promise<{ data: unknown; headers: any }>,
+    options?: { markPartialOnFail?: boolean }
   ): Promise<{ data: unknown; headers: any } | null> => {
     if (requestCount >= MAX_REQUESTS) return null;
+
+    const markPartialOnFail = options?.markPartialOnFail ?? true;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
       try {
@@ -269,7 +262,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       } catch (error) {
         retriesUsed += 1;
         if (attempt === MAX_RETRIES) {
-          partialError = true;
+          if (markPartialOnFail) partialError = true;
           if (deduped.size === 0) throw error;
           return null;
         }
@@ -280,154 +273,186 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return null;
   };
 
-  // 1) Primeira página (tenta forçar page size maior quando suportado)
-  const firstCandidates = [
-    { page_size: 500 },
-    { limit: 500 },
-    {},
-  ];
+  // 1) Primeira página com tentativas de page size maior
+  const firstCandidates = [{ page_size: 500 }, { limit: 500 }, {}];
+  let firstCursor: string | null = null;
+  let hasAnyResponse = false;
 
-  let firstResponse: { data: unknown; headers: any } | null = null;
   for (const params of firstCandidates) {
-    firstResponse = await safeGet(() => api.get("/api/booking/requests/", { params }));
-    if (!firstResponse) continue;
+    if (requestCount >= MAX_REQUESTS) break;
 
-    const preview = normalizeBookingListResponse(firstResponse.data);
-    if (preview.results.length > 20 || totalCount === null) break;
+    const response = await safeGet(() => api.get("/api/booking/requests/", { params }));
+    if (!response) continue;
+
+    hasAnyResponse = true;
+    const merged = mergeResponse(response.data, response.headers);
+    if (!firstCursor) firstCursor = merged.cursorTarget;
+
+    const isFinalCandidate = Object.keys(params).length === 0;
+    if (merged.pageResults.length > 20 || isFinalCandidate) break;
   }
 
-  if (!firstResponse) {
+  if (!hasAnyResponse) {
     return { count: 0, results: [], professionals: [] };
   }
-  const firstMerged = mergeResponse(firstResponse.data, firstResponse.headers);
 
-  // 2) Seguir cursor/next quando existir
-  let nextCursor = firstMerged.cursorTarget;
+  // 2) Seguir cursor/next sem abortar cedo por duplicatas
+  let nextCursor = firstCursor;
   while (nextCursor && requestCount < MAX_REQUESTS) {
     if (visitedTargets.has(nextCursor)) break;
     visitedTargets.add(nextCursor);
 
-    const response = await safeGet(() => api.get(nextCursor as string));
+    const currentTarget = nextCursor;
+    const response = await safeGet(() => api.get(currentTarget));
     if (!response) break;
 
     const merged = mergeResponse(response.data, response.headers);
     if (totalCount !== null && deduped.size >= totalCount) break;
-    if (merged.pageResults.length === 0 || merged.newItems === 0) break;
+    if (!merged.cursorTarget || merged.cursorTarget === currentTarget) break;
 
     nextCursor = merged.cursorTarget;
-    await sleep(100);
+    await sleep(80);
   }
 
-  // 3) Paginação por página numérica (quando count indica mais dados)
+  // 3) Sweep por paginação numérica com múltiplos formatos de parâmetro
   const shouldPaginateByPage =
     (totalCount !== null && deduped.size < totalCount) ||
     (totalCount === null && deduped.size >= inferredPageSize);
 
   if (shouldPaginateByPage && requestCount < MAX_REQUESTS) {
-    let emptyStreak = 0;
-    const maxPagesByCount = totalCount !== null
-      ? Math.min(40, Math.ceil(totalCount / Math.max(1, inferredPageSize)) + 2)
-      : 8;
+    const maxPagesByCount =
+      totalCount !== null
+        ? Math.min(80, Math.ceil(totalCount / Math.max(1, inferredPageSize)) + 4)
+        : 14;
+
+    let missStreak = 0;
 
     for (let page = 2; page <= maxPagesByCount && requestCount < MAX_REQUESTS; page += 1) {
       if (totalCount !== null && deduped.size >= totalCount) break;
 
-      const response = await safeGet(() =>
-        api.get("/api/booking/requests/", {
-          params: { page, page_size: inferredPageSize },
-        })
-      );
-      if (!response) break;
+      const pageVariants = [
+        { page, page_size: inferredPageSize },
+        { page },
+        { page_number: page },
+        { p: page },
+        { offset: (page - 1) * inferredPageSize, limit: inferredPageSize },
+      ];
 
-      const merged = mergeResponse(response.data, response.headers);
-      if (merged.pageResults.length === 0) break;
+      let gotAnyPageData = false;
 
-      if (merged.newItems === 0) {
-        emptyStreak += 1;
-        if (emptyStreak >= 2) break;
-      } else {
-        emptyStreak = 0;
+      for (const params of pageVariants) {
+        if (requestCount >= MAX_REQUESTS) break;
+
+        const response = await safeGet(() => api.get("/api/booking/requests/", { params }));
+        if (!response) continue;
+
+        const merged = mergeResponse(response.data, response.headers);
+        if (merged.pageResults.length > 0) {
+          gotAnyPageData = true;
+          break;
+        }
       }
 
-      await sleep(100);
+      if (!gotAnyPageData) {
+        missStreak += 1;
+        if (missStreak >= 3) break;
+      } else {
+        missStreak = 0;
+      }
+
+      await sleep(70);
     }
   }
 
-  // 4) Fallback offset/limit (somente se ainda faltar pelo count)
+  // 4) Sweep por offset como fallback adicional
   if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
-    let emptyStreak = 0;
+    const step = Math.max(1, inferredPageSize);
+    let missStreak = 0;
 
-    for (
-      let offset = deduped.size;
-      offset < totalCount && requestCount < MAX_REQUESTS;
-      offset += Math.max(1, inferredPageSize)
-    ) {
-      const response = await safeGet(() =>
-        api.get("/api/booking/requests/", {
-          params: { offset, limit: inferredPageSize },
-        })
-      );
-      if (!response) break;
-
-      const merged = mergeResponse(response.data, response.headers);
-      if (merged.pageResults.length === 0) break;
-
-      if (merged.newItems === 0) {
-        emptyStreak += 1;
-        if (emptyStreak >= 2) break;
-      } else {
-        emptyStreak = 0;
-      }
-
+    for (let offset = 0; offset < totalCount && requestCount < MAX_REQUESTS; offset += step) {
       if (deduped.size >= totalCount) break;
-      await sleep(100);
+
+      const response = await safeGet(() =>
+        api.get("/api/booking/requests/", {
+          params: { offset, limit: step },
+        })
+      );
+
+      if (!response) {
+        missStreak += 1;
+        if (missStreak >= 3) break;
+        continue;
+      }
+
+      const merged = mergeResponse(response.data, response.headers);
+      if (merged.pageResults.length === 0) {
+        missStreak += 1;
+        if (missStreak >= 3) break;
+      } else {
+        missStreak = 0;
+      }
+
+      await sleep(70);
     }
   }
 
-  // 5) Fallback final por status (quando endpoint global repete os mesmos itens)
-
-  // 5) Fallback por status (quando endpoint global repete sempre os mesmos 20)
+  // 5) Fallback final por status usando APENAS status já vistos (evita invalid_status)
   if (totalCount !== null && deduped.size < totalCount && requestCount < MAX_REQUESTS) {
-    const fetchStatusPages = async (statusKey: "status" | "booking_status", status: string) => {
-      let localNewItems = 0;
-      let emptyStreak = 0;
+    const knownStatuses = Array.from(
+      new Set(
+        Array.from(deduped.values())
+          .map((b) => String(b.status ?? "").trim())
+          .filter((s) => s.length > 0)
+      )
+    );
 
-      for (let page = 1; page <= 6 && requestCount < MAX_REQUESTS; page += 1) {
-        if (deduped.size >= totalCount) break;
+    const detectStatusKey = async (): Promise<"status" | "booking_status" | null> => {
+      if (knownStatuses.length === 0) return null;
 
-        const response = await safeGet(() =>
-          api.get("/api/booking/requests/", {
-            params: { [statusKey]: status, page, page_size: inferredPageSize },
-          })
+      for (const statusKey of ["status", "booking_status"] as const) {
+        const probe = await safeGet(
+          () =>
+            api.get("/api/booking/requests/", {
+              params: { [statusKey]: knownStatuses[0], page: 1, page_size: 1 },
+            }),
+          { markPartialOnFail: false }
         );
-        if (!response) break;
+
+        if (!probe) continue;
 
         shardRequests += 1;
-        const merged = mergeResponse(response.data, response.headers);
-        localNewItems += merged.newItems;
-
-        if (merged.pageResults.length === 0) break;
-        if (merged.newItems === 0) {
-          emptyStreak += 1;
-          if (emptyStreak >= 2) break;
-        } else {
-          emptyStreak = 0;
-        }
-
-        await sleep(90);
+        mergeResponse(probe.data, probe.headers);
+        return statusKey;
       }
 
-      return localNewItems;
+      return null;
     };
 
-    for (const status of SHARD_STATUSES) {
-      if (requestCount >= MAX_REQUESTS || deduped.size >= totalCount) break;
+    const statusKey = await detectStatusKey();
 
-      const withStatus = await fetchStatusPages("status", status);
-      if (requestCount >= MAX_REQUESTS || deduped.size >= totalCount) break;
+    if (statusKey) {
+      for (const status of knownStatuses) {
+        if (requestCount >= MAX_REQUESTS || deduped.size >= totalCount) break;
 
-      if (withStatus === 0) {
-        await fetchStatusPages("booking_status", status);
+        for (let page = 1; page <= 10 && requestCount < MAX_REQUESTS; page += 1) {
+          if (deduped.size >= totalCount) break;
+
+          const response = await safeGet(
+            () =>
+              api.get("/api/booking/requests/", {
+                params: { [statusKey]: status, page, page_size: inferredPageSize },
+              }),
+            { markPartialOnFail: false }
+          );
+
+          if (!response) break;
+
+          shardRequests += 1;
+          const merged = mergeResponse(response.data, response.headers);
+          if (merged.pageResults.length === 0) break;
+
+          await sleep(70);
+        }
       }
     }
   }
