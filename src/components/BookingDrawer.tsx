@@ -452,7 +452,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               <div>
                 <div className="flex items-center gap-1.5">
                   <BookingModeIcon mode={booking.booking_mode} />
-                  <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
+                  {["human", "prices"].includes(
+                    ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
+                  ) ? (
+                    <h3 className="text-base font-semibold text-primary flex items-center gap-1.5">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      Conversa
+                    </h3>
+                  ) : (
+                    <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
+                  )}
                 </div>
                 {(booking.contact_phone || booking.phone) && (
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
