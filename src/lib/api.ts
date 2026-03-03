@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://alt-travesti-molecular-advisors.trycloudflare.com",
+  baseURL: "https://assets-visit-remember-kissing.trycloudflare.com",
   timeout: 10_000,
   withCredentials: true,
   headers: {
