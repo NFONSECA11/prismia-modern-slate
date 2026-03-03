@@ -155,6 +155,16 @@ async function fetchBookingPhoneById(id: number): Promise<string | null> {
 export async function fetchBookingRequests(): Promise<BookingListResponse> {
   const EFFECTIVE_PAGE_SIZE = 20;
   const MAX_REQUESTS = 80;
+  const SHARD_STATUSES = [
+    "handoff",
+    "assisted",
+    "awaiting_choice",
+    "pending",
+    "confirmed",
+    "canceled",
+    "cancelled",
+    "failed",
+  ] as const;
 
   const deduped = new Map<number, BookingRequest>();
   const visitedTargets = new Set<string>();
@@ -164,6 +174,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   let page = 1;
   let nextTarget: string | null = `/api/booking/requests/?page=${page}&page_size=${EFFECTIVE_PAGE_SIZE}`;
   let fallbackRequests = 0;
+  let shardRequests = 0;
 
   const normalizeTarget = (cursor: string | null): string | null => {
     if (!cursor) return null;
@@ -226,19 +237,26 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return newItems;
   };
 
+  const absorbResponse = (data: unknown, headers: any) => {
+    const normalized = normalizeBookingListResponse(data);
+    const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
+
+    updateMeta(normalized.count, extractTotalCountFromHeaders(headers), normalized.professionals);
+
+    const newItems = mergeResults(pageResults);
+    const cursorTarget = normalizeTarget(extractNextCursor(data, headers));
+
+    return { pageResults, newItems, cursorTarget };
+  };
+
+  // 1) Cursor/page pagination
   for (let i = 0; i < MAX_REQUESTS && nextTarget; i += 1) {
     const target = nextTarget;
     if (visitedTargets.has(target)) break;
     visitedTargets.add(target);
 
     const response = await api.get(target);
-    const normalized = normalizeBookingListResponse(response.data);
-    const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
-
-    updateMeta(normalized.count, extractTotalCountFromHeaders(response.headers), normalized.professionals);
-
-    const newItems = mergeResults(pageResults);
-    const cursorTarget = normalizeTarget(extractNextCursor(response.data, response.headers));
+    const { pageResults, newItems, cursorTarget } = absorbResponse(response.data, response.headers);
     const hasMoreByCount = totalCount !== null && deduped.size < totalCount;
 
     if (cursorTarget && !visitedTargets.has(cursorTarget)) {
@@ -246,7 +264,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
       continue;
     }
 
-    if (hasMoreByCount && pageResults.length === EFFECTIVE_PAGE_SIZE && newItems > 0) {
+    if (pageResults.length === EFFECTIVE_PAGE_SIZE && newItems > 0 && hasMoreByCount) {
       page += 1;
       nextTarget = `/api/booking/requests/?page=${page}&page_size=${EFFECTIVE_PAGE_SIZE}`;
       continue;
@@ -255,8 +273,12 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     nextTarget = null;
   }
 
-  // Fallback: APIs que ignoram `page` mas aceitam offset/limit.
-  if (totalCount !== null && deduped.size < totalCount) {
+  // 2) Offset/limit fallback
+  const needsOffsetFallback =
+    (totalCount !== null && deduped.size < totalCount) ||
+    deduped.size === EFFECTIVE_PAGE_SIZE;
+
+  if (needsOffsetFallback) {
     const paramSets = [
       (offset: number) => ({ offset, limit: EFFECTIVE_PAGE_SIZE }),
       (offset: number) => ({ offset, page_size: EFFECTIVE_PAGE_SIZE }),
@@ -275,12 +297,8 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
         });
         fallbackRequests += 1;
 
-        const normalized = normalizeBookingListResponse(response.data);
-        const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
+        const { pageResults, newItems } = absorbResponse(response.data, response.headers);
 
-        updateMeta(normalized.count, extractTotalCountFromHeaders(response.headers), normalized.professionals);
-
-        const newItems = mergeResults(pageResults);
         if (newItems > bestNewItems) {
           bestNewItems = newItems;
           bestBatchLength = pageResults.length;
@@ -295,6 +313,39 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     }
   }
 
+  // 3) Status sharding fallback (captura mais que 20 quando API ignora paginação global)
+  const needsShardFallback =
+    (totalCount !== null && deduped.size < totalCount) ||
+    deduped.size <= EFFECTIVE_PAGE_SIZE;
+
+  if (needsShardFallback) {
+    const statusParamBuilders = [
+      (status: string) => ({ status, page: 1, page_size: EFFECTIVE_PAGE_SIZE }),
+      (status: string) => ({ booking_status: status, page: 1, page_size: EFFECTIVE_PAGE_SIZE }),
+    ];
+
+    for (const status of SHARD_STATUSES) {
+      let bestForStatus = 0;
+
+      for (const buildParams of statusParamBuilders) {
+        const response = await api.get("/api/booking/requests/", {
+          params: buildParams(status),
+        });
+        shardRequests += 1;
+
+        const { newItems } = absorbResponse(response.data, response.headers);
+        if (newItems > bestForStatus) bestForStatus = newItems;
+      }
+
+      if (totalCount !== null && deduped.size >= totalCount) break;
+      if (shardRequests >= MAX_REQUESTS) break;
+      if (bestForStatus === 0 && deduped.size > EFFECTIVE_PAGE_SIZE) {
+        // evita tempestade de chamadas quando shard não traz nada novo
+        continue;
+      }
+    }
+  }
+
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
     if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
@@ -302,7 +353,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   });
 
   console.log(
-    `[bookingApi] Fetched ${results.length} bookings (targets=${visitedTargets.size}, fallbackRequests=${fallbackRequests})`
+    `[bookingApi] Fetched ${results.length} bookings (targets=${visitedTargets.size}, fallbackRequests=${fallbackRequests}, shardRequests=${shardRequests}, totalHint=${totalCount ?? "n/a"})`
   );
 
   return {
