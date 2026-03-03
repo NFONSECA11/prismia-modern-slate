@@ -167,7 +167,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     queryKey: ["booking-messages", booking?.id],
     queryFn: () => fetchBookingMessages(booking!.id, 30),
     enabled: !!booking,
-    refetchInterval: 5000,
+    refetchInterval: 30_000,
   });
 
   const sendMsgMutation = useMutation({
