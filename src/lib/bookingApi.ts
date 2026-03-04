@@ -487,8 +487,7 @@ export async function assignBookingProfessional(
     },
   ];
 
-  let primaryError: any = null;
-  let lastError: any = null;
+  const failures: string[] = [];
 
   for (const attempt of attempts) {
     try {
@@ -503,8 +502,12 @@ export async function assignBookingProfessional(
         contentType.includes("text/html") ||
         (typeof resData === "string" && /<!doctype|<html|<body/i.test(resData));
 
-      if (!primaryError) primaryError = err;
-      lastError = err;
+      const detail = !isHtml
+        ? (resData?.detail ?? resData?.error ?? resData?.message ?? resData?.code ?? "")
+        : "";
+
+      const failureLabel = `${attempt.label}: ${status ?? "sem_status"}${isHtml ? " (HTML)" : detail ? ` (${detail})` : ""}`;
+      failures.push(failureLabel);
 
       console.error(`[assignProfessional] ${attempt.label} failed:`, {
         status,
@@ -512,13 +515,15 @@ export async function assignBookingProfessional(
         data: isHtml ? "(HTML omitted)" : resData,
       });
 
-      // Só tenta fallback para erros de método/rota/formato; outros erros são finais
+      // Só tenta fallback para rota/método/formato. Erros de validação/permissão param aqui.
       const canFallback = isHtml || status === 404 || status === 405;
-      if (!canFallback) throw err;
+      if (!canFallback) {
+        throw new Error(`Falha ao atribuir (${attempt.label}): ${detail || `status ${status ?? "desconhecido"}`}`);
+      }
     }
   }
 
-  throw primaryError ?? lastError ?? new Error("Falha ao atribuir profissional");
+  throw new Error(`Falha ao atribuir profissional. Tentativas: ${failures.join(" | ")}`);
 }
 
 // ── Mensagens de um booking ──────────────────────────────────────────────────
