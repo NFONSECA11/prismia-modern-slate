@@ -50,6 +50,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    // Evita keep-alive que causa "Bad request syntax ('0')" no túnel Cloudflare
+    Connection: "close",
   },
 });
 
