@@ -211,7 +211,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const contentType = String(err?.response?.headers?.["content-type"] ?? "").toLowerCase();
       const isHtml = contentType.includes("text/html") || (typeof data === "string" && data.trim().toLowerCase().startsWith("<!doctype"));
       
-      console.error("[BookingDrawer] assign error:", status, data);
+      console.error("[BookingDrawer] ASSIGN ERROR:", JSON.stringify({ status, data, contentType }, null, 2));
       
       let msg = "Erro ao atribuir profissional";
       if (isHtml) {
