@@ -63,8 +63,8 @@ export default function Index() {
 
   // Debug: log sample created_at values to understand format
   if (bookings.length > 0) {
-    const sample = bookings.slice(0, 3).map((b) => ({ id: b.id, created_at: b.created_at, status: b.status }));
-    console.log("[Index] Sample bookings created_at:", JSON.stringify(sample));
+    const sample = bookings.slice(0, 3).map((b) => ({ id: b.id, created_at: b.created_at, status: b.status, contact_phone: b.contact_phone, phone: (b as any).phone }));
+    console.log("[Index] Sample bookings:", JSON.stringify(sample));
   }
 
   // Fetch professionals by active unit for the agenda view
