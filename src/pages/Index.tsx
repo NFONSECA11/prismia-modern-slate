@@ -77,7 +77,8 @@ export default function Index() {
     return b.created_at?.slice(0, 10) || "";
   };
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   // Step 1: Apply search filter first
   const searchedBookings = bookings.filter((b) => {
