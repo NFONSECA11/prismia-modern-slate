@@ -145,7 +145,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [selectedProcedureId, setSelectedProcedureId] = useState<number | null>(null);
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
-  const [assignLeadName, setAssignLeadName] = useState(booking?.lead_name ?? "");
+  const [assignLeadName, setAssignLeadName] = useState("");
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
