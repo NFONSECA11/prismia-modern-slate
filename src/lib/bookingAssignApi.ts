@@ -51,6 +51,14 @@ interface UnitProcedureItem {
   unit_name?: string;
 }
 
+interface ProcedureItem {
+  id: number;
+  name?: string;
+  procedure_name?: string;
+  slug?: string;
+  code?: string;
+}
+
 // ── Safe GET helper ──────────────────────────────────────────────────────────
 async function safeGet(url: string, label: string): Promise<unknown[]> {
   try {
@@ -67,6 +75,7 @@ async function safeGet(url: string, label: string): Promise<unknown[]> {
 
 // ── Normalize for comparison ─────────────────────────────────────────────────
 const norm = (s?: string) => (s ?? "").trim().toLowerCase();
+const NON_MEDICAL_PROCEDURE_HINTS = ["falar com atendente", "atendente", "human"];
 
 // ── Main enriched assign function ────────────────────────────────────────────
 export async function assignProfessionalEnriched(
@@ -81,30 +90,59 @@ export async function assignProfessionalEnriched(
   await fetchCsrf();
 
   // 1) Fetch all lookups in parallel
-  const [procSpecs, profProcs, unitProcs, professionals] = await Promise.all([
+  const [procSpecs, profProcs, unitProcs, professionals, procedures] = await Promise.all([
     safeGet("/api/settings/procedure-specialties/", "procedure-specialties"),
     safeGet("/api/settings/professional-procedures/", "professional-procedures"),
     safeGet("/api/settings/unit-procedures/", "unit-procedures"),
     safeGet("/api/booking/professionals/", "professionals"),
+    safeGet("/api/settings/procedures/", "procedures"),
   ]);
+
+  const proceduresById = new Map<number, ProcedureItem>(
+    (procedures as ProcedureItem[]).map((p) => [p.id, p]),
+  );
+
+  const resolveProcedureName = (procedureId?: number, fallback?: string) => {
+    const p = procedureId ? proceduresById.get(procedureId) : undefined;
+    return p?.name ?? p?.procedure_name ?? p?.slug ?? fallback ?? "";
+  };
 
   // 2) Find procedure via professional-procedures (e.g. "Botox")
   const profProcLinks = (profProcs as ProfessionalProcedureItem[]).filter(
     (pp) => pp.professional === professionalId,
   );
-  console.log("[assignEnriched] profProcLinks for professional:", profProcLinks);
 
-  // Pick the first linked procedure (if multiple exist, prefer the first match)
-  const linkedProcedure = profProcLinks[0];
-  const procedureName = linkedProcedure?.procedure_name ?? linkedProcedure?.procedure_slug ?? _procedureNameFromBooking;
+  const profProcLinksWithResolvedName = profProcLinks.map((pp) => ({
+    ...pp,
+    resolved_procedure_name: resolveProcedureName(pp.procedure, pp.procedure_name ?? pp.procedure_slug),
+  }));
+
+  console.log("[assignEnriched] profProcLinks for professional:", profProcLinksWithResolvedName);
+
+  const normalizedBookingProcedure = norm(_procedureNameFromBooking);
+
+  const linkedProcedure =
+    profProcLinksWithResolvedName.find(
+      (pp) => norm(pp.resolved_procedure_name) === normalizedBookingProcedure,
+    ) ??
+    profProcLinksWithResolvedName.find((pp) => norm(pp.resolved_procedure_name).includes("botox")) ??
+    profProcLinksWithResolvedName.find((pp) => {
+      const procName = norm(pp.resolved_procedure_name);
+      return procName.length > 0 && !NON_MEDICAL_PROCEDURE_HINTS.some((hint) => procName.includes(hint));
+    }) ??
+    profProcLinksWithResolvedName[0];
+
+  const procedureId = linkedProcedure?.procedure;
+  const procedureName = linkedProcedure?.resolved_procedure_name || _procedureNameFromBooking;
   const normalizedProcName = norm(procedureName);
 
-  console.log("[assignEnriched] resolved procedure:", procedureName);
+  console.log("[assignEnriched] resolved procedure:", { procedureId, procedureName });
 
   // 3) Find specialty via procedure-specialties
-  const matchedProcSpec = (procSpecs as ProcedureSpecialtyItem[]).find(
-    (ps) => norm(ps.procedure_name) === normalizedProcName,
-  );
+  const matchedProcSpec = (procSpecs as ProcedureSpecialtyItem[]).find((ps) => {
+    if (procedureId != null && ps.procedure != null) return ps.procedure === procedureId;
+    return norm(ps.procedure_name) === normalizedProcName;
+  });
   console.log("[assignEnriched] matched specialty:", matchedProcSpec);
 
   // 4) Find professional info (name, code)
@@ -115,13 +153,14 @@ export async function assignProfessionalEnriched(
   // 5) Find unit-procedure link → procedure_code = unit-procedure ID
   const normalizedUnitName = norm(unitName);
   // Prefer matching both unit AND procedure; fallback to procedure-only
-  let matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
-    (up) => norm(up.procedure_name) === normalizedProcName && norm(up.unit_name) === normalizedUnitName,
-  );
+  let matchedUnitProc = (unitProcs as UnitProcedureItem[]).find((up) => {
+    const procedureMatches = procedureId != null ? up.procedure === procedureId : norm(up.procedure_name) === normalizedProcName;
+    return procedureMatches && norm(up.unit_name) === normalizedUnitName;
+  });
   if (!matchedUnitProc) {
-    matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
-      (up) => norm(up.procedure_name) === normalizedProcName,
-    );
+    matchedUnitProc = (unitProcs as UnitProcedureItem[]).find((up) => {
+      return procedureId != null ? up.procedure === procedureId : norm(up.procedure_name) === normalizedProcName;
+    });
   }
   console.log("[assignEnriched] matched unit-procedure:", matchedUnitProc);
 
