@@ -154,11 +154,12 @@ function isTunnelHtmlBadRequest(error: unknown): boolean {
   return status === 400 && (contentType.includes("text/html") || isHtmlPayload(payload));
 }
 
-async function fetchBookingPhoneById(id: number): Promise<string | null> {
+export async function fetchBookingPhoneById(id: number): Promise<string | null> {
+  const cached = bookingPhoneCache.get(id);
+  if (cached) return cached;
   try {
     const { data } = await api.get(`/api/booking/requests/${id}/`);
     const detail = data?.result ?? data;
-
     const phone = detail?.contact_phone ?? detail?.phone ?? null;
     if (phone) bookingPhoneCache.set(id, phone);
     return phone;

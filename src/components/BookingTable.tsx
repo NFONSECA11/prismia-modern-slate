@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -13,6 +13,7 @@ import {
   handoffOn,
   handoffOff,
   suggestSlots,
+  fetchBookingPhoneById,
 } from "@/lib/bookingApi";
 import {
   Phone,
@@ -179,6 +180,32 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const queryClient = useQueryClient();
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
+  const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
+
+  // Fetch phones for bookings that don't have one (API listing omits phone)
+  useEffect(() => {
+    const missing = bookings.filter(
+      (b) => !b.contact_phone && !b.phone && !phoneMap[b.id]
+    );
+    if (missing.length === 0) return;
+
+    let cancelled = false;
+    const batch = missing.slice(0, 20); // limit to avoid tunnel pressure
+
+    (async () => {
+      const results: Record<number, string> = {};
+      for (const b of batch) {
+        if (cancelled) break;
+        const phone = await fetchBookingPhoneById(b.id);
+        if (phone) results[b.id] = phone;
+      }
+      if (!cancelled && Object.keys(results).length > 0) {
+        setPhoneMap((prev) => ({ ...prev, ...results }));
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookings]);
 
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
@@ -309,7 +336,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="h-3 w-3" />
-                            {booking.contact_phone || booking.phone || "Sem telefone"}
+                            {booking.contact_phone || booking.phone || phoneMap[booking.id] || "Sem telefone"}
                           </span>
                         </div>
                       </td>
