@@ -279,12 +279,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         professional: profId,
         booking_mode: "assisted_slots_dashboard",
       };
-      // Send procedure_code (unit-procedure ID) which the backend needs for slot generation
-      if (resolvedUnitProcId) {
-        payload.procedure = resolvedUnitProcId;
-        payload.procedure_code = resolvedUnitProcId;
-      } else if (selectedProcedureId) {
+      // procedure = real procedure ID; procedure_code = unit-procedure link ID
+      if (selectedProcedureId) {
         payload.procedure = selectedProcedureId;
+      }
+      if (resolvedUnitProcId) {
+        payload.procedure_code = resolvedUnitProcId;
       }
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
