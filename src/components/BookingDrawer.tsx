@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -173,6 +173,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   };
 
   const [quickReplies, setQuickReplies] = useState<string[]>(getQuickReplies);
+
+  // Reset form state when a different booking is opened
+  useEffect(() => {
+    setAssignLeadName("");
+    setSelectedProfessionalId(null);
+    setSelectedProcedureId(null);
+    setSelectedSpecialtyId(null);
+    setMockAssignedProfessional(null);
+    setMessageText("");
+    setActionDone(null);
+  }, [booking?.id]);
 
   const saveQuickReplies = (replies: string[]) => {
     setQuickReplies(replies);
