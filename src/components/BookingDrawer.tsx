@@ -279,17 +279,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         professional: profId,
         booking_mode: "assisted_slots_dashboard",
       };
-      // procedure = real procedure ID; procedure_code = unit-procedure link ID
+      // procedure = real procedure ID (same as curl)
       if (selectedProcedureId) {
         payload.procedure = selectedProcedureId;
-      }
-      if (resolvedUnitProcId) {
-        payload.procedure_code = resolvedUnitProcId;
       }
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
 
-      console.log("[BookingDrawer] PATCH payload:", payload, { resolvedUnitProcId, selectedProcedureId });
+      console.log("[BookingDrawer] PATCH payload:", JSON.stringify(payload), 
+        "| selectedProcedureId:", selectedProcedureId, 
+        "| resolvedUnitProcId:", resolvedUnitProcId,
+        "| unitProcLinks:", JSON.stringify(unitProcLinks),
+        "| proceduresForProfessional:", JSON.stringify(proceduresForProfessional.map(p => ({ id: p.id, name: p.name }))));
       return await patchBooking(booking!.id, payload);
     },
     onSuccess: (result: any) => {
