@@ -56,12 +56,14 @@ export async function assignProfessionalEnriched(
   procedureName: string,
   unitName: string
 ): Promise<BookingRequest> {
+  console.log("[assignEnriched] START", { bookingId, professionalId, procedureName, unitName });
+  
   await fetchCsrf();
 
   // 1) Fetch all lookups in parallel — tolerate individual failures
-  const safeGet = async (url: string, label: string): Promise<any[]> => {
+  const safeGet = async (url: string, label: string, params?: Record<string, any>): Promise<any[]> => {
     try {
-      const { data } = await api.get(url);
+      const { data } = await api.get(url, params ? { params } : undefined);
       const arr = extractArray(data);
       console.log(`[assignEnriched] ${label}: ${arr.length} items`);
       return arr;
@@ -126,15 +128,17 @@ export async function assignProfessionalEnriched(
     const status = err?.response?.status;
     const resData = err?.response?.data;
     const isHtml = typeof resData === "string" && /<!doctype|<html/i.test(resData);
+    const errMsg = err?.message ?? "";
     
     console.error("[assignEnriched] PATCH failed:", {
       status,
       isHtml,
-      data: isHtml ? "(HTML debug page)" : resData,
+      message: errMsg,
+      data: isHtml ? "(HTML debug page)" : JSON.stringify(resData)?.slice(0, 500),
     });
 
-    if (isHtml) {
-      throw new Error(`Erro ${status ?? ""} — backend retornou página de debug. O payload pode ter campos inválidos.`);
+    if (isHtml || errMsg.includes("HTML")) {
+      throw new Error(`Erro ${status ?? 500} — backend retornou página de debug. Campos no payload podem ser inválidos para este endpoint.`);
     }
     
     const detail = resData?.detail ?? resData?.error ?? resData?.message ?? "";
