@@ -487,12 +487,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
     }
 
-    // Conversation bookings (human/prices): Confirmar to finish the conversation
-    if (isConvo && !terminal) {
-      actions.push(
-        <ActionButton key="confirm-convo" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
-      );
-    }
 
     // Reopen for terminal
     if (terminal) {
