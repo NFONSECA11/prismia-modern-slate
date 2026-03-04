@@ -58,39 +58,45 @@ export async function assignProfessionalEnriched(
 ): Promise<BookingRequest> {
   await fetchCsrf();
 
-  // 1) Fetch all three lookups in parallel
-  const [procSpecRes, profProcRes, unitProcRes, profRes] = await Promise.all([
-    api.get("/api/settings/procedure-specialties/"),
-    api.get("/api/settings/professional-procedures/"),
-    api.get("/api/settings/unit-procedures/"),
-    api.get("/api/booking/professionals/"),
-  ]);
+  // 1) Fetch all lookups in parallel — tolerate individual failures
+  const safeGet = async (url: string, label: string): Promise<any[]> => {
+    try {
+      const { data } = await api.get(url);
+      const arr = extractArray(data);
+      console.log(`[assignEnriched] ${label}: ${arr.length} items`);
+      return arr;
+    } catch (err: any) {
+      console.warn(`[assignEnriched] ${label} failed:`, err?.response?.status ?? err?.message);
+      return [];
+    }
+  };
 
-  const procSpecs: ProcedureSpecialtyItem[] = extractArray(procSpecRes.data);
-  const profProcs: ProfessionalProcedureItem[] = extractArray(profProcRes.data);
-  const unitProcs: UnitProcedureItem[] = extractArray(unitProcRes.data);
-  const professionals: any[] = extractArray(profRes.data);
+  const [procSpecs, profProcs, unitProcs, professionals] = await Promise.all([
+    safeGet("/api/settings/procedure-specialties/", "procedure-specialties"),
+    safeGet("/api/settings/professional-procedures/", "professional-procedures"),
+    safeGet("/api/settings/unit-procedures/", "unit-procedures"),
+    safeGet("/api/booking/professionals/", "professionals"),
+  ]);
 
   const normalizedProcName = procedureName.trim().toLowerCase();
 
   // 2) Find specialty via procedure-specialties
-  //    Match by procedure_name (case-insensitive)
-  const matchedProcSpec = procSpecs.find(
+  const matchedProcSpec = (procSpecs as ProcedureSpecialtyItem[]).find(
     (ps) => (ps.procedure_name ?? "").trim().toLowerCase() === normalizedProcName
   );
 
   // 3) Find professional info
   const matchedProfessional = professionals.find((p: any) => p.id === professionalId);
 
-  // 4) Find professional-procedure link (confirms the professional does this procedure)
-  const matchedProfProc = profProcs.find(
+  // 4) Find professional-procedure link
+  const matchedProfProc = (profProcs as ProfessionalProcedureItem[]).find(
     (pp) =>
       pp.professional === professionalId &&
       (pp.procedure_name ?? pp.procedure_slug ?? "").trim().toLowerCase() === normalizedProcName
   );
 
-  // 5) Find unit-procedure link for procedure_code (the unit-procedure ID)
-  const matchedUnitProc = unitProcs.find(
+  // 5) Find unit-procedure link for procedure_code
+  const matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
     (up) => (up.procedure_name ?? "").trim().toLowerCase() === normalizedProcName
   );
 
@@ -107,20 +113,31 @@ export async function assignProfessionalEnriched(
     specialty_name: matchedProcSpec?.specialty_name ?? null,
   };
 
-  console.log("[assignEnriched] Lookup results:", {
-    procedureName,
-    matchedProcSpec,
-    matchedProfessional,
-    matchedProfProc,
-    matchedUnitProc,
-    payload,
-  });
+  console.log("[assignEnriched] Payload to PATCH:", JSON.stringify(payload, null, 2));
 
   // 6) PATCH the booking
-  await fetchCsrf();
-  const { data } = await api.patch(`/api/booking/requests/${bookingId}/`, payload);
-  const result = ((data as any)?.result ?? data) as BookingRequest;
+  try {
+    await fetchCsrf();
+    const { data } = await api.patch(`/api/booking/requests/${bookingId}/`, payload);
+    const result = ((data as any)?.result ?? data) as BookingRequest;
+    console.log("[assignEnriched] PATCH success:", result);
+    return result;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const resData = err?.response?.data;
+    const isHtml = typeof resData === "string" && /<!doctype|<html/i.test(resData);
+    
+    console.error("[assignEnriched] PATCH failed:", {
+      status,
+      isHtml,
+      data: isHtml ? "(HTML debug page)" : resData,
+    });
 
-  console.log("[assignEnriched] PATCH success:", result);
-  return result;
+    if (isHtml) {
+      throw new Error(`Erro ${status ?? ""} — backend retornou página de debug. O payload pode ter campos inválidos.`);
+    }
+    
+    const detail = resData?.detail ?? resData?.error ?? resData?.message ?? "";
+    throw new Error(detail || `Erro ${status ?? "desconhecido"} ao atribuir profissional`);
+  }
 }
