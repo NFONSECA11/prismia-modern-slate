@@ -48,6 +48,23 @@ function isTerminal(status: BookingStatus) {
   return TERMINAL_STATUSES.includes(status);
 }
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  // +55 11 9 2273-4820
+  if (digits.length === 13 && digits.startsWith("55")) {
+    return `(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 9)}-${digits.slice(9)}`;
+  }
+  // 11 9 2273-4820
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+  // 10 digits
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return raw;
+}
+
 function formatCreatedAgo(dateStr: string) {
   try {
     return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: ptBR });
@@ -336,7 +353,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="h-3 w-3" />
-                            {booking.contact_phone || booking.phone || phoneMap[booking.id] || "Sem telefone"}
+                            {(() => { const p = booking.contact_phone || booking.phone || phoneMap[booking.id]; return p ? formatPhone(p) : "Sem telefone"; })()}
                           </span>
                         </div>
                       </td>
