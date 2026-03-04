@@ -141,10 +141,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+  const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const hasProfessional = !!(booking?.professional_name && booking.professional_name.trim() && booking.professional_name.trim() !== "None");
+  const effectiveProfessionalName =
+    mockAssignedProfessional?.name ?? booking?.professional_name ?? "";
+  const hasProfessional = !!(
+    effectiveProfessionalName &&
+    effectiveProfessionalName.trim() &&
+    effectiveProfessionalName.trim() !== "None"
+  );
 
   // Always fetch professionals when drawer opens with a booking missing a professional
   const needsProfessional = !!booking && !hasProfessional;
@@ -197,11 +204,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         booking!.id,
         profId,
         booking!.procedure_name,
-        booking!.unit_name
+        booking!.unit_name,
+        booking!
       );
     },
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       console.log("[BookingDrawer] assign success:", result);
+
+      if (result?.__mock_assigned) {
+        setMockAssignedProfessional({
+          id: result.professional_id ?? selectedProfessionalId ?? 0,
+          name: result.professional_name ?? "Profissional (mock)",
+        });
+        setSelectedProfessionalId(null);
+        setActionDone("Mock aplicado: profissional atribuído localmente");
+        toast.success("Mock aplicado para teste (sem persistir no backend)");
+        setTimeout(() => setActionDone(null), 2200);
+        return;
+      }
+
       setActionDone("Profissional atribuído!");
       setSelectedProfessionalId(null);
       setTimeout(() => {
@@ -548,7 +569,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               className="col-span-2"
               value={
                 hasProfessional ? (
-                  booking.professional_name
+                  effectiveProfessionalName
                 ) : (
                   <div className="flex items-center gap-2">
                     <select
