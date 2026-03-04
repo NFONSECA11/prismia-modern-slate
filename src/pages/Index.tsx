@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus } from "@/types/booking";
-import { fetchBookingRequests, createBooking, fetchProfessionalsByUnit } from "@/lib/bookingApi";
+import { fetchBookingRequests, createBooking, fetchProfessionalsByUnit, patchBooking } from "@/lib/bookingApi";
+import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
@@ -60,6 +61,39 @@ export default function Index() {
   });
 
   const bookings = data?.results ?? [];
+
+  // ── Auto-patch: awaiting_choice → auto_slots_bot (once per BR) ──────────
+  const autoPatchedRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (!activeUnit || bookings.length === 0) return;
+
+    const awaitingBRs = bookings.filter(
+      (b) => b.status === "awaiting_choice" && b.booking_mode !== "auto_slots_bot" && !autoPatchedRef.current.has(b.id)
+    );
+    if (awaitingBRs.length === 0) return;
+
+    (async () => {
+      try {
+        const { data: settingsData } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit.id}/`);
+        const settings = settingsData?.result ?? settingsData;
+        if (settings?.default_booking_mode !== "auto_slots_bot") return;
+
+        for (const br of awaitingBRs) {
+          autoPatchedRef.current.add(br.id);
+          try {
+            await patchBooking(br.id, { booking_mode: "auto_slots_bot" });
+            console.log(`[Index] Auto-patched BR #${br.id} → auto_slots_bot`);
+          } catch (err) {
+            console.warn(`[Index] Auto-patch BR #${br.id} failed:`, err);
+          }
+        }
+        queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      } catch (err) {
+        console.warn("[Index] Failed to fetch booking-settings for auto-patch:", err);
+      }
+    })();
+  }, [bookings, activeUnit, queryClient]);
 
   // Debug: log sample created_at values to understand format
   if (bookings.length > 0) {
