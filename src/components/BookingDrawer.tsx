@@ -405,6 +405,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     suggestMut.isPending;
 
   const mode = booking.booking_mode as BookingMode;
+  const isConvo = ["human", "prices"].includes(
+    ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
+  );
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
@@ -431,9 +434,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     }
 
     const actions: React.ReactNode[] = [];
-    const isConvo = ["human", "prices"].includes(
-      ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
-    );
+
 
     if (mode === "handoff_manual") {
       if (booking.status === "handoff") {
@@ -608,7 +609,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
               icon={User}
-              label="Profissional"
+              label={isConvo ? "Atendimento" : "Profissional"}
               className="col-span-2"
               value={
                 hasProfessional ? (
@@ -706,7 +707,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                         {assignProfMut.isPending ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          "Atribuir"
+                          isConvo ? "Ligar Bot" : "Atribuir"
                         )}
                       </button>
                       {assignProfMut.isError && (
