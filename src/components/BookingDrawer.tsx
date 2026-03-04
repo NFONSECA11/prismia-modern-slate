@@ -17,9 +17,10 @@ import {
   fetchBookingRequestById,
   fetchBookingMessages,
   sendBookingMessage,
+  patchBooking,
 } from "@/lib/bookingApi";
 import type { BookingMessage } from "@/lib/bookingApi";
-import { assignProfessionalEnriched } from "@/lib/bookingAssignApi";
+import api from "@/lib/api";
 import {
   X,
   Phone,
@@ -141,6 +142,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+  const [selectedProcedureId, setSelectedProcedureId] = useState<number | null>(null);
+  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -159,16 +162,68 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals-unit-drawer"],
     queryFn: async () => {
-      // Try to find unit from the booking list endpoint (already cached)
-      // Fallback: fetch without unit filter or use unit=1
-      console.log("[BookingDrawer] fetching professionals...");
-      const { data } = await (await import("@/lib/api")).default.get("/api/booking/professionals/");
+      const { data } = await api.get("/api/booking/professionals/");
       const result = Array.isArray(data) ? data : (data?.results ?? []);
-      console.log("[BookingDrawer] professionals result:", result);
-      return result;
+      return result as { id: number; name: string; code?: string }[];
     },
     enabled: needsProfessional,
   });
+
+  // Fetch professional-procedures links (to filter procedures by selected professional)
+  const { data: profProcLinks = [] } = useQuery({
+    queryKey: ["professional-procedures-drawer"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/professional-procedures/");
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? arr as { id: number; professional?: number; procedure?: number; procedure_name?: string }[] : [];
+    },
+    enabled: needsProfessional,
+  });
+
+  // Fetch all procedures
+  const { data: allProcedures = [] } = useQuery({
+    queryKey: ["procedures-drawer"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/procedures/");
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? arr as { id: number; name?: string; slug?: string }[] : [];
+    },
+    enabled: needsProfessional,
+  });
+
+  // Fetch all specialties
+  const { data: allSpecialties = [] } = useQuery({
+    queryKey: ["specialties-drawer"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/specialties/");
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? arr as { id: number; name?: string }[] : [];
+    },
+    enabled: needsProfessional,
+  });
+
+  // Fetch procedure-specialties links (to auto-resolve specialty)
+  const { data: procSpecLinks = [] } = useQuery({
+    queryKey: ["procedure-specialties-drawer"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/procedure-specialties/");
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? arr as { id: number; procedure?: number; specialty?: number }[] : [];
+    },
+    enabled: needsProfessional,
+  });
+
+  // Derived: procedures available for selected professional
+  const proceduresForProfessional = selectedProfessionalId
+    ? allProcedures.filter((p) =>
+        profProcLinks.some((link) => link.professional === selectedProfessionalId && link.procedure === p.id)
+      )
+    : [];
+
+  // Auto-resolve specialty when procedure changes
+  const autoSpecialtyId = selectedProcedureId
+    ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
+    : null;
 
   const { data: bookingDetailForBot, refetch: refetchBookingDetailForBot } = useQuery({
     queryKey: ["booking-request-detail-bot", booking?.id],
@@ -200,45 +255,24 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
-      return await assignProfessionalEnriched(
-        booking!.id,
-        profId,
-        booking!.procedure_name,
-        booking!.unit_name,
-        booking!
-      );
+      const payload: Record<string, unknown> = {
+        lead_name: booking!.lead_name,
+        professional: profId,
+        booking_mode: "assisted_slots_dashboard",
+      };
+      if (selectedProcedureId) payload.procedure = selectedProcedureId;
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+      if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
+
+      console.log("[BookingDrawer] PATCH payload:", payload);
+      return await patchBooking(booking!.id, payload);
     },
     onSuccess: (result: any) => {
       console.log("[BookingDrawer] assign success:", result);
-
-      if (result?.__mock_assigned) {
-        const profName = result.professional_name ?? "Profissional (mock)";
-        const profId = result.professional_id ?? selectedProfessionalId ?? 0;
-
-        setMockAssignedProfessional({ id: profId, name: profName });
-        setSelectedProfessionalId(null);
-
-        // Optimistic: also update booking list cache so table reflects assignment
-        queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
-          if (!old?.results) return old;
-          return {
-            ...old,
-            results: old.results.map((b: any) =>
-              b.id === booking!.id
-                ? { ...b, professional_name: profName, professional_id: profId }
-                : b
-            ),
-          };
-        });
-
-        setActionDone("⚠️ Mock: profissional atribuído localmente (não persistido)");
-        toast.warning("Mock aplicado — backend retornou erro 500. Atribuição local apenas.");
-        setTimeout(() => setActionDone(null), 3000);
-        return;
-      }
-
       setActionDone("Profissional atribuído!");
       setSelectedProfessionalId(null);
+      setSelectedProcedureId(null);
+      setSelectedSpecialtyId(null);
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
@@ -585,33 +619,86 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 hasProfessional ? (
                   effectiveProfessionalName
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 w-full">
+                    {/* Professional select */}
                     <select
                       value={selectedProfessionalId ?? ""}
-                      onChange={(e) => setSelectedProfessionalId(Number(e.target.value) || null)}
-                      className="text-sm bg-surface border border-border rounded-lg px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60"
+                      onChange={(e) => {
+                        const id = Number(e.target.value) || null;
+                        setSelectedProfessionalId(id);
+                        setSelectedProcedureId(null);
+                        setSelectedSpecialtyId(null);
+                      }}
+                      className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                     >
-                      <option value="">Selecionar...</option>
+                      <option value="">Selecionar profissional...</option>
                       {professionals.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name}
                         </option>
                       ))}
                     </select>
-                    <button
-                      onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
-                      disabled={!selectedProfessionalId || assignProfMut.isPending}
-                      className="text-xs font-medium px-2.5 py-1 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                      {assignProfMut.isPending ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "Atribuir"
-                      )}
-                    </button>
-                    {assignProfMut.isError && (
-                      <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+
+                    {/* Procedure select (filtered by professional) */}
+                    {selectedProfessionalId && (
+                      <select
+                        value={selectedProcedureId ?? ""}
+                        onChange={(e) => {
+                          setSelectedProcedureId(Number(e.target.value) || null);
+                          setSelectedSpecialtyId(null);
+                        }}
+                        className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                      >
+                        <option value="">Selecionar procedimento...</option>
+                        {proceduresForProfessional.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name ?? p.slug ?? `#${p.id}`}
+                          </option>
+                        ))}
+                      </select>
                     )}
+
+                    {/* Specialty select (auto-resolved or manual) */}
+                    {selectedProcedureId && (
+                      <div className="flex items-center gap-2">
+                        {autoSpecialtyId ? (
+                          <span className="text-xs text-muted-foreground">
+                            Especialidade: {allSpecialties.find((s) => s.id === autoSpecialtyId)?.name ?? `#${autoSpecialtyId}`}
+                          </span>
+                        ) : (
+                          <select
+                            value={selectedSpecialtyId ?? ""}
+                            onChange={(e) => setSelectedSpecialtyId(Number(e.target.value) || null)}
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 flex-1"
+                          >
+                            <option value="">Selecionar especialidade...</option>
+                            {allSpecialties.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name ?? `#${s.id}`}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Assign button */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                        disabled={!selectedProfessionalId || !selectedProcedureId || assignProfMut.isPending}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        {assignProfMut.isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          "Atribuir"
+                        )}
+                      </button>
+                      {assignProfMut.isError && (
+                        <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+                      )}
+                    </div>
                   </div>
                 )
               }
