@@ -59,6 +59,14 @@ function isTerminal(status: BookingStatus) {
   return TERMINAL_STATUSES.includes(status);
 }
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("55")) return `(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 9)}-${digits.slice(9)}`;
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return raw;
+}
+
 function DetailRow({
   icon: Icon,
   label,
@@ -484,7 +492,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 {(booking.contact_phone || booking.phone) && (
                   <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                     <Phone className="h-3 w-3" />
-                    {booking.contact_phone || booking.phone}
+                    {formatPhone(booking.contact_phone || booking.phone || "")}
                   </p>
                 )}
               </div>
