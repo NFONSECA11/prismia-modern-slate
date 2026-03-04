@@ -468,37 +468,57 @@ export async function assignBookingProfessional(
 ): Promise<BookingRequest> {
   await fetchCsrf();
 
-  // Tenta PATCH com professional_id — o endpoint principal
-  try {
-    const { data } = await api.patch(`/api/booking/requests/${id}/`, { professional_id: professionalId });
-    console.log("[assignProfessional] PATCH success:", data);
-    return (data as any)?.result ?? data;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const resData = err?.response?.data;
-    const contentType = String(err?.response?.headers?.["content-type"] ?? "");
-    const isHtml = contentType.includes("text/html");
+  const attempts: Array<{ label: string; request: () => Promise<{ data: any }> }> = [
+    {
+      label: "PATCH professional_id",
+      request: () => api.patch(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
+    },
+    {
+      label: "PATCH professional",
+      request: () => api.patch(`/api/booking/requests/${id}/`, { professional: professionalId }),
+    },
+    {
+      label: "PUT professional_id",
+      request: () => api.put(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
+    },
+    {
+      label: "POST assign_professional",
+      request: () => api.post(`/api/booking/requests/${id}/assign_professional/`, { professional_id: professionalId }),
+    },
+  ];
 
-    console.error("[assignProfessional] PATCH failed:", {
-      status,
-      isHtml,
-      data: isHtml ? "(HTML omitted)" : resData,
-      url: `/api/booking/requests/${id}/`,
-      payload: { professional_id: professionalId },
-    });
+  let primaryError: any = null;
+  let lastError: any = null;
 
-    // Se for 405 Method Not Allowed, tenta PUT
-    if (status === 405) {
-      try {
-        const { data } = await api.put(`/api/booking/requests/${id}/`, { professional_id: professionalId });
-        return (data as any)?.result ?? data;
-      } catch (putErr: any) {
-        console.error("[assignProfessional] PUT also failed:", putErr?.response?.status);
-      }
+  for (const attempt of attempts) {
+    try {
+      const { data } = await attempt.request();
+      console.log(`[assignProfessional] ${attempt.label} success`);
+      return ((data as any)?.result ?? data) as BookingRequest;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const resData = err?.response?.data;
+      const contentType = String(err?.response?.headers?.["content-type"] ?? "").toLowerCase();
+      const isHtml =
+        contentType.includes("text/html") ||
+        (typeof resData === "string" && /<!doctype|<html|<body/i.test(resData));
+
+      if (!primaryError) primaryError = err;
+      lastError = err;
+
+      console.error(`[assignProfessional] ${attempt.label} failed:`, {
+        status,
+        isHtml,
+        data: isHtml ? "(HTML omitted)" : resData,
+      });
+
+      // Só tenta fallback para erros de método/rota/formato; outros erros são finais
+      const canFallback = isHtml || status === 404 || status === 405;
+      if (!canFallback) throw err;
     }
-
-    throw err;
   }
+
+  throw primaryError ?? lastError ?? new Error("Falha ao atribuir profissional");
 }
 
 // ── Mensagens de um booking ──────────────────────────────────────────────────
