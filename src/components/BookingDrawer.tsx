@@ -689,7 +689,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                         type="text"
                         value={assignLeadName}
                         onChange={(e) => setAssignLeadName(e.target.value)}
-                        placeholder="Nome do paciente..."
+                        placeholder="Nome do cliente..."
                         className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                       />
                     </div>

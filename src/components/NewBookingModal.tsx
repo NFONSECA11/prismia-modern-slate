@@ -281,10 +281,10 @@ function ModalBody({
             </span>
           </div>
 
-          {/* Paciente */}
+          {/* Cliente */}
           <div>
             <FieldLabel>
-              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Paciente {!readOnly && "*"}</span>
+              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Cliente {!readOnly && "*"}</span>
             </FieldLabel>
             <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" disabled={readOnly} />
           </div>
@@ -384,7 +384,7 @@ function ModalBody({
               <textarea
                 value={form.notes}
                 onChange={(e) => set("notes")(e.target.value)}
-                placeholder="Informações adicionais, preferências do paciente..."
+                placeholder="Informações adicionais, preferências do cliente..."
                 rows={3}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
               />
