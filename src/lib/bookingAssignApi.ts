@@ -2,9 +2,9 @@
  * Enriched professional assignment for bookings.
  *
  * Flow:
- * 1. Look up the procedure in procedure-specialties → get Specialty
- * 2. Look up the professional in professional-procedures → get Professional details
- * 3. Look up the procedure in unit-procedures → get Procedure code (unit-procedure ID)
+ * 1. professional-procedures → find procedure linked to the selected professional
+ * 2. procedure-specialties  → find specialty for that procedure
+ * 3. unit-procedures        → find procedure_code (unit-procedure ID)
  * 4. PATCH the booking with the full enriched payload
  */
 
@@ -14,13 +14,14 @@ import { assignBookingProfessional } from "@/lib/bookingApi";
 import type { BookingRequest } from "@/types/booking";
 
 // ── Helper: normalize array from any API shape ──────────────────────────────
-function extractArray(data: any): any[] {
+function extractArray(data: unknown): unknown[] {
   if (Array.isArray(data)) return data;
-  if (data?.results) return data.results;
-  if (data?.data) return data.data;
-  const inner = data?.result;
+  const obj = data as Record<string, unknown> | undefined;
+  if (obj?.results) return obj.results as unknown[];
+  if (obj?.data) return obj.data as unknown[];
+  const inner = obj?.result as Record<string, unknown> | unknown[] | undefined;
   if (Array.isArray(inner)) return inner;
-  if (inner?.results) return inner.results;
+  if ((inner as Record<string, unknown>)?.results) return (inner as Record<string, unknown>).results as unknown[];
   return [];
 }
 
@@ -50,31 +51,36 @@ interface UnitProcedureItem {
   unit_name?: string;
 }
 
+// ── Safe GET helper ──────────────────────────────────────────────────────────
+async function safeGet(url: string, label: string): Promise<unknown[]> {
+  try {
+    const { data } = await api.get(url);
+    const arr = extractArray(data);
+    console.log(`[assignEnriched] ${label}: ${arr.length} items`);
+    return arr;
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number }; message?: string };
+    console.warn(`[assignEnriched] ${label} failed:`, e?.response?.status ?? e?.message);
+    return [];
+  }
+}
+
+// ── Normalize for comparison ─────────────────────────────────────────────────
+const norm = (s?: string) => (s ?? "").trim().toLowerCase();
+
 // ── Main enriched assign function ────────────────────────────────────────────
 export async function assignProfessionalEnriched(
   bookingId: number,
   professionalId: number,
-  procedureName: string,
+  _procedureNameFromBooking: string, // kept for signature compat; may be overridden
   unitName: string,
-  currentBooking?: BookingRequest
+  currentBooking?: BookingRequest,
 ): Promise<BookingRequest> {
-  console.log("[assignEnriched] START", { bookingId, professionalId, procedureName, unitName });
-  
+  console.log("[assignEnriched] START", { bookingId, professionalId, unitName });
+
   await fetchCsrf();
 
-  // 1) Fetch all lookups in parallel — tolerate individual failures
-  const safeGet = async (url: string, label: string, params?: Record<string, any>): Promise<any[]> => {
-    try {
-      const { data } = await api.get(url, params ? { params } : undefined);
-      const arr = extractArray(data);
-      console.log(`[assignEnriched] ${label}: ${arr.length} items`);
-      return arr;
-    } catch (err: any) {
-      console.warn(`[assignEnriched] ${label} failed:`, err?.response?.status ?? err?.message);
-      return [];
-    }
-  };
-
+  // 1) Fetch all lookups in parallel
   const [procSpecs, profProcs, unitProcs, professionals] = await Promise.all([
     safeGet("/api/settings/procedure-specialties/", "procedure-specialties"),
     safeGet("/api/settings/professional-procedures/", "professional-procedures"),
@@ -82,33 +88,48 @@ export async function assignProfessionalEnriched(
     safeGet("/api/booking/professionals/", "professionals"),
   ]);
 
-  const normalizedProcName = procedureName.trim().toLowerCase();
+  // 2) Find procedure via professional-procedures (e.g. "Botox")
+  const profProcLinks = (profProcs as ProfessionalProcedureItem[]).filter(
+    (pp) => pp.professional === professionalId,
+  );
+  console.log("[assignEnriched] profProcLinks for professional:", profProcLinks);
 
-  // 2) Find specialty via procedure-specialties
+  // Pick the first linked procedure (if multiple exist, prefer the first match)
+  const linkedProcedure = profProcLinks[0];
+  const procedureName = linkedProcedure?.procedure_name ?? linkedProcedure?.procedure_slug ?? _procedureNameFromBooking;
+  const normalizedProcName = norm(procedureName);
+
+  console.log("[assignEnriched] resolved procedure:", procedureName);
+
+  // 3) Find specialty via procedure-specialties
   const matchedProcSpec = (procSpecs as ProcedureSpecialtyItem[]).find(
-    (ps) => (ps.procedure_name ?? "").trim().toLowerCase() === normalizedProcName
+    (ps) => norm(ps.procedure_name) === normalizedProcName,
+  );
+  console.log("[assignEnriched] matched specialty:", matchedProcSpec);
+
+  // 4) Find professional info (name, code)
+  const matchedProfessional = (professionals as { id: number; name?: string; code?: string }[]).find(
+    (p) => p.id === professionalId,
   );
 
-  // 3) Find professional info
-  const matchedProfessional = professionals.find((p: any) => p.id === professionalId);
-
-  // 4) Find professional-procedure link
-  const matchedProfProc = (profProcs as ProfessionalProcedureItem[]).find(
-    (pp) =>
-      pp.professional === professionalId &&
-      (pp.procedure_name ?? pp.procedure_slug ?? "").trim().toLowerCase() === normalizedProcName
+  // 5) Find unit-procedure link → procedure_code = unit-procedure ID
+  const normalizedUnitName = norm(unitName);
+  // Prefer matching both unit AND procedure; fallback to procedure-only
+  let matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
+    (up) => norm(up.procedure_name) === normalizedProcName && norm(up.unit_name) === normalizedUnitName,
   );
-
-  // 5) Find unit-procedure link for procedure_code
-  const matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
-    (up) => (up.procedure_name ?? "").trim().toLowerCase() === normalizedProcName
-  );
+  if (!matchedUnitProc) {
+    matchedUnitProc = (unitProcs as UnitProcedureItem[]).find(
+      (up) => norm(up.procedure_name) === normalizedProcName,
+    );
+  }
+  console.log("[assignEnriched] matched unit-procedure:", matchedUnitProc);
 
   // Build the enriched payload
   const payload: Record<string, unknown> = {
     professional: professionalId,
     professional_id: professionalId,
-    professional_name: matchedProfessional?.name ?? matchedProfProc?.professional_name ?? "",
+    professional_name: matchedProfessional?.name ?? linkedProcedure?.professional_name ?? "",
     professional_code: matchedProfessional?.code ?? matchedProfessional?.id ?? professionalId,
     procedure: procedureName,
     procedure_name: procedureName,
@@ -119,100 +140,100 @@ export async function assignProfessionalEnriched(
 
   console.log("[assignEnriched] Payload to PATCH:", JSON.stringify(payload, null, 2));
 
-  // 6) PATCH the booking (primary path)
+  // 6) PATCH the booking
+  return patchWithFallbacks(bookingId, professionalId, payload, currentBooking, matchedProfessional, linkedProcedure);
+}
+
+// ── PATCH + fallback logic (extracted for clarity) ───────────────────────────
+async function patchWithFallbacks(
+  bookingId: number,
+  professionalId: number,
+  payload: Record<string, unknown>,
+  currentBooking?: BookingRequest,
+  matchedProfessional?: { id: number; name?: string; code?: string },
+  linkedProcedure?: ProfessionalProcedureItem,
+): Promise<BookingRequest> {
   try {
     await fetchCsrf();
     const { data } = await api.patch(`/api/booking/requests/${bookingId}/`, payload);
-    const result = ((data as any)?.result ?? data) as BookingRequest;
+    const result = ((data as Record<string, unknown>)?.result ?? data) as BookingRequest;
     console.log("[assignEnriched] PATCH success:", result);
     return result;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const resData = err?.response?.data;
-    const errMsg = err?.message ?? "";
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: unknown }; message?: string };
+    const status = e?.response?.status;
+    const resData = e?.response?.data;
     const rawText = typeof resData === "string" ? resData : JSON.stringify(resData ?? "");
     const isLockJoinError = rawText.includes("FOR UPDATE cannot be applied to the nullable side of an outer join");
 
-    console.error("[assignEnriched] PATCH failed:", {
-      status,
-      message: errMsg,
-      preview: rawText.slice(0, 220),
-    });
+    console.error("[assignEnriched] PATCH failed:", { status, preview: rawText.slice(0, 220) });
 
-    // Backend 500 known issue: fallback to dedicated assignment endpoint strategies
     if (status === 500 || isLockJoinError) {
-      const fallbackFailures: string[] = [];
-
-      const attempts: Array<{ label: string; request: () => Promise<any> }> = [
-        {
-          label: "POST assign_professional (enriched)",
-          request: () => api.post(`/api/booking/requests/${bookingId}/assign_professional/`, payload),
-        },
-        {
-          label: "POST assign_professional (minimal)",
-          request: () =>
-            api.post(`/api/booking/requests/${bookingId}/assign_professional/`, {
-              professional_id: professionalId,
-            }),
-        },
-        {
-          label: "assignBookingProfessional legacy fallback",
-          request: () => assignBookingProfessional(bookingId, professionalId),
-        },
-      ];
-
-      for (const attempt of attempts) {
-        try {
-          const res = await attempt.request();
-          const data = (res as any)?.data ?? res;
-          const normalized = ((data as any)?.result ?? data) as BookingRequest;
-          console.log(`[assignEnriched] ${attempt.label} success`);
-          return normalized;
-        } catch (fallbackErr: any) {
-          const fbStatus = fallbackErr?.response?.status;
-          const fbData = fallbackErr?.response?.data;
-          const fbDetail =
-            (typeof fbData === "string" ? fbData.slice(0, 120) : fbData?.detail ?? fbData?.error ?? "") ||
-            fallbackErr?.message ||
-            "sem detalhe";
-
-          fallbackFailures.push(`${attempt.label}: ${fbStatus ?? "sem_status"} (${fbDetail})`);
-          console.warn(`[assignEnriched] ${attempt.label} failed`, { status: fbStatus, detail: fbDetail });
-        }
-      }
-
-      if (currentBooking) {
-        const mockResult = {
-          ...currentBooking,
-          professional_id: professionalId,
-          professional_name:
-            (matchedProfessional as any)?.name ??
-            matchedProfProc?.professional_name ??
-            currentBooking.professional_name ??
-            `#${professionalId}`,
-          updated_at: new Date().toISOString(),
-          __mock_assigned: true,
-          __mock_reason: fallbackFailures.join(" | "),
-        } as BookingRequest;
-
-        console.warn("[assignEnriched] MOCK fallback applied", {
-          bookingId,
-          professionalId,
-          reason: fallbackFailures,
-        });
-
-        return mockResult;
-      }
-
-      throw new Error(
-        `Erro 500 no PATCH e fallbacks falharam. Tentativas: ${fallbackFailures.join(" | ")}`
-      );
+      return runFallbacks(bookingId, professionalId, payload, currentBooking, matchedProfessional, linkedProcedure);
     }
 
     const detail =
-      (typeof resData === "string" ? resData.slice(0, 180) : resData?.detail ?? resData?.error ?? resData?.message ?? "") ||
-      errMsg;
+      (typeof resData === "string" ? resData.slice(0, 180) : (resData as Record<string, string>)?.detail ?? (resData as Record<string, string>)?.error ?? "") ||
+      e?.message;
 
-    throw new Error(detail || `Erro ${status ?? "desconhecido"} ao atribuir profissional`);
+    throw new Error(String(detail) || `Erro ${status ?? "desconhecido"} ao atribuir profissional`);
   }
+}
+
+async function runFallbacks(
+  bookingId: number,
+  professionalId: number,
+  payload: Record<string, unknown>,
+  currentBooking?: BookingRequest,
+  matchedProfessional?: { id: number; name?: string; code?: string },
+  linkedProcedure?: ProfessionalProcedureItem,
+): Promise<BookingRequest> {
+  const failures: string[] = [];
+
+  const attempts: Array<{ label: string; request: () => Promise<unknown> }> = [
+    {
+      label: "POST assign_professional (enriched)",
+      request: () => api.post(`/api/booking/requests/${bookingId}/assign_professional/`, payload),
+    },
+    {
+      label: "POST assign_professional (minimal)",
+      request: () => api.post(`/api/booking/requests/${bookingId}/assign_professional/`, { professional_id: professionalId }),
+    },
+    {
+      label: "assignBookingProfessional legacy",
+      request: () => assignBookingProfessional(bookingId, professionalId),
+    },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const res = await attempt.request();
+      const data = (res as { data?: unknown })?.data ?? res;
+      const normalized = ((data as Record<string, unknown>)?.result ?? data) as BookingRequest;
+      console.log(`[assignEnriched] ${attempt.label} success`);
+      return normalized;
+    } catch (fbErr: unknown) {
+      const fe = fbErr as { response?: { status?: number; data?: unknown }; message?: string };
+      const fbData = fe?.response?.data;
+      const fbDetail = (typeof fbData === "string" ? fbData.slice(0, 120) : (fbData as Record<string, string>)?.detail ?? "") || fe?.message || "sem detalhe";
+      failures.push(`${attempt.label}: ${fe?.response?.status ?? "?"} (${fbDetail})`);
+      console.warn(`[assignEnriched] ${attempt.label} failed`, fbDetail);
+    }
+  }
+
+  if (currentBooking) {
+    const mockResult = {
+      ...currentBooking,
+      professional_id: professionalId,
+      professional_name: matchedProfessional?.name ?? linkedProcedure?.professional_name ?? currentBooking.professional_name ?? `#${professionalId}`,
+      updated_at: new Date().toISOString(),
+      __mock_assigned: true,
+      __mock_reason: failures.join(" | "),
+    } as BookingRequest;
+
+    console.warn("[assignEnriched] MOCK fallback applied", { bookingId, professionalId, reason: failures });
+    return mockResult;
+  }
+
+  throw new Error(`Erro 500 no PATCH e fallbacks falharam. Tentativas: ${failures.join(" | ")}`);
 }
