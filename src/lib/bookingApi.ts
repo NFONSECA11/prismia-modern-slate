@@ -468,29 +468,37 @@ export async function assignBookingProfessional(
 ): Promise<BookingRequest> {
   await fetchCsrf();
 
-  const attempts = [
-    () => api.patch<BookingRequest>(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
-    () => api.patch<BookingRequest>(`/api/booking/requests/${id}/`, { professional: professionalId }),
-    () => api.put<BookingRequest>(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
-    () => api.post<BookingRequest>(`/api/booking/requests/${id}/assign_professional/`, { professional_id: professionalId }),
-  ];
+  // Tenta PATCH com professional_id — o endpoint principal
+  try {
+    const { data } = await api.patch(`/api/booking/requests/${id}/`, { professional_id: professionalId });
+    console.log("[assignProfessional] PATCH success:", data);
+    return (data as any)?.result ?? data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const resData = err?.response?.data;
+    const contentType = String(err?.response?.headers?.["content-type"] ?? "");
+    const isHtml = contentType.includes("text/html");
 
-  let lastError: unknown = null;
+    console.error("[assignProfessional] PATCH failed:", {
+      status,
+      isHtml,
+      data: isHtml ? "(HTML omitted)" : resData,
+      url: `/api/booking/requests/${id}/`,
+      payload: { professional_id: professionalId },
+    });
 
-  for (const run of attempts) {
-    try {
-      const { data } = await run();
-      return data as BookingRequest;
-    } catch (err: any) {
-      lastError = err;
-      const status = err?.response?.status;
-
-      // Não vale tentar fallback em erro de permissão/autenticação
-      if (status === 401 || status === 403) throw err;
+    // Se for 405 Method Not Allowed, tenta PUT
+    if (status === 405) {
+      try {
+        const { data } = await api.put(`/api/booking/requests/${id}/`, { professional_id: professionalId });
+        return (data as any)?.result ?? data;
+      } catch (putErr: any) {
+        console.error("[assignProfessional] PUT also failed:", putErr?.response?.status);
+      }
     }
-  }
 
-  throw lastError ?? new Error("Falha ao atribuir profissional");
+    throw err;
+  }
 }
 
 // ── Mensagens de um booking ──────────────────────────────────────────────────
