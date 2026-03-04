@@ -14,13 +14,12 @@ import {
   handoffOn,
   handoffOff,
   suggestSlots,
-  assignBookingProfessional,
-  fetchProfessionalsByUnit,
   fetchBookingRequestById,
   fetchBookingMessages,
   sendBookingMessage,
 } from "@/lib/bookingApi";
 import type { BookingMessage } from "@/lib/bookingApi";
+import { assignProfessionalEnriched } from "@/lib/bookingAssignApi";
 import {
   X,
   Phone,
@@ -194,7 +193,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
-      return await assignBookingProfessional(booking!.id, profId);
+      return await assignProfessionalEnriched(
+        booking!.id,
+        profId,
+        booking!.procedure_name,
+        booking!.unit_name
+      );
     },
     onSuccess: (result) => {
       console.log("[BookingDrawer] assign success:", result);
