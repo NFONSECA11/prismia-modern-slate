@@ -46,6 +46,11 @@ import {
   Bot,
   MessageSquare,
   Send,
+  Zap,
+  Pencil,
+  Trash2,
+  Plus,
+  Check,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -147,7 +152,32 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [editingQuickReplies, setEditingQuickReplies] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const DEFAULT_QUICK_REPLIES = [
+    "Olá! Como posso te ajudar?",
+    "Vou verificar a disponibilidade para você.",
+    "Seu agendamento foi confirmado!",
+    "Poderia me informar seu nome completo?",
+    "Qual procedimento você deseja agendar?",
+  ];
+
+  const getQuickReplies = (): string[] => {
+    try {
+      const saved = localStorage.getItem("quick_replies");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_QUICK_REPLIES;
+  };
+
+  const [quickReplies, setQuickReplies] = useState<string[]>(getQuickReplies);
+
+  const saveQuickReplies = (replies: string[]) => {
+    setQuickReplies(replies);
+    localStorage.setItem("quick_replies", JSON.stringify(replies));
+  };
 
   const effectiveProfessionalName =
     mockAssignedProfessional?.name ?? booking?.professional_name ?? "";
@@ -908,6 +938,89 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               )}
               <div ref={messagesEndRef} />
             </div>
+            {/* Quick Replies */}
+            {!isBotOn && (
+              <div className="px-3 pt-2 border-t border-border bg-surface-elevated">
+                <button
+                  onClick={() => {
+                    setShowQuickReplies(!showQuickReplies);
+                    if (editingQuickReplies) setEditingQuickReplies(false);
+                  }}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mb-1"
+                >
+                  <Zap className="h-3 w-3" />
+                  Respostas rápidas
+                </button>
+                {showQuickReplies && (
+                  <div className="mb-2">
+                    {editingQuickReplies ? (
+                      <div className="space-y-1">
+                        {quickReplies.map((reply, idx) => (
+                          <div key={idx} className="flex items-center gap-1">
+                            <input
+                              className="flex-1 bg-surface border border-border rounded px-2 py-1 text-[11px] text-foreground"
+                              value={reply}
+                              onChange={(e) => {
+                                const updated = [...quickReplies];
+                                updated[idx] = e.target.value;
+                                setQuickReplies(updated);
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                const updated = quickReplies.filter((_, i) => i !== idx);
+                                saveQuickReplies(updated);
+                              }}
+                              className="text-destructive hover:text-destructive/80 p-0.5"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {quickReplies.length < 5 && (
+                          <button
+                            onClick={() => setQuickReplies([...quickReplies, ""])}
+                            className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80"
+                          >
+                            <Plus className="h-3 w-3" /> Adicionar
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            saveQuickReplies(quickReplies.filter(r => r.trim()));
+                            setEditingQuickReplies(false);
+                          }}
+                          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 mt-1"
+                        >
+                          <Check className="h-3 w-3" /> Salvar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {quickReplies.map((reply, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setMessageText(reply);
+                            }}
+                            disabled={sendMsgMutation.isPending}
+                            className="px-2 py-1 text-[10px] rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors truncate max-w-[200px]"
+                          >
+                            {reply}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setEditingQuickReplies(true)}
+                          className="px-2 py-1 text-[10px] rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Input de mensagem */}
             <div className="px-3 py-2 border-t border-border flex items-center gap-2 bg-surface-elevated">
               <input
