@@ -206,9 +206,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1200);
     },
     onError: (err: any) => {
-      console.error("[BookingDrawer] assign error:", err?.response?.status, err?.response?.data);
-      setActionDone("Erro ao atribuir profissional");
-      setTimeout(() => setActionDone(null), 3000);
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      const contentType = String(err?.response?.headers?.["content-type"] ?? "").toLowerCase();
+      const isHtml = contentType.includes("text/html") || (typeof data === "string" && data.trim().toLowerCase().startsWith("<!doctype"));
+      
+      console.error("[BookingDrawer] assign error:", status, data);
+      
+      let msg = "Erro ao atribuir profissional";
+      if (isHtml) {
+        msg = `Erro ${status || ""} — túnel retornou HTML. Tente novamente.`;
+      } else if (data) {
+        const detail = data?.detail || data?.error || data?.message || data?.code || (typeof data === "string" ? data : "");
+        if (detail) msg = `Erro: ${detail}`;
+        else msg = `Erro ${status || "desconhecido"} ao atribuir`;
+      }
+      
+      toast.error(msg);
+      setActionDone(msg);
+      setTimeout(() => setActionDone(null), 4000);
     },
   });
 
