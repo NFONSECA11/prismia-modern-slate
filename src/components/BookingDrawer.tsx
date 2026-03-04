@@ -220,6 +220,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         const detail = data?.detail || data?.error || data?.message || data?.code || (typeof data === "string" ? data : "");
         if (detail) msg = `Erro: ${detail}`;
         else msg = `Erro ${status || "desconhecido"} ao atribuir`;
+      } else if (err?.message) {
+        msg = err.message;
       }
       
       toast.error(msg);
