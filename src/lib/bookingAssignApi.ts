@@ -10,6 +10,7 @@
 
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
+import { assignBookingProfessional } from "@/lib/bookingApi";
 import type { BookingRequest } from "@/types/booking";
 
 // ── Helper: normalize array from any API shape ──────────────────────────────
@@ -117,7 +118,7 @@ export async function assignProfessionalEnriched(
 
   console.log("[assignEnriched] Payload to PATCH:", JSON.stringify(payload, null, 2));
 
-  // 6) PATCH the booking
+  // 6) PATCH the booking (primary path)
   try {
     await fetchCsrf();
     const { data } = await api.patch(`/api/booking/requests/${bookingId}/`, payload);
@@ -127,21 +128,67 @@ export async function assignProfessionalEnriched(
   } catch (err: any) {
     const status = err?.response?.status;
     const resData = err?.response?.data;
-    const isHtml = typeof resData === "string" && /<!doctype|<html/i.test(resData);
     const errMsg = err?.message ?? "";
-    
+    const rawText = typeof resData === "string" ? resData : JSON.stringify(resData ?? "");
+    const isLockJoinError = rawText.includes("FOR UPDATE cannot be applied to the nullable side of an outer join");
+
     console.error("[assignEnriched] PATCH failed:", {
       status,
-      isHtml,
       message: errMsg,
-      data: isHtml ? "(HTML debug page)" : JSON.stringify(resData)?.slice(0, 500),
+      preview: rawText.slice(0, 220),
     });
 
-    if (isHtml || errMsg.includes("HTML")) {
-      throw new Error(`Erro ${status ?? 500} — backend retornou página de debug. Campos no payload podem ser inválidos para este endpoint.`);
+    // Backend 500 known issue: fallback to dedicated assignment endpoint strategies
+    if (status === 500 || isLockJoinError) {
+      const fallbackFailures: string[] = [];
+
+      const attempts: Array<{ label: string; request: () => Promise<any> }> = [
+        {
+          label: "POST assign_professional (enriched)",
+          request: () => api.post(`/api/booking/requests/${bookingId}/assign_professional/`, payload),
+        },
+        {
+          label: "POST assign_professional (minimal)",
+          request: () =>
+            api.post(`/api/booking/requests/${bookingId}/assign_professional/`, {
+              professional_id: professionalId,
+            }),
+        },
+        {
+          label: "assignBookingProfessional legacy fallback",
+          request: () => assignBookingProfessional(bookingId, professionalId),
+        },
+      ];
+
+      for (const attempt of attempts) {
+        try {
+          const res = await attempt.request();
+          const data = (res as any)?.data ?? res;
+          const normalized = ((data as any)?.result ?? data) as BookingRequest;
+          console.log(`[assignEnriched] ${attempt.label} success`);
+          return normalized;
+        } catch (fallbackErr: any) {
+          const fbStatus = fallbackErr?.response?.status;
+          const fbData = fallbackErr?.response?.data;
+          const fbDetail =
+            (typeof fbData === "string" ? fbData.slice(0, 120) : fbData?.detail ?? fbData?.error ?? "") ||
+            fallbackErr?.message ||
+            "sem detalhe";
+
+          fallbackFailures.push(`${attempt.label}: ${fbStatus ?? "sem_status"} (${fbDetail})`);
+          console.warn(`[assignEnriched] ${attempt.label} failed`, { status: fbStatus, detail: fbDetail });
+        }
+      }
+
+      throw new Error(
+        `Erro 500 no PATCH e fallbacks falharam. Tentativas: ${fallbackFailures.join(" | ")}`
+      );
     }
-    
-    const detail = resData?.detail ?? resData?.error ?? resData?.message ?? "";
+
+    const detail =
+      (typeof resData === "string" ? resData.slice(0, 180) : resData?.detail ?? resData?.error ?? resData?.message ?? "") ||
+      errMsg;
+
     throw new Error(detail || `Erro ${status ?? "desconhecido"} ao atribuir profissional`);
   }
 }
