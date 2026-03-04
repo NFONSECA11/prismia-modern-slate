@@ -212,14 +212,28 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       console.log("[BookingDrawer] assign success:", result);
 
       if (result?.__mock_assigned) {
-        setMockAssignedProfessional({
-          id: result.professional_id ?? selectedProfessionalId ?? 0,
-          name: result.professional_name ?? "Profissional (mock)",
-        });
+        const profName = result.professional_name ?? "Profissional (mock)";
+        const profId = result.professional_id ?? selectedProfessionalId ?? 0;
+
+        setMockAssignedProfessional({ id: profId, name: profName });
         setSelectedProfessionalId(null);
-        setActionDone("Mock aplicado: profissional atribuído localmente");
-        toast.success("Mock aplicado para teste (sem persistir no backend)");
-        setTimeout(() => setActionDone(null), 2200);
+
+        // Optimistic: also update booking list cache so table reflects assignment
+        queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
+          if (!old?.results) return old;
+          return {
+            ...old,
+            results: old.results.map((b: any) =>
+              b.id === booking!.id
+                ? { ...b, professional_name: profName, professional_id: profId }
+                : b
+            ),
+          };
+        });
+
+        setActionDone("⚠️ Mock: profissional atribuído localmente (não persistido)");
+        toast.warning("Mock aplicado — backend retornou erro 500. Atribuição local apenas.");
+        setTimeout(() => setActionDone(null), 3000);
         return;
       }
 
