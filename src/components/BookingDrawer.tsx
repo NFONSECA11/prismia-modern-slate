@@ -214,6 +214,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     enabled: needsProfessional,
   });
 
+  // Fetch unit-procedures links (to resolve procedure_code = unit-procedure ID)
+  const { data: unitProcLinks = [] } = useQuery({
+    queryKey: ["unit-procedures-drawer"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/unit-procedures/");
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? arr as { id: number; procedure?: number; unit?: number; unit_name?: string }[] : [];
+    },
+    enabled: needsProfessional,
+  });
+
   // Derived: procedures available for selected professional
   const proceduresForProfessional = selectedProfessionalId
     ? allProcedures.filter((p) =>
@@ -224,6 +235,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Auto-resolve specialty when procedure changes
   const autoSpecialtyId = selectedProcedureId
     ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
+    : null;
+
+  // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
+  const resolvedUnitProcId = selectedProcedureId
+    ? (unitProcLinks.find((up) => up.procedure === selectedProcedureId && up.unit_name?.toLowerCase() === booking?.unit_name?.toLowerCase())?.id
+       ?? unitProcLinks.find((up) => up.procedure === selectedProcedureId)?.id
+       ?? null)
     : null;
 
   const { data: bookingDetailForBot, refetch: refetchBookingDetailForBot } = useQuery({
@@ -261,11 +279,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         professional: profId,
         booking_mode: "assisted_slots_dashboard",
       };
-      if (selectedProcedureId) payload.procedure = selectedProcedureId;
+      // Send procedure_code (unit-procedure ID) which the backend needs for slot generation
+      if (resolvedUnitProcId) {
+        payload.procedure = resolvedUnitProcId;
+        payload.procedure_code = resolvedUnitProcId;
+      } else if (selectedProcedureId) {
+        payload.procedure = selectedProcedureId;
+      }
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
 
-      console.log("[BookingDrawer] PATCH payload:", payload);
+      console.log("[BookingDrawer] PATCH payload:", payload, { resolvedUnitProcId, selectedProcedureId });
       return await patchBooking(booking!.id, payload);
     },
     onSuccess: (result: any) => {
