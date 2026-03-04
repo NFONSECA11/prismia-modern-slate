@@ -61,6 +61,12 @@ export default function Index() {
 
   const bookings = data?.results ?? [];
 
+  // Debug: log sample created_at values to understand format
+  if (bookings.length > 0) {
+    const sample = bookings.slice(0, 3).map((b) => ({ id: b.id, created_at: b.created_at, status: b.status }));
+    console.log("[Index] Sample bookings created_at:", JSON.stringify(sample));
+  }
+
   // Fetch professionals by active unit for the agenda view
   const { data: unitProfessionals } = useQuery({
     queryKey: ["professionals-by-unit", activeUnit?.id],
@@ -79,6 +85,7 @@ export default function Index() {
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  console.log("[Index] todayStr:", todayStr, "bookings count:", bookings.length);
 
   // Step 1: Apply search filter first
   const searchedBookings = bookings.filter((b) => {
