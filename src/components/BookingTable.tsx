@@ -293,10 +293,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Contato */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <BookingModeIcon mode={booking.booking_mode} />
-                              <span className="text-[10px] font-mono text-muted-foreground">#{booking.id}</span>
-                              {isConversationRequest ? (
+                          <div className="flex items-center gap-1.5">
+                            <BookingModeIcon mode={booking.booking_mode} />
+                            <span className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
+                              #{booking.id}
+                            </span>
+                            {isConversationRequest ? (
                                 <span className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight">
                                   <MessageCircle className="h-4 w-4 text-primary" />
                                   Conversa

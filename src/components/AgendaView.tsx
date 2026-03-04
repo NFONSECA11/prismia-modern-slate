@@ -193,7 +193,10 @@ function AppointmentCard({
         <Clock className="h-2.5 w-2.5 flex-shrink-0 opacity-70" />
         {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
       </span>
-      <span className="block text-[11px] font-medium truncate leading-tight mt-0.5">{booking.lead_name}</span>
+      <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-tight">
+        <span className="font-mono opacity-80">#{booking.id}</span>
+        <span className="truncate">{booking.lead_name}</span>
+      </div>
       {!compact && phone && (
         <span className="block text-[9px] opacity-70 truncate">{phone}</span>
       )}
