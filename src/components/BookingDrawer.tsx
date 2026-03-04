@@ -14,7 +14,7 @@ import {
   handoffOn,
   handoffOff,
   suggestSlots,
-  patchBooking,
+  assignBookingProfessional,
   fetchProfessionalsByUnit,
   fetchBookingRequestById,
   fetchBookingMessages,
@@ -194,7 +194,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
-      return await patchBooking(booking!.id, { professional_id: profId });
+      return await assignBookingProfessional(booking!.id, profId);
     },
     onSuccess: (result) => {
       console.log("[BookingDrawer] assign success:", result);

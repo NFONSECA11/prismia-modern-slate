@@ -459,7 +459,38 @@ export async function patchBooking(
 ): Promise<BookingRequest> {
   await fetchCsrf();
   const { data } = await api.patch<BookingRequest>(`/api/booking/requests/${id}/`, payload);
-  return data;
+  return data as BookingRequest;
+}
+
+export async function assignBookingProfessional(
+  id: number,
+  professionalId: number
+): Promise<BookingRequest> {
+  await fetchCsrf();
+
+  const attempts = [
+    () => api.patch<BookingRequest>(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
+    () => api.patch<BookingRequest>(`/api/booking/requests/${id}/`, { professional: professionalId }),
+    () => api.put<BookingRequest>(`/api/booking/requests/${id}/`, { professional_id: professionalId }),
+    () => api.post<BookingRequest>(`/api/booking/requests/${id}/assign_professional/`, { professional_id: professionalId }),
+  ];
+
+  let lastError: unknown = null;
+
+  for (const run of attempts) {
+    try {
+      const { data } = await run();
+      return data as BookingRequest;
+    } catch (err: any) {
+      lastError = err;
+      const status = err?.response?.status;
+
+      // Não vale tentar fallback em erro de permissão/autenticação
+      if (status === 401 || status === 403) throw err;
+    }
+  }
+
+  throw lastError ?? new Error("Falha ao atribuir profissional");
 }
 
 // ── Mensagens de um booking ──────────────────────────────────────────────────
