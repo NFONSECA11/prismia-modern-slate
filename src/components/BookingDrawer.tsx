@@ -895,13 +895,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           )}
 
           {/* Mensagens */}
-          <div className="rounded-xl overflow-hidden border border-border flex flex-col" style={{ maxHeight: "320px" }}>
+          <div className="rounded-xl overflow-hidden border border-border flex flex-col" style={{ maxHeight: showQuickReplies ? "420px" : "320px" }}>
             <div className="surface-elevated px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border flex items-center gap-2">
               <MessageSquare className="h-3.5 w-3.5" />
               Conversa
               <span className="ml-auto text-[10px] font-mono opacity-60">{messages.filter(m => !/^\d{1,2}$/.test((m.content ?? "").toString().trim())).length} msgs</span>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface" style={{ minHeight: "150px" }}>
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
