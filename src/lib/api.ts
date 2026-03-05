@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://essay-shipping-subscription-doll.trycloudflare.com",
+  baseURL: "https://lightning-mandate-governmental-womens.trycloudflare.com",
   timeout: 30_000,
   withCredentials: true,
   headers: {
