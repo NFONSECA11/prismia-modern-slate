@@ -899,7 +899,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             <div className="surface-elevated px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border flex items-center gap-2">
               <MessageSquare className="h-3.5 w-3.5" />
               Conversa
-              <span className="ml-auto text-[10px] font-mono opacity-60">{messages.filter(m => !/^\d{1,2}$/.test((m.content ?? "").toString().trim())).length} msgs</span>
+              <span className="ml-auto text-[10px] font-mono opacity-60">{messages.length} msgs</span>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface" style={{ minHeight: "150px" }}>
               {messagesLoading ? (
@@ -918,9 +918,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                   // Final: if not explicitly user → treat as bot (OUT)
                   const isBotFinal = isBot || !isUser;
                   const content = (msg.content ?? "").toString().trim();
-
-                  // Ocultar respostas curtas numéricas (seleção de menu: "1", "2", etc.)
-                  if (/^\d{1,2}$/.test(content)) return null;
 
                   return (
                     <div key={msg.id} className={`flex flex-col gap-0.5 ${isBotFinal ? "items-end" : "items-start"}`}>
