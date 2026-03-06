@@ -130,21 +130,8 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // With server-side filtering, bookings are already filtered — just use them directly
+  // With server-side filtering, bookings are already filtered
   const filteredBookings = bookings;
-
-  // Stats: counts come from the current result set
-  const stats = {
-    today: bookings.length,
-    last7: bookings.length,
-    handoff: bookings.length,
-    awaiting_choice: bookings.length,
-  };
-  // Show the count for the ACTIVE filter only; others show "–" until clicked
-  const statForFilter = (f: QuickFilter) => {
-    if (f === statusFilter && !debouncedSearch) return bookings.length;
-    return "–";
-  };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
