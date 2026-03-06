@@ -40,7 +40,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("today");
+  const [statusFilter, setStatusFilter] = useState<DateFilter>("7days");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
@@ -103,12 +103,19 @@ export default function Index() {
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  console.log("[Index] todayStr:", todayStr, "bookings count:", bookings.length);
+  
+  // 7 days ago string
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
 
-  // Step 1: Apply search filter first
+  // Step 1: Apply search filter (by name, procedure, phone, or ID)
   const searchedBookings = bookings.filter((b) => {
-    const q = search.toLowerCase();
+    const q = search.toLowerCase().trim();
     if (!q) return true;
+    // Search by ID (e.g. "#123" or just "123")
+    const idQuery = q.startsWith("#") ? q.slice(1) : q;
+    if (/^\d+$/.test(idQuery) && String(b.id) === idQuery) return true;
     return (
       (b.lead_name ?? "").toLowerCase().includes(q) ||
       (b.procedure_name ?? "").toLowerCase().includes(q) ||
@@ -117,31 +124,25 @@ export default function Index() {
     );
   });
 
-  // Step 2: Apply status filter on searched results
-  const matchStatusFn = (b: BookingRequest, filter: FilterStatus): boolean => {
+  // Step 2: Apply date filter
+  const matchDateFn = (b: BookingRequest, filter: DateFilter): boolean => {
     if (filter === "all") return true;
-    if (filter === "today") return getCreatedDate(b) === todayStr;
-    const s = (b.status ?? "").toLowerCase();
-    const f = filter.toLowerCase();
-    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
+    const d = getCreatedDate(b);
+    if (filter === "today") return d === todayStr;
+    if (filter === "7days") return d >= sevenDaysAgoStr && d <= todayStr;
+    return true;
   };
 
-  const filteredBookings = searchedBookings.filter((b) => matchStatusFn(b, statusFilter));
+  const filteredBookings = searchedBookings.filter((b) => matchDateFn(b, statusFilter));
 
-
-  const matchStatusHelper = (b: BookingRequest, filter: string) => {
-    const s = (b.status ?? "").toLowerCase();
-    const f = filter.toLowerCase();
-    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
-  };
-
-  // Stats based on searched results (respects search but not status filter)
+  // Stats based on searched results
   const stats = {
     total: searchedBookings.length,
-    handoff: searchedBookings.filter((b) => matchStatusHelper(b, "handoff")).length,
-    assisted: searchedBookings.filter((b) => matchStatusHelper(b, "assisted")).length,
-    pending: searchedBookings.filter((b) => matchStatusHelper(b, "pending")).length,
-    confirmed: searchedBookings.filter((b) => matchStatusHelper(b, "confirmed")).length,
+    today: searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length,
+    last7: searchedBookings.filter((b) => {
+      const d = getCreatedDate(b);
+      return d >= sevenDaysAgoStr && d <= todayStr;
+    }).length,
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
