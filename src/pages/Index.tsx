@@ -27,12 +27,13 @@ import {
 } from "lucide-react";
 
 type View = "table" | "agenda";
-type DateFilter = "today" | "7days" | "all";
+type QuickFilter = "today" | "7days" | "handoff" | "awaiting_choice";
 
-const DATE_FILTERS: { value: DateFilter; label: string }[] = [
+const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
   { value: "today", label: "Hoje" },
   { value: "7days", label: "Últimos 7 dias" },
-  { value: "all", label: "Todos" },
+  { value: "handoff", label: "Handoff" },
+  { value: "awaiting_choice", label: "Aguardando decisão" },
 ];
 
 export default function Index() {
