@@ -319,13 +319,11 @@ export default function Index() {
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
         {/* KPI row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Total", value: stats.total, color: "text-foreground" },
-            { label: "Handoff", value: stats.handoff, color: "text-status-handoff" },
-            { label: "Assisted", value: stats.assisted, color: "text-status-assisted" },
-            { label: "Pendentes", value: stats.pending, color: "text-status-pending" },
-            { label: "Confirmados", value: stats.confirmed, color: "text-status-confirmed" },
+            { label: "Hoje", value: stats.today, color: "text-status-confirmed" },
+            { label: "7 dias", value: stats.last7, color: "text-primary" },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -353,7 +351,7 @@ export default function Index() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar cliente, procedimento..."
+              placeholder="Buscar por ID (#123), nome, procedimento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
@@ -362,7 +360,7 @@ export default function Index() {
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
-            {STATUS_FILTERS.map((f) => (
+            {DATE_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
@@ -373,13 +371,9 @@ export default function Index() {
                 }`}
               >
                 {f.label}
-                {f.value !== "all" && (
-                  <span className="ml-1 opacity-60">
-                    {f.value === "today"
-                      ? searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length
-                      : searchedBookings.filter((b) => matchStatusHelper(b, f.value)).length}
-                  </span>
-                )}
+                <span className="ml-1 opacity-60">
+                  {f.value === "today" ? stats.today : f.value === "7days" ? stats.last7 : stats.total}
+                </span>
               </button>
             ))}
           </div>
