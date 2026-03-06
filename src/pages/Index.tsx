@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { BookingRequest } from "@/types/booking";
-import { fetchFilteredBookings, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
+import { fetchFilteredBookings, fetchBookingRequestById, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
@@ -61,24 +61,25 @@ export default function Index() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
 
+  // Detect if searching by ID
+  const searchId = useMemo(() => {
+    if (!debouncedSearch) return null;
+    const q = debouncedSearch;
+    const idQuery = q.startsWith("#") ? q.slice(1) : q;
+    return /^\d+$/.test(idQuery) ? Number(idQuery) : null;
+  }, [debouncedSearch]);
+
   const apiParams = useMemo((): BookingFilterParams => {
-    // Search → send to API
-    if (debouncedSearch) {
-      const q = debouncedSearch;
-      const idQuery = q.startsWith("#") ? q.slice(1) : q;
-      if (/^\d+$/.test(idQuery)) {
-        return { search: idQuery, limit: 50 };
-      }
-      return { search: q, limit: 50 };
-    }
+    // Don't change list params when searching by ID (handled separately)
+    if (searchId) return { limit: 0 }; // skip list fetch
 
     // Status filters → server-side
     if (statusFilter === "handoff") return { status: "handoff", limit: 200 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 200 };
 
-    // Date filters → fetch all, filter client-side (API doesn't support date params)
+    // Date filters → fetch all, filter client-side
     return { limit: 500 };
-  }, [statusFilter, debouncedSearch]);
+  }, [statusFilter, searchId]);
 
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests", apiParams],
