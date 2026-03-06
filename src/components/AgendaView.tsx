@@ -75,12 +75,14 @@ function extractRawDateTime(raw: string): { date: string; hour: number; minute: 
 }
 
 function getSlotDateTime(booking: BookingRequest): { date: string; hour: number; minute: number } | null {
-  // Primary date sources from booking list payload
+  // Prefer sources that usually include explicit time, keeping scheduled_at as fallback
   const candidates = [
-    booking.scheduled_at,
     booking.chosen_slot?.start_at,
     booking.vars_snapshot?.chosen_slot?.start_at,
+    booking.scheduled_at,
   ];
+
+  let dateOnlyFallback: { date: string; hour: number; minute: number } | null = null;
 
   for (const raw of candidates) {
     if (!raw) continue;
@@ -89,12 +91,16 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
     const extracted = extractRawDateTime(raw);
     if (extracted) return extracted;
 
+    const rawHasExplicitTime = /[T\s]\d{2}:\d{2}/.test(raw);
     const normalized = raw.includes(" ") && !raw.includes("T") ? raw.replace(" ", "T") : raw;
+
     for (const value of [normalized, raw]) {
       try {
         const d = parseISO(value);
         if (!isNaN(d.getTime())) {
-          return { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+          const parsed = { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+          if (rawHasExplicitTime) return parsed;
+          if (!dateOnlyFallback) dateOnlyFallback = parsed;
         }
       } catch {
         // continue to native parsing fallback
@@ -102,7 +108,9 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
 
       const native = new Date(value);
       if (!isNaN(native.getTime())) {
-        return { date: format(native, "yyyy-MM-dd"), hour: native.getHours(), minute: native.getMinutes() };
+        const parsed = { date: format(native, "yyyy-MM-dd"), hour: native.getHours(), minute: native.getMinutes() };
+        if (rawHasExplicitTime) return parsed;
+        if (!dateOnlyFallback) dateOnlyFallback = parsed;
       }
     }
   }
@@ -127,7 +135,30 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
     }
   }
 
+  return dateOnlyFallback;
+}
+
+function getBookingProfessionalId(booking: BookingRequest): number | null {
+  const candidates = [
+    booking.professional_id,
+    (booking as any)?.professional?.id,
+    (booking as any)?.professionalId,
+  ];
+
+  for (const candidate of candidates) {
+    const n = Number(candidate);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
   return null;
+}
+
+function getBookingProfessionalName(booking: BookingRequest): string {
+  return (
+    booking.professional_name ||
+    (booking as any)?.professional?.name ||
+    `Profissional #${getBookingProfessionalId(booking) ?? "-"}`
+  );
 }
 
 function getStatusColors(status: string) {
@@ -283,8 +314,10 @@ function DayView({
     for (const p of professionals) map[p.id] = [];
     for (const b of bookings) {
       const dt = getSlotDateTime(b);
-      if (dt?.date === dateKey && map[b.professional_id] !== undefined) {
-        map[b.professional_id].push(b);
+      const profId = getBookingProfessionalId(b);
+      if (!profId) continue;
+      if (dt?.date === dateKey && map[profId] !== undefined) {
+        map[profId].push(b);
       }
     }
     return map;
@@ -372,8 +405,9 @@ function WeekView({
     const map: Record<string, BookingRequest[]> = {};
     for (const b of bookings) {
       const dt = getSlotDateTime(b);
-      if (!dt) continue;
-      const key = `${b.professional_id}_${dt.date}`;
+      const profId = getBookingProfessionalId(b);
+      if (!dt || !profId) continue;
+      const key = `${profId}_${dt.date}`;
       if (!map[key]) map[key] = [];
       map[key].push(b);
     }
@@ -531,17 +565,39 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     staleTime: 60_000,
   });
 
+  const displayProfessionals = useMemo(() => {
+    const byId = new Map<number, Professional>();
+
+    for (const p of professionals) {
+      const id = Number((p as any)?.id);
+      if (Number.isFinite(id) && id > 0) byId.set(id, { ...p, id });
+    }
+
+    for (const b of agendaBookings) {
+      const id = getBookingProfessionalId(b);
+      if (!id || byId.has(id)) continue;
+      byId.set(id, {
+        id,
+        name: getBookingProfessionalName(b),
+        specialty: (b as any)?.professional_specialty || "",
+      });
+    }
+
+    return Array.from(byId.values());
+  }, [professionals, agendaBookings]);
+
   // When clicking an existing appointment, open the creation modal pre-filled
   const handleAppointmentClick = (booking: BookingRequest) => {
     const dt = getSlotDateTime(booking);
     if (!dt) return;
-    const prof = professionals.find((p) => String(p.id) === String(booking.professional_id));
+    const bookingProfId = getBookingProfessionalId(booking);
+    const prof = displayProfessionals.find((p) => String(p.id) === String(bookingProfId ?? booking.professional_id));
     const slotDate = parseISO(dt.date);
     setNewSlot({
       date: slotDate,
       hour: dt.hour,
       minute: dt.minute,
-      professional: prof ?? { id: booking.professional_id as unknown as number, name: booking.professional_name, specialty: "" },
+      professional: prof ?? { id: bookingProfId ?? 0, name: getBookingProfessionalName(booking), specialty: "" },
       prefill: {
         lead_name: booking.lead_name,
         phone: booking.contact_phone || booking.phone || "",
@@ -632,18 +688,18 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
           {mode === "day" ? (
             <DayView
               day={currentDate}
-              professionals={professionals}
-               bookings={agendaBookings}
-               availMap={availMap}
-               onSelectBooking={handleAppointmentClick}
-               onCellClick={setNewSlot}
-             />
-           ) : (
-             <WeekView
-               weekStart={weekStart}
-               professionals={professionals}
-               bookings={agendaBookings}
-               availMap={availMap}
+              professionals={displayProfessionals}
+              bookings={agendaBookings}
+              availMap={availMap}
+              onSelectBooking={handleAppointmentClick}
+              onCellClick={setNewSlot}
+            />
+          ) : (
+            <WeekView
+              weekStart={weekStart}
+              professionals={displayProfessionals}
+              bookings={agendaBookings}
+              availMap={availMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
@@ -656,7 +712,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
       <NewBookingModal
         key={newSlot ? `${newSlot.professional.id}_${newSlot.date.toISOString()}_${newSlot.hour}` : "closed"}
         slot={newSlot}
-        professionals={professionals}
+        professionals={displayProfessionals}
         onClose={() => setNewSlot(null)}
         onSave={handleSaveBooking}
       />
