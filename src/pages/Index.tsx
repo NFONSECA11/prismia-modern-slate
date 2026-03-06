@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookingRequest, BookingStatus } from "@/types/booking";
+import { BookingRequest } from "@/types/booking";
 import { fetchBookingRequests, createBooking, patchBooking } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
 import { AgendaView } from "@/components/AgendaView";
-import { StatusBadge } from "@/components/StatusBadge";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
