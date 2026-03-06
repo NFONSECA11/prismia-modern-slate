@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest } from "@/types/booking";
-import { fetchBookingRequests, createBooking, patchBooking } from "@/lib/bookingApi";
+import { fetchFilteredBookings, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
@@ -43,13 +43,52 @@ export default function Index() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
   const queryClient = useQueryClient();
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build API params based on active filter
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
+
+  const apiParams = useMemo((): BookingFilterParams => {
+    // If searching, use search param and skip date/status filters
+    if (debouncedSearch) {
+      const q = debouncedSearch;
+      const idQuery = q.startsWith("#") ? q.slice(1) : q;
+      if (/^\d+$/.test(idQuery)) {
+        return { search: idQuery, limit: 50 };
+      }
+      return { search: q, limit: 50 };
+    }
+
+    switch (statusFilter) {
+      case "today":
+        return { created_at__date: todayStr, limit: 200 };
+      case "7days":
+        return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 200 };
+      case "handoff":
+        return { status: "handoff", limit: 200 };
+      case "awaiting_choice":
+        return { status: "awaiting_choice", limit: 200 };
+      default:
+        return { limit: 200 };
+    }
+  }, [statusFilter, debouncedSearch, todayStr, sevenDaysAgoStr]);
+
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
-    queryKey: ["booking-requests"],
-    queryFn: fetchBookingRequests,
+    queryKey: ["booking-requests", apiParams],
+    queryFn: () => fetchFilteredBookings(apiParams),
     refetchInterval: false,
     refetchOnWindowFocus: false,
     staleTime: 120_000,
