@@ -319,20 +319,14 @@ export default function Index() {
       </header>
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
-        {/* KPI row */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Hoje", value: stats.today, color: "text-status-confirmed" },
-            { label: "7 dias", value: stats.last7, color: "text-primary" },
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className="rounded-xl px-4 py-3 border border-border surface-raised flex items-center justify-between"
-            >
-              <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
-              <span className={`text-xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</span>
-            </div>
-          ))}
+        {/* Result count */}
+        <div className="rounded-xl px-4 py-3 border border-border surface-raised flex items-center justify-between">
+          <span className="text-xs text-muted-foreground font-medium">
+            {debouncedSearch ? "Resultados da busca" : QUICK_FILTERS.find(f => f.value === statusFilter)?.label ?? ""}
+          </span>
+          <span className="text-xl font-bold tabular-nums text-foreground">
+            {isLoading ? "…" : bookings.length}
+          </span>
         </div>
 
         {/* Error banner */}
@@ -371,9 +365,6 @@ export default function Index() {
                 }`}
               >
                 {f.label}
-                <span className="ml-1 opacity-60">
-                  {stats[f.value as keyof typeof stats]}
-                </span>
               </button>
             ))}
           </div>
