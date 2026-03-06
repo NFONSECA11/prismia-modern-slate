@@ -186,6 +186,7 @@ export default function Index() {
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
     queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
   };
 
   const handleSetView = (v: View) => {
