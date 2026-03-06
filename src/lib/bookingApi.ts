@@ -449,16 +449,18 @@ export async function fetchAgendaBookings(
   dateFrom: string, // yyyy-MM-dd
   dateTo: string,   // yyyy-MM-dd
 ): Promise<BookingRequest[]> {
+  console.log("[Agenda] Fetching bookings", { unitId, dateFrom, dateTo });
   const { data } = await api.get("/api/booking/requests/", {
     params: {
       unit: unitId,
       status: "confirmed",
-      scheduled_at_after: dateFrom,
-      scheduled_at_before: dateTo,
+      scheduled_at_after: `${dateFrom}T00:00:00`,
+      scheduled_at_before: `${dateTo}T23:59:59`,
       limit: 500,
     },
   });
   const normalized = normalizeBookingListResponse(data);
+  console.log("[Agenda] Got", normalized.results.length, "bookings. Sample:", normalized.results.slice(0, 2).map((b: any) => ({ id: b.id, scheduled_at: b.scheduled_at, status: b.status })));
   return normalized.results as BookingRequest[];
 }
 
