@@ -23,6 +23,7 @@ export interface NewBookingSlot {
   professional: Professional;
   // Pre-fill from existing appointment
   prefill?: {
+    booking_id?: number;
     lead_name?: string;
     phone?: string;
     procedure_name?: string;
@@ -286,6 +287,9 @@ function ModalBody({
             <FieldLabel>
               <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Cliente {!readOnly && "*"}</span>
             </FieldLabel>
+            {readOnly && slot.prefill?.booking_id && (
+              <p className="text-[11px] text-muted-foreground mb-1">BR #{slot.prefill.booking_id}</p>
+            )}
             <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" disabled={readOnly} />
           </div>
 
