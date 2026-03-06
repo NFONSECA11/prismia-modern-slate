@@ -72,13 +72,11 @@ export default function Index() {
 
   const apiParams = useMemo((): BookingFilterParams => {
     if (searchId) return { limit: 0 };
-    // Text search: API doesn't support 'search' — we filter client-side on loaded data
     if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
-    if (statusFilter === "today") return { created_at__date: todayStr, limit: 100 };
-    if (statusFilter === "7days") return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 100 };
+    // Date filters done client-side (API ignores date params)
     return { limit: 100 };
-  }, [statusFilter, searchId, todayStr, sevenDaysAgoStr]);
+  }, [statusFilter, searchId]);
 
   // Main list query (skipped when searching by ID)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
@@ -138,18 +136,37 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // Text search → client-side filter (API doesn't support 'search')
+  const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
+
   const filteredBookings = useMemo(() => {
-    if (!debouncedSearch || searchId) return bookings;
-    const q = debouncedSearch.toLowerCase();
-    return bookings.filter((b) => {
-      const name = (b.lead_name || (b as any).patient_name || "").toLowerCase();
-      const proc = (b.procedure_name || "").toLowerCase();
-      const prof = (b.professional_name || "").toLowerCase();
-      const phone = (b.contact_phone || b.phone || "").toLowerCase();
-      return name.includes(q) || proc.includes(q) || prof.includes(q) || phone.includes(q);
-    });
-  }, [bookings, debouncedSearch, searchId]);
+    let list = bookings;
+
+    // Date filters (client-side — API ignores date params)
+    if (!searchId && !debouncedSearch) {
+      if (statusFilter === "today") {
+        list = list.filter((b) => getCreatedDate(b) === todayStr);
+      } else if (statusFilter === "7days") {
+        list = list.filter((b) => {
+          const d = getCreatedDate(b);
+          return d >= sevenDaysAgoStr && d <= todayStr;
+        });
+      }
+    }
+
+    // Text search (client-side — API ignores 'search')
+    if (debouncedSearch && !searchId) {
+      const q = debouncedSearch.toLowerCase();
+      list = list.filter((b) => {
+        const name = (b.lead_name || (b as any).patient_name || "").toLowerCase();
+        const proc = (b.procedure_name || "").toLowerCase();
+        const prof = (b.professional_name || "").toLowerCase();
+        const phone = (b.contact_phone || b.phone || "").toLowerCase();
+        return name.includes(q) || proc.includes(q) || prof.includes(q) || phone.includes(q);
+      });
+    }
+
+    return list;
+  }, [bookings, statusFilter, debouncedSearch, searchId, todayStr, sevenDaysAgoStr]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
