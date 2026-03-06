@@ -459,13 +459,15 @@ export async function fetchAgendaBookings(
   });
   const normalized = normalizeBookingListResponse(data);
   // API não suporta filtro por scheduled_at — filtrar client-side
-  const fromTs = new Date(`${dateFrom}T00:00:00`).getTime();
-  const toTs = new Date(`${dateTo}T23:59:59`).getTime();
   const filtered = (normalized.results as BookingRequest[]).filter((b) => {
-    const raw = b.scheduled_at || (b as any).chosen_slot?.start_at;
+    const raw = b.scheduled_at || b.chosen_slot?.start_at || b.vars_snapshot?.chosen_slot?.start_at;
     if (!raw) return false;
-    const ts = new Date(raw).getTime();
-    return ts >= fromTs && ts <= toTs;
+
+    const dateMatch = String(raw).match(/\d{4}-\d{2}-\d{2}/);
+    if (!dateMatch) return false;
+
+    const bookingDate = dateMatch[0];
+    return bookingDate >= dateFrom && bookingDate <= dateTo;
   });
   console.log("[Agenda] Total from API:", normalized.results.length, "| Filtered for range:", filtered.length);
   return filtered;
