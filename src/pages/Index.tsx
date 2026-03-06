@@ -74,9 +74,10 @@ export default function Index() {
     if (searchId) return { limit: 0 };
     if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
-    // Date filters done client-side (API ignores date params)
+    if (statusFilter === "today") return { date_field: "created_at", date_from: todayStr, date_to: todayStr, limit: 200 };
+    if (statusFilter === "7days") return { date_field: "created_at", date_from: sevenDaysAgoStr, date_to: todayStr, limit: 200 };
     return { limit: 100 };
-  }, [statusFilter, searchId]);
+  }, [statusFilter, searchId, todayStr, sevenDaysAgoStr]);
 
   // Main list query (skipped when searching by ID)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
@@ -136,24 +137,12 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
+  
 
   const filteredBookings = useMemo(() => {
     let list = bookings;
 
-    // Date filters (client-side — API ignores date params)
-    if (!searchId && !debouncedSearch) {
-      if (statusFilter === "today") {
-        list = list.filter((b) => getCreatedDate(b) === todayStr);
-      } else if (statusFilter === "7days") {
-        list = list.filter((b) => {
-          const d = getCreatedDate(b);
-          return d >= sevenDaysAgoStr && d <= todayStr;
-        });
-      }
-    }
-
-    // Text search (client-side — API ignores 'search')
+    // Text search (client-side)
     if (debouncedSearch && !searchId) {
       const q = debouncedSearch.toLowerCase();
       list = list.filter((b) => {
@@ -166,7 +155,7 @@ export default function Index() {
     }
 
     return list;
-  }, [bookings, statusFilter, debouncedSearch, searchId, todayStr, sevenDaysAgoStr]);
+  }, [bookings, debouncedSearch, searchId]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
