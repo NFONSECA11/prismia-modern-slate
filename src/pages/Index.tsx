@@ -143,7 +143,7 @@ export default function Index() {
     if (!debouncedSearch || searchId) return bookings;
     const q = debouncedSearch.toLowerCase();
     return bookings.filter((b) => {
-      const name = (b.lead_name || b.patient_name || "").toLowerCase();
+      const name = (b.lead_name || (b as any).patient_name || "").toLowerCase();
       const proc = (b.procedure_name || "").toLowerCase();
       const prof = (b.professional_name || "").toLowerCase();
       const phone = (b.contact_phone || b.phone || "").toLowerCase();
