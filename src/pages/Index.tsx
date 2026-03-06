@@ -81,16 +81,30 @@ export default function Index() {
     return { limit: 500 };
   }, [statusFilter, searchId]);
 
-  const { data, isLoading, isRefetching, refetch, isError } = useQuery({
+  // Main list query (skipped when searching by ID)
+  const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests", apiParams],
     queryFn: () => fetchFilteredBookings(apiParams),
+    enabled: !searchId,
     refetchInterval: false,
     refetchOnWindowFocus: false,
     staleTime: 120_000,
     retry: 1,
   });
 
-  const bookings = data?.results ?? [];
+  // Direct ID lookup
+  const { data: idResult, isLoading: idLoading } = useQuery({
+    queryKey: ["booking-by-id", searchId],
+    queryFn: () => fetchBookingRequestById(searchId!),
+    enabled: !!searchId,
+    retry: 1,
+    staleTime: 60_000,
+  });
+
+  const isLoading = searchId ? idLoading : listLoading;
+  const bookings = searchId
+    ? (idResult ? [idResult] : [])
+    : (data?.results ?? []);
 
   // ── Auto-patch: awaiting_choice → auto_slots_bot (once per BR) ──────────
   const autoPatchedRef = useRef<Set<number>>(new Set());
@@ -125,12 +139,25 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // Client-side date filtering for today/7days (API doesn't support date params)
+  // Client-side filtering
   const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
 
   const filteredBookings = useMemo(() => {
-    if (debouncedSearch) return bookings; // search results already filtered by API
-    if (statusFilter === "handoff" || statusFilter === "awaiting_choice") return bookings; // status filtered by API
+    // ID search → already fetched directly
+    if (searchId) return bookings;
+    // Text search (name/procedure) → filter client-side from current results
+    if (debouncedSearch && !searchId) {
+      const q = debouncedSearch.toLowerCase();
+      return bookings.filter((b) =>
+        (b.lead_name ?? "").toLowerCase().includes(q) ||
+        (b.procedure_name ?? "").toLowerCase().includes(q) ||
+        (b.professional_name ?? "").toLowerCase().includes(q) ||
+        (b.contact_phone ?? "").toLowerCase().includes(q)
+      );
+    }
+    // Status filtered by API
+    if (statusFilter === "handoff" || statusFilter === "awaiting_choice") return bookings;
+    // Date filters → client-side
     if (statusFilter === "today") return bookings.filter((b) => getCreatedDate(b) === todayStr);
     if (statusFilter === "7days") return bookings.filter((b) => {
       const d = getCreatedDate(b);
