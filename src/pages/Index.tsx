@@ -390,7 +390,7 @@ export default function Index() {
           </div>
 
           <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-            {filteredBookings.length} filtrado{filteredBookings.length !== 1 ? "s" : ""} • {bookings.length} carregado{bookings.length !== 1 ? "s" : ""}
+            {filteredBookings.length} resultado{filteredBookings.length !== 1 ? "s" : ""}
           </span>
         </div>
 
