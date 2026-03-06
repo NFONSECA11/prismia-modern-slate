@@ -98,7 +98,11 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
       try {
         const d = parseISO(value);
         if (!isNaN(d.getTime())) {
-          const parsed = { date: format(d, "yyyy-MM-dd"), hour: d.getHours(), minute: d.getMinutes() };
+          const parsed = {
+            date: format(d, "yyyy-MM-dd"),
+            hour: rawHasExplicitTime ? d.getHours() : 9,
+            minute: rawHasExplicitTime ? d.getMinutes() : 0,
+          };
           if (rawHasExplicitTime) return parsed;
           if (!dateOnlyFallback) dateOnlyFallback = parsed;
         }
@@ -108,7 +112,11 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
 
       const native = new Date(value);
       if (!isNaN(native.getTime())) {
-        const parsed = { date: format(native, "yyyy-MM-dd"), hour: native.getHours(), minute: native.getMinutes() };
+        const parsed = {
+          date: format(native, "yyyy-MM-dd"),
+          hour: rawHasExplicitTime ? native.getHours() : 9,
+          minute: rawHasExplicitTime ? native.getMinutes() : 0,
+        };
         if (rawHasExplicitTime) return parsed;
         if (!dateOnlyFallback) dateOnlyFallback = parsed;
       }
@@ -141,6 +149,7 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
 function getBookingProfessionalId(booking: BookingRequest): number | null {
   const candidates = [
     booking.professional_id,
+    (booking as any)?.professional,
     (booking as any)?.professional?.id,
     (booking as any)?.professionalId,
   ];
