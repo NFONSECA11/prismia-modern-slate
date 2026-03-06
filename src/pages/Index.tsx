@@ -70,20 +70,40 @@ export default function Index() {
     return /^\d+$/.test(idQuery) ? Number(idQuery) : null;
   }, [debouncedSearch]);
 
+  // For date filters, we need two queries (created_at OR updated_at) merged
+  const isDateFilter = statusFilter === "today" || statusFilter === "7days";
+  const dateFrom = statusFilter === "today" ? todayStr : sevenDaysAgoStr;
+  const dateTo = todayStr;
+
   const apiParams = useMemo((): BookingFilterParams => {
     if (searchId) return { limit: 0 };
     if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
-    if (statusFilter === "today") return { date_field: "created_at", date_from: todayStr, date_to: todayStr, limit: 200 };
-    if (statusFilter === "7days") return { date_field: "created_at", date_from: sevenDaysAgoStr, date_to: todayStr, limit: 200 };
+    if (isDateFilter) return { date_field: "created_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
     return { limit: 100 };
-  }, [statusFilter, searchId, todayStr, sevenDaysAgoStr]);
+  }, [statusFilter, searchId, isDateFilter, dateFrom, dateTo]);
 
-  // Main list query (skipped when searching by ID)
+  const apiParamsUpdated = useMemo((): BookingFilterParams | null => {
+    if (searchId || !isDateFilter) return null;
+    return { date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
+  }, [searchId, isDateFilter, dateFrom, dateTo]);
+
+  // Main list query (created_at)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests", apiParams],
     queryFn: () => fetchFilteredBookings(apiParams),
     enabled: !searchId,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    staleTime: 120_000,
+    retry: 1,
+  });
+
+  // Secondary query (updated_at) — only for date filters
+  const { data: dataUpdated, refetch: refetchUpdated } = useQuery({
+    queryKey: ["booking-requests-updated", apiParamsUpdated],
+    queryFn: () => fetchFilteredBookings(apiParamsUpdated!),
+    enabled: !!apiParamsUpdated,
     refetchInterval: false,
     refetchOnWindowFocus: false,
     staleTime: 120_000,
@@ -100,9 +120,15 @@ export default function Index() {
   });
 
   const isLoading = searchId ? idLoading : listLoading;
-  const bookings = searchId
-    ? (idResult ? [idResult] : [])
-    : (data?.results ?? []);
+
+  // Merge created_at + updated_at results (deduplicate by id)
+  const bookings = useMemo(() => {
+    if (searchId) return idResult ? [idResult] : [];
+    const map = new Map<number, BookingRequest>();
+    for (const b of (data?.results ?? [])) map.set(b.id, b);
+    for (const b of (dataUpdated?.results ?? [])) map.set(b.id, b);
+    return Array.from(map.values());
+  }, [searchId, idResult, data, dataUpdated]);
 
   // ── Auto-patch: awaiting_choice → auto_slots_bot (once per BR) ──────────
   const autoPatchedRef = useRef<Set<number>>(new Set());
