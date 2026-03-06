@@ -334,12 +334,26 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         "| proceduresForProfessional:", JSON.stringify(proceduresForProfessional.map(p => ({ id: p.id, name: p.name }))));
       return await patchBooking(booking!.id, payload);
     },
-    onSuccess: (result: any) => {
+    onSuccess: async (result: any) => {
       console.log("[BookingDrawer] assign success:", result);
-      setActionDone("Profissional atribuído!");
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
+
+      // For conversation BRs (human/prices), also turn the bot ON after assigning
+      if (isConvo) {
+        try {
+          console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
+          await handoffOff(booking!.id);
+          setActionDone("Bot ligado!");
+        } catch (err) {
+          console.error("[BookingDrawer] handoffOff after assign failed:", err);
+          setActionDone("Profissional atribuído, mas falha ao ligar bot.");
+        }
+      } else {
+        setActionDone("Profissional atribuído!");
+      }
+
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
