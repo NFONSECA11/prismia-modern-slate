@@ -73,13 +73,16 @@ export default function Index() {
     // Don't change list params when searching by ID (handled separately)
     if (searchId) return { limit: 0 }; // skip list fetch
 
+    // Text search → send to API
+    if (debouncedSearch) return { search: debouncedSearch, limit: 200 };
+
     // Status filters → server-side
     if (statusFilter === "handoff") return { status: "handoff", limit: 200 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 200 };
 
     // Date filters → fetch all, filter client-side
     return { limit: 500 };
-  }, [statusFilter, searchId]);
+  }, [statusFilter, searchId, debouncedSearch]);
 
   // Main list query (skipped when searching by ID)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
@@ -143,18 +146,8 @@ export default function Index() {
   const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
 
   const filteredBookings = useMemo(() => {
-    // ID search → already fetched directly
-    if (searchId) return bookings;
-    // Text search (name/procedure) → filter client-side from current results
-    if (debouncedSearch && !searchId) {
-      const q = debouncedSearch.toLowerCase();
-      return bookings.filter((b) =>
-        (b.lead_name ?? "").toLowerCase().includes(q) ||
-        (b.procedure_name ?? "").toLowerCase().includes(q) ||
-        (b.professional_name ?? "").toLowerCase().includes(q) ||
-        (b.contact_phone ?? "").toLowerCase().includes(q)
-      );
-    }
+    // ID search or text search → already fetched from API
+    if (searchId || debouncedSearch) return bookings;
     // Status filtered by API
     if (statusFilter === "handoff" || statusFilter === "awaiting_choice") return bookings;
     // Date filters → client-side
