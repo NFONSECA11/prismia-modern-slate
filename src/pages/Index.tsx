@@ -137,7 +137,7 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
+  
 
   const filteredBookings = useMemo(() => {
     let list = bookings;
