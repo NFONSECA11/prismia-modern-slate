@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest } from "@/types/booking";
-import { fetchBookingRequests, createBooking, patchBooking } from "@/lib/bookingApi";
+import { fetchFilteredBookings, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
@@ -43,13 +43,52 @@ export default function Index() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
   const queryClient = useQueryClient();
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build API params based on active filter
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
+
+  const apiParams = useMemo((): BookingFilterParams => {
+    // If searching, use search param and skip date/status filters
+    if (debouncedSearch) {
+      const q = debouncedSearch;
+      const idQuery = q.startsWith("#") ? q.slice(1) : q;
+      if (/^\d+$/.test(idQuery)) {
+        return { search: idQuery, limit: 50 };
+      }
+      return { search: q, limit: 50 };
+    }
+
+    switch (statusFilter) {
+      case "today":
+        return { created_at__date: todayStr, limit: 200 };
+      case "7days":
+        return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 200 };
+      case "handoff":
+        return { status: "handoff", limit: 200 };
+      case "awaiting_choice":
+        return { status: "awaiting_choice", limit: 200 };
+      default:
+        return { limit: 200 };
+    }
+  }, [statusFilter, debouncedSearch, todayStr, sevenDaysAgoStr]);
+
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
-    queryKey: ["booking-requests"],
-    queryFn: fetchBookingRequests,
+    queryKey: ["booking-requests", apiParams],
+    queryFn: () => fetchFilteredBookings(apiParams),
     refetchInterval: false,
     refetchOnWindowFocus: false,
     staleTime: 120_000,
@@ -91,71 +130,8 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // Debug: log sample created_at values to understand format
-  if (bookings.length > 0) {
-    const sample = bookings.slice(0, 3).map((b) => ({ id: b.id, created_at: b.created_at, status: b.status, contact_phone: b.contact_phone, phone: (b as any).phone }));
-    console.log("[Index] Sample bookings:", JSON.stringify(sample));
-  }
-
-
-  const getCreatedDate = (b: BookingRequest): string => {
-    return b.created_at?.slice(0, 10) || "";
-  };
-
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  
-  // 7 days ago string
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
-
-  // Step 1: Apply search filter (by name, procedure, phone, or ID)
-  const searchedBookings = bookings.filter((b) => {
-    const q = search.toLowerCase().trim();
-    if (!q) return true;
-    // Search by ID (e.g. "#123" or just "123")
-    const idQuery = q.startsWith("#") ? q.slice(1) : q;
-    if (/^\d+$/.test(idQuery) && String(b.id) === idQuery) return true;
-    return (
-      (b.lead_name ?? "").toLowerCase().includes(q) ||
-      (b.procedure_name ?? "").toLowerCase().includes(q) ||
-      (b.professional_name ?? "").toLowerCase().includes(q) ||
-      (b.contact_phone ?? "").toLowerCase().includes(q)
-    );
-  });
-
-  // Step 2: Apply date filter
-  const matchFilterFn = (b: BookingRequest, filter: QuickFilter): boolean => {
-    if (filter === "handoff") return b.status === "handoff";
-    if (filter === "awaiting_choice") return b.status === "awaiting_choice";
-    const d = getCreatedDate(b);
-    if (filter === "today") return d === todayStr;
-    if (filter === "7days") return d >= sevenDaysAgoStr && d <= todayStr;
-    return true;
-  };
-
-  // If searching by ID, skip date filter so user always finds the record
-  const isIdSearch = (() => {
-    const q = search.trim();
-    const idQuery = q.startsWith("#") ? q.slice(1) : q;
-    return /^\d+$/.test(idQuery) && q.length > 0;
-  })();
-
-  const filteredBookings = isIdSearch
-    ? searchedBookings
-    : searchedBookings.filter((b) => matchFilterFn(b, statusFilter));
-
-  // Stats based on searched results
-  const stats = {
-    today: searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length,
-    last7: searchedBookings.filter((b) => {
-      const d = getCreatedDate(b);
-      return d >= sevenDaysAgoStr && d <= todayStr;
-    }).length,
-    handoff: searchedBookings.filter((b) => b.status === "handoff").length,
-    awaiting_choice: searchedBookings.filter((b) => b.status === "awaiting_choice").length,
-  };
+  // With server-side filtering, bookings are already filtered
+  const filteredBookings = bookings;
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
@@ -330,20 +306,14 @@ export default function Index() {
       </header>
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
-        {/* KPI row */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Hoje", value: stats.today, color: "text-status-confirmed" },
-            { label: "7 dias", value: stats.last7, color: "text-primary" },
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className="rounded-xl px-4 py-3 border border-border surface-raised flex items-center justify-between"
-            >
-              <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
-              <span className={`text-xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</span>
-            </div>
-          ))}
+        {/* Result count */}
+        <div className="rounded-xl px-4 py-3 border border-border surface-raised flex items-center justify-between">
+          <span className="text-xs text-muted-foreground font-medium">
+            {debouncedSearch ? "Resultados da busca" : QUICK_FILTERS.find(f => f.value === statusFilter)?.label ?? ""}
+          </span>
+          <span className="text-xl font-bold tabular-nums text-foreground">
+            {isLoading ? "…" : bookings.length}
+          </span>
         </div>
 
         {/* Error banner */}
@@ -382,9 +352,6 @@ export default function Index() {
                 }`}
               >
                 {f.label}
-                <span className="ml-1 opacity-60">
-                  {stats[f.value as keyof typeof stats]}
-                </span>
               </button>
             ))}
           </div>

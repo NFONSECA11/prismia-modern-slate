@@ -168,212 +168,60 @@ export async function fetchBookingPhoneById(id: number): Promise<string | null> 
   }
 }
 
-export async function fetchBookingRequests(): Promise<BookingListResponse> {
-  const MAX_REQUESTS = 15;
-  const MAX_RETRIES = 1;
+export interface BookingFilterParams {
+  status?: string;
+  created_at__date?: string;
+  created_at__gte?: string;
+  created_at__lte?: string;
+  search?: string;
+  limit?: number;
+}
 
+/**
+ * Lightweight filtered fetch — sends params to the API instead of loading everything.
+ * Follows at most 1 next-page cursor to keep it fast.
+ */
+export async function fetchFilteredBookings(
+  params: BookingFilterParams = {}
+): Promise<BookingListResponse> {
+  const queryParams: Record<string, unknown> = { limit: params.limit ?? 200, ...params };
+  delete queryParams.limit; // re-add after spread
+  
+  const { data, headers } = await api.get("/api/booking/requests/", {
+    params: { limit: params.limit ?? 200, ...params },
+  });
+
+  const normalized = normalizeBookingListResponse(data);
+  const professionals = normalized.professionals;
   const deduped = new Map<number, BookingRequest>();
-  const visitedTargets = new Set<string>();
-  let professionals: Professional[] = [];
-  let totalCount: number | null = null;
-  let requestCount = 0;
-  let retriesUsed = 0;
-  let shardRequests = 0;
-  let partialError = false;
-  let inferredPageSize = 20;
-  let tunnelDegraded = false;
 
-  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-  const normalizeTarget = (cursor: string | null): string | null => {
-    if (!cursor) return null;
-    const value = cursor.trim();
-    if (!value) return null;
-
-    if (value.startsWith("http://") || value.startsWith("https://")) {
-      try {
-        const u = new URL(value);
-        return `${u.pathname}${u.search}`;
-      } catch {
-        return value;
-      }
-    }
-
-    if (value.startsWith("/")) return value;
-    if (value.startsWith("?")) return `/api/booking/requests/${value}`;
-    if (/^\d+$/.test(value)) return `/api/booking/requests/?page=${value}`;
-
-    return null;
-  };
-
-  const extractPayloadTotalCount = (payload: any): number | null => {
-    const resultNode = payload?.result;
-    const rawCandidates = [
-      payload?.count,
-      resultNode?.count,
-      payload?.total,
-      resultNode?.total,
-      payload?.total_count,
-      resultNode?.total_count,
-      payload?.pagination?.count,
-      resultNode?.pagination?.count,
-      payload?.pagination?.total,
-      resultNode?.pagination?.total,
-      payload?.meta?.total,
-      resultNode?.meta?.total,
-    ];
-
-    for (const raw of rawCandidates) {
-      const parsed = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
-      if (Number.isFinite(parsed) && parsed >= 0) return parsed;
-    }
-
-    return null;
-  };
-
-  const mergeResponse = (data: unknown, headers: any) => {
-    const normalized = normalizeBookingListResponse(data);
-
-    if (normalized.professionals.length > 0) professionals = normalized.professionals;
-
-    const payloadTotal = extractPayloadTotalCount(data);
-    const headerTotal = extractTotalCountFromHeaders(headers);
-    const candidateCounts = [payloadTotal, headerTotal].filter(
-      (n): n is number => typeof n === "number" && Number.isFinite(n)
-    );
-
-    if (candidateCounts.length > 0) {
-      const best = Math.max(...candidateCounts);
-      totalCount = totalCount === null ? best : Math.max(totalCount, best);
-    }
-
-    const pageResults = Array.isArray(normalized.results) ? (normalized.results as BookingRequest[]) : [];
-    if (pageResults.length > 0) inferredPageSize = Math.max(1, Math.min(100, pageResults.length));
-
-    let newItems = 0;
-    for (const booking of pageResults) {
-      if (!deduped.has(booking.id)) newItems += 1;
-      deduped.set(booking.id, booking);
-    }
-
-    return {
-      pageResults,
-      newItems,
-      cursorTarget: normalizeTarget(extractNextCursor(data, headers)),
-    };
-  };
-
-  const safeGet = async (
-    request: () => Promise<{ data: unknown; headers: any }>,
-    options?: { markPartialOnFail?: boolean }
-  ): Promise<{ data: unknown; headers: any } | null> => {
-    if (tunnelDegraded || requestCount >= MAX_REQUESTS) return null;
-
-    const markPartialOnFail = options?.markPartialOnFail ?? true;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-      try {
-        const response = await request();
-        requestCount += 1;
-        return response;
-      } catch (error) {
-        retriesUsed += 1;
-
-        const hardTunnelFailure = isTunnelHtmlBadRequest(error);
-        if (hardTunnelFailure) {
-          tunnelDegraded = true;
-          if (markPartialOnFail) partialError = true;
-
-          if (deduped.size === 0) {
-            throw new Error("Conexão do túnel indisponível no momento (resposta HTML 400). Tente novamente em alguns segundos.");
-          }
-          return null;
-        }
-
-        if (attempt === MAX_RETRIES) {
-          if (markPartialOnFail) partialError = true;
-          if (deduped.size === 0) throw error;
-          return null;
-        }
-        await sleep(500 * (attempt + 1));
-      }
-    }
-
-    return null;
-  };
-
-  // 1) Primeira página com tentativas de page size maior
-  let firstCursor: string | null = null;
-  let hasAnyResponse = false;
-
-  const firstResponse = await safeGet(() => api.get("/api/booking/requests/", { params: { limit: 500 } }));
-  if (firstResponse) {
-    hasAnyResponse = true;
-    const merged = mergeResponse(firstResponse.data, firstResponse.headers);
-    firstCursor = merged.cursorTarget;
+  for (const b of normalized.results as BookingRequest[]) {
+    deduped.set(b.id, b);
   }
 
-  if (!hasAnyResponse) {
-    return { count: 0, results: [], professionals: [] };
-  }
+  // Follow at most 2 extra pages if there's a next cursor
+  let nextCursor = extractNextCursor(data, headers);
+  const visited = new Set<string>();
+  let extraPages = 0;
 
-  // 2) Seguir cursor/next sem abortar cedo por duplicatas
-  let nextCursor = firstCursor;
-  while (nextCursor && requestCount < MAX_REQUESTS && !tunnelDegraded) {
-    if (visitedTargets.has(nextCursor)) break;
-    visitedTargets.add(nextCursor);
+  while (nextCursor && extraPages < 2) {
+    const target = normalizeNextTarget(nextCursor);
+    if (!target || visited.has(target)) break;
+    visited.add(target);
 
-    const currentTarget = nextCursor;
-    const response = await safeGet(() => api.get(currentTarget));
-    if (!response) break;
-
-    const merged = mergeResponse(response.data, response.headers);
-    if (totalCount !== null && deduped.size >= totalCount) break;
-    if (!merged.cursorTarget || merged.cursorTarget === currentTarget) break;
-
-    nextCursor = merged.cursorTarget;
-    await sleep(400);
-  }
-
-  // 3) Paginação numérica simples (reduzida para não sobrecarregar o túnel)
-  const shouldPaginateByPage =
-    (totalCount !== null && deduped.size < totalCount) ||
-    (totalCount === null && deduped.size >= inferredPageSize);
-
-  if (shouldPaginateByPage && requestCount < MAX_REQUESTS && !tunnelDegraded) {
-    const maxPages =
-      totalCount !== null
-        ? Math.min(10, Math.ceil(totalCount / Math.max(1, inferredPageSize)) + 2)
-        : 5;
-
-    let missStreak = 0;
-
-    for (let page = 2; page <= maxPages && requestCount < MAX_REQUESTS; page += 1) {
-      if (totalCount !== null && deduped.size >= totalCount) break;
-
-      const response = await safeGet(() =>
-        api.get("/api/booking/requests/", { params: { page, page_size: inferredPageSize } })
-      );
-
-      if (!response) {
-        missStreak += 1;
-        if (missStreak >= 2) break;
-        continue;
+    try {
+      const { data: pageData, headers: pageHeaders } = await api.get(target);
+      const page = normalizeBookingListResponse(pageData);
+      for (const b of page.results as BookingRequest[]) {
+        deduped.set(b.id, b);
       }
-
-      const merged = mergeResponse(response.data, response.headers);
-      if (merged.pageResults.length === 0) {
-        missStreak += 1;
-        if (missStreak >= 2) break;
-      } else {
-        missStreak = 0;
-      }
-
-      await sleep(400);
+      nextCursor = extractNextCursor(pageData, pageHeaders);
+      extraPages++;
+      await new Promise((r) => setTimeout(r, 300));
+    } catch {
+      break;
     }
   }
-
-  // Etapas 4 e 5 (offset sweep e status sharding) removidas para reduzir pressão no túnel
 
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
@@ -381,15 +229,35 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
     return { ...booking, contact_phone: cachedPhone } as BookingRequest;
   });
 
-  console.log(
-    `[bookingApi] Fetched ${results.length} bookings (requests=${requestCount}, retries=${retriesUsed}, shard=${shardRequests}, pageSize=${inferredPageSize}, totalHint=${totalCount ?? "n/a"}, partialError=${partialError}, tunnelDegraded=${tunnelDegraded})`
-  );
+  console.log(`[bookingApi] Filtered fetch: ${results.length} results (params=${JSON.stringify(params)})`);
 
   return {
-    count: totalCount !== null ? Math.max(totalCount, results.length) : results.length,
+    count: normalized.count > results.length ? normalized.count : results.length,
     results,
     professionals,
   };
+}
+
+function normalizeNextTarget(cursor: string): string | null {
+  if (!cursor) return null;
+  const value = cursor.trim();
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    try {
+      const u = new URL(value);
+      return `${u.pathname}${u.search}`;
+    } catch {
+      return value;
+    }
+  }
+  if (value.startsWith("/")) return value;
+  if (value.startsWith("?")) return `/api/booking/requests/${value}`;
+  return null;
+}
+
+// Keep the old fetchBookingRequests as a re-export for backward compat
+export async function fetchBookingRequests(): Promise<BookingListResponse> {
+  return fetchFilteredBookings({});
 }
 
 export async function fetchBookingRequestById(id: number): Promise<BookingRequest> {
