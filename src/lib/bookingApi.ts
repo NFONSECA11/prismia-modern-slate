@@ -170,9 +170,9 @@ export async function fetchBookingPhoneById(id: number): Promise<string | null> 
 
 export interface BookingFilterParams {
   status?: string;
-  created_at__date?: string;
-  created_at__gte?: string;
-  created_at__lte?: string;
+  date_field?: string;
+  date_from?: string;
+  date_to?: string;
   search?: string;
   limit?: number;
 }
@@ -300,23 +300,15 @@ export async function fetchAgendaBookings(
     params: {
       unit: unitId,
       status: "confirmed",
+      date_field: "scheduled_at",
+      date_from: dateFrom,
+      date_to: dateTo,
       limit: 500,
     },
   });
   const normalized = normalizeBookingListResponse(data);
-  // API não suporta filtro por scheduled_at — filtrar client-side
-  const filtered = (normalized.results as BookingRequest[]).filter((b) => {
-    const raw = b.scheduled_at || b.chosen_slot?.start_at || b.vars_snapshot?.chosen_slot?.start_at;
-    if (!raw) return false;
-
-    const dateMatch = String(raw).match(/\d{4}-\d{2}-\d{2}/);
-    if (!dateMatch) return false;
-
-    const bookingDate = dateMatch[0];
-    return bookingDate >= dateFrom && bookingDate <= dateTo;
-  });
-  console.log("[Agenda] Total from API:", normalized.results.length, "| Filtered for range:", filtered.length);
-  return filtered;
+  console.log("[Agenda] Server-filtered results:", normalized.results.length);
+  return normalized.results as BookingRequest[];
 }
 
 // ── Listar profissionais por unidade ──────────────────────────────────────────
