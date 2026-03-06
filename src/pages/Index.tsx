@@ -24,6 +24,7 @@ import {
   Building2,
   Shield,
   Settings,
+  X,
 } from "lucide-react";
 
 type View = "table" | "agenda";
