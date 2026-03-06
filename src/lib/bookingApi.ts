@@ -199,29 +199,7 @@ export async function fetchFilteredBookings(
     deduped.set(b.id, b);
   }
 
-  // Follow at most 2 extra pages if there's a next cursor
-  let nextCursor = extractNextCursor(data, headers);
-  const visited = new Set<string>();
-  let extraPages = 0;
-
-  while (nextCursor && extraPages < 2) {
-    const target = normalizeNextTarget(nextCursor);
-    if (!target || visited.has(target)) break;
-    visited.add(target);
-
-    try {
-      const { data: pageData, headers: pageHeaders } = await api.get(target);
-      const page = normalizeBookingListResponse(pageData);
-      for (const b of page.results as BookingRequest[]) {
-        deduped.set(b.id, b);
-      }
-      nextCursor = extractNextCursor(pageData, pageHeaders);
-      extraPages++;
-      await new Promise((r) => setTimeout(r, 300));
-    } catch {
-      break;
-    }
-  }
+  // Don't follow extra pages — keep memory footprint minimal
 
   const results = Array.from(deduped.values()).map((booking) => {
     const cachedPhone = bookingPhoneCache.get(booking.id);
