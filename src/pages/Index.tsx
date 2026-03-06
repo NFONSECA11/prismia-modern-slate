@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus } from "@/types/booking";
-import { fetchBookingRequests, createBooking, fetchProfessionalsByUnit, patchBooking } from "@/lib/bookingApi";
+import { fetchBookingRequests, createBooking, patchBooking } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
@@ -101,17 +101,6 @@ export default function Index() {
     console.log("[Index] Sample bookings:", JSON.stringify(sample));
   }
 
-  // Fetch professionals by active unit for the agenda view
-  const { data: unitProfessionals } = useQuery({
-    queryKey: ["professionals-by-unit", activeUnit?.id],
-    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
-    enabled: !!activeUnit && view === "agenda",
-    staleTime: 60_000,
-  });
-
-  const professionals = (unitProfessionals && unitProfessionals.length > 0)
-    ? unitProfessionals
-    : (data?.professionals ?? []);
 
   const getCreatedDate = (b: BookingRequest): string => {
     return b.created_at?.slice(0, 10) || "";
@@ -144,44 +133,6 @@ export default function Index() {
 
   const filteredBookings = searchedBookings.filter((b) => matchStatusFn(b, statusFilter));
 
-  const isCanceledStatus = (status: unknown) => {
-    const normalized = String(status ?? "").trim().toLowerCase();
-    return normalized === "canceled" || normalized === "cancelled" || normalized === "failed";
-  };
-
-  const hasAgendaSlot = (booking: BookingRequest) =>
-    Boolean(
-      booking.scheduled_at ||
-      booking.chosen_slot?.start_at ||
-      booking.vars_snapshot?.chosen_slot?.start_at ||
-      booking.chosen_slot_label ||
-      booking.chosen_slot?.label ||
-      booking.vars_snapshot?.chosen_slot?.label
-    );
-
-  // Agenda shows bookings with a scheduled date, EXCEPT canceled ones
-  // This keeps reopened bookings (handoff) visible in the agenda
-  const agendaBookings = bookings.filter((b) => !isCanceledStatus(b.status) && hasAgendaSlot(b));
-
-  const agendaProfessionals = useMemo(() => {
-    if (agendaBookings.length === 0) return professionals;
-
-    const byId = new Map<string, { id: number; name: string; specialty: string }>();
-
-    for (const booking of agendaBookings) {
-      const idKey = String(booking.professional_id).trim();
-      if (!idKey || byId.has(idKey)) continue;
-
-      const existing = professionals.find((p) => String(p.id).trim() === idKey);
-      byId.set(idKey, {
-        id: booking.professional_id as unknown as number,
-        name: booking.professional_name || existing?.name || `Profissional #${idKey}`,
-        specialty: existing?.specialty || "-",
-      });
-    }
-
-    return Array.from(byId.values());
-  }, [agendaBookings, professionals]);
 
   const matchStatusHelper = (b: BookingRequest, filter: string) => {
     const s = (b.status ?? "").toLowerCase();
@@ -452,8 +403,6 @@ export default function Index() {
             />
           ) : (
             <AgendaView
-              bookings={agendaBookings}
-              professionals={agendaProfessionals}
               onSelectBooking={setSelectedBooking}
               onSaveBooking={handleSaveBooking}
             />

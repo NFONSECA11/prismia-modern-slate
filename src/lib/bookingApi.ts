@@ -443,6 +443,25 @@ export async function suggestSlots(id: number): Promise<any> {
   return data;
 }
 
+// ── Buscar BRs para Agenda (server-side filters) ─────────────────────────────
+export async function fetchAgendaBookings(
+  unitId: number,
+  dateFrom: string, // yyyy-MM-dd
+  dateTo: string,   // yyyy-MM-dd
+): Promise<BookingRequest[]> {
+  const { data } = await api.get("/api/booking/requests/", {
+    params: {
+      unit: unitId,
+      status: "confirmed",
+      scheduled_at_after: dateFrom,
+      scheduled_at_before: dateTo,
+      limit: 500,
+    },
+  });
+  const normalized = normalizeBookingListResponse(data);
+  return normalized.results as BookingRequest[];
+}
+
 // ── Listar profissionais por unidade ──────────────────────────────────────────
 export async function fetchProfessionalsByUnit(unitId: number): Promise<Professional[]> {
   const { data } = await api.get(`/api/booking/professionals/`, {

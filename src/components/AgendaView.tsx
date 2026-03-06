@@ -5,6 +5,7 @@ import {
   addWeeks,
   subWeeks,
   startOfWeek,
+  endOfWeek,
   isToday,
   parseISO,
   getDay,
@@ -12,14 +13,14 @@ import {
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi";
+import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban } from "lucide-react";
 
 interface AgendaViewProps {
-  bookings: BookingRequest[];
-  professionals: Professional[];
   onSelectBooking: (booking: BookingRequest) => void;
   onSaveBooking: (data: NewBookingFormData) => Promise<void>;
 }
@@ -480,10 +481,41 @@ function WeekView({
 }
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
-export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBooking }: AgendaViewProps) {
+export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
+  const { activeUnit } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
+
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+
+  // Compute visible date range based on mode
+  const dateRange = useMemo(() => {
+    if (mode === "day") {
+      const d = format(currentDate, "yyyy-MM-dd");
+      return { from: d, to: d };
+    }
+    return {
+      from: format(weekStart, "yyyy-MM-dd"),
+      to: format(endOfWeek(currentDate, { weekStartsOn: 0 }), "yyyy-MM-dd"),
+    };
+  }, [mode, currentDate, weekStart]);
+
+  // Fetch agenda bookings with server-side filters
+  const { data: agendaBookings = [], isLoading: loadingBookings } = useQuery({
+    queryKey: ["agenda-bookings", activeUnit?.id, dateRange.from, dateRange.to],
+    queryFn: () => fetchAgendaBookings(activeUnit!.id, dateRange.from, dateRange.to),
+    enabled: !!activeUnit,
+    staleTime: 30_000,
+  });
+
+  // Fetch professionals for active unit
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["professionals-by-unit", activeUnit?.id],
+    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
+    enabled: !!activeUnit,
+    staleTime: 60_000,
+  });
 
   // When clicking an existing appointment, open the creation modal pre-filled
   const handleAppointmentClick = (booking: BookingRequest) => {
@@ -516,7 +548,6 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
     staleTime: 60_000,
   });
 
-  // Build lookup: profId → availability
   const availMap = useMemo(() => {
     const map: Record<number, ProfAvailability> = {};
     for (const a of rawAvailabilities) {
@@ -526,12 +557,6 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
     }
     return map;
   }, [rawAvailabilities]);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = (HOURS[0] - 6) * CELL_HEIGHT;
-  }, [mode]);
-
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
 
   const navigatePrev = () =>
     mode === "day" ? setCurrentDate((d) => addDays(d, -1)) : setCurrentDate((d) => subWeeks(d, 1));
@@ -594,17 +619,17 @@ export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBoo
             <DayView
               day={currentDate}
               professionals={professionals}
-              bookings={bookings}
-              availMap={availMap}
-              onSelectBooking={handleAppointmentClick}
-              onCellClick={setNewSlot}
-            />
-          ) : (
-            <WeekView
-              weekStart={weekStart}
-              professionals={professionals}
-              bookings={bookings}
-              availMap={availMap}
+               bookings={agendaBookings}
+               availMap={availMap}
+               onSelectBooking={handleAppointmentClick}
+               onCellClick={setNewSlot}
+             />
+           ) : (
+             <WeekView
+               weekStart={weekStart}
+               professionals={professionals}
+               bookings={agendaBookings}
+               availMap={availMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
