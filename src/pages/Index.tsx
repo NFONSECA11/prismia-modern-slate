@@ -133,7 +133,16 @@ export default function Index() {
     return true;
   };
 
-  const filteredBookings = searchedBookings.filter((b) => matchDateFn(b, statusFilter));
+  // If searching by ID, skip date filter so user always finds the record
+  const isIdSearch = (() => {
+    const q = search.trim();
+    const idQuery = q.startsWith("#") ? q.slice(1) : q;
+    return /^\d+$/.test(idQuery) && q.length > 0;
+  })();
+
+  const filteredBookings = isIdSearch
+    ? searchedBookings
+    : searchedBookings.filter((b) => matchDateFn(b, statusFilter));
 
   // Stats based on searched results
   const stats = {
