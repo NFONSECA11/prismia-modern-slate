@@ -27,17 +27,12 @@ import {
 } from "lucide-react";
 
 type View = "table" | "agenda";
-type FilterStatus = BookingStatus | "all" | "today";
+type DateFilter = "today" | "7days" | "all";
 
-const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
-  { value: "today" as FilterStatus, label: "Hoje" },
+const DATE_FILTERS: { value: DateFilter; label: string }[] = [
+  { value: "today", label: "Hoje" },
+  { value: "7days", label: "Últimos 7 dias" },
   { value: "all", label: "Todos" },
-  { value: "handoff", label: "Handoff" },
-  { value: "assisted", label: "Assisted" },
-  { value: "awaiting_choice", label: "Aguardando" },
-  { value: "pending", label: "Pendente" },
-  { value: "confirmed", label: "Confirmado" },
-  { value: "canceled", label: "Cancelado" },
 ];
 
 export default function Index() {
