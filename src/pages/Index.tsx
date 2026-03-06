@@ -70,19 +70,14 @@ export default function Index() {
   }, [debouncedSearch]);
 
   const apiParams = useMemo((): BookingFilterParams => {
-    // Don't change list params when searching by ID (handled separately)
-    if (searchId) return { limit: 0 }; // skip list fetch
-
-    // Text search → send to API
-    if (debouncedSearch) return { search: debouncedSearch, limit: 200 };
-
-    // Status filters → server-side
-    if (statusFilter === "handoff") return { status: "handoff", limit: 200 };
-    if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 200 };
-
-    // Date filters → fetch all, filter client-side
-    return { limit: 500 };
-  }, [statusFilter, searchId, debouncedSearch]);
+    if (searchId) return { limit: 0 };
+    if (debouncedSearch) return { search: debouncedSearch, limit: 50 };
+    if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
+    if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
+    if (statusFilter === "today") return { created_at__date: todayStr, limit: 100 };
+    if (statusFilter === "7days") return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 100 };
+    return { limit: 100 };
+  }, [statusFilter, searchId, debouncedSearch, todayStr, sevenDaysAgoStr]);
 
   // Main list query (skipped when searching by ID)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
@@ -145,19 +140,7 @@ export default function Index() {
   // Client-side filtering
   const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
 
-  const filteredBookings = useMemo(() => {
-    // ID search or text search → already fetched from API
-    if (searchId || debouncedSearch) return bookings;
-    // Status filtered by API
-    if (statusFilter === "handoff" || statusFilter === "awaiting_choice") return bookings;
-    // Date filters → client-side
-    if (statusFilter === "today") return bookings.filter((b) => getCreatedDate(b) === todayStr);
-    if (statusFilter === "7days") return bookings.filter((b) => {
-      const d = getCreatedDate(b);
-      return d >= sevenDaysAgoStr && d <= todayStr;
-    });
-    return bookings;
-  }, [bookings, statusFilter, debouncedSearch, todayStr, sevenDaysAgoStr]);
+  const filteredBookings = useMemo(() => bookings, [bookings]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
