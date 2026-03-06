@@ -608,6 +608,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
       minute: dt.minute,
       professional: prof ?? { id: bookingProfId ?? 0, name: getBookingProfessionalName(booking), specialty: "" },
       prefill: {
+        booking_id: booking.id,
         lead_name: booking.lead_name,
         phone: booking.contact_phone || booking.phone || "",
         procedure_name: booking.procedure_name,
