@@ -481,7 +481,7 @@ function WeekView({
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
 export function AgendaView({ bookings, professionals, onSelectBooking, onSaveBooking }: AgendaViewProps) {
-  const [mode, setMode] = useState<AgendaMode>("day");
+  const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
 
