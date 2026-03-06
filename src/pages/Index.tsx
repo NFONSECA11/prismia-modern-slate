@@ -27,12 +27,13 @@ import {
 } from "lucide-react";
 
 type View = "table" | "agenda";
-type DateFilter = "today" | "7days" | "all";
+type QuickFilter = "today" | "7days" | "handoff" | "awaiting_choice";
 
-const DATE_FILTERS: { value: DateFilter; label: string }[] = [
+const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
   { value: "today", label: "Hoje" },
   { value: "7days", label: "Últimos 7 dias" },
-  { value: "all", label: "Todos" },
+  { value: "handoff", label: "Handoff" },
+  { value: "awaiting_choice", label: "Aguardando decisão" },
 ];
 
 export default function Index() {
@@ -40,7 +41,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<DateFilter>("today");
+  const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
@@ -125,8 +126,9 @@ export default function Index() {
   });
 
   // Step 2: Apply date filter
-  const matchDateFn = (b: BookingRequest, filter: DateFilter): boolean => {
-    if (filter === "all") return true;
+  const matchFilterFn = (b: BookingRequest, filter: QuickFilter): boolean => {
+    if (filter === "handoff") return b.status === "handoff";
+    if (filter === "awaiting_choice") return b.status === "awaiting_choice";
     const d = getCreatedDate(b);
     if (filter === "today") return d === todayStr;
     if (filter === "7days") return d >= sevenDaysAgoStr && d <= todayStr;
@@ -142,16 +144,17 @@ export default function Index() {
 
   const filteredBookings = isIdSearch
     ? searchedBookings
-    : searchedBookings.filter((b) => matchDateFn(b, statusFilter));
+    : searchedBookings.filter((b) => matchFilterFn(b, statusFilter));
 
   // Stats based on searched results
   const stats = {
-    total: searchedBookings.length,
     today: searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length,
     last7: searchedBookings.filter((b) => {
       const d = getCreatedDate(b);
       return d >= sevenDaysAgoStr && d <= todayStr;
     }).length,
+    handoff: searchedBookings.filter((b) => b.status === "handoff").length,
+    awaiting_choice: searchedBookings.filter((b) => b.status === "awaiting_choice").length,
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
@@ -328,9 +331,8 @@ export default function Index() {
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
         {/* KPI row */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Total", value: stats.total, color: "text-foreground" },
             { label: "Hoje", value: stats.today, color: "text-status-confirmed" },
             { label: "7 dias", value: stats.last7, color: "text-primary" },
           ].map((kpi) => (
@@ -369,7 +371,7 @@ export default function Index() {
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
-            {DATE_FILTERS.map((f) => (
+            {QUICK_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
@@ -381,7 +383,7 @@ export default function Index() {
               >
                 {f.label}
                 <span className="ml-1 opacity-60">
-                  {f.value === "today" ? stats.today : f.value === "7days" ? stats.last7 : stats.total}
+                  {stats[f.value as keyof typeof stats]}
                 </span>
               </button>
             ))}
