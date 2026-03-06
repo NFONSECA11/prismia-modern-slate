@@ -137,9 +137,7 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // Client-side filtering
-  const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
-
+  // All filtering is now server-side
   const filteredBookings = useMemo(() => bookings, [bookings]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
