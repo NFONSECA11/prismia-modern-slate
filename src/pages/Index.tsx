@@ -33,7 +33,7 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
   { value: "today", label: "Hoje" },
   { value: "7days", label: "Últimos 7 dias" },
   { value: "handoff", label: "Handoff" },
-  { value: "awaiting_choice", label: "Aguardando decisão" },
+  { value: "awaiting_choice", label: "Aguardando Escolha" },
 ];
 
 export default function Index() {
