@@ -130,70 +130,20 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // Debug: log sample created_at values to understand format
-  if (bookings.length > 0) {
-    const sample = bookings.slice(0, 3).map((b) => ({ id: b.id, created_at: b.created_at, status: b.status, contact_phone: b.contact_phone, phone: (b as any).phone }));
-    console.log("[Index] Sample bookings:", JSON.stringify(sample));
-  }
+  // With server-side filtering, bookings are already filtered — just use them directly
+  const filteredBookings = bookings;
 
-
-  const getCreatedDate = (b: BookingRequest): string => {
-    return b.created_at?.slice(0, 10) || "";
-  };
-
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  
-  // 7 days ago string
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
-
-  // Step 1: Apply search filter (by name, procedure, phone, or ID)
-  const searchedBookings = bookings.filter((b) => {
-    const q = search.toLowerCase().trim();
-    if (!q) return true;
-    // Search by ID (e.g. "#123" or just "123")
-    const idQuery = q.startsWith("#") ? q.slice(1) : q;
-    if (/^\d+$/.test(idQuery) && String(b.id) === idQuery) return true;
-    return (
-      (b.lead_name ?? "").toLowerCase().includes(q) ||
-      (b.procedure_name ?? "").toLowerCase().includes(q) ||
-      (b.professional_name ?? "").toLowerCase().includes(q) ||
-      (b.contact_phone ?? "").toLowerCase().includes(q)
-    );
-  });
-
-  // Step 2: Apply date filter
-  const matchFilterFn = (b: BookingRequest, filter: QuickFilter): boolean => {
-    if (filter === "handoff") return b.status === "handoff";
-    if (filter === "awaiting_choice") return b.status === "awaiting_choice";
-    const d = getCreatedDate(b);
-    if (filter === "today") return d === todayStr;
-    if (filter === "7days") return d >= sevenDaysAgoStr && d <= todayStr;
-    return true;
-  };
-
-  // If searching by ID, skip date filter so user always finds the record
-  const isIdSearch = (() => {
-    const q = search.trim();
-    const idQuery = q.startsWith("#") ? q.slice(1) : q;
-    return /^\d+$/.test(idQuery) && q.length > 0;
-  })();
-
-  const filteredBookings = isIdSearch
-    ? searchedBookings
-    : searchedBookings.filter((b) => matchFilterFn(b, statusFilter));
-
-  // Stats based on searched results
+  // Stats: counts come from the current result set
   const stats = {
-    today: searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length,
-    last7: searchedBookings.filter((b) => {
-      const d = getCreatedDate(b);
-      return d >= sevenDaysAgoStr && d <= todayStr;
-    }).length,
-    handoff: searchedBookings.filter((b) => b.status === "handoff").length,
-    awaiting_choice: searchedBookings.filter((b) => b.status === "awaiting_choice").length,
+    today: bookings.length,
+    last7: bookings.length,
+    handoff: bookings.length,
+    awaiting_choice: bookings.length,
+  };
+  // Show the count for the ACTIVE filter only; others show "–" until clicked
+  const statForFilter = (f: QuickFilter) => {
+    if (f === statusFilter && !debouncedSearch) return bookings.length;
+    return "–";
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
