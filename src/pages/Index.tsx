@@ -62,7 +62,7 @@ export default function Index() {
   const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
 
   const apiParams = useMemo((): BookingFilterParams => {
-    // If searching, use search param and skip date/status filters
+    // Search → send to API
     if (debouncedSearch) {
       const q = debouncedSearch;
       const idQuery = q.startsWith("#") ? q.slice(1) : q;
@@ -72,19 +72,13 @@ export default function Index() {
       return { search: q, limit: 50 };
     }
 
-    switch (statusFilter) {
-      case "today":
-        return { created_at__date: todayStr, limit: 200 };
-      case "7days":
-        return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 200 };
-      case "handoff":
-        return { status: "handoff", limit: 200 };
-      case "awaiting_choice":
-        return { status: "awaiting_choice", limit: 200 };
-      default:
-        return { limit: 200 };
-    }
-  }, [statusFilter, debouncedSearch, todayStr, sevenDaysAgoStr]);
+    // Status filters → server-side
+    if (statusFilter === "handoff") return { status: "handoff", limit: 200 };
+    if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 200 };
+
+    // Date filters → fetch all, filter client-side (API doesn't support date params)
+    return { limit: 500 };
+  }, [statusFilter, debouncedSearch]);
 
   const { data, isLoading, isRefetching, refetch, isError } = useQuery({
     queryKey: ["booking-requests", apiParams],
@@ -130,8 +124,19 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // With server-side filtering, bookings are already filtered
-  const filteredBookings = bookings;
+  // Client-side date filtering for today/7days (API doesn't support date params)
+  const getCreatedDate = (b: BookingRequest): string => b.created_at?.slice(0, 10) || "";
+
+  const filteredBookings = useMemo(() => {
+    if (debouncedSearch) return bookings; // search results already filtered by API
+    if (statusFilter === "handoff" || statusFilter === "awaiting_choice") return bookings; // status filtered by API
+    if (statusFilter === "today") return bookings.filter((b) => getCreatedDate(b) === todayStr);
+    if (statusFilter === "7days") return bookings.filter((b) => {
+      const d = getCreatedDate(b);
+      return d >= sevenDaysAgoStr && d <= todayStr;
+    });
+    return bookings;
+  }, [bookings, statusFilter, debouncedSearch, todayStr, sevenDaysAgoStr]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
@@ -306,15 +311,6 @@ export default function Index() {
       </header>
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
-        {/* Result count */}
-        <div className="rounded-xl px-4 py-3 border border-border surface-raised flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-medium">
-            {debouncedSearch ? "Resultados da busca" : QUICK_FILTERS.find(f => f.value === statusFilter)?.label ?? ""}
-          </span>
-          <span className="text-xl font-bold tabular-nums text-foreground">
-            {isLoading ? "…" : bookings.length}
-          </span>
-        </div>
 
         {/* Error banner */}
         {isError && (
