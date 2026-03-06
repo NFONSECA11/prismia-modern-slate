@@ -64,6 +64,16 @@ function isProfAvailable(
   return false;
 }
 
+function extractRawDateTime(raw: string): { date: string; hour: number; minute: number } | null {
+  const m = raw.match(/(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (!m) return null;
+  return {
+    date: `${m[1]}-${m[2]}-${m[3]}`,
+    hour: Number(m[4]),
+    minute: Number(m[5]),
+  };
+}
+
 function getSlotDateTime(booking: BookingRequest): { date: string; hour: number; minute: number } | null {
   // Primary date sources from booking list payload
   const candidates = [
@@ -74,6 +84,10 @@ function getSlotDateTime(booking: BookingRequest): { date: string; hour: number;
 
   for (const raw of candidates) {
     if (!raw) continue;
+
+    // Prefer raw wall-time parsing to avoid timezone shifts in agenda grid
+    const extracted = extractRawDateTime(raw);
+    if (extracted) return extracted;
 
     const normalized = raw.includes(" ") && !raw.includes("T") ? raw.replace(" ", "T") : raw;
     for (const value of [normalized, raw]) {
