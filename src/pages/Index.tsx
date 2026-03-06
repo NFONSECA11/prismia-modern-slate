@@ -192,6 +192,7 @@ export default function Index() {
   const handleSetView = (v: View) => {
     setView(v);
     refetch();
+    refetchUpdated();
   };
 
   const handleLogout = async () => {
