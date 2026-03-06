@@ -138,8 +138,18 @@ export default function Index() {
     })();
   }, [bookings, activeUnit, queryClient]);
 
-  // All filtering is now server-side
-  const filteredBookings = useMemo(() => bookings, [bookings]);
+  // Text search → client-side filter (API doesn't support 'search')
+  const filteredBookings = useMemo(() => {
+    if (!debouncedSearch || searchId) return bookings;
+    const q = debouncedSearch.toLowerCase();
+    return bookings.filter((b) => {
+      const name = (b.lead_name || b.patient_name || "").toLowerCase();
+      const proc = (b.procedure_name || "").toLowerCase();
+      const prof = (b.professional_name || "").toLowerCase();
+      const phone = (b.contact_phone || b.phone || "").toLowerCase();
+      return name.includes(q) || proc.includes(q) || prof.includes(q) || phone.includes(q);
+    });
+  }, [bookings, debouncedSearch, searchId]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
