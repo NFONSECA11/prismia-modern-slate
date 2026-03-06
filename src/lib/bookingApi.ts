@@ -454,14 +454,21 @@ export async function fetchAgendaBookings(
     params: {
       unit: unitId,
       status: "confirmed",
-      scheduled_at_after: `${dateFrom}T00:00:00`,
-      scheduled_at_before: `${dateTo}T23:59:59`,
       limit: 500,
     },
   });
   const normalized = normalizeBookingListResponse(data);
-  console.log("[Agenda] Got", normalized.results.length, "bookings. Sample:", normalized.results.slice(0, 2).map((b: any) => ({ id: b.id, scheduled_at: b.scheduled_at, status: b.status })));
-  return normalized.results as BookingRequest[];
+  // API não suporta filtro por scheduled_at — filtrar client-side
+  const fromTs = new Date(`${dateFrom}T00:00:00`).getTime();
+  const toTs = new Date(`${dateTo}T23:59:59`).getTime();
+  const filtered = (normalized.results as BookingRequest[]).filter((b) => {
+    const raw = b.scheduled_at || (b as any).chosen_slot?.start_at;
+    if (!raw) return false;
+    const ts = new Date(raw).getTime();
+    return ts >= fromTs && ts <= toTs;
+  });
+  console.log("[Agenda] Total from API:", normalized.results.length, "| Filtered for range:", filtered.length);
+  return filtered;
 }
 
 // ── Listar profissionais por unidade ──────────────────────────────────────────
