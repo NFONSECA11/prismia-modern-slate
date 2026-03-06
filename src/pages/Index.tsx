@@ -72,13 +72,11 @@ export default function Index() {
 
   const apiParams = useMemo((): BookingFilterParams => {
     if (searchId) return { limit: 0 };
-    // Text search: API doesn't support 'search' — we filter client-side on loaded data
     if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
     if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
-    if (statusFilter === "today") return { created_at__date: todayStr, limit: 100 };
-    if (statusFilter === "7days") return { created_at__gte: sevenDaysAgoStr, created_at__lte: todayStr, limit: 100 };
+    // Date filters done client-side (API ignores date params)
     return { limit: 100 };
-  }, [statusFilter, searchId, todayStr, sevenDaysAgoStr]);
+  }, [statusFilter, searchId]);
 
   // Main list query (skipped when searching by ID)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
