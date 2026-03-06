@@ -354,6 +354,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         setActionDone("Profissional atribuído!");
       }
 
+      // Invalidate and refetch so the drawer updates status/bot badge
+      await queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      await queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
+      await refetchBookingDetailForBot();
+
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
