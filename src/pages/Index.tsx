@@ -40,7 +40,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<DateFilter>("7days");
+  const [statusFilter, setStatusFilter] = useState<DateFilter>("today");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
