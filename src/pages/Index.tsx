@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookingRequest, BookingStatus } from "@/types/booking";
+import { BookingRequest } from "@/types/booking";
 import { fetchBookingRequests, createBooking, patchBooking } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import { NewBookingFormData } from "@/components/NewBookingModal";
 import { BookingTable } from "@/components/BookingTable";
 import { BookingDrawer } from "@/components/BookingDrawer";
 import { AgendaView } from "@/components/AgendaView";
-import { StatusBadge } from "@/components/StatusBadge";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,17 +27,12 @@ import {
 } from "lucide-react";
 
 type View = "table" | "agenda";
-type FilterStatus = BookingStatus | "all" | "today";
+type DateFilter = "today" | "7days" | "all";
 
-const STATUS_FILTERS: { value: FilterStatus; label: string }[] = [
-  { value: "today" as FilterStatus, label: "Hoje" },
+const DATE_FILTERS: { value: DateFilter; label: string }[] = [
+  { value: "today", label: "Hoje" },
+  { value: "7days", label: "Últimos 7 dias" },
   { value: "all", label: "Todos" },
-  { value: "handoff", label: "Handoff" },
-  { value: "assisted", label: "Assisted" },
-  { value: "awaiting_choice", label: "Aguardando" },
-  { value: "pending", label: "Pendente" },
-  { value: "confirmed", label: "Confirmado" },
-  { value: "canceled", label: "Cancelado" },
 ];
 
 export default function Index() {
@@ -45,7 +40,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("today");
+  const [statusFilter, setStatusFilter] = useState<DateFilter>("7days");
   const [search, setSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
@@ -108,12 +103,19 @@ export default function Index() {
 
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  console.log("[Index] todayStr:", todayStr, "bookings count:", bookings.length);
+  
+  // 7 days ago string
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(sevenDaysAgo.getDate()).padStart(2, "0")}`;
 
-  // Step 1: Apply search filter first
+  // Step 1: Apply search filter (by name, procedure, phone, or ID)
   const searchedBookings = bookings.filter((b) => {
-    const q = search.toLowerCase();
+    const q = search.toLowerCase().trim();
     if (!q) return true;
+    // Search by ID (e.g. "#123" or just "123")
+    const idQuery = q.startsWith("#") ? q.slice(1) : q;
+    if (/^\d+$/.test(idQuery) && String(b.id) === idQuery) return true;
     return (
       (b.lead_name ?? "").toLowerCase().includes(q) ||
       (b.procedure_name ?? "").toLowerCase().includes(q) ||
@@ -122,31 +124,25 @@ export default function Index() {
     );
   });
 
-  // Step 2: Apply status filter on searched results
-  const matchStatusFn = (b: BookingRequest, filter: FilterStatus): boolean => {
+  // Step 2: Apply date filter
+  const matchDateFn = (b: BookingRequest, filter: DateFilter): boolean => {
     if (filter === "all") return true;
-    if (filter === "today") return getCreatedDate(b) === todayStr;
-    const s = (b.status ?? "").toLowerCase();
-    const f = filter.toLowerCase();
-    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
+    const d = getCreatedDate(b);
+    if (filter === "today") return d === todayStr;
+    if (filter === "7days") return d >= sevenDaysAgoStr && d <= todayStr;
+    return true;
   };
 
-  const filteredBookings = searchedBookings.filter((b) => matchStatusFn(b, statusFilter));
+  const filteredBookings = searchedBookings.filter((b) => matchDateFn(b, statusFilter));
 
-
-  const matchStatusHelper = (b: BookingRequest, filter: string) => {
-    const s = (b.status ?? "").toLowerCase();
-    const f = filter.toLowerCase();
-    return s === f || (f === "canceled" && s === "cancelled") || (f === "cancelled" && s === "canceled");
-  };
-
-  // Stats based on searched results (respects search but not status filter)
+  // Stats based on searched results
   const stats = {
     total: searchedBookings.length,
-    handoff: searchedBookings.filter((b) => matchStatusHelper(b, "handoff")).length,
-    assisted: searchedBookings.filter((b) => matchStatusHelper(b, "assisted")).length,
-    pending: searchedBookings.filter((b) => matchStatusHelper(b, "pending")).length,
-    confirmed: searchedBookings.filter((b) => matchStatusHelper(b, "confirmed")).length,
+    today: searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length,
+    last7: searchedBookings.filter((b) => {
+      const d = getCreatedDate(b);
+      return d >= sevenDaysAgoStr && d <= todayStr;
+    }).length,
   };
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
@@ -323,13 +319,11 @@ export default function Index() {
 
       <main className="px-6 py-5 space-y-5 max-w-[1440px] mx-auto">
         {/* KPI row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Total", value: stats.total, color: "text-foreground" },
-            { label: "Handoff", value: stats.handoff, color: "text-status-handoff" },
-            { label: "Assisted", value: stats.assisted, color: "text-status-assisted" },
-            { label: "Pendentes", value: stats.pending, color: "text-status-pending" },
-            { label: "Confirmados", value: stats.confirmed, color: "text-status-confirmed" },
+            { label: "Hoje", value: stats.today, color: "text-status-confirmed" },
+            { label: "7 dias", value: stats.last7, color: "text-primary" },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -357,7 +351,7 @@ export default function Index() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar cliente, procedimento..."
+              placeholder="Buscar por ID (#123), nome, procedimento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
@@ -366,7 +360,7 @@ export default function Index() {
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
-            {STATUS_FILTERS.map((f) => (
+            {DATE_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
@@ -377,13 +371,9 @@ export default function Index() {
                 }`}
               >
                 {f.label}
-                {f.value !== "all" && (
-                  <span className="ml-1 opacity-60">
-                    {f.value === "today"
-                      ? searchedBookings.filter((b) => getCreatedDate(b) === todayStr).length
-                      : searchedBookings.filter((b) => matchStatusHelper(b, f.value)).length}
-                  </span>
-                )}
+                <span className="ml-1 opacity-60">
+                  {f.value === "today" ? stats.today : f.value === "7days" ? stats.last7 : stats.total}
+                </span>
               </button>
             ))}
           </div>
