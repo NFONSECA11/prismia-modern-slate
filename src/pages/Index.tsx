@@ -59,6 +59,7 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   const queryClient = useQueryClient();
 
