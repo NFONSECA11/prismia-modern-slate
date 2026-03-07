@@ -24,7 +24,7 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, bgMode, setBgMode } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -213,33 +213,69 @@ export default function Settings() {
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
-              <p className="text-xs text-muted-foreground px-1">
-                Escolha o tema visual do dashboard.
-              </p>
-              <div className="flex items-center gap-4 px-1">
-                {([
-                  { id: "dark-navy" as ThemeId, label: "Dark Navy", colors: ["222 47% 7%", "213 94% 58%", "186 72% 48%"] },
-                  { id: "soft-slate" as ThemeId, label: "Soft Slate", colors: ["220 20% 18%", "213 80% 56%", "186 55% 45%"] },
-                  { id: "light-clean" as ThemeId, label: "Light Clean", colors: ["220 20% 97%", "213 90% 48%", "186 65% 40%"] },
-                ]).map((t) => {
-                  const active = theme === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setTheme(t.id)}
-                      className={`flex flex-col items-center gap-1.5 transition-all ${active ? "" : "opacity-60 hover:opacity-90"}`}
-                    >
-                      <div className={`w-16 h-10 rounded-lg overflow-hidden flex ${active ? "border-2 border-primary ring-2 ring-primary/30" : "border border-border"}`}>
-                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[0]})` }} />
-                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[1]})` }} />
-                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[2]})` }} />
-                      </div>
-                      <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{t.label}</span>
-                      {active && <span className="text-[9px] text-primary font-medium">Ativo</span>}
-                    </button>
-                  );
-                })}
+            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-5" style={{ background: "hsl(var(--surface))" }}>
+              {/* Theme selection */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
+                  Tema
+                </p>
+                <div className="flex items-center gap-4 px-1">
+                  {([
+                    { id: "dark-navy" as ThemeId, label: "Dark Navy", colors: ["222 47% 7%", "213 94% 58%", "186 72% 48%"] },
+                    { id: "soft-slate" as ThemeId, label: "Soft Slate", colors: ["220 20% 18%", "213 80% 56%", "186 55% 45%"] },
+                    { id: "light-clean" as ThemeId, label: "Light Clean", colors: ["220 20% 97%", "213 90% 48%", "186 65% 40%"] },
+                  ]).map((t) => {
+                    const active = theme === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        className={`flex flex-col items-center gap-1.5 transition-all ${active ? "" : "opacity-60 hover:opacity-90"}`}
+                      >
+                        <div className={`w-16 h-10 rounded-lg overflow-hidden flex ${active ? "border-2 border-primary ring-2 ring-primary/30" : "border border-border"}`}>
+                          <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[0]})` }} />
+                          <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[1]})` }} />
+                          <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[2]})` }} />
+                        </div>
+                        <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{t.label}</span>
+                        {active && <span className="text-[9px] text-primary font-medium">Ativo</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Background mode */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
+                  Plano de fundo
+                </p>
+                <div className="flex items-center gap-3 px-1">
+                  {([
+                    { id: "solid" as BgMode, label: "Sólido", icon: Square, desc: "Cor sólida de fundo" },
+                    { id: "landscape" as BgMode, label: "Paisagem", icon: Image, desc: "Imagem de natureza ao fundo" },
+                  ]).map((bg) => {
+                    const active = bgMode === bg.id;
+                    const Icon = bg.icon;
+                    return (
+                      <button
+                        key={bg.id}
+                        onClick={() => setBgMode(bg.id)}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all ${
+                          active
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-surface-elevated"
+                        }`}
+                      >
+                        <Icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+                        <div className="text-left">
+                          <span className={`text-xs font-medium block ${active ? "text-foreground" : ""}`}>{bg.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{bg.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
