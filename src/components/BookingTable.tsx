@@ -193,6 +193,8 @@ function QuickActionButton({
 
 export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTableProps) {
   const queryClient = useQueryClient();
+  const { bgMode } = useTheme();
+  const isLandscape = bgMode === "landscape";
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
