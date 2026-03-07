@@ -24,6 +24,7 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
