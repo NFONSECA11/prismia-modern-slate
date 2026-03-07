@@ -34,7 +34,43 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
-  const { theme, setTheme, bgMode, setBgMode } = useTheme();
+  const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant } = useTheme();
+
+  const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
+    "dark-navy": [
+      { label: "Azul Profundo", color: "222 47% 7%" },
+      { label: "Carvão", color: "220 15% 10%" },
+      { label: "Púrpura Noturno", color: "260 30% 8%" },
+    ],
+    "soft-slate": [
+      { label: "Slate", color: "220 20% 18%" },
+      { label: "Cinza Quente", color: "30 8% 20%" },
+      { label: "Aço Frio", color: "210 15% 22%" },
+    ],
+    "light-clean": [
+      { label: "Branco", color: "220 20% 97%" },
+      { label: "Creme", color: "40 30% 95%" },
+      { label: "Gelo Azul", color: "200 30% 95%" },
+    ],
+  };
+
+  const landscapeVariants: Record<ThemeId, { label: string; src: string }[]> = {
+    "dark-navy": [
+      { label: "Montanhas", src: bgDarkNavy },
+      { label: "Aurora Boreal", src: bgDarkNavy2 },
+      { label: "Via Láctea", src: bgDarkNavy3 },
+    ],
+    "soft-slate": [
+      { label: "Lago", src: bgSoftSlate },
+      { label: "Floresta", src: bgSoftSlate2 },
+      { label: "Costa", src: bgSoftSlate3 },
+    ],
+    "light-clean": [
+      { label: "Praia", src: bgLightClean },
+      { label: "Lavanda", src: bgLightClean2 },
+      { label: "Cerejeiras", src: bgLightClean3 },
+    ],
+  };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
