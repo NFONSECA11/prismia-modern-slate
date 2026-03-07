@@ -243,7 +243,7 @@ export default function Index() {
       {isLandscape && (
         <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${currentBg})`, opacity: 0.4 }}
+          style={{ backgroundImage: `url(${currentBg})` }}
         />
       )}
       {/* Top navigation bar */}
