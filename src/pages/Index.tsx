@@ -112,7 +112,7 @@ export default function Index() {
     enabled: !searchId,
     refetchInterval: 30_000,
     refetchOnWindowFocus: false,
-    staleTime: 120_000,
+    staleTime: 0,
     retry: 1,
   });
 
@@ -123,7 +123,7 @@ export default function Index() {
     enabled: !!apiParamsUpdated,
     refetchInterval: 30_000,
     refetchOnWindowFocus: false,
-    staleTime: 120_000,
+    staleTime: 0,
     retry: 1,
   });
 
@@ -342,7 +342,7 @@ export default function Index() {
           )}
 
           <button
-            onClick={() => refetch()}
+            onClick={() => { refetch(); refetchUpdated(); }}
             disabled={isRefetching}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-surface-elevated"
           >
