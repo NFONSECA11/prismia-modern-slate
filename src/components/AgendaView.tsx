@@ -218,6 +218,7 @@ function AppointmentCard({
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
+  const isConfirmed = booking.status === "confirmed";
   // Check if theme has custom appointment colors (Light Clean)
   const root = document.documentElement;
   const hasCustomAppointment = getComputedStyle(root).getPropertyValue('--appointment-bg').trim() !== '';
