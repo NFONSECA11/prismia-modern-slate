@@ -218,19 +218,31 @@ function AppointmentCard({
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
-  const isConfirmed = booking.status === "confirmed";
+  // Check if theme has custom appointment colors (Light Clean)
+  const root = document.documentElement;
+  const hasCustomAppointment = getComputedStyle(root).getPropertyValue('--appointment-bg').trim() !== '';
 
-  const bgColor = isPast
-    ? "hsl(var(--muted-foreground))"
-    : isConfirmed
-      ? "hsl(var(--status-confirmed))"
-      : "hsl(var(--status-handoff))";
-  const textColor = "hsl(var(--primary-foreground))";
-  const borderColor = isPast
-    ? "hsl(var(--muted-foreground) / 0.7)"
-    : isConfirmed
-      ? "hsl(var(--status-confirmed))"
-      : "hsl(var(--status-handoff))";
+  let bgColor: string;
+  let textColor: string;
+  let borderColor: string;
+
+  if (hasCustomAppointment) {
+    bgColor = "hsl(var(--appointment-bg))";
+    textColor = "hsl(var(--appointment-text))";
+    borderColor = "hsl(var(--appointment-border))";
+  } else {
+    bgColor = isPast
+      ? "hsl(var(--muted-foreground))"
+      : isConfirmed
+        ? "hsl(var(--status-confirmed))"
+        : "hsl(var(--status-handoff))";
+    textColor = "hsl(var(--primary-foreground))";
+    borderColor = isPast
+      ? "hsl(var(--muted-foreground) / 0.7)"
+      : isConfirmed
+        ? "hsl(var(--status-confirmed))"
+        : "hsl(var(--status-handoff))";
+  }
 
   return (
     <button
