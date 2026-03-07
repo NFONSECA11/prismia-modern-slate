@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
-import { useNavigate } from "react-router-dom";
 import {
   LayoutList,
   CalendarDays,
