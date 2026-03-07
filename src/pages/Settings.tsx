@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -199,6 +199,49 @@ export default function Settings() {
                   );
                 })
               )}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Aparência */}
+          <Collapsible defaultOpen={false} id="section-aparencia">
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold text-foreground">Aparência</span>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
+              <p className="text-xs text-muted-foreground px-1">
+                Escolha o tema visual do dashboard. Em breve você poderá alternar entre 3 templates de cores.
+              </p>
+              <div className="flex items-center gap-3 px-1">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-16 h-10 rounded-lg border-2 border-primary ring-2 ring-primary/30 overflow-hidden flex">
+                    <div className="w-1/3 h-full" style={{ background: "hsl(222 47% 7%)" }} />
+                    <div className="w-1/3 h-full" style={{ background: "hsl(213 94% 58%)" }} />
+                    <div className="w-1/3 h-full" style={{ background: "hsl(186 72% 48%)" }} />
+                  </div>
+                  <span className="text-[10px] font-medium text-foreground">Dark Navy</span>
+                  <span className="text-[9px] text-primary font-medium">Ativo</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 opacity-50">
+                  <div className="w-16 h-10 rounded-lg border border-border overflow-hidden flex cursor-not-allowed">
+                    <div className="w-1/3 h-full bg-gray-100" />
+                    <div className="w-1/3 h-full bg-blue-500" />
+                    <div className="w-1/3 h-full bg-gray-300" />
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Em breve</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 opacity-50">
+                  <div className="w-16 h-10 rounded-lg border border-border overflow-hidden flex cursor-not-allowed">
+                    <div className="w-1/3 h-full bg-gray-900" />
+                    <div className="w-1/3 h-full bg-purple-500" />
+                    <div className="w-1/3 h-full bg-violet-400" />
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Em breve</span>
+                </div>
+              </div>
             </CollapsibleContent>
           </Collapsible>
         </section>
