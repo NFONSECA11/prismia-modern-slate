@@ -7,12 +7,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
 import bgDarkNavy3 from "@/assets/bg-dark-navy-3.jpg";
+import bgDarkNavy4 from "@/assets/bg-dark-navy-4.jpg";
 import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
 import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
+import bgSoftSlate4 from "@/assets/bg-soft-slate-4.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
 import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
 import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
+import bgLightClean4 from "@/assets/bg-light-clean-4.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
@@ -59,16 +62,19 @@ export default function Settings() {
       { label: "Montanhas", src: bgDarkNavy },
       { label: "Aurora Boreal", src: bgDarkNavy2 },
       { label: "Via Láctea", src: bgDarkNavy3 },
+      { label: "Céu Estrelado", src: bgDarkNavy4 },
     ],
     "soft-slate": [
       { label: "Lago", src: bgSoftSlate },
       { label: "Floresta", src: bgSoftSlate2 },
       { label: "Costa", src: bgSoftSlate3 },
+      { label: "Tempestade", src: bgSoftSlate4 },
     ],
     "light-clean": [
       { label: "Praia", src: bgLightClean },
       { label: "Lavanda", src: bgLightClean2 },
       { label: "Cerejeiras", src: bgLightClean3 },
+      { label: "Tropical", src: bgLightClean4 },
     ],
   };
   const navigate = useNavigate();
