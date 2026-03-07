@@ -278,7 +278,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="rounded-xl border border-border/60 overflow-hidden shadow-md backdrop-blur-xl" style={{ background: "hsl(var(--surface) / 0.85)" }}>
+      <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isLandscape ? "backdrop-blur-xl" : ""}`} style={{ background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface-raised))" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
