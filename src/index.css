@@ -15,6 +15,9 @@
     --surface-raised: 217 33% 17%;
     --surface-elevated: 215 28% 22%;
     --row-hover: 215 28% 22%;
+    --appointment-bg: ;
+    --appointment-text: ;
+    --appointment-border: ;
 
     --foreground: 213 31% 91%;
     --foreground-muted: 215 20% 58%;
@@ -84,6 +87,9 @@
     --surface-raised: 220 15% 28%;
     --surface-elevated: 220 12% 34%;
     --row-hover: 220 12% 34%;
+    --appointment-bg: ;
+    --appointment-text: ;
+    --appointment-border: ;
 
     --foreground: 220 15% 92%;
     --foreground-muted: 220 10% 62%;
@@ -153,6 +159,9 @@
     --surface-raised: 220 14% 96%;
     --surface-elevated: 220 12% 92%;
     --row-hover: 195 53% 79%;
+    --appointment-bg: 195 53% 82%;
+    --appointment-text: 220 25% 14%;
+    --appointment-border: 195 53% 65%;
 
     --foreground: 220 25% 14%;
     --foreground-muted: 220 10% 46%;
