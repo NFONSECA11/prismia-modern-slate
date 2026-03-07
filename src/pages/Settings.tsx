@@ -1,8 +1,18 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
+import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
+import bgDarkNavy3 from "@/assets/bg-dark-navy-3.jpg";
+import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
+import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
+import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
+import bgLightClean from "@/assets/bg-light-clean.jpg";
+import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
+import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
@@ -24,7 +34,43 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
-  const { theme, setTheme, bgMode, setBgMode } = useTheme();
+  const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant } = useTheme();
+
+  const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
+    "dark-navy": [
+      { label: "Azul Profundo", color: "222 47% 7%" },
+      { label: "Carvão", color: "220 15% 10%" },
+      { label: "Púrpura Noturno", color: "260 30% 8%" },
+    ],
+    "soft-slate": [
+      { label: "Slate", color: "220 20% 18%" },
+      { label: "Cinza Quente", color: "30 8% 20%" },
+      { label: "Aço Frio", color: "210 15% 22%" },
+    ],
+    "light-clean": [
+      { label: "Branco", color: "220 20% 97%" },
+      { label: "Creme", color: "40 30% 95%" },
+      { label: "Gelo Azul", color: "200 30% 95%" },
+    ],
+  };
+
+  const landscapeVariants: Record<ThemeId, { label: string; src: string }[]> = {
+    "dark-navy": [
+      { label: "Montanhas", src: bgDarkNavy },
+      { label: "Aurora Boreal", src: bgDarkNavy2 },
+      { label: "Via Láctea", src: bgDarkNavy3 },
+    ],
+    "soft-slate": [
+      { label: "Lago", src: bgSoftSlate },
+      { label: "Floresta", src: bgSoftSlate2 },
+      { label: "Costa", src: bgSoftSlate3 },
+    ],
+    "light-clean": [
+      { label: "Praia", src: bgLightClean },
+      { label: "Lavanda", src: bgLightClean2 },
+      { label: "Cerejeiras", src: bgLightClean3 },
+    ],
+  };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -252,8 +298,8 @@ export default function Settings() {
                 </p>
                 <div className="flex items-center gap-3 px-1">
                   {([
-                    { id: "solid" as BgMode, label: "Sólido", icon: Square, desc: "Cor sólida de fundo" },
-                    { id: "landscape" as BgMode, label: "Paisagem", icon: Image, desc: "Imagem de natureza ao fundo" },
+                    { id: "solid" as BgMode, label: "Sólido", icon: Square, desc: "Cor sólida" },
+                    { id: "landscape" as BgMode, label: "Paisagem", icon: Image, desc: "Imagem de natureza" },
                   ]).map((bg) => {
                     const active = bgMode === bg.id;
                     const Icon = bg.icon;
@@ -275,6 +321,60 @@ export default function Settings() {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Variant selection */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
+                  {bgMode === "solid" ? "Variação de cor" : "Escolha a paisagem"}
+                </p>
+                <div className="flex items-center gap-3 px-1">
+                  {bgMode === "solid"
+                    ? solidVariants[theme].map((v, i) => {
+                        const active = bgVariant === i;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => setBgVariant(i)}
+                            className={`flex flex-col items-center gap-1.5 transition-all`}
+                          >
+                            <div
+                              className={`w-14 h-10 rounded-lg relative ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "border border-border hover:border-primary/50"}`}
+                              style={{ background: `hsl(${v.color})` }}
+                            >
+                              {active && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <Check className="h-4 w-4 text-primary" />
+                                </div>
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{v.label}</span>
+                          </button>
+                        );
+                      })
+                    : landscapeVariants[theme].map((v, i) => {
+                        const active = bgVariant === i;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => setBgVariant(i)}
+                            className="flex flex-col items-center gap-1.5 transition-all"
+                          >
+                            <div
+                              className={`w-20 h-12 rounded-lg overflow-hidden relative bg-cover bg-center ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "border border-border hover:border-primary/50"}`}
+                              style={{ backgroundImage: `url(${v.src})` }}
+                            >
+                              {active && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <Check className="h-4 w-4 text-white" />
+                                </div>
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{v.label}</span>
+                          </button>
+                        );
+                      })}
                 </div>
               </div>
             </CollapsibleContent>

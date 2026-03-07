@@ -13,8 +13,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
+import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
+import bgDarkNavy3 from "@/assets/bg-dark-navy-3.jpg";
 import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
+import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
+import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
+import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
+import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
 import {
   LayoutList,
   CalendarDays,
@@ -210,17 +216,28 @@ export default function Index() {
     agent: "Agente",
   };
 
-  const { theme, bgMode } = useTheme();
-  const bgMap = { "dark-navy": bgDarkNavy, "soft-slate": bgSoftSlate, "light-clean": bgLightClean };
+  const { theme, bgMode, bgVariant } = useTheme();
+  const landscapeMap: Record<string, string[]> = {
+    "dark-navy": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3],
+    "soft-slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3],
+    "light-clean": [bgLightClean, bgLightClean2, bgLightClean3],
+  };
+  const solidColors: Record<string, string[]> = {
+    "dark-navy": ["222 47% 7%", "220 15% 10%", "260 30% 8%"],
+    "soft-slate": ["220 20% 18%", "30 8% 20%", "210 15% 22%"],
+    "light-clean": ["220 20% 97%", "40 30% 95%", "200 30% 95%"],
+  };
   const isLandscape = bgMode === "landscape";
+  const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
+  const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
 
   return (
-    <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
+    <div className="min-h-screen relative" style={{ background: isLandscape ? "hsl(var(--background))" : `hsl(${solidBg})` }}>
       {/* Background landscape */}
       {isLandscape && (
         <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${bgMap[theme]})`, opacity: 0.15 }}
+          style={{ backgroundImage: `url(${currentBg})`, opacity: 0.15 }}
         />
       )}
       {/* Top navigation bar */}
