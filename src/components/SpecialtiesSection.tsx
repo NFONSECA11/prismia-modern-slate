@@ -3,7 +3,7 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, Award } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -101,11 +101,14 @@ export default function SpecialtiesSection() {
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
       >
-        <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Especialidades</span>
-          <p className="text-xs text-muted-foreground">
-            Especialidades disponíveis na empresa
-          </p>
+        <div className="flex items-center gap-2">
+          <Award className="h-4 w-4 text-primary shrink-0" />
+          <div className="text-left">
+            <span className="text-sm font-bold text-foreground">Especialidades</span>
+            <p className="text-xs text-muted-foreground">
+              Especialidades disponíveis na empresa
+            </p>
+          </div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>

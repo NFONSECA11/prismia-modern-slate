@@ -3,7 +3,7 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -108,11 +108,14 @@ export default function ProceduresByUnitLinkSection() {
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
       >
-        <div className="text-left">
-          <span className="text-sm font-bold text-foreground">Unidade X Procedimento</span>
-          <p className="text-xs text-muted-foreground">
-            Gerenciar vínculos entre unidades e procedimentos
-          </p>
+        <div className="flex items-center gap-2">
+          <Plug className="h-4 w-4 text-primary shrink-0" />
+          <div className="text-left">
+            <span className="text-sm font-bold text-foreground">Unidade X Procedimento</span>
+            <p className="text-xs text-muted-foreground">
+              Gerenciar vínculos entre unidades e procedimentos
+            </p>
+          </div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
