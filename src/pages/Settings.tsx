@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme, ThemeId } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette } from "lucide-react";
+import { useTheme, ThemeId, BgMode } from "@/contexts/ThemeContext";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
