@@ -36,6 +36,8 @@ import {
   Shield,
   Settings,
   X,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 type View = "table" | "agenda";
@@ -57,6 +59,7 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -373,14 +376,24 @@ export default function Index() {
 
           <div className="h-4 w-px bg-border" />
 
-          <button
-            onClick={() => navigate("/settings")}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-            title="Configurações"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Configurações</span>
-          </button>
+            {isLandscape && (
+              <button
+                onClick={() => setZenMode(!zenMode)}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title={zenMode ? "Voltar ao dashboard" : "Modo paisagem"}
+              >
+                {zenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
+            )}
+
+            <button
+              onClick={() => navigate("/settings")}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+              title="Configurações"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Configurações</span>
+            </button>
 
           <button
             onClick={handleLogout}
@@ -393,7 +406,24 @@ export default function Index() {
         </div>
       </header>
 
-      <main className={`relative z-10 ${view === "agenda" ? "px-2 py-2 space-y-2" : "px-6 py-5 space-y-5 max-w-[1440px]"} mx-auto`}>
+      {/* Zen mode - fullscreen landscape */}
+      {zenMode && isLandscape && (
+        <div className="fixed inset-0 z-40 cursor-pointer" onClick={() => setZenMode(false)}>
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${currentBg})` }}
+          />
+          <button
+            onClick={() => setZenMode(false)}
+            className="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:text-white bg-black/30 backdrop-blur-md hover:bg-black/50 transition-all text-xs font-medium"
+          >
+            <Minimize2 className="h-4 w-4" />
+            Voltar
+          </button>
+        </div>
+      )}
+
+      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-2 py-2 space-y-2" : "px-6 py-5 space-y-5 max-w-[1440px]"} mx-auto`}>
 
         {/* Error banner */}
         {isError && (
