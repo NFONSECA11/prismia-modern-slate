@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme, ThemeId } from "@/contexts/ThemeContext";
 import { ArrowLeft, ChevronDown, Plus, Trash2, Palette } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -213,34 +214,31 @@ export default function Settings() {
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
               <p className="text-xs text-muted-foreground px-1">
-                Escolha o tema visual do dashboard. Em breve você poderá alternar entre 3 templates de cores.
+                Escolha o tema visual do dashboard.
               </p>
-              <div className="flex items-center gap-3 px-1">
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="w-16 h-10 rounded-lg border-2 border-primary ring-2 ring-primary/30 overflow-hidden flex">
-                    <div className="w-1/3 h-full" style={{ background: "hsl(222 47% 7%)" }} />
-                    <div className="w-1/3 h-full" style={{ background: "hsl(213 94% 58%)" }} />
-                    <div className="w-1/3 h-full" style={{ background: "hsl(186 72% 48%)" }} />
-                  </div>
-                  <span className="text-[10px] font-medium text-foreground">Dark Navy</span>
-                  <span className="text-[9px] text-primary font-medium">Ativo</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 opacity-50">
-                  <div className="w-16 h-10 rounded-lg border border-border overflow-hidden flex cursor-not-allowed">
-                    <div className="w-1/3 h-full bg-gray-100" />
-                    <div className="w-1/3 h-full bg-blue-500" />
-                    <div className="w-1/3 h-full bg-gray-300" />
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">Em breve</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 opacity-50">
-                  <div className="w-16 h-10 rounded-lg border border-border overflow-hidden flex cursor-not-allowed">
-                    <div className="w-1/3 h-full bg-gray-900" />
-                    <div className="w-1/3 h-full bg-purple-500" />
-                    <div className="w-1/3 h-full bg-violet-400" />
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">Em breve</span>
-                </div>
+              <div className="flex items-center gap-4 px-1">
+                {([
+                  { id: "dark-navy" as ThemeId, label: "Dark Navy", colors: ["222 47% 7%", "213 94% 58%", "186 72% 48%"] },
+                  { id: "soft-slate" as ThemeId, label: "Soft Slate", colors: ["220 20% 18%", "213 80% 56%", "186 55% 45%"] },
+                  { id: "light-clean" as ThemeId, label: "Light Clean", colors: ["220 20% 97%", "213 90% 48%", "186 65% 40%"] },
+                ]).map((t) => {
+                  const active = theme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTheme(t.id)}
+                      className={`flex flex-col items-center gap-1.5 transition-all ${active ? "" : "opacity-60 hover:opacity-90"}`}
+                    >
+                      <div className={`w-16 h-10 rounded-lg overflow-hidden flex ${active ? "border-2 border-primary ring-2 ring-primary/30" : "border border-border"}`}>
+                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[0]})` }} />
+                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[1]})` }} />
+                        <div className="w-1/3 h-full" style={{ background: `hsl(${t.colors[2]})` }} />
+                      </div>
+                      <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{t.label}</span>
+                      {active && <span className="text-[9px] text-primary font-medium">Ativo</span>}
+                    </button>
+                  );
+                })}
               </div>
             </CollapsibleContent>
           </Collapsible>
