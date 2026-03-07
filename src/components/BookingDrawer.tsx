@@ -619,9 +619,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border surface-elevated">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
@@ -645,7 +645,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           {/* Lead identity */}
-          <div className="rounded-xl p-4 bg-surface border border-border">
+          <div className="rounded-xl p-4 border border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface)) / 0.3)" }}>
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
                 <div className="flex items-center gap-1.5">
