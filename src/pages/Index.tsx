@@ -210,12 +210,20 @@ export default function Index() {
     agent: "Agente",
   };
 
+  const { theme } = useTheme();
+  const bgMap = { "dark-navy": bgDarkNavy, "soft-slate": bgSoftSlate, "light-clean": bgLightClean };
+
   return (
-    <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
+    <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
+      {/* Background landscape */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${bgMap[theme]})`, opacity: 0.15 }}
+      />
       {/* Top navigation bar */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border"
-        style={{ background: "hsl(var(--surface))", backdropFilter: "blur(12px)" }}
+        className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60 backdrop-blur-xl"
+        style={{ background: "hsl(var(--surface) / 0.85)" }}
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
