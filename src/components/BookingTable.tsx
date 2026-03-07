@@ -287,7 +287,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                   Procedimento
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  Janela / Período
+                  Agendamento
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   Status
@@ -363,17 +363,28 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                         </div>
                       </td>
 
-                      {/* Janela / Período */}
+                      {/* Agendamento */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          <span className="flex items-center gap-1 text-foreground text-xs">
-                            <Calendar className="h-3 w-3 text-primary" />
-                            {booking.preferred_window}
-                          </span>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {booking.preferred_period}
-                          </span>
+                          {booking.scheduled_at ? (() => {
+                            const dt = new Date(booking.scheduled_at);
+                            const day = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+                            const time = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                            return (
+                              <>
+                                <span className="flex items-center gap-1 text-foreground text-xs">
+                                  <Calendar className="h-3 w-3 text-primary" />
+                                  {day}
+                                </span>
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  {time}
+                                </span>
+                              </>
+                            );
+                          })() : (
+                            <span className="text-xs text-muted-foreground">Não agendado</span>
+                          )}
                         </div>
                       </td>
 
