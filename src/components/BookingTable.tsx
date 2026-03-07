@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -192,6 +193,8 @@ function QuickActionButton({
 
 export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTableProps) {
   const queryClient = useQueryClient();
+  const { bgMode } = useTheme();
+  const isLandscape = bgMode === "landscape";
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
@@ -275,7 +278,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="rounded-xl border border-border/60 overflow-hidden shadow-md backdrop-blur-xl" style={{ background: "hsl(var(--surface) / 0.85)" }}>
+      <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isLandscape ? "backdrop-blur-xl" : ""}`} style={{ background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface-raised))" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

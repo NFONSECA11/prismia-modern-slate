@@ -210,20 +210,26 @@ export default function Index() {
     agent: "Agente",
   };
 
-  const { theme } = useTheme();
+  const { theme, bgMode } = useTheme();
   const bgMap = { "dark-navy": bgDarkNavy, "soft-slate": bgSoftSlate, "light-clean": bgLightClean };
+  const isLandscape = bgMode === "landscape";
 
   return (
     <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
       {/* Background landscape */}
-      <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${bgMap[theme]})`, opacity: 0.15 }}
-      />
+      {isLandscape && (
+        <div
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${bgMap[theme]})`, opacity: 0.15 }}
+        />
+      )}
       {/* Top navigation bar */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60 backdrop-blur-xl"
-        style={{ background: "hsl(var(--surface) / 0.85)" }}
+        className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60"
+        style={{
+          background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
+          backdropFilter: isLandscape ? "blur(16px)" : undefined,
+        }}
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
