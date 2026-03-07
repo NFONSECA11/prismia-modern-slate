@@ -222,11 +222,17 @@ export default function Index() {
     "soft-slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3],
     "light-clean": [bgLightClean, bgLightClean2, bgLightClean3],
   };
+  const solidColors: Record<string, string[]> = {
+    "dark-navy": ["222 47% 7%", "220 15% 10%", "260 30% 8%"],
+    "soft-slate": ["220 20% 18%", "30 8% 20%", "210 15% 22%"],
+    "light-clean": ["220 20% 97%", "40 30% 95%", "200 30% 95%"],
+  };
   const isLandscape = bgMode === "landscape";
   const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
+  const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
 
   return (
-    <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
+    <div className="min-h-screen relative" style={{ background: isLandscape ? "hsl(var(--background))" : `hsl(${solidBg})` }}>
       {/* Background landscape */}
       {isLandscape && (
         <div
