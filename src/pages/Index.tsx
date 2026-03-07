@@ -36,6 +36,8 @@ import {
   Shield,
   Settings,
   X,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 type View = "table" | "agenda";
