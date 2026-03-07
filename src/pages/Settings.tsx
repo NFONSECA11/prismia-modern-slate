@@ -1,8 +1,18 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
+import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
+import bgDarkNavy3 from "@/assets/bg-dark-navy-3.jpg";
+import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
+import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
+import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
+import bgLightClean from "@/assets/bg-light-clean.jpg";
+import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
+import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
