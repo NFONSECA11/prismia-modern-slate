@@ -216,9 +216,14 @@ export default function Index() {
     agent: "Agente",
   };
 
-  const { theme, bgMode } = useTheme();
-  const bgMap = { "dark-navy": bgDarkNavy, "soft-slate": bgSoftSlate, "light-clean": bgLightClean };
+  const { theme, bgMode, bgVariant } = useTheme();
+  const landscapeMap: Record<string, string[]> = {
+    "dark-navy": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3],
+    "soft-slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3],
+    "light-clean": [bgLightClean, bgLightClean2, bgLightClean3],
+  };
   const isLandscape = bgMode === "landscape";
+  const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
 
   return (
     <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
