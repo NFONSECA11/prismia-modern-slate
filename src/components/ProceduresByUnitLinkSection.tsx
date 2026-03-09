@@ -134,13 +134,113 @@ export default function ProceduresByUnitLinkSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Ações</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Duração</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Mín</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Máx</span>
+          <span />
         </div>
 
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground px-3">Carregando…</p>
+        ) : (items as UnitProcedureLink[]).length === 0 ? (
+          <p className="text-xs text-muted-foreground px-3">Nenhum vínculo encontrado.</p>
+        ) : (
+          (items as UnitProcedureLink[]).map((item) => (
+            <div
+              key={item.id}
+              className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              style={{ background: "hsl(var(--surface-elevated))" }}
+            >
+              <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
+              <span className="text-sm text-foreground truncate">{getUnitName(item)}</span>
+              <span className="text-sm font-medium text-foreground truncate">{getProcName(item)}</span>
+              <span className="text-xs text-muted-foreground">{item.override_duration_min ? `${item.override_duration_min} min` : "—"}</span>
+              <span className="text-xs text-muted-foreground">{item.override_price_min != null ? `R$ ${Number(item.override_price_min).toFixed(2)}` : "—"}</span>
+              <span className="text-xs text-muted-foreground">{item.override_price_max != null ? `R$ ${Number(item.override_price_max).toFixed(2)}` : "—"}</span>
+              <button
+                onClick={() => deleteLink.mutate(item.id)}
+                className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
+                title="Remover vínculo"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))
+        )}
+
+        {/* Criar vínculo */}
+        {showNew ? (
+          <div className="flex flex-wrap items-center gap-2 pt-2 px-3">
+            <select
+              value={newUnitId}
+              onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[120px]"
+            >
+              <option value="">Unidade</option>
+              {units.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name ?? `#${u.id}`}</option>
+              ))}
+            </select>
+            <select
+              value={newProcedureId}
+              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[140px]"
+            >
+              <option value="">Procedimento</option>
+              {procedures.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? `#${p.id}`}</option>
+              ))}
+            </select>
+            <Input
+              placeholder="Duração (min)"
+              type="number"
+              value={newDuration}
+              onChange={(e) => setNewDuration(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço mín"
+              type="number"
+              step="0.01"
+              value={newPriceMin}
+              onChange={(e) => setNewPriceMin(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço máx"
+              type="number"
+              step="0.01"
+              value={newPriceMax}
+              onChange={(e) => setNewPriceMax(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              disabled={!newProcedureId || !newUnitId || createLink.isPending}
+              onClick={() => createLink.mutate({
+                procedure: newProcedureId as number,
+                unit: newUnitId as number,
+                ...(newDuration ? { override_duration_min: Number(newDuration) } : {}),
+                ...(newPriceMin ? { override_price_min: newPriceMin } : {}),
+                ...(newPriceMax ? { override_price_max: newPriceMax } : {}),
+              })}
+            >
+              {createLink.isPending ? "…" : "Salvar"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setShowNew(false); setNewProcedureId(""); setNewUnitId(""); setNewDuration(""); setNewPriceMin(""); setNewPriceMax(""); }}
+            >
+              Cancelar
+            </Button>
+          </div>
         {isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
         ) : (items as UnitProcedureLink[]).length === 0 ? (
