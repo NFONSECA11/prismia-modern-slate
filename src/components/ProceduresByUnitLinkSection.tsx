@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Plus, Trash2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +15,9 @@ interface UnitProcedureLink {
   procedure_name?: string;
   unit?: number;
   unit_name?: string;
+  override_duration_min?: number | null;
+  override_price_min?: string | number | null;
+  override_price_max?: string | number | null;
 }
 
 export default function ProceduresByUnitLinkSection() {
@@ -22,6 +26,9 @@ export default function ProceduresByUnitLinkSection() {
   const [showNew, setShowNew] = useState(false);
   const [newProcedureId, setNewProcedureId] = useState<number | "">("");
   const [newUnitId, setNewUnitId] = useState<number | "">("");
+  const [newDuration, setNewDuration] = useState("");
+  const [newPriceMin, setNewPriceMin] = useState("");
+  const [newPriceMax, setNewPriceMax] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["unit-procedures"],
@@ -40,7 +47,6 @@ export default function ProceduresByUnitLinkSection() {
     enabled: !!user && units.length > 0,
   });
 
-  // Fetch procedures for the select
   const { data: procedures = [] } = useQuery({
     queryKey: ["procedures"],
     queryFn: async () => {
@@ -69,7 +75,7 @@ export default function ProceduresByUnitLinkSection() {
   }, [units]);
 
   const createLink = useMutation({
-    mutationFn: async (payload: { procedure: number; unit: number }) => {
+    mutationFn: async (payload: { procedure: number; unit: number; override_duration_min?: number; override_price_min?: string; override_price_max?: string }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/unit-procedures/", payload);
       return data;
@@ -79,6 +85,9 @@ export default function ProceduresByUnitLinkSection() {
       setShowNew(false);
       setNewProcedureId("");
       setNewUnitId("");
+      setNewDuration("");
+      setNewPriceMin("");
+      setNewPriceMax("");
       toast.success("Vínculo criado com sucesso");
     },
     onError: () => toast.error("Erro ao criar vínculo"),
@@ -124,11 +133,14 @@ export default function ProceduresByUnitLinkSection() {
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Ações</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Duração</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Mín</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Preço Máx</span>
+          <span />
         </div>
 
         {isLoading ? (
@@ -139,12 +151,15 @@ export default function ProceduresByUnitLinkSection() {
           (items as UnitProcedureLink[]).map((item) => (
             <div
               key={item.id}
-              className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="grid grid-cols-[3rem_1fr_1fr_5rem_5rem_5rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
               <span className="text-sm text-foreground truncate">{getUnitName(item)}</span>
               <span className="text-sm font-medium text-foreground truncate">{getProcName(item)}</span>
+              <span className="text-xs text-muted-foreground">{item.override_duration_min ? `${item.override_duration_min} min` : "—"}</span>
+              <span className="text-xs text-muted-foreground">{item.override_price_min != null ? `R$ ${Number(item.override_price_min).toFixed(2)}` : "—"}</span>
+              <span className="text-xs text-muted-foreground">{item.override_price_max != null ? `R$ ${Number(item.override_price_max).toFixed(2)}` : "—"}</span>
               <button
                 onClick={() => deleteLink.mutate(item.id)}
                 className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
@@ -158,11 +173,11 @@ export default function ProceduresByUnitLinkSection() {
 
         {/* Criar vínculo */}
         {showNew ? (
-          <div className="flex items-center gap-2 pt-2 px-3">
+          <div className="flex flex-wrap items-center gap-2 pt-2 px-3">
             <select
               value={newUnitId}
               onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[120px]"
             >
               <option value="">Unidade</option>
               {units.map((u: any) => (
@@ -172,18 +187,47 @@ export default function ProceduresByUnitLinkSection() {
             <select
               value={newProcedureId}
               onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
+              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[140px]"
             >
               <option value="">Procedimento</option>
               {procedures.map((p: any) => (
                 <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? `#${p.id}`}</option>
               ))}
             </select>
+            <Input
+              placeholder="Duração (min)"
+              type="number"
+              value={newDuration}
+              onChange={(e) => setNewDuration(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço mín"
+              type="number"
+              step="0.01"
+              value={newPriceMin}
+              onChange={(e) => setNewPriceMin(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
+            <Input
+              placeholder="Preço máx"
+              type="number"
+              step="0.01"
+              value={newPriceMax}
+              onChange={(e) => setNewPriceMax(e.target.value)}
+              className="h-8 text-sm w-24"
+            />
             <Button
               size="sm"
               className="h-8 text-xs"
               disabled={!newProcedureId || !newUnitId || createLink.isPending}
-              onClick={() => createLink.mutate({ procedure: newProcedureId as number, unit: newUnitId as number })}
+              onClick={() => createLink.mutate({
+                procedure: newProcedureId as number,
+                unit: newUnitId as number,
+                ...(newDuration ? { override_duration_min: Number(newDuration) } : {}),
+                ...(newPriceMin ? { override_price_min: newPriceMin } : {}),
+                ...(newPriceMax ? { override_price_max: newPriceMax } : {}),
+              })}
             >
               {createLink.isPending ? "…" : "Salvar"}
             </Button>
@@ -191,7 +235,7 @@ export default function ProceduresByUnitLinkSection() {
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewProcedureId(""); setNewUnitId(""); }}
+              onClick={() => { setShowNew(false); setNewProcedureId(""); setNewUnitId(""); setNewDuration(""); setNewPriceMin(""); setNewPriceMax(""); }}
             >
               Cancelar
             </Button>
