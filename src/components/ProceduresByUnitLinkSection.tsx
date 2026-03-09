@@ -14,6 +14,9 @@ interface UnitProcedureLink {
   procedure_name?: string;
   unit?: number;
   unit_name?: string;
+  override_duration_min?: number | null;
+  override_price_min?: string | number | null;
+  override_price_max?: string | number | null;
 }
 
 export default function ProceduresByUnitLinkSection() {
