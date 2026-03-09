@@ -76,7 +76,7 @@ export default function ProceduresByUnitLinkSection() {
   }, [units]);
 
   const createLink = useMutation({
-    mutationFn: async (payload: { procedure: number; unit: number }) => {
+    mutationFn: async (payload: { procedure: number; unit: number; override_duration_min?: number; override_price_min?: string; override_price_max?: string }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/settings/unit-procedures/", payload);
       return data;
@@ -86,6 +86,9 @@ export default function ProceduresByUnitLinkSection() {
       setShowNew(false);
       setNewProcedureId("");
       setNewUnitId("");
+      setNewDuration("");
+      setNewPriceMin("");
+      setNewPriceMax("");
       toast.success("Vínculo criado com sucesso");
     },
     onError: () => toast.error("Erro ao criar vínculo"),
