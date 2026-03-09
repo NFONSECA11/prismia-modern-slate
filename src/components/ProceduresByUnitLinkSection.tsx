@@ -26,6 +26,9 @@ export default function ProceduresByUnitLinkSection() {
   const [showNew, setShowNew] = useState(false);
   const [newProcedureId, setNewProcedureId] = useState<number | "">("");
   const [newUnitId, setNewUnitId] = useState<number | "">("");
+  const [newDuration, setNewDuration] = useState("");
+  const [newPriceMin, setNewPriceMin] = useState("");
+  const [newPriceMax, setNewPriceMax] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["unit-procedures"],
