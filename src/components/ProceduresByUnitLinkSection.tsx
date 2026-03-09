@@ -47,7 +47,6 @@ export default function ProceduresByUnitLinkSection() {
     enabled: !!user && units.length > 0,
   });
 
-  // Fetch procedures for the select
   const { data: procedures = [] } = useQuery({
     queryKey: ["procedures"],
     queryFn: async () => {
@@ -237,83 +236,6 @@ export default function ProceduresByUnitLinkSection() {
               variant="ghost"
               className="h-8 text-xs"
               onClick={() => { setShowNew(false); setNewProcedureId(""); setNewUnitId(""); setNewDuration(""); setNewPriceMin(""); setNewPriceMax(""); }}
-            >
-              Cancelar
-            </Button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-3"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar vínculo
-          </button>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-          <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : (items as UnitProcedureLink[]).length === 0 ? (
-          <p className="text-xs text-muted-foreground px-3">Nenhum vínculo encontrado.</p>
-        ) : (
-          (items as UnitProcedureLink[]).map((item) => (
-            <div
-              key={item.id}
-              className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-              style={{ background: "hsl(var(--surface-elevated))" }}
-            >
-              <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
-              <span className="text-sm text-foreground truncate">{getUnitName(item)}</span>
-              <span className="text-sm font-medium text-foreground truncate">{getProcName(item)}</span>
-              <button
-                onClick={() => deleteLink.mutate(item.id)}
-                className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
-                title="Remover vínculo"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))
-        )}
-
-        {/* Criar vínculo */}
-        {showNew ? (
-          <div className="flex items-center gap-2 pt-2 px-3">
-            <select
-              value={newUnitId}
-              onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
-            >
-              <option value="">Unidade</option>
-              {units.map((u: any) => (
-                <option key={u.id} value={u.id}>{u.name ?? `#${u.id}`}</option>
-              ))}
-            </select>
-            <select
-              value={newProcedureId}
-              onChange={(e) => setNewProcedureId(e.target.value ? Number(e.target.value) : "")}
-              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground flex-1"
-            >
-              <option value="">Procedimento</option>
-              {procedures.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.name ?? p.procedure_name ?? `#${p.id}`}</option>
-              ))}
-            </select>
-            <Button
-              size="sm"
-              className="h-8 text-xs"
-              disabled={!newProcedureId || !newUnitId || createLink.isPending}
-              onClick={() => createLink.mutate({ procedure: newProcedureId as number, unit: newUnitId as number })}
-            >
-              {createLink.isPending ? "…" : "Salvar"}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 text-xs"
-              onClick={() => { setShowNew(false); setNewProcedureId(""); setNewUnitId(""); }}
             >
               Cancelar
             </Button>
