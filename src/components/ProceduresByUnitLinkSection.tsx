@@ -241,7 +241,19 @@ export default function ProceduresByUnitLinkSection() {
               Cancelar
             </Button>
           </div>
-        {isLoading ? (
+        ) : (
+          <button
+            onClick={() => setShowNew(true)}
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-3"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Adicionar vínculo
+          </button>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
         ) : (items as UnitProcedureLink[]).length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhum vínculo encontrado.</p>
