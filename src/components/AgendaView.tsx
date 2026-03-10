@@ -380,7 +380,7 @@ function DayView({
               {professionals.map((prof) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
-                  <div key={prof.id} className="w-[200px] last:border-r-0 relative" style={{ borderRight: "1px solid #e0e0e0" }}>
+                  <div key={prof.id} className="w-[200px] last:border-r-0 relative border-r border-border">
                     <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
