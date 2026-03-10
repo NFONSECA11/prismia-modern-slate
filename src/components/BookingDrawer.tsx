@@ -781,7 +781,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                             disabled={!assignLeadName.trim() || assignProfMut.isPending}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                           >
-                            {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Atribuir"}
+                            {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
                           </button>
                           {assignProfMut.isError && (
                             <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
