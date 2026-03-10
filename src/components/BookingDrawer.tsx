@@ -366,21 +366,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
       const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
       const isCancelFlow = (procCode === "cancel" || procName.startsWith("cancelar agendamento")) && cancelBookingIdField.trim();
-      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "procName:", procName, "isCancelFlow:", isCancelFlow);
+      const isRescheduleFlow = procCode === "reschedule" && cancelBookingIdField.trim();
+      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "isCancelFlow:", isCancelFlow, "isRescheduleFlow:", isRescheduleFlow);
       if (isCancelFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
-        // Step 1: Cancel the target booking
         await cancelBooking(targetId);
-        // Step 2: Turn bot OFF on current BR
         try {
           console.log("[BookingDrawer] Cancel flow — calling handoffOn to turn bot OFF on BR #", booking!.id);
           await handoffOn(booking!.id);
         } catch (err) {
           console.warn("[BookingDrawer] handoffOn failed (may already be off):", err);
         }
-        // Step 3: Update current BR's lead_name and notes
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
@@ -393,6 +391,34 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           conversation_bot_mode: "off",
           booking_mode: "handoff_manual",
         });
+      }
+
+      // Reschedule flow: cancel target BR + assign professional/procedure + handoffOff
+      if (isRescheduleFlow) {
+        const targetId = Number(cancelBookingIdField.trim());
+        if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
+        console.log("[BookingDrawer] Reschedule flow — cancelling BR #", targetId, "and assigning on current BR #", booking!.id);
+        // Step 1: Cancel the target booking
+        await cancelBooking(targetId);
+        // Step 2: PATCH current BR with professional, procedure, lead_name
+        const now = new Date();
+        const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+        const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+        const logEntry = `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} e atribuição de profissional por ${assignLeadName.trim() || "N/A"}`;
+        const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
+        const payload: Record<string, unknown> = {
+          lead_name: assignLeadName.trim() || booking!.lead_name,
+          notes: newNotes,
+        };
+        if (profId > 0) {
+          payload.professional = profId;
+          payload.booking_mode = "assisted_slots_dashboard";
+        }
+        if (selectedProcedureId) payload.procedure = selectedProcedureId;
+        const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+        if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
+        console.log("[BookingDrawer] Reschedule PATCH payload:", JSON.stringify(payload));
+        return await patchBooking(booking!.id, payload);
       }
 
       const payload: Record<string, unknown> = {
