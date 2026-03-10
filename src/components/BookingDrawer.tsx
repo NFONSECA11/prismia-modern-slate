@@ -183,6 +183,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
+    setForceBotOff(false);
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
