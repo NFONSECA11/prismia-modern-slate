@@ -454,6 +454,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1800);
     },
     onError: (err: any) => {
+      console.error("[cancelConfirmedMut] error:", err?.response?.status, err?.response?.data);
       const data = err?.response?.data;
       const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
       toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
@@ -621,6 +622,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   }
 
   const errorMutation = [confirmMut, cancelMut, cancelConfirmedMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
+  const isCancelError = errorMutation === cancelMut || errorMutation === cancelConfirmedMut;
   const anyError = !!errorMutation;
   const errorDetail = (() => {
     if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
@@ -629,8 +631,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     const status = err?.response?.status;
     const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
     const rawStr = raw?.toString() || "";
-    // Detecta conflito de horário duplicado
-    const isDuplicate = status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists");
+    // Detecta conflito de horário duplicado (não para ações de cancelamento)
+    const isDuplicate = !isCancelError && (status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists"));
     if (isDuplicate) return "Esse horário já está confirmado para este profissional. Escolha outro horário.";
     if (raw === "missing_slots")
       return "Não há disponibilidades para esse profissional e esse procedimento.";
