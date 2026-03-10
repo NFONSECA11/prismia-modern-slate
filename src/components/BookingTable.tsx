@@ -270,7 +270,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       const data = err?.response?.data;
       const raw = typeof data === "string" ? data : (data?.code || data?.detail || data?.error || "");
       const rawStr = raw?.toString() || "";
-      const isDuplicate = status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists");
+      const isDuplicate = (status === 409 || rawStr.includes("duplicate key") || rawStr.includes("uniq_confirmed") || rawStr.includes("already exists")) && key !== "cancel";
       const isHtmlOrLong = (typeof data === "string" && data.length > 200) || rawStr.includes("<!");
       const msg = isDuplicate
         ? "Esse horário já está confirmado para este profissional. Escolha outro horário."
