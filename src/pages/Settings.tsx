@@ -77,6 +77,22 @@ export default function Settings() {
       { label: "Tropical", src: bgLightClean4 },
     ],
   };
+
+  const gradientVariants: Record<ThemeId, { label: string; gradient: string }[]> = {
+    "dark-navy": [
+      { label: "Oceano Profundo", gradient: "linear-gradient(135deg, hsl(222 47% 7%), hsl(213 94% 20%), hsl(213 94% 58%))" },
+      { label: "Aurora Boreal", gradient: "linear-gradient(160deg, hsl(222 47% 7%), hsl(260 30% 18%), hsl(186 72% 48%))" },
+    ],
+    "soft-slate": [
+      { label: "Névoa Azul", gradient: "linear-gradient(135deg, hsl(220 20% 14%), hsl(213 50% 28%), hsl(213 80% 56%))" },
+      { label: "Aço Quente", gradient: "linear-gradient(160deg, hsl(220 20% 14%), hsl(30 15% 22%), hsl(220 15% 32%))" },
+    ],
+    "light-clean": [
+      { label: "Céu Limpo", gradient: "linear-gradient(135deg, hsl(220 20% 97%), hsl(200 40% 92%), hsl(213 90% 85%))" },
+      { label: "Pôr do Sol", gradient: "linear-gradient(160deg, hsl(220 20% 97%), hsl(40 50% 92%), hsl(20 60% 90%))" },
+    ],
+  };
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
