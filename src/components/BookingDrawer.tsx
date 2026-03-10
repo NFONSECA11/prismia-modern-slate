@@ -960,7 +960,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 className="col-span-2"
                 value={
                   <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-                    {(booking as any).notes}
+                    {(bookingDetailForBot as any)?.notes || (booking as any)?.notes}
                   </pre>
                 }
               />
