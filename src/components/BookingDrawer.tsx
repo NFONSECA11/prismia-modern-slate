@@ -433,6 +433,29 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     makeMutation(() => cancelBooking(booking!.id), "Cancelado!")
   );
 
+  // Cancel a confirmed booking: reopen first, then cancel
+  const cancelConfirmedMut = useMutation({
+    mutationFn: async () => {
+      await reopenBooking(booking!.id);
+      await cancelBooking(booking!.id);
+    },
+    onSuccess: async () => {
+      setActionDone("Agendamento cancelado!");
+      await refetchBookingDetailForBot();
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      const data = err?.response?.data;
+      const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
+      toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
+      setActionDone(null);
+    },
+  });
+
   const reopenMut = useMutation({
     mutationFn: () => reopenBooking(booking!.id),
     onMutate: async () => {
@@ -486,6 +509,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const busy =
     confirmMut.isPending ||
     cancelMut.isPending ||
+    cancelConfirmedMut.isPending ||
     reopenMut.isPending ||
     handoffOnMut.isPending ||
     handoffOffMut.isPending ||
@@ -583,7 +607,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       );
       if (booking.status === "confirmed") {
         actions.push(
-          <ActionButton key="cancel-booking" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar Agendamento" variant="danger" />,
+          <ActionButton key="cancel-booking" onClick={() => cancelConfirmedMut.mutate()} disabled={busy} loading={cancelConfirmedMut.isPending} icon={XCircle} label="Cancelar Agendamento" variant="danger" />,
         );
       }
     }
@@ -591,7 +615,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
   }
 
-  const errorMutation = [confirmMut, cancelMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
+  const errorMutation = [confirmMut, cancelMut, cancelConfirmedMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
   const anyError = !!errorMutation;
   const errorDetail = (() => {
     if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
