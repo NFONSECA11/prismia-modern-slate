@@ -46,6 +46,7 @@ export interface BookingRequest {
   preferred_window: string;
   preferred_period: string;
   created_at: string;
+  notes?: string;
   updated_at: string;
   conversation_bot_mode?: "on" | "off" | string;
   vars_snapshot: VarsSnapshot;

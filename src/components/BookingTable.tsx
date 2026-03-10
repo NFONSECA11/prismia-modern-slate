@@ -384,10 +384,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           {(() => {
-                            const idFromNotes = extractCancelledIdFromNotes((booking as any)?.notes);
+                            const idFromNotes = extractCancelledIdFromNotes(booking.notes);
                             const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                             const effectiveId = idFromNotes || cachedId;
-                            const isReschedule = isRescheduleFromNotes((booking as any)?.notes);
+                            const isReschedule = isRescheduleFromNotes(booking.notes);
                             return (
                               <>
                                 <span className="text-foreground leading-tight flex items-center gap-1.5">
