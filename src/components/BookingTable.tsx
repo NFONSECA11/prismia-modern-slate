@@ -31,6 +31,7 @@ import {
   PhoneOff,
   Loader2,
   MessageCircle,
+  RefreshCw,
 } from "lucide-react";
 import {
   Tooltip,
@@ -382,19 +383,28 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Procedimento */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-foreground leading-tight">
-                            {(() => {
-                              const idFromNotes = extractCancelledIdFromNotes((booking as any)?.notes);
-                              const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
-                              const effectiveId = idFromNotes || cachedId;
-                              if (!effectiveId) return booking.procedure_name;
-                              const isReschedule = normalizedProcedureCode === "reschedule" || isRescheduleFromNotes((booking as any)?.notes);
-                              return isReschedule
-                                ? `Reagendamento #${effectiveId}`
-                                : `Cancelar agendamento #${effectiveId}`;
-                            })()}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
+                          {(() => {
+                            const idFromNotes = extractCancelledIdFromNotes((booking as any)?.notes);
+                            const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
+                            const effectiveId = idFromNotes || cachedId;
+                            const isReschedule = normalizedProcedureCode === "reschedule" || isRescheduleFromNotes((booking as any)?.notes);
+                            return (
+                              <>
+                                {isReschedule && (
+                                  <span className="inline-flex items-center gap-1 w-fit rounded-md px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                    <RefreshCw className="h-3 w-3" />
+                                    Reagendamento
+                                  </span>
+                                )}
+                                <span className="text-foreground leading-tight">
+                                  {effectiveId
+                                    ? (isReschedule ? `#${effectiveId} → ${booking.procedure_name}` : `Cancelar agendamento #${effectiveId}`)
+                                    : booking.procedure_name}
+                                </span>
+                                <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
 
