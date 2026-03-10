@@ -324,9 +324,10 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
                   Plano de fundo
                 </p>
-                <div className="flex items-center gap-3 px-1">
+                <div className="flex items-center gap-3 px-1 flex-wrap">
                   {([
                     { id: "solid" as BgMode, label: "Sólido", icon: Square, desc: "Cor sólida" },
+                    { id: "gradient" as BgMode, label: "Gradiente", icon: Layers, desc: "Transição de cores" },
                     { id: "landscape" as BgMode, label: "Paisagem", icon: Image, desc: "Imagem de natureza" },
                   ]).map((bg) => {
                     const active = bgMode === bg.id;
