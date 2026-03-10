@@ -153,6 +153,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [assignLeadName, setAssignLeadName] = useState("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
+  const [forceBotOff, setForceBotOff] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
@@ -182,6 +183,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
+    setForceBotOff(false);
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
@@ -410,6 +412,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
       if (wasCancelFlow) {
         setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
+        setForceBotOff(true);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
@@ -600,7 +603,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
-  const isBotOn = effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending");
+  const isBotOn = forceBotOff ? false : (effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending"));
   const botLabel = isBotOn ? "ON" : "OFF";
 
   const formattedCreated = (() => {
