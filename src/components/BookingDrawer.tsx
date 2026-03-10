@@ -361,7 +361,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
         // Step 1: Cancel the target booking
         await cancelBooking(targetId);
-        // Step 2: Update current BR's lead_name, procedure_name, and notes
+        // Step 2: Turn bot OFF on current BR
+        try {
+          console.log("[BookingDrawer] Cancel flow — calling handoffOn to turn bot OFF on BR #", booking!.id);
+          await handoffOn(booking!.id);
+        } catch (err) {
+          console.warn("[BookingDrawer] handoffOn failed (may already be off):", err);
+        }
+        // Step 3: Update current BR's lead_name and notes
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
