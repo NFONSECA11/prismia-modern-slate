@@ -601,7 +601,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const mode = booking.booking_mode as BookingMode;
   const pCodeRaw = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw);
-  const isCancelCode = pCodeRaw === "cancel";
+  const isCancelCode = pCodeRaw === "cancel" || pCodeRaw.startsWith("cancelar");
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
