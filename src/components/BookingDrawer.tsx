@@ -490,9 +490,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     suggestMut.isPending;
 
   const mode = booking.booking_mode as BookingMode;
-  const isConvo = ["human", "prices"].includes(
-    ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
-  );
+  const normalizedProcedureCode = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
+  const isConvo = ["human", "prices"].includes(normalizedProcedureCode);
+  const isCancel = normalizedProcedureCode === "cancel";
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
@@ -690,8 +690,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           </div>
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
-            <DetailRow icon={Hash} label="Procedimento" value={booking.procedure_name} />
+            {!isCancel && <DetailRow icon={Hash} label="Procedimento" value={booking.procedure_name} />}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
+            {!isCancel && (
             <DetailRow
               icon={User}
               label={isConvo ? "Atendimento" : "Profissional"}
@@ -803,6 +804,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 )
               }
             />
+            )}
             <DetailRow
               icon={Calendar}
               label="Janela Preferida"
