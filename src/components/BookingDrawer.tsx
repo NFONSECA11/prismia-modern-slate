@@ -404,16 +404,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       return await patchBooking(booking!.id, payload);
     },
     onSuccess: async (result: any) => {
-      console.log("[BookingDrawer] assign success:", result);
+      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
+      const wasCancelFlow = procCode === "cancel";
+      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "procCode:", procCode, "result:", JSON.stringify(result)?.substring(0, 200));
+      
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
 
-      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      const wasCancelFlow = procCode === "cancel";
-
       if (wasCancelFlow) {
-        setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
+        const newProcName = `Cancelar agendamento #${cancelBookingIdField.trim()}`;
+        console.log("[BookingDrawer] Setting overrideProcedureName:", newProcName, "and forceBotOff: true");
+        setOverrideProcedureName(newProcName);
         setForceBotOff(true);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
