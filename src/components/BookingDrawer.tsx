@@ -406,6 +406,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         } catch (err) {
           console.warn("[BookingDrawer] handoffOn after cancel failed (may already be off):", err);
         }
+        setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
