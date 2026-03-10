@@ -310,10 +310,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     refetchInterval: 30_000,
   });
 
-  // Auto-fill cancel booking ID from conversation messages
+  // Auto-fill cancel booking ID from booking data or conversation messages
   const pCodeForAutoFill = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
   useEffect(() => {
-    if (pCodeForAutoFill !== "cancel" || !messages.length || cancelBookingIdField) return;
+    if (pCodeForAutoFill !== "cancel" || cancelBookingIdField) return;
+    // 1) From vars_snapshot.booking_reference
+    const ref = (booking as any)?.vars_snapshot?.booking_reference;
+    if (ref) { setCancelBookingIdField(String(ref)); return; }
+    // 2) From procedure_name e.g. "Cancelar agendamento #472"
+    const procName = booking?.procedure_name ?? "";
+    const procMatch = procName.match(/#(\d+)/);
+    if (procMatch) { setCancelBookingIdField(procMatch[1]); return; }
+    // 3) From messages
+    if (!messages.length) return;
     for (const msg of messages) {
       const body = (msg as any).body ?? (msg as any).text ?? "";
       const match = body.match(/agendamento\s*(?:n[uú]mero|#|nº)?\s*(\d+)/i);
@@ -324,7 +333,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const body = ((msg as any).body ?? (msg as any).text ?? "").trim();
       if (dir === "in" && /^\d{1,6}$/.test(body)) { setCancelBookingIdField(body); return; }
     }
-  }, [pCodeForAutoFill, messages]);
+  }, [pCodeForAutoFill, messages, booking?.id]);
 
   const sendMsgMutation = useMutation({
     mutationFn: (text: string) => sendBookingMessage(booking!.id, text),
@@ -944,14 +953,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               })()}
             />
             {/* Notes / Log */}
-            {(booking as any)?.notes && (
+            {((bookingDetailForBot as any)?.notes || (booking as any)?.notes) && (
               <DetailRow
                 icon={MessageSquare}
                 label="Notas"
                 className="col-span-2"
                 value={
                   <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-                    {(booking as any).notes}
+                    {(bookingDetailForBot as any)?.notes || (booking as any)?.notes}
                   </pre>
                 }
               />
