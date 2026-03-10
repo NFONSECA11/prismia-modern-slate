@@ -575,23 +575,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
     const actions: React.ReactNode[] = [];
 
-  // Auto-fill cancel booking ID from conversation messages
-  const pCodeForAutoFill = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-  useEffect(() => {
-    if (pCodeForAutoFill !== "cancel" || !messages.length || cancelBookingIdField) return;
-    for (const msg of messages) {
-      const body = (msg as any).body ?? (msg as any).text ?? "";
-      const match = body.match(/agendamento\s*(?:n[uú]mero|#|nº)?\s*(\d+)/i);
-      if (match) { setCancelBookingIdField(match[1]); return; }
-    }
-    for (const msg of messages) {
-      const dir = ((msg as any).direction ?? "").toString().toLowerCase();
-      const body = ((msg as any).body ?? (msg as any).text ?? "").trim();
-      if (dir === "in" && /^\d{1,6}$/.test(body)) { setCancelBookingIdField(body); return; }
-    }
-  }, [pCodeForAutoFill, messages]);
-
-
     if (mode === "handoff_manual") {
       if (booking.status === "handoff") {
         if (!isConvo) actions.push(
