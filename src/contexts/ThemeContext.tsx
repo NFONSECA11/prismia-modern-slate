@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type ThemeId = "dark-navy" | "soft-slate" | "light-clean";
-export type BgMode = "solid" | "landscape";
+export type BgMode = "solid" | "landscape" | "gradient";
 
 interface ThemeContextType {
   theme: ThemeId;
