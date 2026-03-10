@@ -296,7 +296,7 @@ export default function Index() {
   const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
   const gradientBg = gradientMap[theme]?.[bgVariant] ?? gradientMap[theme]?.[0];
 
-  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? gradientBg : `hsl(${solidBg})`;
+  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? "hsl(var(--background))" : `hsl(${solidBg})`;
 
   return (
     <div className="min-h-screen relative" style={{ background: mainBg }}>
@@ -305,6 +305,13 @@ export default function Index() {
         <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${currentBg})` }}
+        />
+      )}
+      {/* Background gradient */}
+      {isGradient && (
+        <div
+          className="fixed inset-0 z-0"
+          style={{ background: gradientBg }}
         />
       )}
       {/* Top navigation bar */}
