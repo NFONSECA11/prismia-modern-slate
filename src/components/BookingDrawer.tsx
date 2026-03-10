@@ -144,7 +144,7 @@ function ActionButton({
   );
 }
 
-import { cancelledBookingCache, extractCancelledIdFromNotes } from "@/lib/cancelledBookingCache";
+import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes } from "@/lib/cancelledBookingCache";
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
   const queryClient = useQueryClient();
@@ -662,7 +662,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const pCodeFallback = pCodeRaw || (booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
   const isCancelCode = pCodeRaw === "cancel" || pCodeFallback.startsWith("cancelar agendamento");
-  const isRescheduleCode = pCodeRaw === "reschedule";
+  const detailNotes = (bookingDetailForBot as any)?.notes ?? "";
+  const isRescheduleCode = pCodeRaw === "reschedule" || isRescheduleFromNotes(detailNotes);
 
   const cachedCancel = booking ? cancelledBookingCache.get(booking.id) : undefined;
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
@@ -875,7 +876,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               const effectiveCancelId = idFromNotes || cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
-                : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
+                : isRescheduleCode && effectiveCancelId
+                  ? `Reagendamento #${effectiveCancelId}`
+                  : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
               return <DetailRow icon={Hash} label="Procedimento" value={displayValue} />;
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
