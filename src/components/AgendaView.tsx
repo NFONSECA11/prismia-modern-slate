@@ -670,7 +670,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     <>
       <div
         className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
-        style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
+        style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
         {/* Toolbar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2">
