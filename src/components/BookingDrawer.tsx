@@ -581,6 +581,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       actions.push(
         <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
       );
+      if (booking.status === "confirmed") {
+        actions.push(
+          <ActionButton key="cancel-booking" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar Agendamento" variant="danger" />,
+        );
+      }
     }
 
     return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
