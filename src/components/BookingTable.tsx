@@ -388,11 +388,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                             const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                             const effectiveId = idFromNotes || cachedId;
                             const isReschedule = isRescheduleFromNotes((booking as any)?.notes);
-                            const isConfirmed = booking.status === "confirmed";
                             return (
                               <>
                                 <span className="text-foreground leading-tight flex items-center gap-1.5">
-                                  {isReschedule && isConfirmed && (
+                                  {isReschedule && (
                                     <RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
                                   )}
                                   {effectiveId
