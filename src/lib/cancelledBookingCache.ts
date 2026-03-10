@@ -16,3 +16,13 @@ export function isRescheduleFromNotes(notes?: string | null): boolean {
   if (!notes) return false;
   return /BR_TAG_IN/i.test(notes);
 }
+
+// Extract real procedure name from reschedule log in notes
+// Format: "... Reagendamento: ... | Procedimento: Limpeza de Pele | ..."
+export function extractProcedureFromNotes(notes?: string | null): string | null {
+  if (!notes) return null;
+  const matches = [...notes.matchAll(/Procedimento:\s*([^|]+)/gi)];
+  if (matches.length === 0) return null;
+  const name = matches[matches.length - 1][1].trim();
+  return name && name !== "N/A" ? name : null;
+}
