@@ -406,7 +406,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
-        const logEntry = `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} e atribuição de profissional por ${assignLeadName.trim() || "N/A"}`;
+        const realProcName = selectedProcedureId ? (allProcedures.find((p) => p.id === selectedProcedureId)?.name ?? "") : "";
+        const profName = professionals.find((p) => p.id === profId)?.name ?? "";
+        const logEntry = `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${realProcName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
         const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
         const payload: Record<string, unknown> = {
           lead_name: assignLeadName.trim() || booking!.lead_name,
@@ -418,9 +420,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         }
         if (selectedProcedureId) {
           payload.procedure = selectedProcedureId;
-          const realProc = allProcedures.find((p) => p.id === selectedProcedureId);
-          if (realProc?.name) payload.procedure_name = realProc.name;
-          if (realProc?.slug) payload.procedure_slug = realProc.slug;
         }
         if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
         const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;

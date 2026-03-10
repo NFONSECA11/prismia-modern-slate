@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes } from "@/lib/cancelledBookingCache";
+import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -257,13 +257,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
-          const isResch = isRescheduleFromNotes((detail as any).notes);
+          const detailNotes = (detail as any).notes ?? "";
+          const isResch = isRescheduleFromNotes(detailNotes);
           if (isResch) {
             newIds.push(b.id);
-            // If procedure_name starts with "Reagendar", try to get real name from detail
-            const detailProcName = (detail as any).procedure_name ?? "";
-            if (!/^Reagendar\s+agendamento/i.test(detailProcName) && detailProcName) {
-              newProcNames[b.id] = detailProcName;
+            // Extract real procedure name from notes log
+            const realProc = extractProcedureFromNotes(detailNotes);
+            if (realProc) {
+              newProcNames[b.id] = realProc;
             }
           }
         } catch { /* ignore */ }
@@ -442,8 +443,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                                   )}
                                   {effectiveId && !isReschedule
                                     ? `Cancelar agendamento #${effectiveId}`
-                                    : isReschedule && (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
-                                      ? (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
+                                    : isReschedule && rescheduleProcNameMap[booking.id]
+                                      ? rescheduleProcNameMap[booking.id]
                                       : booking.procedure_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
