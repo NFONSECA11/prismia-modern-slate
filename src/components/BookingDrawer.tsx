@@ -451,6 +451,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const wasRescheduleFlow = procCode === "reschedule";
       console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "wasRescheduleFlow:", wasRescheduleFlow, "procCode:", procCode);
       
+      // Capture procedure name BEFORE clearing state
+      const savedProcName = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId)?.name : undefined;
+      
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
@@ -466,8 +469,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        const realProcName = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId)?.name : undefined;
-        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: realProcName || undefined });
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
+        if (savedProcName) setOverrideProcedureName(savedProcName);
         try {
           console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
           await handoffOff(booking!.id);
