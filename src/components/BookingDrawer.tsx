@@ -143,6 +143,9 @@ function ActionButton({
   );
 }
 
+// Persistent cancel state that survives re-renders and refetches
+const cancelledBookingCache = new Map<number, { cancelledId: string; botOff: boolean }>();
+
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
