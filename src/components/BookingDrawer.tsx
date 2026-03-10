@@ -145,7 +145,7 @@ function ActionButton({
   );
 }
 
-import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes } from "@/lib/cancelledBookingCache";
+import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
   const queryClient = useQueryClient();
