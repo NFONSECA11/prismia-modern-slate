@@ -176,7 +176,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   // Reset form state when a different booking is opened
   useEffect(() => {
-    setAssignLeadName(booking?.lead_name ?? "");
+    const rawName = booking?.lead_name ?? "";
+    setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
