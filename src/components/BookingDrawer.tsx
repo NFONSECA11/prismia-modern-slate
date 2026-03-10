@@ -943,6 +943,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 }
               })()}
             />
+            {/* Notes / Log */}
+            {(booking as any)?.notes && (
+              <DetailRow
+                icon={MessageSquare}
+                label="Notas"
+                className="col-span-2"
+                value={
+                  <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                    {(booking as any).notes}
+                  </pre>
+                }
+              />
+            )}
           </div>
 
           {/* Awaiting choice state (assisted_slots_dashboard) */}
