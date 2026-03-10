@@ -412,6 +412,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
       if (wasCancelFlow) {
         setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
+        setForceBotOff(true);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
