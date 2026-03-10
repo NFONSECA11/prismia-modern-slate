@@ -433,6 +433,29 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     makeMutation(() => cancelBooking(booking!.id), "Cancelado!")
   );
 
+  // Cancel a confirmed booking: reopen first, then cancel
+  const cancelConfirmedMut = useMutation({
+    mutationFn: async () => {
+      await reopenBooking(booking!.id);
+      await cancelBooking(booking!.id);
+    },
+    onSuccess: async () => {
+      setActionDone("Agendamento cancelado!");
+      await refetchBookingDetailForBot();
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      const data = err?.response?.data;
+      const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
+      toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
+      setActionDone(null);
+    },
+  });
+
   const reopenMut = useMutation({
     mutationFn: () => reopenBooking(booking!.id),
     onMutate: async () => {
