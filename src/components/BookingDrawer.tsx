@@ -410,7 +410,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedSpecialtyId(null);
 
       const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      const wasCancelFlow = procCode === "cancel" || procCode.startsWith("cancelar");
+      const wasCancelFlow = procCode === "cancel";
 
       if (wasCancelFlow) {
         setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
