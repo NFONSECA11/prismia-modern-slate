@@ -257,13 +257,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
-          const isResch = isRescheduleFromNotes((detail as any).notes);
+          const detailNotes = (detail as any).notes ?? "";
+          const isResch = isRescheduleFromNotes(detailNotes);
           if (isResch) {
             newIds.push(b.id);
-            // If procedure_name starts with "Reagendar", try to get real name from detail
-            const detailProcName = (detail as any).procedure_name ?? "";
-            if (!/^Reagendar\s+agendamento/i.test(detailProcName) && detailProcName) {
-              newProcNames[b.id] = detailProcName;
+            // Extract real procedure name from notes log
+            const realProc = extractProcedureFromNotes(detailNotes);
+            if (realProc) {
+              newProcNames[b.id] = realProc;
             }
           }
         } catch { /* ignore */ }
