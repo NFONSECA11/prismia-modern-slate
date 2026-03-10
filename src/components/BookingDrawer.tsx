@@ -826,7 +826,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             {(() => {
-              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current;
+              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current || cachedCancel?.cancelledId;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
                 : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
