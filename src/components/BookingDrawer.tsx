@@ -52,6 +52,7 @@ import {
   Plus,
   ClipboardList,
   Check,
+  RefreshCw,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -876,10 +877,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               const effectiveCancelId = idFromNotes || cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
-                : isRescheduleCode && effectiveCancelId
-                  ? `Reagendamento #${effectiveCancelId}`
-                  : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
-              return <DetailRow icon={Hash} label="Procedimento" value={displayValue} />;
+                : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
+              return <DetailRow icon={Hash} label="Procedimento" value={
+                isRescheduleCode ? (
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                    {displayValue}
+                  </span>
+                ) : displayValue
+              } />;
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
