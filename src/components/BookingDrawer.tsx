@@ -50,6 +50,7 @@ import {
   Pencil,
   Trash2,
   Plus,
+  ClipboardList,
   Check,
 } from "lucide-react";
 
