@@ -821,10 +821,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             {(() => {
-              const displayValue = isCancelCode && cancelBookingIdField.trim()
-                ? `Cancelar agendamento #${cancelBookingIdField.trim()}`
+              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current;
+              const displayValue = isCancelCode && effectiveCancelId
+                ? `Cancelar agendamento #${effectiveCancelId}`
                 : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
-              console.log("[BookingDrawer] Procedimento render — isCancelCode:", isCancelCode, "cancelBookingIdField:", cancelBookingIdField, "displayValue:", displayValue);
               return <DetailRow icon={Hash} label="Procedimento" value={displayValue} />;
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
