@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { isRescheduleFromNotes } from "@/lib/cancelledBookingCache";
 import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { BookingRequest } from "@/types/booking";
 import { fetchFilteredBookings, fetchBookingRequestById, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
