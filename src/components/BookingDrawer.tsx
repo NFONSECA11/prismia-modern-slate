@@ -876,7 +876,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               const effectiveCancelId = idFromNotes || cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
-                : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
+                : isRescheduleCode && effectiveCancelId
+                  ? `Reagendamento #${effectiveCancelId}`
+                  : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
               return <DetailRow icon={Hash} label="Procedimento" value={displayValue} />;
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
