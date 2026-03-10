@@ -219,7 +219,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   );
 
   // Always fetch professionals when drawer opens with a booking missing a professional
-  const needsProfessional = !!booking && !hasProfessional;
+  const earlyProcCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
+  const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals-unit-drawer"],
