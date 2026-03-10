@@ -418,8 +418,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         }
         if (selectedProcedureId) {
           payload.procedure = selectedProcedureId;
-          const realProcName = allProcedures.find((p) => p.id === selectedProcedureId)?.name;
-          if (realProcName) payload.procedure_name = realProcName;
+          const realProc = allProcedures.find((p) => p.id === selectedProcedureId);
+          if (realProc?.name) payload.procedure_name = realProc.name;
+          if (realProc?.slug) payload.procedure_slug = realProc.slug;
         }
         if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
         const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
