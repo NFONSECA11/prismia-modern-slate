@@ -848,36 +848,42 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                 ) : (
               <div className="flex flex-col gap-3 w-full">
                     {isCancelCode ? (
-                      <>
-                        <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome Requisitante</label>
-                          <input
-                            type="text"
-                            value={assignLeadName}
-                            onChange={(e) => setAssignLeadName(e.target.value)}
-                            placeholder="Nome do cliente..."
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID Agendamento</label>
-                          <input
-                            type="text"
-                            value={cancelBookingIdField}
-                            onChange={(e) => setCancelBookingIdField(e.target.value)}
-                            placeholder="Ex: 483"
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => assignProfMut.mutate(0)}
-                            disabled={!assignLeadName.trim() || !cancelBookingIdField.trim() || assignProfMut.isPending}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                          >
-                            {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
-                          </button>
-                          {assignProfMut.isError && (
+                      (() => {
+                        const notesText = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+                        const alreadyCancelled = !!extractCancelledIdFromNotes(notesText);
+                        return alreadyCancelled ? (
+                          <div className="text-xs text-muted-foreground italic">Cancelamento já realizado.</div>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome Requisitante</label>
+                              <input
+                                type="text"
+                                value={assignLeadName}
+                                onChange={(e) => setAssignLeadName(e.target.value)}
+                                placeholder="Nome do cliente..."
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID Agendamento</label>
+                              <input
+                                type="text"
+                                value={cancelBookingIdField}
+                                onChange={(e) => setCancelBookingIdField(e.target.value)}
+                                placeholder="Ex: 483"
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => assignProfMut.mutate(0)}
+                                disabled={!assignLeadName.trim() || !cancelBookingIdField.trim() || assignProfMut.isPending}
+                                className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              >
+                                {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
+                              </button>
+                              {assignProfMut.isError && (
                             <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
                           )}
                         </div>
