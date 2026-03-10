@@ -320,7 +320,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const pCodeForAutoFill = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
   const pCodeAutoFillIsCancel = pCodeForAutoFill === "cancel" || (booking?.procedure_name ?? "").trim().toLowerCase().startsWith("cancelar agendamento");
   useEffect(() => {
-    if (!pCodeAutoFillIsCancel || cancelBookingIdField) return;
+    if (!pCodeAutoFillIsCancel || cancelBookingIdField || lastCancelledIdRef.current) return;
     // 1) From vars_snapshot.booking_reference
     const ref = (booking as any)?.vars_snapshot?.booking_reference;
     if (ref) { setCancelBookingIdField(String(ref)); return; }
