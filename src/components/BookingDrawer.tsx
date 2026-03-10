@@ -184,6 +184,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     setMockAssignedProfessional(null);
     setMessageText("");
     setActionDone(null);
+    // Reset stale mutation errors
+    confirmMut.reset();
+    cancelMut.reset();
+    cancelConfirmedMut.reset();
+    reopenMut.reset();
+    handoffOnMut.reset();
+    handoffOffMut.reset();
+    suggestMut.reset();
   }, [booking?.id]);
 
   const saveQuickReplies = (replies: string[]) => {
