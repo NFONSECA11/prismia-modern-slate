@@ -50,6 +50,7 @@ import {
   Pencil,
   Trash2,
   Plus,
+  ClipboardList,
   Check,
 } from "lucide-react";
 
@@ -839,8 +840,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
-              icon={User}
-              label={isConvo ? "Atendimento" : "Profissional"}
+              icon={isCancelCode ? ClipboardList : User}
+              label={isCancelCode ? "Ações" : isConvo ? "Atendimento" : "Profissional"}
               className="col-span-2"
               value={
                 hasProfessional ? (
