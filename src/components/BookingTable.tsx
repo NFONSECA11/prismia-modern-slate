@@ -208,7 +208,7 @@ function QuickActionButton({
 export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTableProps) {
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
-  const isLandscape = bgMode === "landscape";
+  const isGlass = bgMode === "landscape" || bgMode === "gradient";
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
@@ -344,7 +344,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isLandscape ? "backdrop-blur-xl" : ""}`} style={{ background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface-raised))" }}>
+      <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isGlass ? "backdrop-blur-xl" : ""}`} style={{ background: isGlass ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface-raised))" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
