@@ -615,7 +615,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     return actions.length > 0 ? <div className="flex gap-2 flex-wrap">{actions}</div> : null;
   }
 
-  const errorMutation = [confirmMut, cancelMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
+  const errorMutation = [confirmMut, cancelMut, cancelConfirmedMut, reopenMut, handoffOnMut, handoffOffMut, suggestMut].find(m => m.isError);
   const anyError = !!errorMutation;
   const errorDetail = (() => {
     if (!errorMutation?.error) return "Erro ao comunicar com o servidor. Tente novamente.";
