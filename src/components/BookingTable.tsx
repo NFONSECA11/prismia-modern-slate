@@ -431,8 +431,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                                   )}
                                   {effectiveId && !isReschedule
                                     ? `Cancelar agendamento #${effectiveId}`
-                                    : isReschedule
-                                      ? booking.procedure_name.replace(/^Reagendar\s+agendamento\s*#?\d*/i, "").trim() || booking.procedure_name
+                                    : isReschedule && effectiveId
+                                      ? `Reagendamento #${effectiveId}`
                                       : booking.procedure_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
