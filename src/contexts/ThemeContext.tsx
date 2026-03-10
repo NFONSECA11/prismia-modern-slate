@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type ThemeId = "dark-navy" | "soft-slate" | "light-clean";
-export type BgMode = "solid" | "landscape";
+export type BgMode = "solid" | "landscape" | "gradient";
 
 interface ThemeContextType {
   theme: ThemeId;
@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [bgMode, setBgModeState] = useState<BgMode>(() => {
     try {
       const saved = localStorage.getItem(BG_KEY);
-      if (saved === "solid" || saved === "landscape") return saved;
+      if (saved === "solid" || saved === "landscape" || saved === "gradient") return saved;
     } catch {}
     return "solid";
   });
