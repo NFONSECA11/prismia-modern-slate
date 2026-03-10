@@ -296,7 +296,7 @@ export default function Index() {
   const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
   const gradientBg = gradientMap[theme]?.[bgVariant] ?? gradientMap[theme]?.[0];
 
-  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? gradientBg : `hsl(${solidBg})`;
+  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? "hsl(var(--background))" : `hsl(${solidBg})`;
 
   return (
     <div className="min-h-screen relative" style={{ background: mainBg }}>
@@ -307,12 +307,19 @@ export default function Index() {
           style={{ backgroundImage: `url(${currentBg})` }}
         />
       )}
+      {/* Background gradient */}
+      {isGradient && (
+        <div
+          className="fixed inset-0 z-0"
+          style={{ background: gradientBg }}
+        />
+      )}
       {/* Top navigation bar */}
       <header
         className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60"
         style={{
-          background: (isLandscape || isGradient) ? "transparent" : "hsl(var(--surface))",
-          backdropFilter: (isLandscape || isGradient) ? "blur(16px)" : undefined,
+          background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
+          backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
         <div className="flex items-center gap-3">
