@@ -211,6 +211,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
+  const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -220,7 +221,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     if (missing.length === 0) return;
 
     let cancelled = false;
-    const batch = missing.slice(0, 20); // limit to avoid tunnel pressure
+    const batch = missing.slice(0, 20);
 
     (async () => {
       const results: Record<number, string> = {};
@@ -231,6 +232,39 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       }
       if (!cancelled && Object.keys(results).length > 0) {
         setPhoneMap((prev) => ({ ...prev, ...results }));
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookings]);
+
+  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN
+  useEffect(() => {
+    const confirmed = bookings.filter(
+      (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
+    );
+    if (confirmed.length === 0) return;
+
+    let cancelled = false;
+    const batch = confirmed.slice(0, 20);
+
+    (async () => {
+      const newIds: number[] = [];
+      for (const b of batch) {
+        if (cancelled) break;
+        try {
+          const detail = await fetchBookingRequestById(b.id);
+          if (isRescheduleFromNotes((detail as any).notes)) {
+            newIds.push(b.id);
+          }
+        } catch { /* ignore */ }
+      }
+      if (!cancelled && newIds.length > 0) {
+        setRescheduleSet((prev) => {
+          const next = new Set(prev);
+          newIds.forEach((id) => next.add(id));
+          return next;
+        });
       }
     })();
 
