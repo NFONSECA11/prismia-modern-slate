@@ -608,9 +608,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     suggestMut.isPending;
 
   const mode = booking.booking_mode as BookingMode;
-  const pCodeRaw = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
-  const isConvo = ["human", "prices"].includes(pCodeRaw);
-  const isCancelCode = pCodeRaw === "cancel";
+  const pCodeRaw = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any).procedure_code ?? booking.procedure_slug ?? "").trim().toLowerCase();
+  const pCodeFallback = pCodeRaw || (booking.procedure_name ?? "").trim().toLowerCase();
+  const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
+  const isCancelCode = pCodeRaw === "cancel" || pCodeFallback.startsWith("cancelar agendamento");
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
