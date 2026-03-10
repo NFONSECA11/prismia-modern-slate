@@ -381,7 +381,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                     ""
                   ).trim().toLowerCase();
                   const isConversationRequest = normalizedProcedureCode === "human" || normalizedProcedureCode === "prices";
-                  if (booking.id === 514) console.log("[DEBUG] BR#514 procedure_code:", (booking as any).procedure_code, "normalizedProcedureCode:", normalizedProcedureCode, "procedure_name:", booking.procedure_name);
 
                   return (
                     <tr
