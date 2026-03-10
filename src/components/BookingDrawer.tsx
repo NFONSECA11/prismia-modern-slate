@@ -454,6 +454,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1800);
     },
     onError: (err: any) => {
+      console.error("[cancelConfirmedMut] error:", err?.response?.status, err?.response?.data);
       const data = err?.response?.data;
       const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
       toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
