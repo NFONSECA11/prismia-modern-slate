@@ -423,9 +423,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       if (wasCancelFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        const newProcName = `Cancelar agendamento #${cancelledId}`;
-        console.log("[BookingDrawer] Setting lastCancelledIdRef:", cancelledId);
-        setOverrideProcedureName(newProcName);
+        // Persist to module-level cache so it survives any re-render/refetch
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: true });
+        console.log("[BookingDrawer] Cached cancel for BR", booking!.id, "→ cancelled", cancelledId);
+        setOverrideProcedureName(`Cancelar agendamento #${cancelledId}`);
         setForceBotOff(true);
         setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (isConvo) {
