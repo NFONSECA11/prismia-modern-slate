@@ -442,7 +442,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                                   )}
                                   {effectiveId && !isReschedule
                                     ? `Cancelar agendamento #${effectiveId}`
-                                    : booking.procedure_name}
+                                    : isReschedule && rescheduleProcNameMap[booking.id]
+                                      ? rescheduleProcNameMap[booking.id]
+                                      : booking.procedure_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
                               </>
