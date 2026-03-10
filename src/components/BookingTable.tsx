@@ -346,7 +346,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                     ""
                   ).trim().toLowerCase();
                   const isConversationRequest = normalizedProcedureCode === "human" || normalizedProcedureCode === "prices";
-                  if (booking.id === 514) console.log("[DEBUG] BR#514 notes:", JSON.stringify(booking.notes), "procedure_slug:", booking.procedure_slug, "keys:", Object.keys(booking));
 
                   return (
                     <tr
@@ -388,7 +387,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                             const idFromNotes = extractCancelledIdFromNotes(booking.notes);
                             const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                             const effectiveId = idFromNotes || cachedId;
-                            const isReschedule = isRescheduleFromNotes(booking.notes);
+                            const isReschedule = normalizedProcedureCode === "reschedule";
                             return (
                               <>
                                 <span className="text-foreground leading-tight flex items-center gap-1.5">
