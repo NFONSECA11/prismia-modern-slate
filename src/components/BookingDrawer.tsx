@@ -357,9 +357,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
       // Cancel flow: cancel the target booking by ID, then update current BR
-      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      const isCancelFlow = procCode === "cancel" && cancelBookingIdField.trim();
-      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "cancelBookingIdField:", cancelBookingIdField, "isCancelFlow:", isCancelFlow);
+      const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
+      const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
+      const isCancelFlow = (procCode === "cancel" || procName.startsWith("cancelar agendamento")) && cancelBookingIdField.trim();
+      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "procName:", procName, "isCancelFlow:", isCancelFlow);
       if (isCancelFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
