@@ -394,7 +394,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
 
-      if (isCancelCode) {
+      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
+      const wasCancelFlow = procCode === "cancel";
+
+      if (wasCancelFlow) {
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
@@ -409,7 +412,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         setActionDone("Profissional atribuído!");
       }
 
-      // Invalidate and refetch so the drawer updates status/bot badge
+      // Invalidate and refetch so the drawer updates status/bot badge/notes
       await queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       await queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
       await refetchBookingDetailForBot();
@@ -417,7 +420,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
-      }, 1200);
+        // Don't close drawer on cancel flow so user can see the log
+      }, wasCancelFlow ? 3000 : 1200);
     },
     onError: (err: any) => {
       const status = err?.response?.status;
