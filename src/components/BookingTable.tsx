@@ -387,9 +387,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                               const idFromNotes = extractCancelledIdFromNotes((booking as any)?.notes);
                               const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                               const effectiveId = idFromNotes || cachedId;
-                              return effectiveId
-                                ? `Cancelar agendamento #${effectiveId}`
-                                : booking.procedure_name;
+                              if (!effectiveId) return booking.procedure_name;
+                              return normalizedProcedureCode === "reschedule"
+                                ? `Reagendamento #${effectiveId}`
+                                : `Cancelar agendamento #${effectiveId}`;
                             })()}
                           </span>
                           <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
