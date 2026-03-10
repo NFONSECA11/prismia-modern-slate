@@ -154,6 +154,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
+  const lastCancelledIdRef = useRef<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
