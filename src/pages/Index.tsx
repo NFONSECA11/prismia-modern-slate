@@ -64,6 +64,10 @@ export default function Index() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [hideCancelled, setHideCancelled] = useState(() => {
+    const saved = localStorage.getItem("prismia-hide-cancelled");
+    return saved === "true";
+  });
 
   const queryClient = useQueryClient();
 
