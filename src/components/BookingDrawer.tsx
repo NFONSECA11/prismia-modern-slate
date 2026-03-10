@@ -437,15 +437,28 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Cancel a confirmed booking: reopen first, then cancel
   const cancelConfirmedMut = useMutation({
     mutationFn: async () => {
+      // Try multiple strategies to cancel a confirmed booking
+      // Strategy 1: direct cancel
+      try {
+        await cancelBooking(booking!.id);
+        return;
+      } catch (e1: any) {
+        console.log("[cancelConfirmed] direct cancel failed:", e1?.response?.status);
+      }
+      // Strategy 2: reopen then cancel
       try {
         await reopenBooking(booking!.id);
-      } catch {
-        // reopen may fail if backend allows direct cancel — continue
+        await cancelBooking(booking!.id);
+        return;
+      } catch (e2: any) {
+        console.log("[cancelConfirmed] reopen+cancel failed:", e2?.response?.status);
       }
-      await cancelBooking(booking!.id);
+      // Strategy 3: patch status directly
+      await patchBooking(booking!.id, { status: "cancelled" });
     },
     onSuccess: async () => {
       setActionDone("Agendamento cancelado!");
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       await refetchBookingDetailForBot();
       setTimeout(() => {
         onConfirmed();
@@ -454,7 +467,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1800);
     },
     onError: (err: any) => {
-      console.error("[cancelConfirmedMut] error:", err?.response?.status, err?.response?.data);
+      console.error("[cancelConfirmedMut] all strategies failed:", err?.response?.status, err?.response?.data);
       const data = err?.response?.data;
       const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
       toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
