@@ -440,25 +440,25 @@ function WeekView({
     <div className="overflow-x-auto">
       <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
         {/* Header grouped by professional */}
-        <div className="sticky top-0 z-10" style={{ background: "#f5f5f5", borderBottom: "1px solid #e0e0e0" }}>
+        <div className="sticky top-0 z-10 border-b border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
           {professionals.length === 0 ? (
             <div className="flex">
-              <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
-              <div className="flex-1 px-3 py-2 text-xs italic" style={{ color: "#888" }}>Sem profissionais</div>
+              <div className="w-[60px] flex-shrink-0 border-r border-border" />
+              <div className="flex-1 px-3 py-2 text-xs italic text-muted-foreground">Sem profissionais</div>
             </div>
           ) : (
             <>
-              <div className="flex" style={{ borderBottom: "1px solid #e0e0e0" }}>
-                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
+              <div className="flex border-b border-border">
+                <div className="w-[60px] flex-shrink-0 border-r border-border" />
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
                     className={`flex-1 px-2 py-1.5 text-center`}
-                    style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}
+                    style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}
                     title={`${prof.name} (${prof.specialty})`}
                   >
-                    <p className="text-[11px] font-semibold leading-tight truncate" style={{ color: "#222" }}>{prof.name}</p>
-                    <p className="text-[9px] truncate" style={{ color: "#888" }}>{prof.specialty}</p>
+                    <p className="text-[11px] font-semibold leading-tight truncate text-foreground">{prof.name}</p>
+                    <p className="text-[9px] truncate text-muted-foreground">{prof.specialty}</p>
                   </div>
                 ))}
               </div>
