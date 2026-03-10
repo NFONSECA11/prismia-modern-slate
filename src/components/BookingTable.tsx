@@ -16,6 +16,7 @@ import {
   handoffOff,
   suggestSlots,
   fetchBookingPhoneById,
+  fetchBookingRequestById,
 } from "@/lib/bookingApi";
 import {
   Phone,
@@ -211,6 +212,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
+  const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -220,7 +222,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     if (missing.length === 0) return;
 
     let cancelled = false;
-    const batch = missing.slice(0, 20); // limit to avoid tunnel pressure
+    const batch = missing.slice(0, 20);
 
     (async () => {
       const results: Record<number, string> = {};
@@ -231,6 +233,39 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       }
       if (!cancelled && Object.keys(results).length > 0) {
         setPhoneMap((prev) => ({ ...prev, ...results }));
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookings]);
+
+  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN
+  useEffect(() => {
+    const confirmed = bookings.filter(
+      (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
+    );
+    if (confirmed.length === 0) return;
+
+    let cancelled = false;
+    const batch = confirmed.slice(0, 20);
+
+    (async () => {
+      const newIds: number[] = [];
+      for (const b of batch) {
+        if (cancelled) break;
+        try {
+          const detail = await fetchBookingRequestById(b.id);
+          if (isRescheduleFromNotes((detail as any).notes)) {
+            newIds.push(b.id);
+          }
+        } catch { /* ignore */ }
+      }
+      if (!cancelled && newIds.length > 0) {
+        setRescheduleSet((prev) => {
+          const next = new Set(prev);
+          newIds.forEach((id) => next.add(id));
+          return next;
+        });
       }
     })();
 
@@ -346,7 +381,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                     ""
                   ).trim().toLowerCase();
                   const isConversationRequest = normalizedProcedureCode === "human" || normalizedProcedureCode === "prices";
-                  if (booking.id === 514) console.log("[DEBUG] BR#514 procedure_code:", (booking as any).procedure_code, "normalizedProcedureCode:", normalizedProcedureCode, "procedure_name:", booking.procedure_name);
 
                   return (
                     <tr
@@ -388,7 +422,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                             const idFromNotes = extractCancelledIdFromNotes(booking.notes);
                             const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                             const effectiveId = idFromNotes || cachedId;
-                            const isReschedule = normalizedProcedureCode === "reschedule";
+                            const isReschedule = normalizedProcedureCode === "reschedule" || rescheduleSet.has(booking.id);
                             return (
                               <>
                                 <span className="text-foreground leading-tight flex items-center gap-1.5">
