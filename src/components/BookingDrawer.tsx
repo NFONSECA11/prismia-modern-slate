@@ -326,6 +326,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
+      // Cancel flow: cancel the target booking by ID, then update current BR's lead_name
+      if (isCancelCode && cancelBookingIdField.trim()) {
+        const targetId = Number(cancelBookingIdField.trim());
+        if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
+        console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
+        // Step 1: Cancel the target booking
+        await cancelBooking(targetId);
+        // Step 2: Update current BR's lead_name
+        return await patchBooking(booking!.id, {
+          lead_name: assignLeadName.trim() || booking!.lead_name,
+        });
+      }
+
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim() || booking!.lead_name,
       };
@@ -333,18 +346,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         payload.professional = profId;
         payload.booking_mode = "assisted_slots_dashboard";
       }
-      // procedure = real procedure ID (same as curl)
       if (selectedProcedureId) {
         payload.procedure = selectedProcedureId;
       }
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
 
-      console.log("[BookingDrawer] PATCH payload:", JSON.stringify(payload), 
-        "| selectedProcedureId:", selectedProcedureId, 
-        "| resolvedUnitProcId:", resolvedUnitProcId,
-        "| unitProcLinks:", JSON.stringify(unitProcLinks),
-        "| proceduresForProfessional:", JSON.stringify(proceduresForProfessional.map(p => ({ id: p.id, name: p.name }))));
+      console.log("[BookingDrawer] PATCH payload:", JSON.stringify(payload));
       return await patchBooking(booking!.id, payload);
     },
     onSuccess: async (result: any) => {
