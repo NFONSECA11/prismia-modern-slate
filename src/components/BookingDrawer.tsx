@@ -432,15 +432,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }
 
       // Invalidate and refetch so the drawer updates status/bot badge/notes
-      await queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
-      await queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
-      await refetchBookingDetailForBot();
-
-      setTimeout(() => {
-        onConfirmed();
-        setActionDone(null);
-        // Don't close drawer on cancel flow so user can see the log
-      }, wasCancelFlow ? 3000 : 1200);
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
+      
+      if (wasCancelFlow) {
+        // Don't refetch immediately — keep local overrides visible
+        setTimeout(() => {
+          refetchBookingDetailForBot();
+          setActionDone(null);
+        }, 3000);
+      } else {
+        await refetchBookingDetailForBot();
+        setTimeout(() => {
+          onConfirmed();
+          setActionDone(null);
+        }, 1200);
+      }
     },
     onError: (err: any) => {
       const status = err?.response?.status;
