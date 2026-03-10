@@ -441,7 +441,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
       const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
       const wasCancelFlow = procCode === "cancel" || procName.startsWith("cancelar agendamento");
-      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "procCode:", procCode);
+      const wasRescheduleFlow = procCode === "reschedule";
+      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "wasRescheduleFlow:", wasRescheduleFlow, "procCode:", procCode);
       
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
@@ -450,12 +451,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       if (wasCancelFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        // Persist to module-level cache so it survives any re-render/refetch
         cancelledBookingCache.set(booking!.id, { cancelledId, botOff: true });
         console.log("[BookingDrawer] Cached cancel for BR", booking!.id, "→ cancelled", cancelledId);
         setOverrideProcedureName(`Cancelar agendamento #${cancelledId}`);
         setForceBotOff(true);
         setActionDone(`Agenda #${cancelledId} cancelada!`);
+      } else if (wasRescheduleFlow) {
+        const cancelledId = cancelBookingIdField.trim();
+        lastCancelledIdRef.current = cancelledId;
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false });
+        try {
+          console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
+          await handoffOff(booking!.id);
+          setActionDone(`Agenda #${cancelledId} cancelada e bot ligado!`);
+        } catch (err) {
+          console.error("[BookingDrawer] handoffOff after reschedule failed:", err);
+          setActionDone(`Agenda #${cancelledId} cancelada, mas falha ao ligar bot.`);
+        }
       } else if (isConvo) {
         try {
           console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
@@ -474,7 +486,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
       
       if (wasCancelFlow) {
-        // Don't refetch immediately — keep local overrides visible
         setTimeout(() => {
           refetchBookingDetailForBot();
           setActionDone(null);
