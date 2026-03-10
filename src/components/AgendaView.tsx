@@ -464,21 +464,21 @@ function WeekView({
               </div>
 
               <div className="flex">
-                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid #e0e0e0" }} />
+                <div className="w-[60px] flex-shrink-0 border-r border-border" />
                 {professionals.map((prof, pi) => (
-                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}>
+                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
                     {days.map((day, di) => {
                       const today = isToday(day);
                       return (
                         <div
                           key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
                           className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
-                          style={{ borderLeft: di > 0 ? "1px solid #d0d0d0" : undefined }}
+                          style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : ""}`} style={{ color: today ? undefined : "#999" }}>
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}>
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : ""}`} style={{ color: today ? undefined : "#222" }}>
+                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
                             {format(day, "dd")}
                           </p>
                         </div>
