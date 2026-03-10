@@ -610,7 +610,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       actions.push(
         <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
       );
-      if (booking.status === "confirmed") {
+      if (booking.status === "confirmed" && pCodeRaw !== "cancel") {
         actions.push(
           <ActionButton key="cancel-booking" onClick={() => cancelConfirmedMut.mutate()} disabled={busy} loading={cancelConfirmedMut.isPending} icon={XCircle} label="Cancelar Agendamento" variant="danger" />,
         );

@@ -145,7 +145,10 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
   if (terminal) {
     actions.push({ key: "reopen", icon: RotateCcw, label: "Reabrir", variant: "default" });
     if (booking.status === "confirmed") {
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar Agendamento", variant: "danger" });
+      const pCode = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
+      if (pCode !== "cancel") {
+        actions.push({ key: "cancel", icon: XCircle, label: "Cancelar Agendamento", variant: "danger" });
+      }
     } else {
       const pCode = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
       if (pCode === "cancel" || pCode === "reschedule") {
