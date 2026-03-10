@@ -143,6 +143,9 @@ function ActionButton({
   );
 }
 
+// Persistent cancel state that survives re-renders and refetches
+const cancelledBookingCache = new Map<number, { cancelledId: string; botOff: boolean }>();
+
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
@@ -420,9 +423,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       if (wasCancelFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        const newProcName = `Cancelar agendamento #${cancelledId}`;
-        console.log("[BookingDrawer] Setting lastCancelledIdRef:", cancelledId);
-        setOverrideProcedureName(newProcName);
+        // Persist to module-level cache so it survives any re-render/refetch
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: true });
+        console.log("[BookingDrawer] Cached cancel for BR", booking!.id, "→ cancelled", cancelledId);
+        setOverrideProcedureName(`Cancelar agendamento #${cancelledId}`);
         setForceBotOff(true);
         setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (isConvo) {
@@ -620,10 +624,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
   const isCancelCode = pCodeRaw === "cancel" || pCodeFallback.startsWith("cancelar agendamento");
 
+  const cachedCancel = booking ? cancelledBookingCache.get(booking.id) : undefined;
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
   const cancelButConfirmed = isCancelCode && effectiveStatus === "confirmed";
-  const isBotOn = (forceBotOff || (isCancelCode && !cancelButConfirmed)) ? false : (effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending"));
+  const isBotOn = (forceBotOff || cachedCancel?.botOff || (isCancelCode && !cancelButConfirmed)) ? false : (effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending"));
   const botLabel = isBotOn ? "ON" : "OFF";
 
   const formattedCreated = (() => {
@@ -821,7 +826,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             {(() => {
-              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current;
+              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current || cachedCancel?.cancelledId;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
                 : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
