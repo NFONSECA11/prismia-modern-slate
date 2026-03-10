@@ -953,7 +953,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               })()}
             />
             {/* Notes / Log */}
-            {(booking as any)?.notes && (
+            {((bookingDetailForBot as any)?.notes || (booking as any)?.notes) && (
               <DetailRow
                 icon={MessageSquare}
                 label="Notas"
