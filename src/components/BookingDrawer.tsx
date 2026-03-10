@@ -796,7 +796,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           </div>
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
-            <DetailRow icon={Hash} label="Procedimento" value={(bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name} />
+            <DetailRow icon={Hash} label="Procedimento" value={overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name} />
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
               icon={User}
