@@ -349,12 +349,12 @@ function DayView({
     <div className="overflow-x-auto">
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
-        <div className="flex border-b sticky top-0 z-10" style={{ borderColor: "#e0e0e0", background: "#f5f5f5" }}>
-          <div className="w-[60px] flex-shrink-0 border-r" style={{ borderColor: "#e0e0e0" }} />
+        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+          <div className="w-[60px] flex-shrink-0 border-r border-border" />
           {professionals.map((prof) => (
-            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5" style={{ borderColor: "#e0e0e0" }}>
-              <p className="text-xs font-semibold truncate" style={{ color: "#222" }}>{prof.name}</p>
-              <p className="text-[10px] truncate" style={{ color: "#888" }}>{prof.specialty}</p>
+            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5 border-border">
+              <p className="text-xs font-semibold truncate text-foreground">{prof.name}</p>
+              <p className="text-[10px] truncate text-muted-foreground">{prof.specialty}</p>
             </div>
           ))}
         </div>
