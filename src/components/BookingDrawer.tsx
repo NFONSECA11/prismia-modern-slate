@@ -624,6 +624,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const pCodeFallback = pCodeRaw || (booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
   const isCancelCode = pCodeRaw === "cancel" || pCodeFallback.startsWith("cancelar agendamento");
+  const isRescheduleCode = pCodeRaw === "reschedule";
 
   const cachedCancel = booking ? cancelledBookingCache.get(booking.id) : undefined;
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
