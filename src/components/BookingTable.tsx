@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { cancelledBookingCache } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
