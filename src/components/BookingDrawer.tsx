@@ -509,6 +509,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const busy =
     confirmMut.isPending ||
     cancelMut.isPending ||
+    cancelConfirmedMut.isPending ||
     reopenMut.isPending ||
     handoffOnMut.isPending ||
     handoffOffMut.isPending ||
