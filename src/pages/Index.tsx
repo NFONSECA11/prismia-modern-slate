@@ -179,7 +179,9 @@ export default function Index() {
 
         const toPatch = [...rescheduleBRs, ...(unitIsAuto ? otherBRs : [])];
 
-        for (const br of awaitingBRs) {
+        if (toPatch.length === 0) return;
+
+        for (const br of toPatch) {
           autoPatchedRef.current.add(br.id);
           try {
             await patchBooking(br.id, { booking_mode: "auto_slots_bot" });
