@@ -246,7 +246,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
           break;
         case "cancel":
           if (booking.status === "confirmed") {
-            await reopenBooking(booking.id);
+            try { await reopenBooking(booking.id); } catch { /* continue */ }
           }
           await cancelBooking(booking.id);
           break;
