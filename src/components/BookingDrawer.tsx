@@ -361,8 +361,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
 
-      // For conversation BRs (human/prices), also turn the bot ON after assigning
-      if (isConvo) {
+      if (isCancelCode) {
+        setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
+      } else if (isConvo) {
         try {
           console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
           await handoffOff(booking!.id);
