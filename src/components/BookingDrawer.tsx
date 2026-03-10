@@ -152,6 +152,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
+  const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
@@ -180,6 +181,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     const rawName = booking?.lead_name ?? "";
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
     setCancelBookingIdField("");
+    setOverrideProcedureName(null);
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
@@ -404,6 +406,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         } catch (err) {
           console.warn("[BookingDrawer] handoffOn after cancel failed (may already be off):", err);
         }
+        setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
@@ -793,7 +796,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           </div>
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
-            <DetailRow icon={Hash} label="Procedimento" value={(bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name} />
+            <DetailRow icon={Hash} label="Procedimento" value={overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name} />
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
               icon={User}
