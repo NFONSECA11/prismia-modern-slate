@@ -317,9 +317,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     mutationFn: async (profId: number) => {
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim() || booking!.lead_name,
-        professional: profId,
-        booking_mode: "assisted_slots_dashboard",
       };
+      if (profId > 0) {
+        payload.professional = profId;
+        payload.booking_mode = "assisted_slots_dashboard";
+      }
       // procedure = real procedure ID (same as curl)
       if (selectedProcedureId) {
         payload.procedure = selectedProcedureId;
@@ -786,8 +788,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     {/* Assign button */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
-                        disabled={!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || assignProfMut.isPending}
+                        onClick={() => isCancelCode ? assignProfMut.mutate(0) : selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                        disabled={
+                          isCancelCode
+                            ? (!assignLeadName.trim() || assignProfMut.isPending)
+                            : (!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || assignProfMut.isPending)
+                        }
                         className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
                         {assignProfMut.isPending ? (
