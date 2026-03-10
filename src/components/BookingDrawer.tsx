@@ -787,7 +787,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
-                        disabled={!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || assignProfMut.isPending}
+                        disabled={
+                          isCancelCode
+                            ? (!assignLeadName.trim() || assignProfMut.isPending)
+                            : (!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || assignProfMut.isPending)
+                        }
                         className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
                         {assignProfMut.isPending ? (
