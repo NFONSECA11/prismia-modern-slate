@@ -437,7 +437,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Cancel a confirmed booking: reopen first, then cancel
   const cancelConfirmedMut = useMutation({
     mutationFn: async () => {
-      await reopenBooking(booking!.id);
+      try {
+        await reopenBooking(booking!.id);
+      } catch {
+        // reopen may fail if backend allows direct cancel — continue
+      }
       await cancelBooking(booking!.id);
     },
     onSuccess: async () => {
