@@ -407,12 +407,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const wasCancelFlow = procCode === "cancel";
 
       if (wasCancelFlow) {
-        try {
-          console.log("[BookingDrawer] Cancel flow — calling handoffOn to turn bot OFF");
-          await handoffOn(booking!.id);
-        } catch (err) {
-          console.warn("[BookingDrawer] handoffOn after cancel failed (may already be off):", err);
-        }
         setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
