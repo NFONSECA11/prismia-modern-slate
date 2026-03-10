@@ -349,9 +349,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
         // Step 1: Cancel the target booking
         await cancelBooking(targetId);
-        // Step 2: Update current BR's lead_name
+        // Step 2: Update current BR's lead_name + notes with log
+        const now = new Date();
+        const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+        const existingNotes = (booking as any)?.notes ?? "";
+        const logEntry = `[${timestamp}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
+        const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
         return await patchBooking(booking!.id, {
           lead_name: assignLeadName.trim() || booking!.lead_name,
+          notes: newNotes,
         });
       }
 
