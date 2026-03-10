@@ -437,24 +437,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Cancel a confirmed booking: reopen first, then cancel
   const cancelConfirmedMut = useMutation({
     mutationFn: async () => {
-      // Try multiple strategies to cancel a confirmed booking
-      // Strategy 1: direct cancel
-      try {
-        await cancelBooking(booking!.id);
-        return;
-      } catch (e1: any) {
-        console.log("[cancelConfirmed] direct cancel failed:", e1?.response?.status);
-      }
-      // Strategy 2: reopen then cancel
-      try {
-        await reopenBooking(booking!.id);
-        await cancelBooking(booking!.id);
-        return;
-      } catch (e2: any) {
-        console.log("[cancelConfirmed] reopen+cancel failed:", e2?.response?.status);
-      }
-      // Strategy 3: patch status directly
-      await patchBooking(booking!.id, { status: "cancelled" });
+      // Step 1: reopen (moves from confirmed → handoff)
+      await reopenBooking(booking!.id);
+      // Small delay to let backend commit
+      await new Promise(r => setTimeout(r, 500));
+      // Step 2: cancel (moves from handoff → cancelled)
+      await cancelBooking(booking!.id);
     },
     onSuccess: async () => {
       setActionDone("Agendamento cancelado!");
@@ -467,10 +455,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       }, 1800);
     },
     onError: (err: any) => {
-      console.error("[cancelConfirmedMut] all strategies failed:", err?.response?.status, err?.response?.data);
+      console.error("[cancelConfirmedMut] error:", err?.response?.status, JSON.stringify(err?.response?.data)?.substring(0, 300));
+      // If reopen succeeded but cancel failed, at least refresh to show new status
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      refetchBookingDetailForBot();
       const data = err?.response?.data;
-      const msg = data?.detail || data?.error || "Erro ao cancelar agendamento.";
-      toast.error(typeof msg === "string" ? msg : "Erro ao cancelar agendamento.");
+      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
+      toast.error(typeof detail === "string" ? detail : "Erro ao cancelar agendamento. O booking foi reaberto.");
       setActionDone(null);
     },
   });
