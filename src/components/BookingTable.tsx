@@ -240,7 +240,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => { cancelled = true; };
   }, [bookings]);
 
-  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN
+  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN + real procedure name
   useEffect(() => {
     const confirmed = bookings.filter(
       (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
@@ -252,12 +252,19 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
     (async () => {
       const newIds: number[] = [];
+      const newProcNames: Record<number, string> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
-          if (isRescheduleFromNotes((detail as any).notes)) {
+          const isResch = isRescheduleFromNotes((detail as any).notes);
+          if (isResch) {
             newIds.push(b.id);
+            // If procedure_name starts with "Reagendar", try to get real name from detail
+            const detailProcName = (detail as any).procedure_name ?? "";
+            if (!/^Reagendar\s+agendamento/i.test(detailProcName) && detailProcName) {
+              newProcNames[b.id] = detailProcName;
+            }
           }
         } catch { /* ignore */ }
       }
@@ -267,6 +274,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
           newIds.forEach((id) => next.add(id));
           return next;
         });
+      }
+      if (!cancelled && Object.keys(newProcNames).length > 0) {
+        setRescheduleProcNameMap((prev) => ({ ...prev, ...newProcNames }));
       }
     })();
 
