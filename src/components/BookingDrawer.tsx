@@ -626,8 +626,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const cachedCancel = booking ? cancelledBookingCache.get(booking.id) : undefined;
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
-  const cancelButConfirmed = isCancelCode && effectiveStatus === "confirmed";
-  const isBotOn = (forceBotOff || cachedCancel?.botOff || (isCancelCode && !cancelButConfirmed)) ? false : (effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending"));
+  const baseBotOn = effectiveBotMode === "on" || (effectiveBotMode !== "off" && effectiveStatus !== "handoff" && effectiveStatus !== "awaiting_choice" && effectiveStatus !== "pending");
+  const cancelForcesOff = isCancelCode && effectiveStatus !== "confirmed";
+  const isBotOn = (forceBotOff || cachedCancel?.botOff || cancelForcesOff) ? false : baseBotOn;
   const botLabel = isBotOn ? "ON" : "OFF";
 
   const formattedCreated = (() => {
