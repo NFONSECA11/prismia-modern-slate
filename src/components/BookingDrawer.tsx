@@ -490,9 +490,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     suggestMut.isPending;
 
   const mode = booking.booking_mode as BookingMode;
-  const isConvo = ["human", "prices"].includes(
-    ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
-  );
+  const pCodeRaw = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
+  const isConvo = ["human", "prices"].includes(pCodeRaw);
+  const isCancelCode = pCodeRaw === "cancel";
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
@@ -725,7 +725,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                             setSelectedProcedureId(null);
                             setSelectedSpecialtyId(null);
                           }}
-                          className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                          disabled={isCancelCode}
+                          className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <option value="">Selecionar...</option>
                           {professionals.map((p) => (
@@ -744,7 +745,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                             setSelectedProcedureId(Number(e.target.value) || null);
                             setSelectedSpecialtyId(null);
                           }}
-                          disabled={!selectedProfessionalId}
+                          disabled={!selectedProfessionalId || isCancelCode}
                           className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <option value="">{selectedProfessionalId ? "Selecionar..." : "—"}</option>
