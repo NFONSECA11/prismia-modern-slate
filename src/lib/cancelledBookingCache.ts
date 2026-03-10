@@ -11,8 +11,8 @@ export function extractCancelledIdFromNotes(notes?: string | null): string | nul
   return matches[matches.length - 1][1];
 }
 
-// Detect if notes contain a reschedule log entry
+// Detect if notes contain a reschedule marker (BR_TAG_IN)
 export function isRescheduleFromNotes(notes?: string | null): boolean {
   if (!notes) return false;
-  return /reagendamento/i.test(notes);
+  return /BR_TAG_IN/i.test(notes);
 }
