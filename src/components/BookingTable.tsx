@@ -388,7 +388,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                               const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
                               const effectiveId = idFromNotes || cachedId;
                               if (!effectiveId) return booking.procedure_name;
-                              return normalizedProcedureCode === "reschedule"
+                              const isReschedule = normalizedProcedureCode === "reschedule" || isRescheduleFromNotes((booking as any)?.notes);
+                              return isReschedule
                                 ? `Reagendamento #${effectiveId}`
                                 : `Cancelar agendamento #${effectiveId}`;
                             })()}
