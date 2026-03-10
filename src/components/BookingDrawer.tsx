@@ -467,7 +467,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false });
+        const realProcName = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId)?.name : undefined;
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: realProcName || undefined });
         try {
           console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
           await handoffOff(booking!.id);

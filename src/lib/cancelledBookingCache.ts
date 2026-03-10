@@ -1,5 +1,5 @@
 // Module-level cache for cancelled booking data (session only)
-export const cancelledBookingCache = new Map<number, { cancelledId: string; botOff: boolean }>();
+export const cancelledBookingCache = new Map<number, { cancelledId: string; botOff: boolean; realProcedureName?: string }>();
 
 // Extract the last cancelled/rescheduled booking ID from the notes log
 // Notes format: "[DD/MM/YYYY HH:mm] Cancelamento do agendamento #123 ..."

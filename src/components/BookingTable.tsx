@@ -213,6 +213,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
+  const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -239,7 +240,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => { cancelled = true; };
   }, [bookings]);
 
-  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN
+  // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN + real procedure name
   useEffect(() => {
     const confirmed = bookings.filter(
       (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
@@ -251,12 +252,19 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
     (async () => {
       const newIds: number[] = [];
+      const newProcNames: Record<number, string> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
-          if (isRescheduleFromNotes((detail as any).notes)) {
+          const isResch = isRescheduleFromNotes((detail as any).notes);
+          if (isResch) {
             newIds.push(b.id);
+            // If procedure_name starts with "Reagendar", try to get real name from detail
+            const detailProcName = (detail as any).procedure_name ?? "";
+            if (!/^Reagendar\s+agendamento/i.test(detailProcName) && detailProcName) {
+              newProcNames[b.id] = detailProcName;
+            }
           }
         } catch { /* ignore */ }
       }
@@ -266,6 +274,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
           newIds.forEach((id) => next.add(id));
           return next;
         });
+      }
+      if (!cancelled && Object.keys(newProcNames).length > 0) {
+        setRescheduleProcNameMap((prev) => ({ ...prev, ...newProcNames }));
       }
     })();
 
@@ -431,7 +442,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                                   )}
                                   {effectiveId && !isReschedule
                                     ? `Cancelar agendamento #${effectiveId}`
-                                    : booking.procedure_name}
+                                    : isReschedule && (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
+                                      ? (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
+                                      : booking.procedure_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
                               </>
