@@ -378,6 +378,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           lead_name: assignLeadName.trim() || booking!.lead_name,
           procedure_name: `Cancelar agendamento #${targetId}`,
           notes: newNotes,
+          conversation_bot_mode: "off",
+          booking_mode: "handoff_manual",
         });
       }
 
