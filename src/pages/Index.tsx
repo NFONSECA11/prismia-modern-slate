@@ -164,12 +164,23 @@ export default function Index() {
 
     (async () => {
       try {
-        // Reschedules always go auto, others check unit settings
-        const rescheduleBRs = awaitingBRs.filter((b) => {
+        // Detect reschedules: by procedure_code or by notes (need fetch for notes)
+        const rescheduleIds = new Set<number>();
+        for (const b of awaitingBRs) {
           const pCode = ((b as any).procedure_code ?? b.procedure_slug ?? "").trim().toLowerCase();
-          return pCode === "reschedule" || isRescheduleFromNotes((b as any).notes);
-        });
-        const otherBRs = awaitingBRs.filter((b) => !rescheduleBRs.includes(b));
+          if (pCode === "reschedule") {
+            rescheduleIds.add(b.id);
+          } else {
+            try {
+              const detail = await fetchBookingRequestById(b.id);
+              if (isRescheduleFromNotes((detail as any).notes)) {
+                rescheduleIds.add(b.id);
+              }
+            } catch { /* ignore */ }
+          }
+        }
+        const rescheduleBRs = awaitingBRs.filter((b) => rescheduleIds.has(b.id));
+        const otherBRs = awaitingBRs.filter((b) => !rescheduleIds.has(b.id));
 
         let unitIsAuto = false;
         if (otherBRs.length > 0) {
