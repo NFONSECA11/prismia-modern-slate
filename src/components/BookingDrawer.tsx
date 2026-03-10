@@ -152,6 +152,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
+  const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
