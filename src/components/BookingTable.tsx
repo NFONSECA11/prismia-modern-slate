@@ -249,17 +249,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
           break;
         case "cancel":
           if (booking.status === "confirmed") {
-            // Try direct cancel first, then reopen+cancel, then patch
-            try {
-              await cancelBooking(booking.id);
-              break;
-            } catch { /* continue */ }
-            try {
-              await reopenBooking(booking.id);
-              await cancelBooking(booking.id);
-              break;
-            } catch { /* continue */ }
-            await import("@/lib/bookingApi").then(m => m.patchBooking(booking.id, { status: "cancelled" }));
+            await reopenBooking(booking.id);
+            await new Promise(r => setTimeout(r, 500));
+            await cancelBooking(booking.id);
           } else {
             await cancelBooking(booking.id);
           }
