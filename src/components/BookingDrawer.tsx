@@ -317,7 +317,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Auto-fill cancel booking ID from booking data or conversation messages
   const pCodeForAutoFill = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
   useEffect(() => {
-    if (!(pCodeForAutoFill === "cancel" || pCodeForAutoFill.startsWith("cancelar")) || cancelBookingIdField) return;
+    if (pCodeForAutoFill !== "cancel" || cancelBookingIdField) return;
     // 1) From vars_snapshot.booking_reference
     const ref = (booking as any)?.vars_snapshot?.booking_reference;
     if (ref) { setCancelBookingIdField(String(ref)); return; }
