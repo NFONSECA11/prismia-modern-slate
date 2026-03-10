@@ -881,7 +881,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               return <DetailRow icon={Hash} label="Procedimento" value={
                 isRescheduleCode ? (
                   <span className="flex items-center gap-1.5">
-                    <RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" title="Reagendamento" />
+                    <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
                     {displayValue}
                   </span>
                 ) : displayValue
