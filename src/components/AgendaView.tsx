@@ -505,9 +505,9 @@ function WeekView({
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid #c0c0c0" }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid #e0e0e0" }}>
-                <span className="text-[10px] font-mono" style={{ color: "#999" }}>{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
+                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
               </div>
 
               {professionals.length === 0 ? (
