@@ -196,6 +196,31 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     suggestMut.reset();
   }, [booking?.id]);
 
+  // Auto-fill cancel booking ID from conversation messages
+  const pCodeRawEarly = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
+  const isCancelCodeEarly = pCodeRawEarly === "cancel";
+  useEffect(() => {
+    if (!isCancelCodeEarly || !messages.length) return;
+    if (cancelBookingIdField) return; // don't overwrite manual input
+    for (const msg of messages) {
+      const body = (msg as any).body ?? (msg as any).text ?? "";
+      const match = body.match(/agendamento\s*(?:n[uú]mero|#|nº)?\s*(\d+)/i);
+      if (match) {
+        setCancelBookingIdField(match[1]);
+        return;
+      }
+    }
+    // Fallback: standalone number from lead
+    for (const msg of messages) {
+      const dir = ((msg as any).direction ?? "").toString().toLowerCase();
+      const body = ((msg as any).body ?? (msg as any).text ?? "").trim();
+      if (dir === "in" && /^\d{1,6}$/.test(body)) {
+        setCancelBookingIdField(body);
+        return;
+      }
+    }
+  }, [isCancelCodeEarly, messages]);
+
   const saveQuickReplies = (replies: string[]) => {
     setQuickReplies(replies);
     localStorage.setItem("quick_replies", JSON.stringify(replies));
