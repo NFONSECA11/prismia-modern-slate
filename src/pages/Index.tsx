@@ -64,6 +64,10 @@ export default function Index() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showUnitMenu, setShowUnitMenu] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [hideCancelled, setHideCancelled] = useState(() => {
+    const saved = localStorage.getItem("prismia-hide-cancelled");
+    return saved === "true";
+  });
 
   const queryClient = useQueryClient();
 
@@ -211,8 +215,18 @@ export default function Index() {
 
   
 
+  const toggleHideCancelled = useCallback((val: boolean) => {
+    setHideCancelled(val);
+    localStorage.setItem("prismia-hide-cancelled", String(val));
+  }, []);
+
   const filteredBookings = useMemo(() => {
     let list = bookings;
+
+    // Hide cancelled if toggled on
+    if (hideCancelled) {
+      list = list.filter((b) => b.status !== "canceled" && b.status !== "cancelled");
+    }
 
     // Text search (client-side)
     if (debouncedSearch && !searchId) {
@@ -227,7 +241,7 @@ export default function Index() {
     }
 
     return list;
-  }, [bookings, debouncedSearch, searchId]);
+  }, [bookings, debouncedSearch, searchId, hideCancelled]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
@@ -504,6 +518,26 @@ export default function Index() {
                   {f.label}
                 </button>
               ))}
+
+              <div className="h-4 w-px bg-border mx-1" />
+
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <button
+                  role="switch"
+                  aria-checked={hideCancelled}
+                  onClick={() => toggleHideCancelled(!hideCancelled)}
+                  className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full border border-border transition-colors ${
+                    hideCancelled ? "bg-primary" : "bg-surface-elevated"
+                  }`}
+                >
+                  <span
+                    className={`block h-3 w-3 rounded-full bg-background shadow-sm transition-transform ${
+                      hideCancelled ? "translate-x-3.5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">Ocultar cancelados</span>
+              </label>
             </div>
 
             <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
