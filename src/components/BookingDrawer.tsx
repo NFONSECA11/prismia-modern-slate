@@ -406,9 +406,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       return await patchBooking(booking!.id, payload);
     },
     onSuccess: async (result: any) => {
-      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      const wasCancelFlow = procCode === "cancel";
-      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "procCode:", procCode, "result:", JSON.stringify(result)?.substring(0, 200));
+      const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
+      const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
+      const wasCancelFlow = procCode === "cancel" || procName.startsWith("cancelar agendamento");
+      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "procCode:", procCode);
       
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
