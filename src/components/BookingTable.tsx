@@ -144,6 +144,9 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
   // Reopen for terminal
   if (terminal) {
     actions.push({ key: "reopen", icon: RotateCcw, label: "Reabrir", variant: "default" });
+    if (booking.status === "confirmed") {
+      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar Agendamento", variant: "danger" });
+    }
   }
 
   return actions;
