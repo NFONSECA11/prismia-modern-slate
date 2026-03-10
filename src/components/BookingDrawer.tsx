@@ -219,7 +219,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   );
 
   // Always fetch professionals when drawer opens with a booking missing a professional
-  const needsProfessional = !!booking && !hasProfessional;
+  const earlyProcCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
+  const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   const { data: professionals = [] } = useQuery({
     queryKey: ["professionals-unit-drawer"],
@@ -322,8 +323,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Auto-fill cancel booking ID from booking data or conversation messages
   const pCodeForAutoFill = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
   const pCodeAutoFillIsCancel = pCodeForAutoFill === "cancel" || (booking?.procedure_name ?? "").trim().toLowerCase().startsWith("cancelar agendamento");
+  const pCodeAutoFillNeedsId = pCodeAutoFillIsCancel || pCodeForAutoFill === "reschedule";
   useEffect(() => {
-    if (!pCodeAutoFillIsCancel || cancelBookingIdField || lastCancelledIdRef.current) return;
+    if (!pCodeAutoFillNeedsId || cancelBookingIdField || lastCancelledIdRef.current) return;
     // 1) From vars_snapshot.booking_reference
     const ref = (booking as any)?.vars_snapshot?.booking_reference;
     if (ref) { setCancelBookingIdField(String(ref)); return; }
@@ -365,21 +367,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
       const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
       const isCancelFlow = (procCode === "cancel" || procName.startsWith("cancelar agendamento")) && cancelBookingIdField.trim();
-      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "procName:", procName, "isCancelFlow:", isCancelFlow);
+      const isRescheduleFlow = procCode === "reschedule" && cancelBookingIdField.trim();
+      console.log("[BookingDrawer] mutationFn — procCode:", procCode, "isCancelFlow:", isCancelFlow, "isRescheduleFlow:", isRescheduleFlow);
       if (isCancelFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
-        // Step 1: Cancel the target booking
         await cancelBooking(targetId);
-        // Step 2: Turn bot OFF on current BR
         try {
           console.log("[BookingDrawer] Cancel flow — calling handoffOn to turn bot OFF on BR #", booking!.id);
           await handoffOn(booking!.id);
         } catch (err) {
           console.warn("[BookingDrawer] handoffOn failed (may already be off):", err);
         }
-        // Step 3: Update current BR's lead_name and notes
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
@@ -392,6 +392,34 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           conversation_bot_mode: "off",
           booking_mode: "handoff_manual",
         });
+      }
+
+      // Reschedule flow: cancel target BR + assign professional/procedure + handoffOff
+      if (isRescheduleFlow) {
+        const targetId = Number(cancelBookingIdField.trim());
+        if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
+        console.log("[BookingDrawer] Reschedule flow — cancelling BR #", targetId, "and assigning on current BR #", booking!.id);
+        // Step 1: Cancel the target booking
+        await cancelBooking(targetId);
+        // Step 2: PATCH current BR with professional, procedure, lead_name
+        const now = new Date();
+        const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+        const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+        const logEntry = `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} e atribuição de profissional por ${assignLeadName.trim() || "N/A"}`;
+        const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
+        const payload: Record<string, unknown> = {
+          lead_name: assignLeadName.trim() || booking!.lead_name,
+          notes: newNotes,
+        };
+        if (profId > 0) {
+          payload.professional = profId;
+          payload.booking_mode = "assisted_slots_dashboard";
+        }
+        if (selectedProcedureId) payload.procedure = selectedProcedureId;
+        const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+        if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
+        console.log("[BookingDrawer] Reschedule PATCH payload:", JSON.stringify(payload));
+        return await patchBooking(booking!.id, payload);
       }
 
       const payload: Record<string, unknown> = {
@@ -414,7 +442,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       const procCode = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
       const procName = (booking?.procedure_name ?? "").trim().toLowerCase();
       const wasCancelFlow = procCode === "cancel" || procName.startsWith("cancelar agendamento");
-      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "procCode:", procCode);
+      const wasRescheduleFlow = procCode === "reschedule";
+      console.log("[BookingDrawer] onSuccess — wasCancelFlow:", wasCancelFlow, "wasRescheduleFlow:", wasRescheduleFlow, "procCode:", procCode);
       
       setSelectedProfessionalId(null);
       setSelectedProcedureId(null);
@@ -423,12 +452,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       if (wasCancelFlow) {
         const cancelledId = cancelBookingIdField.trim();
         lastCancelledIdRef.current = cancelledId;
-        // Persist to module-level cache so it survives any re-render/refetch
         cancelledBookingCache.set(booking!.id, { cancelledId, botOff: true });
         console.log("[BookingDrawer] Cached cancel for BR", booking!.id, "→ cancelled", cancelledId);
         setOverrideProcedureName(`Cancelar agendamento #${cancelledId}`);
         setForceBotOff(true);
         setActionDone(`Agenda #${cancelledId} cancelada!`);
+      } else if (wasRescheduleFlow) {
+        const cancelledId = cancelBookingIdField.trim();
+        lastCancelledIdRef.current = cancelledId;
+        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false });
+        try {
+          console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
+          await handoffOff(booking!.id);
+          setActionDone(`Agenda #${cancelledId} cancelada e bot ligado!`);
+        } catch (err) {
+          console.error("[BookingDrawer] handoffOff after reschedule failed:", err);
+          setActionDone(`Agenda #${cancelledId} cancelada, mas falha ao ligar bot.`);
+        }
       } else if (isConvo) {
         try {
           console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
@@ -447,7 +487,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
       
       if (wasCancelFlow) {
-        // Don't refetch immediately — keep local overrides visible
         setTimeout(() => {
           refetchBookingDetailForBot();
           setActionDone(null);
@@ -623,6 +662,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const pCodeFallback = pCodeRaw || (booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
   const isCancelCode = pCodeRaw === "cancel" || pCodeFallback.startsWith("cancelar agendamento");
+  const isRescheduleCode = pCodeRaw === "reschedule";
 
   const cachedCancel = booking ? cancelledBookingCache.get(booking.id) : undefined;
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
@@ -840,11 +880,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
-              icon={isCancelCode ? ClipboardList : User}
-              label={isCancelCode ? "Ações" : isConvo ? "Atendimento" : "Profissional"}
+              icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
+              label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
               className="col-span-2"
               value={
-                hasProfessional ? (
+                hasProfessional && !isRescheduleCode ? (
                   effectiveProfessionalName
                 ) : (
               <div className="flex flex-col gap-3 w-full">
@@ -883,6 +923,113 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                                 className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                               >
                                 {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
+                              </button>
+                              {assignProfMut.isError && (
+                                <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()
+                    ) : isRescheduleCode ? (
+                      (() => {
+                        const notesText = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+                        const alreadyRescheduled = notesText.includes("Reagendamento: cancelamento do agendamento");
+                        return alreadyRescheduled ? (
+                          <div className="text-xs text-muted-foreground italic">Reagendamento já realizado.</div>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Lead</label>
+                              <input
+                                type="text"
+                                value={assignLeadName}
+                                onChange={(e) => setAssignLeadName(e.target.value)}
+                                placeholder="Nome do cliente..."
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID Agendamento a Cancelar</label>
+                              <input
+                                type="text"
+                                value={cancelBookingIdField}
+                                onChange={(e) => setCancelBookingIdField(e.target.value)}
+                                placeholder="Ex: 483"
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Profissional</label>
+                                <select
+                                  value={selectedProfessionalId ?? ""}
+                                  onChange={(e) => {
+                                    const id = Number(e.target.value) || null;
+                                    setSelectedProfessionalId(id);
+                                    setSelectedProcedureId(null);
+                                    setSelectedSpecialtyId(null);
+                                  }}
+                                  className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                                >
+                                  <option value="">Selecionar...</option>
+                                  {professionals.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento</label>
+                                <select
+                                  value={selectedProcedureId ?? ""}
+                                  onChange={(e) => {
+                                    setSelectedProcedureId(Number(e.target.value) || null);
+                                    setSelectedSpecialtyId(null);
+                                  }}
+                                  disabled={!selectedProfessionalId}
+                                  className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <option value="">{selectedProfessionalId ? "Selecionar..." : "—"}</option>
+                                  {proceduresForProfessional.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name ?? p.slug ?? `#${p.id}`}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                            {selectedProcedureId && (
+                              autoSpecialtyId ? (
+                                <span className="text-xs text-muted-foreground">
+                                  Especialidade: {allSpecialties.find((s) => s.id === autoSpecialtyId)?.name ?? `#${autoSpecialtyId}`}
+                                </span>
+                              ) : (
+                                <div>
+                                  <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Especialidade</label>
+                                  <select
+                                    value={selectedSpecialtyId ?? ""}
+                                    onChange={(e) => setSelectedSpecialtyId(Number(e.target.value) || null)}
+                                    className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                                  >
+                                    <option value="">Selecionar especialidade...</option>
+                                    {allSpecialties.map((s) => (
+                                      <option key={s.id} value={s.id}>
+                                        {s.name ?? `#${s.id}`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )
+                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                                disabled={!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || !cancelBookingIdField.trim() || assignProfMut.isPending}
+                                className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              >
+                                {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Atribuir"}
                               </button>
                               {assignProfMut.isError && (
                                 <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
