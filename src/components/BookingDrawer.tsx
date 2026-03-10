@@ -185,6 +185,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
     setForceBotOff(false);
+    lastCancelledIdRef.current = null;
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
