@@ -777,9 +777,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               <div>
                 <div className="flex items-center gap-1.5">
                   <BookingModeIcon mode={booking.booking_mode} />
-                  {["human", "prices"].includes(
-                    ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase()
-                  ) ? (
+                  {isConvo ? (
                     <h3 className="text-base font-semibold text-primary flex items-center gap-1.5">
                       <MessageSquare className="h-4 w-4 text-primary" />
                       Conversa
