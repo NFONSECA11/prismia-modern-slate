@@ -356,7 +356,7 @@ export default function Settings() {
               {/* Variant selection */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
-                  {bgMode === "solid" ? "Variação de cor" : "Escolha a paisagem"}
+                  {bgMode === "solid" ? "Variação de cor" : bgMode === "gradient" ? "Escolha o gradiente" : "Escolha a paisagem"}
                 </p>
                 <div className="flex items-center gap-3 px-1">
                   {bgMode === "solid"
@@ -375,6 +375,29 @@ export default function Settings() {
                               {active && (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                   <Check className="h-4 w-4 text-primary" />
+                                </div>
+                              )}
+                            </div>
+                            <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{v.label}</span>
+                          </button>
+                        );
+                      })
+                    : bgMode === "gradient"
+                    ? gradientVariants[theme].map((v, i) => {
+                        const active = bgVariant === i;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => setBgVariant(i)}
+                            className="flex flex-col items-center gap-1.5 transition-all"
+                          >
+                            <div
+                              className={`w-20 h-12 rounded-lg relative ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "border border-border hover:border-primary/50"}`}
+                              style={{ background: v.gradient }}
+                            >
+                              {active && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                                  <Check className="h-4 w-4 text-white" />
                                 </div>
                               )}
                             </div>

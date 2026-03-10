@@ -276,12 +276,30 @@ export default function Index() {
     "soft-slate": ["220 20% 18%", "30 8% 20%", "210 15% 22%"],
     "light-clean": ["220 20% 97%", "40 30% 95%", "200 30% 95%"],
   };
+  const gradientMap: Record<string, string[]> = {
+    "dark-navy": [
+      "linear-gradient(135deg, hsl(222 47% 7%), hsl(213 94% 20%), hsl(213 94% 58%))",
+      "linear-gradient(160deg, hsl(222 47% 7%), hsl(260 30% 18%), hsl(186 72% 48%))",
+    ],
+    "soft-slate": [
+      "linear-gradient(135deg, hsl(220 20% 14%), hsl(213 50% 28%), hsl(213 80% 56%))",
+      "linear-gradient(160deg, hsl(220 20% 14%), hsl(30 15% 22%), hsl(220 15% 32%))",
+    ],
+    "light-clean": [
+      "linear-gradient(135deg, hsl(220 20% 97%), hsl(200 40% 92%), hsl(213 90% 85%))",
+      "linear-gradient(160deg, hsl(220 20% 97%), hsl(40 50% 92%), hsl(20 60% 90%))",
+    ],
+  };
   const isLandscape = bgMode === "landscape";
+  const isGradient = bgMode === "gradient";
   const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
   const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
+  const gradientBg = gradientMap[theme]?.[bgVariant] ?? gradientMap[theme]?.[0];
+
+  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? gradientBg : `hsl(${solidBg})`;
 
   return (
-    <div className="min-h-screen relative" style={{ background: isLandscape ? "hsl(var(--background))" : `hsl(${solidBg})` }}>
+    <div className="min-h-screen relative" style={{ background: mainBg }}>
       {/* Background landscape */}
       {isLandscape && (
         <div
