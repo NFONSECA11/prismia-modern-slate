@@ -322,8 +322,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Auto-fill cancel booking ID from booking data or conversation messages
   const pCodeForAutoFill = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
   const pCodeAutoFillIsCancel = pCodeForAutoFill === "cancel" || (booking?.procedure_name ?? "").trim().toLowerCase().startsWith("cancelar agendamento");
+  const pCodeAutoFillNeedsId = pCodeAutoFillIsCancel || pCodeForAutoFill === "reschedule";
   useEffect(() => {
-    if (!pCodeAutoFillIsCancel || cancelBookingIdField || lastCancelledIdRef.current) return;
+    if (!pCodeAutoFillNeedsId || cancelBookingIdField || lastCancelledIdRef.current) return;
     // 1) From vars_snapshot.booking_reference
     const ref = (booking as any)?.vars_snapshot?.booking_reference;
     if (ref) { setCancelBookingIdField(String(ref)); return; }
