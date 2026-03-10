@@ -1080,20 +1080,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         </div>
 
         {/* Footer — Actions */}
-        <div className="px-5 py-4 border-t border-border surface-elevated space-y-3">
+        <div className="px-5 py-4 border-t border-border surface-elevated space-y-2">
           {renderActions()}
-
-          {/* Floating-style cancel for confirmed bookings */}
-          {booking.status === "confirmed" && !actionDone && (
-            <button
-              onClick={() => cancelMut.mutate()}
-              disabled={busy}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {cancelMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-              Cancelar Agendamento
-            </button>
-          )}
 
           {anyError && (
             <p className="text-xs text-center text-status-canceled animate-fade-in">
