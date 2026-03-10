@@ -163,11 +163,25 @@ export default function Index() {
 
     (async () => {
       try {
-        const { data: settingsData } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit.id}/`);
-        const settings = settingsData?.result ?? settingsData;
-        if (settings?.default_booking_mode !== "auto_slots_bot") return;
+        // Reschedules always go auto, others check unit settings
+        const rescheduleBRs = awaitingBRs.filter((b) => {
+          const pCode = ((b as any).procedure_code ?? b.procedure_slug ?? "").trim().toLowerCase();
+          return pCode === "reschedule";
+        });
+        const otherBRs = awaitingBRs.filter((b) => !rescheduleBRs.includes(b));
 
-        for (const br of awaitingBRs) {
+        let unitIsAuto = false;
+        if (otherBRs.length > 0) {
+          const { data: settingsData } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit.id}/`);
+          const settings = settingsData?.result ?? settingsData;
+          unitIsAuto = settings?.default_booking_mode === "auto_slots_bot";
+        }
+
+        const toPatch = [...rescheduleBRs, ...(unitIsAuto ? otherBRs : [])];
+
+        if (toPatch.length === 0) return;
+
+        for (const br of toPatch) {
           autoPatchedRef.current.add(br.id);
           try {
             await patchBooking(br.id, { booking_mode: "auto_slots_bot" });
