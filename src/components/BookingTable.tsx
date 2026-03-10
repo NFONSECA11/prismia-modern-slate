@@ -427,7 +427,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                               <>
                                 <span className="text-foreground leading-tight flex items-center gap-1.5">
                                   {isReschedule && (
-                                    <RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                                    <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
                                   )}
                                   {effectiveId
                                     ? (isReschedule ? `Reagendamento #${effectiveId}` : `Cancelar agendamento #${effectiveId}`)
