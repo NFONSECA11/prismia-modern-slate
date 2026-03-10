@@ -884,10 +884,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                                 {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
                               </button>
                               {assignProfMut.isError && (
-                            <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
-                          )}
-                        </div>
-                      </>
+                                <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()
                     ) : (
                       <>
                         <div>
