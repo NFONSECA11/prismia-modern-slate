@@ -167,7 +167,7 @@ export default function Index() {
         // Reschedules always go auto, others check unit settings
         const rescheduleBRs = awaitingBRs.filter((b) => {
           const pCode = ((b as any).procedure_code ?? b.procedure_slug ?? "").trim().toLowerCase();
-          return pCode === "reschedule";
+          return pCode === "reschedule" || isRescheduleFromNotes((b as any).notes);
         });
         const otherBRs = awaitingBRs.filter((b) => !rescheduleBRs.includes(b));
 
