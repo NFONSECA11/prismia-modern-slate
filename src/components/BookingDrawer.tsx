@@ -154,6 +154,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
+  const lastCancelledIdRef = useRef<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
@@ -184,6 +185,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
     setForceBotOff(false);
+    lastCancelledIdRef.current = null;
     setSelectedProfessionalId(null);
     setSelectedProcedureId(null);
     setSelectedSpecialtyId(null);
@@ -416,11 +418,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedSpecialtyId(null);
 
       if (wasCancelFlow) {
-        const newProcName = `Cancelar agendamento #${cancelBookingIdField.trim()}`;
-        console.log("[BookingDrawer] Setting overrideProcedureName:", newProcName, "and forceBotOff: true");
+        const cancelledId = cancelBookingIdField.trim();
+        lastCancelledIdRef.current = cancelledId;
+        const newProcName = `Cancelar agendamento #${cancelledId}`;
+        console.log("[BookingDrawer] Setting lastCancelledIdRef:", cancelledId);
         setOverrideProcedureName(newProcName);
         setForceBotOff(true);
-        setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
+        setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (isConvo) {
         try {
           console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
@@ -817,10 +821,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             {(() => {
-              const displayValue = isCancelCode && cancelBookingIdField.trim()
-                ? `Cancelar agendamento #${cancelBookingIdField.trim()}`
+              const effectiveCancelId = cancelBookingIdField.trim() || lastCancelledIdRef.current;
+              const displayValue = isCancelCode && effectiveCancelId
+                ? `Cancelar agendamento #${effectiveCancelId}`
                 : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
-              console.log("[BookingDrawer] Procedimento render — isCancelCode:", isCancelCode, "cancelBookingIdField:", cancelBookingIdField, "displayValue:", displayValue);
               return <DetailRow icon={Hash} label="Procedimento" value={displayValue} />;
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
