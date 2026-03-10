@@ -514,7 +514,7 @@ function WeekView({
                 <div className="flex-1" />
               ) : (
                 professionals.map((prof, pi) => (
-                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid #e0e0e0" : undefined }}>
+                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
                     {days.map((day, di) => {
                       const dateKey = format(day, "yyyy-MM-dd");
                       const today = isToday(day);
