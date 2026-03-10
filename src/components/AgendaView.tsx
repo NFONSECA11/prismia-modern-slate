@@ -522,7 +522,7 @@ function WeekView({
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid #d0d0d0" : undefined }}>
+                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}>
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
