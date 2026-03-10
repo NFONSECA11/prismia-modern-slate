@@ -786,7 +786,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     {/* Assign button */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                        onClick={() => isCancelCode ? assignProfMut.mutate(0) : selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
                         disabled={
                           isCancelCode
                             ? (!assignLeadName.trim() || assignProfMut.isPending)
