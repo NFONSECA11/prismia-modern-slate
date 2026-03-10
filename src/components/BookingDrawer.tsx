@@ -317,9 +317,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     mutationFn: async (profId: number) => {
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim() || booking!.lead_name,
-        professional: profId,
-        booking_mode: "assisted_slots_dashboard",
       };
+      if (profId > 0) {
+        payload.professional = profId;
+        payload.booking_mode = "assisted_slots_dashboard";
+      }
       // procedure = real procedure ID (same as curl)
       if (selectedProcedureId) {
         payload.procedure = selectedProcedureId;
