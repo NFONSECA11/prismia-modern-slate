@@ -417,11 +417,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedSpecialtyId(null);
 
       if (wasCancelFlow) {
-        const newProcName = `Cancelar agendamento #${cancelBookingIdField.trim()}`;
-        console.log("[BookingDrawer] Setting overrideProcedureName:", newProcName, "and forceBotOff: true");
+        const cancelledId = cancelBookingIdField.trim();
+        lastCancelledIdRef.current = cancelledId;
+        const newProcName = `Cancelar agendamento #${cancelledId}`;
+        console.log("[BookingDrawer] Setting lastCancelledIdRef:", cancelledId);
         setOverrideProcedureName(newProcName);
         setForceBotOff(true);
-        setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
+        setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (isConvo) {
         try {
           console.log("[BookingDrawer] Conversation flow — calling handoffOff to turn bot ON");
