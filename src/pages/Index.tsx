@@ -311,8 +311,8 @@ export default function Index() {
       <header
         className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60"
         style={{
-          background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
-          backdropFilter: isLandscape ? "blur(16px)" : undefined,
+          background: (isLandscape || isGradient) ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
+          backdropFilter: (isLandscape || isGradient) ? "blur(16px)" : undefined,
         }}
       >
         <div className="flex items-center gap-3">
