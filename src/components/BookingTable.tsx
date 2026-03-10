@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { cancelledBookingCache } from "@/lib/cancelledBookingCache";
+import { cancelledBookingCache, extractCancelledIdFromNotes } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -383,9 +383,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-foreground leading-tight">
-                            {cancelledBookingCache.get(booking.id)?.cancelledId
-                              ? `Cancelar agendamento #${cancelledBookingCache.get(booking.id)!.cancelledId}`
-                              : booking.procedure_name}
+                            {(() => {
+                              const idFromNotes = extractCancelledIdFromNotes((booking as any)?.notes);
+                              const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
+                              const effectiveId = idFromNotes || cachedId;
+                              return effectiveId
+                                ? `Cancelar agendamento #${effectiveId}`
+                                : booking.procedure_name;
+                            })()}
                           </span>
                           <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
                         </div>

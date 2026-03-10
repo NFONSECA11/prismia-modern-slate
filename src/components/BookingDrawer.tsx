@@ -143,7 +143,7 @@ function ActionButton({
   );
 }
 
-import { cancelledBookingCache } from "@/lib/cancelledBookingCache";
+import { cancelledBookingCache, extractCancelledIdFromNotes } from "@/lib/cancelledBookingCache";
 
 export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
   const queryClient = useQueryClient();
@@ -825,9 +825,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           {/* Details grid */}
           <div className="grid grid-cols-2 gap-2">
             {(() => {
-              // Priority: cache (survives everything) > field > ref > API
+              // Priority: notes from API (persistent) > cache > field > fallback
+              const notesText = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+              const idFromNotes = extractCancelledIdFromNotes(notesText);
               const cachedId = cachedCancel?.cancelledId;
-              const effectiveCancelId = cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
+              const effectiveCancelId = idFromNotes || cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
                 : (overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
