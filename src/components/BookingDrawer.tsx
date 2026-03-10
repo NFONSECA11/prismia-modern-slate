@@ -416,7 +416,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
           payload.professional = profId;
           payload.booking_mode = "assisted_slots_dashboard";
         }
-        if (selectedProcedureId) payload.procedure = selectedProcedureId;
+        if (selectedProcedureId) {
+          payload.procedure = selectedProcedureId;
+          // Update procedure_name to the real procedure instead of "Reagendar agendamento #..."
+          const realProcName = allProcedures.find((p) => p.id === selectedProcedureId)?.name;
+          if (realProcName) payload.procedure_name = realProcName;
+        }
+        if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
         const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
         if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
         console.log("[BookingDrawer] Reschedule PATCH payload:", JSON.stringify(payload));
