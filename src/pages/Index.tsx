@@ -215,8 +215,18 @@ export default function Index() {
 
   
 
+  const toggleHideCancelled = useCallback((val: boolean) => {
+    setHideCancelled(val);
+    localStorage.setItem("prismia-hide-cancelled", String(val));
+  }, []);
+
   const filteredBookings = useMemo(() => {
     let list = bookings;
+
+    // Hide cancelled if toggled on
+    if (hideCancelled) {
+      list = list.filter((b) => b.status !== "canceled" && b.status !== "cancelled");
+    }
 
     // Text search (client-side)
     if (debouncedSearch && !searchId) {
@@ -231,7 +241,7 @@ export default function Index() {
     }
 
     return list;
-  }, [bookings, debouncedSearch, searchId]);
+  }, [bookings, debouncedSearch, searchId, hideCancelled]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
