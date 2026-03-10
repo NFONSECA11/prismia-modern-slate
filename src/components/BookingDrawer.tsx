@@ -879,11 +879,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
             })()}
             <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
             <DetailRow
-              icon={isCancelCode ? ClipboardList : User}
-              label={isCancelCode ? "Ações" : isConvo ? "Atendimento" : "Profissional"}
+              icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
+              label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
               className="col-span-2"
               value={
-                hasProfessional ? (
+                hasProfessional && !isRescheduleCode ? (
                   effectiveProfessionalName
                 ) : (
               <div className="flex flex-col gap-3 w-full">
@@ -922,6 +922,113 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                                 className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                               >
                                 {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Cancelar Agenda"}
+                              </button>
+                              {assignProfMut.isError && (
+                                <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()
+                    ) : isRescheduleCode ? (
+                      (() => {
+                        const notesText = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
+                        const alreadyRescheduled = notesText.includes("Reagendamento: cancelamento do agendamento");
+                        return alreadyRescheduled ? (
+                          <div className="text-xs text-muted-foreground italic">Reagendamento já realizado.</div>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Lead</label>
+                              <input
+                                type="text"
+                                value={assignLeadName}
+                                onChange={(e) => setAssignLeadName(e.target.value)}
+                                placeholder="Nome do cliente..."
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID Agendamento a Cancelar</label>
+                              <input
+                                type="text"
+                                value={cancelBookingIdField}
+                                onChange={(e) => setCancelBookingIdField(e.target.value)}
+                                placeholder="Ex: 483"
+                                className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Profissional</label>
+                                <select
+                                  value={selectedProfessionalId ?? ""}
+                                  onChange={(e) => {
+                                    const id = Number(e.target.value) || null;
+                                    setSelectedProfessionalId(id);
+                                    setSelectedProcedureId(null);
+                                    setSelectedSpecialtyId(null);
+                                  }}
+                                  className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                                >
+                                  <option value="">Selecionar...</option>
+                                  {professionals.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento</label>
+                                <select
+                                  value={selectedProcedureId ?? ""}
+                                  onChange={(e) => {
+                                    setSelectedProcedureId(Number(e.target.value) || null);
+                                    setSelectedSpecialtyId(null);
+                                  }}
+                                  disabled={!selectedProfessionalId}
+                                  className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <option value="">{selectedProfessionalId ? "Selecionar..." : "—"}</option>
+                                  {proceduresForProfessional.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name ?? p.slug ?? `#${p.id}`}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                            {selectedProcedureId && (
+                              autoSpecialtyId ? (
+                                <span className="text-xs text-muted-foreground">
+                                  Especialidade: {allSpecialties.find((s) => s.id === autoSpecialtyId)?.name ?? `#${autoSpecialtyId}`}
+                                </span>
+                              ) : (
+                                <div>
+                                  <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Especialidade</label>
+                                  <select
+                                    value={selectedSpecialtyId ?? ""}
+                                    onChange={(e) => setSelectedSpecialtyId(Number(e.target.value) || null)}
+                                    className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                                  >
+                                    <option value="">Selecionar especialidade...</option>
+                                    {allSpecialties.map((s) => (
+                                      <option key={s.id} value={s.id}>
+                                        {s.name ?? `#${s.id}`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )
+                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => selectedProfessionalId && assignProfMut.mutate(selectedProfessionalId)}
+                                disabled={!selectedProfessionalId || !selectedProcedureId || !assignLeadName.trim() || !cancelBookingIdField.trim() || assignProfMut.isPending}
+                                className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              >
+                                {assignProfMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Atribuir"}
                               </button>
                               {assignProfMut.isError && (
                                 <span className="text-[10px] text-status-canceled">Erro ao atribuir</span>
