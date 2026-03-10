@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [bgMode, setBgModeState] = useState<BgMode>(() => {
     try {
       const saved = localStorage.getItem(BG_KEY);
-      if (saved === "solid" || saved === "landscape") return saved;
+      if (saved === "solid" || saved === "landscape" || saved === "gradient") return saved;
     } catch {}
     return "solid";
   });
