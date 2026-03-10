@@ -154,7 +154,10 @@ export default function Index() {
     if (!activeUnit || bookings.length === 0) return;
 
     const awaitingBRs = bookings.filter(
-      (b) => b.status === "awaiting_choice" && b.booking_mode !== "auto_slots_bot" && !autoPatchedRef.current.has(b.id)
+      (b) => {
+        const pCode = ((b as any).procedure_code ?? b.procedure_slug ?? "").trim().toLowerCase();
+        return b.status === "awaiting_choice" && b.booking_mode !== "auto_slots_bot" && !autoPatchedRef.current.has(b.id) && pCode !== "cancel";
+      }
     );
     if (awaitingBRs.length === 0) return;
 
