@@ -442,8 +442,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                                   )}
                                   {effectiveId && !isReschedule
                                     ? `Cancelar agendamento #${effectiveId}`
-                                    : isReschedule && rescheduleProcNameMap[booking.id]
-                                      ? rescheduleProcNameMap[booking.id]
+                                    : isReschedule && (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
+                                      ? (rescheduleProcNameMap[booking.id] || cancelledBookingCache.get(booking.id)?.realProcedureName)
                                       : booking.procedure_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
