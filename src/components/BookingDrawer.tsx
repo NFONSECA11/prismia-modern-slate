@@ -317,7 +317,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Auto-fill cancel booking ID from booking data or conversation messages
   const pCodeForAutoFill = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
   useEffect(() => {
-    if (pCodeForAutoFill !== "cancel" || cancelBookingIdField) return;
+    if (!(pCodeForAutoFill === "cancel" || pCodeForAutoFill.startsWith("cancelar")) || cancelBookingIdField) return;
     // 1) From vars_snapshot.booking_reference
     const ref = (booking as any)?.vars_snapshot?.booking_reference;
     if (ref) { setCancelBookingIdField(String(ref)); return; }
@@ -357,7 +357,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
     mutationFn: async (profId: number) => {
       // Cancel flow: cancel the target booking by ID, then update current BR
       const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      if (procCode === "cancel" && cancelBookingIdField.trim()) {
+      const isCancelFlow = (procCode === "cancel" || procCode.startsWith("cancelar")) && cancelBookingIdField.trim();
+      console.log("[BookingDrawer] mutationFn procCode:", JSON.stringify(procCode), "isCancelFlow:", isCancelFlow, "cancelBookingIdField:", cancelBookingIdField);
+      if (isCancelFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
@@ -408,7 +410,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedSpecialtyId(null);
 
       const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
-      const wasCancelFlow = procCode === "cancel";
+      const wasCancelFlow = procCode === "cancel" || procCode.startsWith("cancelar");
 
       if (wasCancelFlow) {
         setOverrideProcedureName(`Cancelar agendamento #${cancelBookingIdField.trim()}`);
@@ -599,7 +601,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   const mode = booking.booking_mode as BookingMode;
   const pCodeRaw = ((booking as any).procedure_code ?? booking.procedure_slug ?? booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw);
-  const isCancelCode = pCodeRaw === "cancel";
+  const isCancelCode = pCodeRaw === "cancel" || pCodeRaw.startsWith("cancelar");
 
   const effectiveStatus = bookingDetailForBot?.status ?? booking.status;
   const effectiveBotMode = (bookingDetailForBot?.conversation_bot_mode ?? bookingDetailForBot?.vars_snapshot?.conversation_bot_mode ?? booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode ?? "").toString().trim().toLowerCase();
