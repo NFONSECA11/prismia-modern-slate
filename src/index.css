@@ -267,7 +267,7 @@
   .text-subtle { color: hsl(var(--foreground-subtle)); }
   .border-subtle { border-color: hsl(var(--border-subtle)); }
   .glass {
-    background: hsl(var(--surface-raised) / 0.85);
+    background: transparent;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid hsl(var(--border));
