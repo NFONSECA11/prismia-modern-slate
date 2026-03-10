@@ -351,21 +351,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
 
   const assignProfMut = useMutation({
     mutationFn: async (profId: number) => {
-      // Cancel flow: cancel the target booking by ID, then update current BR's lead_name
-      if (isCancelCode && cancelBookingIdField.trim()) {
+      // Cancel flow: cancel the target booking by ID, then update current BR
+      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
+      if (procCode === "cancel" && cancelBookingIdField.trim()) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         console.log("[BookingDrawer] Cancel flow — cancelling BR #", targetId, "and patching current BR #", booking!.id);
         // Step 1: Cancel the target booking
         await cancelBooking(targetId);
-        // Step 2: Update current BR's lead_name + notes with log
+        // Step 2: Update current BR's lead_name, procedure_name, and notes
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-        const existingNotes = (booking as any)?.notes ?? "";
+        const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
         const logEntry = `[${timestamp}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
         const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
         return await patchBooking(booking!.id, {
           lead_name: assignLeadName.trim() || booking!.lead_name,
+          procedure_name: `Cancelar agendamento #${targetId}`,
           notes: newNotes,
         });
       }
@@ -392,7 +394,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setSelectedProcedureId(null);
       setSelectedSpecialtyId(null);
 
-      if (isCancelCode) {
+      const procCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? booking?.procedure_name ?? "").trim().toLowerCase();
+      const wasCancelFlow = procCode === "cancel";
+
+      if (wasCancelFlow) {
         setActionDone(`Agenda #${cancelBookingIdField.trim()} cancelada!`);
       } else if (isConvo) {
         try {
@@ -407,7 +412,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         setActionDone("Profissional atribuído!");
       }
 
-      // Invalidate and refetch so the drawer updates status/bot badge
+      // Invalidate and refetch so the drawer updates status/bot badge/notes
       await queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       await queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
       await refetchBookingDetailForBot();
@@ -415,7 +420,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       setTimeout(() => {
         onConfirmed();
         setActionDone(null);
-      }, 1200);
+        // Don't close drawer on cancel flow so user can see the log
+      }, wasCancelFlow ? 3000 : 1200);
     },
     onError: (err: any) => {
       const status = err?.response?.status;
