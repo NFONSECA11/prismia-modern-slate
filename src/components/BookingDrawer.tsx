@@ -725,7 +725,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                             setSelectedProcedureId(null);
                             setSelectedSpecialtyId(null);
                           }}
-                          className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                          disabled={isCancelCode}
+                          className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <option value="">Selecionar...</option>
                           {professionals.map((p) => (
