@@ -857,12 +857,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
                   )}
                 </div>
-                {(booking.contact_phone || booking.phone) && (
-                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {formatPhone(booking.contact_phone || booking.phone || "")}
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  {(booking.contact_phone || booking.phone)
+                    ? formatPhone(booking.contact_phone || booking.phone || "")
+                    : <span className="italic opacity-60">Não informado</span>
+                  }
+                </p>
               </div>
               <div className="flex flex-col items-end gap-1.5">
                 <StatusBadge status={booking.status} size="md" />
