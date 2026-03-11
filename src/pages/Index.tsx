@@ -43,6 +43,7 @@ import {
   X,
   Maximize2,
   Minimize2,
+  Menu,
 } from "lucide-react";
 
 type View = "table" | "agenda";
