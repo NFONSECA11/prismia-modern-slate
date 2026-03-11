@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer } from "lucide-react";
 
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
@@ -646,6 +646,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   return (
     <>
       <div
+        id="agenda-print-area"
         className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
         style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
@@ -681,6 +682,15 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border print:hidden"
+            title="Imprimir agenda"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Imprimir
+          </button>
         </div>
 
         {/* Grid scrollable */}
