@@ -429,6 +429,36 @@ export default function Settings() {
                       })}
                 </div>
               </div>
+
+              {/* Accent / color variation */}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
+                  Variação de cor
+                </p>
+                <div className="flex items-center gap-3 px-1">
+                  {([
+                    { id: "deep-blue" as AccentId, label: "Deep Blue", colors: ["205 100% 59%", "186 72% 48%"] },
+                    { id: "charcoal" as AccentId, label: "Charcoal", colors: ["220 10% 45%", "200 8% 50%"] },
+                    { id: "purple-night" as AccentId, label: "Purple Night", colors: ["262 60% 60%", "280 50% 55%"] },
+                  ]).map((a) => {
+                    const active = accent === a.id;
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => setAccent(a.id)}
+                        className={`flex flex-col items-center gap-1.5 transition-all ${active ? "" : "opacity-60 hover:opacity-90"}`}
+                      >
+                        <div className={`w-14 h-8 rounded-lg overflow-hidden flex ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "border border-border"}`}>
+                          <div className="w-1/2 h-full" style={{ background: `hsl(${a.colors[0]})` }} />
+                          <div className="w-1/2 h-full" style={{ background: `hsl(${a.colors[1]})` }} />
+                        </div>
+                        <span className={`text-[10px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>{a.label}</span>
+                        {active && <span className="text-[9px] text-primary font-medium">Ativo</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </CollapsibleContent>
           </Collapsible>
         </section>
