@@ -22,6 +22,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus } from "lucide-rea
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
   onSaveBooking: (data: NewBookingFormData) => Promise<void>;
+  selectedBookingId?: number | null;
 }
 
 type AgendaMode = "day" | "week";
@@ -199,35 +200,53 @@ function useCurrentTimeTop(startHour: number) {
 }
 
 // ── Shared booking event card ──────────────────────────────────────────────
+function getStatusBorderColor(status: string): string {
+  const map: Record<string, string> = {
+    confirmed: "hsl(var(--status-confirmed))",
+    pending: "hsl(var(--status-pending))",
+    handoff: "hsl(var(--status-handoff))",
+    assisted: "hsl(var(--status-assisted))",
+    canceled: "hsl(var(--status-canceled))",
+    cancelled: "hsl(var(--status-canceled))",
+    failed: "hsl(var(--status-canceled))",
+    awaiting_choice: "hsl(var(--status-pending))",
+  };
+  return map[status] ?? "hsl(var(--calendar-event-border))";
+}
+
 function AppointmentCard({
   booking,
   topOffset,
   compact,
+  selected,
   onClick,
 }: {
   booking: BookingRequest;
   topOffset: number;
   compact?: boolean;
+  selected?: boolean;
   onClick: () => void;
 }) {
   const dt = getSlotDateTime(booking)!;
-  const phone = booking.contact_phone || booking.phone || "";
 
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
+  const borderColor = getStatusBorderColor(booking.status);
 
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-2 right-2 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-45" : ""}`}
+      className={`absolute left-2 right-2 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast && !selected ? "opacity-45" : ""}`}
       style={{
         top: `${topOffset + 3}px`,
         minHeight: compact ? "38px" : "50px",
-        background: "hsl(var(--calendar-event-bg))",
+        background: selected ? "hsl(var(--calendar-event-bg) / 1)" : "hsl(var(--calendar-event-bg))",
         color: "hsl(var(--calendar-event-title))",
-        borderLeft: `3px solid hsl(var(--calendar-event-border))`,
-        boxShadow: "var(--calendar-event-shadow)",
+        borderLeft: `3px solid ${borderColor}`,
+        boxShadow: selected
+          ? `var(--calendar-event-shadow), 0 0 0 1.5px ${borderColor}, 0 0 12px ${borderColor.replace(")", " / 0.2)")}`
+          : "var(--calendar-event-shadow)",
         padding: compact ? "3px 8px 4px" : "5px 10px 6px",
       }}
     >
@@ -235,17 +254,15 @@ function AppointmentCard({
       <div className="text-[11px] font-bold leading-tight truncate" style={{ color: "hsl(var(--calendar-event-title))" }}>
         {booking.lead_name}
       </div>
-      {/* Time + ID — secondary */}
+      {/* Time + Status dot + ID — secondary */}
       <div className="mt-0.5 flex items-center gap-1.5" style={{ color: "hsl(var(--calendar-event-meta))" }}>
         <span className="flex items-center gap-0.5 text-[9px] font-medium">
           <Clock className="h-2 w-2 flex-shrink-0 opacity-60" />
           {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
         </span>
+        <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: borderColor }} />
         <span className="text-[9px] font-mono opacity-50">#{booking.id}</span>
       </div>
-      {!compact && phone && (
-        <span className="block text-[9px] mt-0.5 truncate" style={{ color: "hsl(var(--calendar-event-meta))", opacity: 0.6 }}>{phone}</span>
-      )}
     </button>
   );
 }
@@ -295,6 +312,7 @@ function DayView({
   availMap,
   onSelectBooking,
   onCellClick,
+  selectedBookingId,
 }: {
   day: Date;
   professionals: Professional[];
@@ -302,6 +320,7 @@ function DayView({
   availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
+  selectedBookingId?: number | null;
 }) {
   const dateKey = format(day, "yyyy-MM-dd");
   const currentTimeTop = useCurrentTimeTop(HOURS[0]);
@@ -365,6 +384,7 @@ function DayView({
                           key={booking.id}
                           booking={booking}
                           topOffset={(dt.minute / 60) * CELL_HEIGHT}
+                          selected={booking.id === selectedBookingId}
                           onClick={() => onSelectBooking(booking)}
                         />
                       );
@@ -388,6 +408,7 @@ function WeekView({
   availMap,
   onSelectBooking,
   onCellClick,
+  selectedBookingId,
 }: {
   weekStart: Date;
   professionals: Professional[];
@@ -395,6 +416,7 @@ function WeekView({
   availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
+  selectedBookingId?: number | null;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const currentTimeTop = useCurrentTimeTop(HOURS[0]);
@@ -530,6 +552,7 @@ function WeekView({
                                 booking={booking}
                                 topOffset={(dt.minute / 60) * CELL_HEIGHT}
                                 compact
+                                selected={booking.id === selectedBookingId}
                                 onClick={() => onSelectBooking(booking)}
                               />
                             );
@@ -549,7 +572,7 @@ function WeekView({
 }
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
-export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
+export function AgendaView({ onSelectBooking, onSaveBooking, selectedBookingId }: AgendaViewProps) {
   const { activeUnit } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -729,6 +752,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               availMap={availMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
+              selectedBookingId={selectedBookingId}
             />
           ) : (
             <WeekView
@@ -738,6 +762,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               availMap={availMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
+              selectedBookingId={selectedBookingId}
             />
           )}
         </div>
