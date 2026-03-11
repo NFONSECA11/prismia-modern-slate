@@ -319,6 +319,7 @@ function DayView({
   availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
+  selectedBookingId?: number | null;
 }) {
   const dateKey = format(day, "yyyy-MM-dd");
   const currentTimeTop = useCurrentTimeTop(HOURS[0]);
