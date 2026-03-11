@@ -265,7 +265,7 @@ function EmptyCell({
     return (
       <div
         className={`absolute inset-0 z-0 ${className}`}
-        style={{ background: "hsl(var(--calendar-empty) / 0.5)" }}
+        style={{ background: "hsl(var(--calendar-empty) / 0.35)" }}
       />
     );
   }
