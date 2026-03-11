@@ -267,27 +267,27 @@ export default function Index() {
 
   const { theme, bgMode, bgVariant } = useTheme();
   const landscapeMap: Record<string, string[]> = {
-    "dark-navy": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
-    "soft-slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4],
-    "light-clean": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
+    "night": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
+    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4],
+    "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "dark-navy": ["222 47% 7%", "220 15% 10%", "260 30% 8%"],
-    "soft-slate": ["220 20% 18%", "30 8% 20%", "210 15% 22%"],
-    "light-clean": ["220 20% 97%", "40 30% 95%", "200 30% 95%"],
+    "night": ["215 63% 7%", "220 15% 10%", "260 30% 8%"],
+    "slate": ["216 50% 12%", "220 15% 16%", "210 15% 18%"],
+    "frost": ["212 54% 96%", "40 30% 95%", "200 30% 95%"],
   };
   const gradientMap: Record<string, string[]> = {
-    "dark-navy": [
-      "linear-gradient(135deg, hsl(222 47% 7%), hsl(213 94% 20%), hsl(213 94% 58%))",
-      "linear-gradient(160deg, hsl(222 47% 7%), hsl(260 30% 18%), hsl(186 72% 48%))",
+    "night": [
+      "linear-gradient(135deg, hsl(215 63% 7%), hsl(205 80% 20%), hsl(205 100% 59%))",
+      "linear-gradient(160deg, hsl(215 63% 7%), hsl(260 30% 18%), hsl(186 72% 48%))",
     ],
-    "soft-slate": [
-      "linear-gradient(135deg, hsl(220 20% 14%), hsl(213 50% 28%), hsl(213 80% 56%))",
-      "linear-gradient(160deg, hsl(220 20% 14%), hsl(30 15% 22%), hsl(220 15% 32%))",
+    "slate": [
+      "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))",
+      "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))",
     ],
-    "light-clean": [
-      "linear-gradient(135deg, hsl(220 20% 97%), hsl(200 40% 92%), hsl(213 90% 85%))",
-      "linear-gradient(160deg, hsl(220 20% 97%), hsl(40 50% 92%), hsl(20 60% 90%))",
+    "frost": [
+      "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))",
+      "linear-gradient(160deg, hsl(212 54% 96%), hsl(40 50% 92%), hsl(20 60% 90%))",
     ],
   };
   const isLandscape = bgMode === "landscape";

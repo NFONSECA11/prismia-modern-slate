@@ -40,37 +40,37 @@ export default function Settings() {
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant } = useTheme();
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
-    "dark-navy": [
-      { label: "Azul Profundo", color: "222 47% 7%" },
+    "night": [
+      { label: "Azul Profundo", color: "215 63% 7%" },
       { label: "Carvão", color: "220 15% 10%" },
       { label: "Púrpura Noturno", color: "260 30% 8%" },
     ],
-    "soft-slate": [
-      { label: "Slate", color: "220 20% 18%" },
-      { label: "Cinza Quente", color: "30 8% 20%" },
-      { label: "Aço Frio", color: "210 15% 22%" },
+    "slate": [
+      { label: "Deep Blue", color: "216 50% 12%" },
+      { label: "Cinza Quente", color: "220 15% 16%" },
+      { label: "Aço Frio", color: "210 15% 18%" },
     ],
-    "light-clean": [
-      { label: "Branco", color: "220 20% 97%" },
+    "frost": [
+      { label: "Branco Gelo", color: "212 54% 96%" },
       { label: "Creme", color: "40 30% 95%" },
       { label: "Gelo Azul", color: "200 30% 95%" },
     ],
   };
 
   const landscapeVariants: Record<ThemeId, { label: string; src: string }[]> = {
-    "dark-navy": [
+    "night": [
       { label: "Montanhas", src: bgDarkNavy },
       { label: "Aurora Boreal", src: bgDarkNavy2 },
       { label: "Via Láctea", src: bgDarkNavy3 },
       { label: "Céu Estrelado", src: bgDarkNavy4 },
     ],
-    "soft-slate": [
+    "slate": [
       { label: "Lago", src: bgSoftSlate },
       { label: "Floresta", src: bgSoftSlate2 },
       { label: "Costa", src: bgSoftSlate3 },
       { label: "Tempestade", src: bgSoftSlate4 },
     ],
-    "light-clean": [
+    "frost": [
       { label: "Praia", src: bgLightClean },
       { label: "Lavanda", src: bgLightClean2 },
       { label: "Cerejeiras", src: bgLightClean3 },
@@ -79,17 +79,17 @@ export default function Settings() {
   };
 
   const gradientVariants: Record<ThemeId, { label: string; gradient: string }[]> = {
-    "dark-navy": [
-      { label: "Oceano Profundo", gradient: "linear-gradient(135deg, hsl(222 47% 7%), hsl(213 94% 20%), hsl(213 94% 58%))" },
-      { label: "Aurora Boreal", gradient: "linear-gradient(160deg, hsl(222 47% 7%), hsl(260 30% 18%), hsl(186 72% 48%))" },
+    "night": [
+      { label: "Oceano Profundo", gradient: "linear-gradient(135deg, hsl(215 63% 7%), hsl(205 80% 20%), hsl(205 100% 59%))" },
+      { label: "Aurora Boreal", gradient: "linear-gradient(160deg, hsl(215 63% 7%), hsl(260 30% 18%), hsl(186 72% 48%))" },
     ],
-    "soft-slate": [
-      { label: "Névoa Azul", gradient: "linear-gradient(135deg, hsl(220 20% 14%), hsl(213 50% 28%), hsl(213 80% 56%))" },
-      { label: "Aço Quente", gradient: "linear-gradient(160deg, hsl(220 20% 14%), hsl(30 15% 22%), hsl(220 15% 32%))" },
+    "slate": [
+      { label: "Névoa Azul", gradient: "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))" },
+      { label: "Aço Quente", gradient: "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))" },
     ],
-    "light-clean": [
-      { label: "Céu Limpo", gradient: "linear-gradient(135deg, hsl(220 20% 97%), hsl(200 40% 92%), hsl(213 90% 85%))" },
-      { label: "Pôr do Sol", gradient: "linear-gradient(160deg, hsl(220 20% 97%), hsl(40 50% 92%), hsl(20 60% 90%))" },
+    "frost": [
+      { label: "Céu Limpo", gradient: "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))" },
+      { label: "Pôr do Sol", gradient: "linear-gradient(160deg, hsl(212 54% 96%), hsl(40 50% 92%), hsl(20 60% 90%))" },
     ],
   };
 
@@ -295,9 +295,9 @@ export default function Settings() {
                 </p>
                 <div className="flex items-center gap-4 px-1">
                   {([
-                    { id: "dark-navy" as ThemeId, label: "Dark Navy", colors: ["222 47% 7%", "213 94% 58%", "186 72% 48%"] },
-                    { id: "soft-slate" as ThemeId, label: "Soft Slate", colors: ["220 20% 18%", "213 80% 56%", "186 55% 45%"] },
-                    { id: "light-clean" as ThemeId, label: "Light Clean", colors: ["220 20% 97%", "213 90% 48%", "186 65% 40%"] },
+                    { id: "night" as ThemeId, label: "Prism Night", colors: ["215 63% 7%", "205 100% 59%", "186 72% 48%"] },
+                    { id: "slate" as ThemeId, label: "Prism Deep", colors: ["216 50% 12%", "208 100% 59%", "186 65% 46%"] },
+                    { id: "frost" as ThemeId, label: "Prism Light", colors: ["212 54% 96%", "211 83% 50%", "186 60% 38%"] },
                   ]).map((t) => {
                     const active = theme === t.id;
                     return (
