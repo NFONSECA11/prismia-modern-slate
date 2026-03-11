@@ -319,7 +319,7 @@ export default function Index() {
       <header
         className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60 print:hidden"
         style={{
-          background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
+          background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
