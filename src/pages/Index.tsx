@@ -646,34 +646,41 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
-            <div className="relative flex-1 max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Buscar por ID (#123), nome, procedimento..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
-                style={{ background: "hsl(var(--input-bg))" }}
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
+          <div className="flex flex-col gap-2 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
+            {/* Search + result count row */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID (#123), nom..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
+                  style={{ background: "hsl(var(--input-bg))" }}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {filteredBookings.length} resultado{filteredBookings.length !== 1 ? "s" : ""}
+              </span>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+            {/* Filters row — horizontal scroll on mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-0.5 flex-shrink-0 hidden sm:block" />
               {QUICK_FILTERS.map((f) => (
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border whitespace-nowrap flex-shrink-0 ${
                     statusFilter === f.value
                       ? "border-primary/60 bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-border hover:text-foreground bg-surface hover:bg-surface-elevated"
@@ -683,9 +690,9 @@ export default function Index() {
                 </button>
               ))}
 
-              <div className="h-4 w-px bg-border mx-1" />
+              <div className="h-4 w-px bg-border mx-1 flex-shrink-0" />
 
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0">
                 <button
                   role="switch"
                   aria-checked={hideCancelled}
@@ -703,10 +710,6 @@ export default function Index() {
                 <span className="text-[11px] text-muted-foreground whitespace-nowrap">Ocultar cancelados</span>
               </label>
             </div>
-
-            <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-              {filteredBookings.length} resultado{filteredBookings.length !== 1 ? "s" : ""}
-            </span>
           </div>
         )}
 
