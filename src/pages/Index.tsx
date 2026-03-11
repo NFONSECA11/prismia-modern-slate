@@ -279,16 +279,19 @@ export default function Index() {
   };
   const gradientMap: Record<string, string[]> = {
     "night": [
-      "linear-gradient(135deg, hsl(215 63% 7%), hsl(205 80% 20%), hsl(205 100% 59%))",
-      "linear-gradient(160deg, hsl(215 63% 7%), hsl(260 30% 18%), hsl(186 72% 48%))",
+      "linear-gradient(145deg, hsl(210 58% 6%), hsl(205 55% 12%), hsl(200 45% 18%))",
+      "linear-gradient(150deg, hsl(220 30% 7%), hsl(218 25% 11%), hsl(215 20% 16%))",
+      "linear-gradient(140deg, hsl(215 50% 7%), hsl(248 28% 12%), hsl(260 22% 16%))",
     ],
     "slate": [
-      "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))",
-      "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))",
+      "linear-gradient(145deg, hsl(216 48% 11%), hsl(212 42% 17%), hsl(208 38% 23%))",
+      "linear-gradient(150deg, hsl(215 22% 12%), hsl(214 18% 18%), hsl(212 15% 24%))",
+      "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))",
     ],
     "frost": [
-      "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))",
-      "linear-gradient(160deg, hsl(212 54% 96%), hsl(40 50% 92%), hsl(20 60% 90%))",
+      "linear-gradient(145deg, hsl(210 40% 97%), hsl(208 35% 94%), hsl(205 45% 90%))",
+      "linear-gradient(150deg, hsl(214 18% 96%), hsl(212 15% 93%), hsl(210 20% 90%))",
+      "linear-gradient(140deg, hsl(208 30% 96%), hsl(206 35% 92%), hsl(210 25% 95%))",
     ],
   };
   const isLandscape = bgMode === "landscape";
