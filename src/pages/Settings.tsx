@@ -80,6 +80,7 @@ export default function Settings() {
     ],
   };
 
+  // Gradient variants per theme
   const gradientVariants: Record<ThemeId, { label: string; gradient: string }[]> = {
     "night": [
       { label: "Oceano Profundo", gradient: "linear-gradient(135deg, hsl(215 63% 7%), hsl(205 80% 20%), hsl(205 100% 59%))" },
