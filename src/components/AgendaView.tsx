@@ -407,6 +407,7 @@ function WeekView({
   availMap,
   onSelectBooking,
   onCellClick,
+  selectedBookingId,
 }: {
   weekStart: Date;
   professionals: Professional[];
@@ -414,6 +415,7 @@ function WeekView({
   availMap: Record<number, ProfAvailability>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
+  selectedBookingId?: number | null;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const currentTimeTop = useCurrentTimeTop(HOURS[0]);
