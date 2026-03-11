@@ -551,6 +551,7 @@ function WeekView({
                                 booking={booking}
                                 topOffset={(dt.minute / 60) * CELL_HEIGHT}
                                 compact
+                                selected={booking.id === selectedBookingId}
                                 onClick={() => onSelectBooking(booking)}
                               />
                             );
