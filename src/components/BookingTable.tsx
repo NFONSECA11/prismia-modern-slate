@@ -348,7 +348,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border/60 surface-elevated">
+              <tr className="border-b border-border/60" style={{ backgroundColor: 'hsl(var(--table-header-bg))' }}>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   Contato
                 </th>
