@@ -220,32 +220,31 @@ function AppointmentCard({
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1.5 right-1.5 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-50" : ""}`}
+      className={`absolute left-2 right-2 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-45" : ""}`}
       style={{
-        top: `${topOffset + 2}px`,
+        top: `${topOffset + 3}px`,
         minHeight: compact ? "38px" : "50px",
         background: "hsl(var(--calendar-event-bg))",
         color: "hsl(var(--calendar-event-title))",
         borderLeft: `3px solid hsl(var(--calendar-event-border))`,
         boxShadow: "var(--calendar-event-shadow)",
-        padding: compact ? "4px 8px" : "6px 10px",
+        padding: compact ? "3px 8px 4px" : "5px 10px 6px",
       }}
     >
-      <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight" style={{ color: "hsl(var(--calendar-event-meta))" }}>
-        <Clock className="h-2.5 w-2.5 flex-shrink-0 opacity-70" />
-        {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
-      </span>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold leading-tight" style={{ color: "hsl(var(--calendar-event-title))" }}>
-        <span className="truncate">{booking.lead_name}</span>
+      {/* Client name — primary info */}
+      <div className="text-[11px] font-bold leading-tight truncate" style={{ color: "hsl(var(--calendar-event-title))" }}>
+        {booking.lead_name}
       </div>
-      {!compact && (
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <span className="text-[9px] font-mono opacity-60">#{booking.id}</span>
-          {phone && <span className="text-[9px] opacity-50 truncate">{phone}</span>}
-        </div>
-      )}
-      {compact && (
+      {/* Time + ID — secondary */}
+      <div className="mt-0.5 flex items-center gap-1.5" style={{ color: "hsl(var(--calendar-event-meta))" }}>
+        <span className="flex items-center gap-0.5 text-[9px] font-medium">
+          <Clock className="h-2 w-2 flex-shrink-0 opacity-60" />
+          {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
+        </span>
         <span className="text-[9px] font-mono opacity-50">#{booking.id}</span>
+      </div>
+      {!compact && phone && (
+        <span className="block text-[9px] mt-0.5 truncate" style={{ color: "hsl(var(--calendar-event-meta))", opacity: 0.6 }}>{phone}</span>
       )}
     </button>
   );
@@ -266,7 +265,7 @@ function EmptyCell({
     return (
       <div
         className={`absolute inset-0 z-0 ${className}`}
-        style={{ background: "hsl(var(--calendar-empty) / 0.5)" }}
+        style={{ background: "hsl(var(--calendar-empty) / 0.35)" }}
       />
     );
   }
@@ -519,7 +518,7 @@ function WeekView({
                           className="flex-1 relative"
                           style={{
                             borderLeft: di > 0 ? "1px solid hsl(var(--calendar-grid))" : undefined,
-                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.04)" : undefined,
+                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.06)" : undefined,
                           }}
                         >
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
@@ -672,31 +671,46 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
         {/* Toolbar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2">
+        <div
+          className="flex items-center gap-3 px-4 py-3 flex-shrink-0 flex-wrap gap-y-2"
+          style={{
+            background: "hsl(var(--calendar-header-bg))",
+            borderBottom: "2px solid hsl(var(--calendar-grid-strong))",
+          }}
+        >
           <div className="flex items-center gap-1">
-            <button onClick={navigatePrev} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button onClick={navigatePrev} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors" style={{ background: "transparent" }}>
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={goToday} className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button
+              onClick={goToday}
+              className="px-3 py-1 text-xs font-semibold rounded-lg transition-colors"
+              style={{
+                background: "hsl(var(--calendar-column-today-bg) / 0.12)",
+                color: "hsl(var(--calendar-column-today-bg))",
+                border: "1px solid hsl(var(--calendar-column-today-bg) / 0.25)",
+              }}
+            >
               Hoje
             </button>
-            <button onClick={navigateNext} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button onClick={navigateNext} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors" style={{ background: "transparent" }}>
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <span className="text-sm font-semibold text-foreground capitalize flex-1 min-w-0 truncate">
+          <span className="text-sm font-bold text-foreground capitalize flex-1 min-w-0 truncate">
             {periodLabel}
           </span>
 
-          <div className="flex items-center gap-0.5 rounded-lg p-0.5 bg-surface border border-border">
+          <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "hsl(var(--calendar-bg))", border: "1px solid hsl(var(--calendar-grid))" }}>
             {(["day", "week"] as AgendaMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); if (m === "day") setCurrentDate(new Date()); }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                  mode === m ? "bg-surface-raised text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  mode === m ? "text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
+                style={mode === m ? { background: "hsl(var(--calendar-header-bg))" } : undefined}
               >
                 <CalendarDays className="h-3 w-3" />
                 {m === "day" ? "Dia" : "Semana"}
