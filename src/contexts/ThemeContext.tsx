@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type ThemeId = "dark-navy" | "soft-slate" | "light-clean";
+export type ThemeId = "night" | "slate" | "frost";
 export type BgMode = "solid" | "landscape" | "gradient";
 
 interface ThemeContextType {
@@ -13,7 +13,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark-navy",
+  theme: "slate",
   setTheme: () => {},
   bgMode: "solid",
   setBgMode: () => {},
@@ -29,13 +29,26 @@ const THEME_KEY = "prismia-theme";
 const BG_KEY = "prismia-bg-mode";
 const BG_VARIANT_KEY = "prismia-bg-variant";
 
+// Migration map for old theme IDs
+const THEME_MIGRATION: Record<string, ThemeId> = {
+  "dark-navy": "night",
+  "soft-slate": "slate",
+  "light-clean": "frost",
+};
+
+function resolveTheme(saved: string | null): ThemeId {
+  if (!saved) return "slate";
+  if (saved === "night" || saved === "slate" || saved === "frost") return saved;
+  if (THEME_MIGRATION[saved]) return THEME_MIGRATION[saved];
+  return "slate";
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>(() => {
     try {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved === "dark-navy" || saved === "soft-slate" || saved === "light-clean") return saved;
+      return resolveTheme(localStorage.getItem(THEME_KEY));
     } catch {}
-    return "dark-navy";
+    return "slate";
   });
 
   const [bgMode, setBgModeState] = useState<BgMode>(() => {
@@ -56,7 +69,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = (t: ThemeId) => {
     setThemeState(t);
-    setBgVariantState(0); // reset variant when changing theme
+    setBgVariantState(0);
     try {
       localStorage.setItem(THEME_KEY, t);
       localStorage.setItem(BG_VARIANT_KEY, "0");
