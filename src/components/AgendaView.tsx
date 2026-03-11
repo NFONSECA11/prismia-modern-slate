@@ -518,7 +518,7 @@ function WeekView({
                           className="flex-1 relative"
                           style={{
                             borderLeft: di > 0 ? "1px solid hsl(var(--calendar-grid))" : undefined,
-                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.04)" : undefined,
+                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.06)" : undefined,
                           }}
                         >
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
