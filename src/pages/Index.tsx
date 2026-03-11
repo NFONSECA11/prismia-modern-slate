@@ -583,6 +583,7 @@ export default function Index() {
             <AgendaView
               onSelectBooking={setSelectedBooking}
               onSaveBooking={handleSaveBooking}
+              selectedBookingId={selectedBooking?.id ?? null}
             />
           )}
         </div>
