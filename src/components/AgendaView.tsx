@@ -529,7 +529,7 @@ function WeekView({
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
 export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
-  const { activeUnit } = useAuth();
+  const { activeUnit, company } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
@@ -643,6 +643,8 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     await onSaveBooking(data);
   };
 
+  const printPeriodLabel = `${format(weekStart, "dd/MM/yyyy", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd/MM/yyyy", { locale: ptBR })}`;
+
   return (
     <>
       <div
@@ -650,8 +652,16 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
         style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
+        {/* Print-only header */}
+        <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
+          <h1 className="text-base font-bold">{company?.name || "PrismIA"}</h1>
+          <p className="text-xs text-muted-foreground">{activeUnit?.name || "Unidade"}</p>
+          <p className="text-sm font-semibold mt-1">Agenda Semanal — {printPeriodLabel}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Impresso em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+        </div>
+
         {/* Toolbar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2 print:hidden">
           <div className="flex items-center gap-1">
             <button onClick={navigatePrev} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
               <ChevronLeft className="h-4 w-4" />
@@ -685,7 +695,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border print:hidden"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border"
             title="Imprimir agenda"
           >
             <Printer className="h-3.5 w-3.5" />

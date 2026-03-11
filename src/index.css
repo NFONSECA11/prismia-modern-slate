@@ -348,73 +348,77 @@
 
   html, body {
     background: white !important;
-    color: #111 !important;
-    font-size: 10px !important;
+    color: #1a1a1a !important;
+    font-size: 9px !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
   }
 
   /* Hide everything except the agenda */
-  body > * {
-    display: none !important;
-  }
-
-  /* Re-show the React root, then hide non-agenda content inside it */
-  #root {
-    display: block !important;
-  }
-
-  #root > * {
-    display: none !important;
-  }
-
-  /* Walk up to show the agenda print area */
-  #root *:has(#agenda-print-area) {
-    display: block !important;
-  }
+  body > * { display: none !important; }
+  #root { display: block !important; }
+  #root > * { display: none !important; }
+  #root *:has(#agenda-print-area) { display: block !important; }
 
   #agenda-print-area {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
     max-height: none !important;
     overflow: visible !important;
-    border: none !important;
+    border: 1px solid #ccc !important;
     box-shadow: none !important;
-    border-radius: 0 !important;
+    border-radius: 4px !important;
     background: white !important;
     width: 100% !important;
   }
 
   #agenda-print-area * {
     overflow: visible !important;
+    color: #1a1a1a !important;
   }
 
-  /* Toolbar: show period label, hide interactive buttons */
-  .print\:hidden {
+  /* Show print header */
+  .print\:block { display: block !important; }
+  .print\:hidden { display: none !important; }
+
+  /* Appointment cards */
+  #agenda-print-area button[style*="appointment"] {
+    background: #e8f0fe !important;
+    border-left-color: #2e7d32 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Grid lines */
+  #agenda-print-area .border-border,
+  #agenda-print-area [style*="border"] {
+    border-color: #d0d0d0 !important;
+  }
+
+  /* Header backgrounds */
+  #agenda-print-area [style*="surface-elevated"] {
+    background: #f5f5f5 !important;
+  }
+
+  /* Unavailable cells */
+  #agenda-print-area [style*="rgba(0,0,0"] {
+    background: #f9f9f9 !important;
+  }
+
+  /* Remove interactive hover areas in print */
+  #agenda-print-area button {
+    pointer-events: none !important;
+  }
+
+  /* Current time indicator - hide */
+  #agenda-print-area .bg-primary\/70,
+  #agenda-print-area .bg-primary {
     display: none !important;
   }
 
-  /* Force readable colors for print */
-  #agenda-print-area [style*="--appointment-bg"] {
-    background: #e8f0fe !important;
-  }
-
-  #agenda-print-area .text-foreground,
-  #agenda-print-area .text-muted-foreground {
-    color: #222 !important;
-  }
-
-  /* Make grid lines visible */
-  #agenda-print-area .border-border {
-    border-color: #ccc !important;
-  }
-
-  /* Remove hover effects */
-  #agenda-print-area button {
-    pointer-events: none;
-  }
-
   @page {
-    size: landscape;
-    margin: 8mm;
+    size: A4 landscape;
+    margin: 6mm;
   }
 }
