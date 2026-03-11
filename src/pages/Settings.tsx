@@ -37,7 +37,7 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 
 export default function Settings() {
   const { company, units, activeUnit } = useAuth();
-  const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant } = useTheme();
+  const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
