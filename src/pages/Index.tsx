@@ -319,7 +319,7 @@ export default function Index() {
       <header
         className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60 print:hidden"
         style={{
-          background: isLandscape ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))",
+          background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
@@ -509,7 +509,7 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-xl px-3 py-2 bg-surface/80 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
@@ -517,7 +517,8 @@ export default function Index() {
                 placeholder="Buscar por ID (#123), nome, procedimento..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
+                className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all"
+                style={{ background: "hsl(var(--input-bg))" }}
               />
               {search && (
                 <button

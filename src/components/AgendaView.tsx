@@ -326,7 +326,7 @@ function DayView({
     <div className="overflow-x-auto">
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
-        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
           <div className="w-[60px] flex-shrink-0 border-r border-border" />
           {professionals.map((prof) => (
             <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5 border-border">
@@ -417,7 +417,7 @@ function WeekView({
     <div className="overflow-x-auto">
       <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
         {/* Header grouped by professional */}
-        <div className="sticky top-0 z-10 border-b border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+        <div className="sticky top-0 z-10 border-b border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
           {professionals.length === 0 ? (
             <div className="flex">
               <div className="w-[60px] flex-shrink-0 border-r border-border" />

@@ -25,7 +25,11 @@ export default {
           DEFAULT: "hsl(var(--surface))",
           raised: "hsl(var(--surface-raised))",
           elevated: "hsl(var(--surface-elevated))",
+          hover: "hsl(var(--card-hover))",
         },
+        "topbar": "hsl(var(--topbar-bg))",
+        "table-header": "hsl(var(--table-header-bg))",
+        "input-bg": "hsl(var(--input-bg))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
