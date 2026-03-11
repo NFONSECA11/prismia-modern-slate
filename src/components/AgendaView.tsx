@@ -383,6 +383,7 @@ function DayView({
                           key={booking.id}
                           booking={booking}
                           topOffset={(dt.minute / 60) * CELL_HEIGHT}
+                          selected={booking.id === selectedBookingId}
                           onClick={() => onSelectBooking(booking)}
                         />
                       );
