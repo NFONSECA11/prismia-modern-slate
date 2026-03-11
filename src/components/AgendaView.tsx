@@ -266,11 +266,9 @@ function EmptyCell({
   if (!available) {
     return (
       <div
-        className={`absolute inset-0 z-0 flex items-center justify-center ${className}`}
-        style={{ background: "rgba(0,0,0,0.04)" }}
-      >
-        <Ban className="h-3 w-3" style={{ color: "#ccc" }} />
-      </div>
+        className={`absolute inset-0 z-0 ${className}`}
+        style={{ background: "hsl(var(--calendar-empty) / 0.5)" }}
+      />
     );
   }
   return (
@@ -279,10 +277,10 @@ function EmptyCell({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className={`absolute inset-0 cursor-pointer flex items-center justify-center transition-colors rounded-sm ${className}`}
-      style={{ background: hover ? "hsl(var(--primary) / 0.06)" : "transparent" }}
+      style={{ background: hover ? "hsl(var(--calendar-column-today-bg) / 0.08)" : "transparent" }}
     >
       {hover && (
-        <span className="flex items-center gap-1 text-[9px] font-medium text-primary/70 select-none pointer-events-none">
+        <span className="flex items-center gap-1 text-[9px] font-medium select-none pointer-events-none" style={{ color: "hsl(var(--calendar-column-today-bg) / 0.6)" }}>
           <Plus className="h-3 w-3" />
           Agendar
         </span>
