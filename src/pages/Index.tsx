@@ -322,136 +322,141 @@ export default function Index() {
       )}
       {/* Top navigation bar */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 border-b border-border/60 print:hidden"
+        className="sticky top-0 z-30 border-b border-border/60 print:hidden"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
-          </div>
-          <span className="text-border text-xs">|</span>
-
-          {/* Company + Unit selector */}
-          <div className="flex items-center gap-2">
-            {company && (
-              <span className="text-xs text-muted-foreground font-medium">{company.name}</span>
-            )}
-            {units.length > 1 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowUnitMenu(!showUnitMenu)}
-                  className="flex items-center gap-1 text-xs font-medium text-foreground px-2 py-1 rounded-lg border border-border hover:bg-surface-elevated transition-colors"
-                >
-                  <Building2 className="h-3 w-3 text-muted-foreground" />
-                  {activeUnit?.name ?? "Unidade"}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                </button>
-                {showUnitMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowUnitMenu(false)} />
-                    <div className="absolute top-full left-0 mt-1 z-50 rounded-lg border border-border surface-raised shadow-md py-1 min-w-[160px]">
-                      {units.map((u) => (
-                        <button
-                          key={u.id}
-                          onClick={() => {
-                            setActiveUnit(u);
-                            setShowUnitMenu(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
-                            activeUnit?.id === u.id
-                              ? "text-primary font-semibold bg-primary/5"
-                              : "text-foreground hover:bg-surface-elevated"
-                          }`}
-                        >
-                          {u.name}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+        {/* Main bar */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
+                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-            )}
-            {units.length <= 1 && activeUnit && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Building2 className="h-3 w-3" />
-                {activeUnit.name}
+              <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
+            </div>
+            <span className="text-border text-xs hidden sm:inline">|</span>
+
+            {/* Company + Unit selector */}
+            <div className="flex items-center gap-2 min-w-0 hidden sm:flex">
+              {company && (
+                <span className="text-xs text-muted-foreground font-medium truncate">{company.name}</span>
+              )}
+              {units.length > 1 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUnitMenu(!showUnitMenu)}
+                    className="flex items-center gap-1 text-xs font-medium text-foreground px-2 py-1 rounded-lg border border-border hover:bg-surface-elevated transition-colors"
+                  >
+                    <Building2 className="h-3 w-3 text-muted-foreground" />
+                    {activeUnit?.name ?? "Unidade"}
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                  {showUnitMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowUnitMenu(false)} />
+                      <div className="absolute top-full left-0 mt-1 z-50 rounded-lg border border-border surface-raised shadow-md py-1 min-w-[160px]">
+                        {units.map((u) => (
+                          <button
+                            key={u.id}
+                            onClick={() => {
+                              setActiveUnit(u);
+                              setShowUnitMenu(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                              activeUnit?.id === u.id
+                                ? "text-primary font-semibold bg-primary/5"
+                                : "text-foreground hover:bg-surface-elevated"
+                            }`}
+                          >
+                            {u.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {units.length <= 1 && activeUnit && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  {activeUnit.name}
+                </span>
+              )}
+            </div>
+
+            {/* Connectivity */}
+            <div className="hidden sm:flex">
+              {isError ? (
+                <span className="flex items-center gap-1 text-[10px] font-medium text-status-canceled bg-status-canceled-bg px-2 py-0.5 rounded-full border border-status-canceled/25">
+                  <WifiOff className="h-3 w-3" />
+                  Offline
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
+                  <Wifi className="h-3 w-3" />
+                  Conectado
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-2">
+            {/* Role badge */}
+            {role && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
+                <Shield className="h-3 w-3" />
+                {roleLabel[role] ?? role}
               </span>
             )}
-          </div>
 
-          {/* Connectivity */}
-          {isError ? (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-status-canceled bg-status-canceled-bg px-2 py-0.5 rounded-full border border-status-canceled/25">
-              <WifiOff className="h-3 w-3" />
-              Offline
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
-              <Wifi className="h-3 w-3" />
-              Conectado
-            </span>
-          )}
-        </div>
+            {/* User */}
+            {user && (
+              <span className="text-xs text-muted-foreground">
+                {user.first_name || user.username}
+              </span>
+            )}
 
-        <div className="flex items-center gap-2">
-          {/* Role badge */}
-          {role && (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
-              <Shield className="h-3 w-3" />
-              {roleLabel[role] ?? role}
-            </span>
-          )}
-
-          {/* User */}
-          {user && (
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              {user.first_name || user.username}
-            </span>
-          )}
-
-          <button
-            onClick={() => { refetch(); refetchUpdated(); }}
-            disabled={isRefetching}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-surface-elevated"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
-            Atualizar
-          </button>
-
-          <div className="h-4 w-px bg-border" />
-
-          <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
             <button
-              onClick={() => handleSetView("table")}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                view === "table"
-                  ? "bg-surface-raised text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              onClick={() => { refetch(); refetchUpdated(); }}
+              disabled={isRefetching}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-surface-elevated"
             >
-              <LayoutList className="h-3.5 w-3.5" />
-              Tabela
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+              Atualizar
             </button>
-            <button
-              onClick={() => handleSetView("agenda")}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-                view === "agenda"
-                  ? "bg-surface-raised text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Agenda
-            </button>
-          </div>
 
-          <div className="h-4 w-px bg-border" />
+            <div className="h-4 w-px bg-border" />
+
+            <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
+              <button
+                onClick={() => handleSetView("table")}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  view === "table"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+                Tabela
+              </button>
+              <button
+                onClick={() => handleSetView("agenda")}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  view === "agenda"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                Agenda
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-border" />
 
             {isLandscape && (
               <button
@@ -469,18 +474,145 @@ export default function Index() {
               title="Configurações"
             >
               <Settings className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Configurações</span>
+              Configurações
             </button>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-status-canceled transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-            title="Sair"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Sair</span>
-          </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-status-canceled transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+              title="Sair"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sair
+            </button>
+          </div>
+
+          {/* Mobile: view toggle + hamburger */}
+          <div className="flex sm:hidden items-center gap-2">
+            {/* Compact view toggle */}
+            <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
+              <button
+                onClick={() => handleSetView("table")}
+                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
+                  view === "table"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleSetView("agenda")}
+                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
+                  view === "agenda"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <CalendarDays className="h-4 w-4" />
+              </button>
+            </div>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-border/60 px-4 py-3 space-y-2 animate-fade-in">
+            {/* Company & Unit */}
+            {company && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pb-2 border-b border-border/40">
+                <Building2 className="h-3 w-3" />
+                <span className="font-medium">{company.name}</span>
+                {activeUnit && <span className="text-border">·</span>}
+                {activeUnit && <span>{activeUnit.name}</span>}
+              </div>
+            )}
+
+            {/* Unit selector (mobile) */}
+            {units.length > 1 && (
+              <div className="flex flex-wrap gap-1.5 pb-2 border-b border-border/40">
+                {units.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => {
+                      setActiveUnit(u);
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+                      activeUnit?.id === u.id
+                        ? "text-primary font-semibold bg-primary/10 border border-primary/20"
+                        : "text-foreground bg-surface-elevated border border-border"
+                    }`}
+                  >
+                    {u.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* User info & status */}
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <div className="flex items-center gap-2">
+                {user && (
+                  <span className="text-xs text-foreground font-medium">
+                    {user.first_name || user.username}
+                  </span>
+                )}
+                {role && (
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
+                    <Shield className="h-3 w-3" />
+                    {roleLabel[role] ?? role}
+                  </span>
+                )}
+              </div>
+              {isError ? (
+                <span className="flex items-center gap-1 text-[10px] font-medium text-status-canceled bg-status-canceled-bg px-2 py-0.5 rounded-full border border-status-canceled/25">
+                  <WifiOff className="h-3 w-3" />
+                  Offline
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
+                  <Wifi className="h-3 w-3" />
+                  Conectado
+                </span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => { refetch(); refetchUpdated(); setMobileMenuOpen(false); }}
+                disabled={isRefetching}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 text-muted-foreground ${isRefetching ? "animate-spin" : ""}`} />
+                Atualizar dados
+              </button>
+
+              <button
+                onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
+              >
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                Configurações
+              </button>
+
+              <button
+                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-status-canceled hover:bg-surface-elevated transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Zen mode - fullscreen landscape */}
