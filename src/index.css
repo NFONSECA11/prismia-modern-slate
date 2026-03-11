@@ -355,6 +355,9 @@
     overflow: visible !important;
   }
 
+  /* Hide background layers (landscape/gradient) */
+  .fixed.inset-0 { display: none !important; }
+
   /* Hide everything except the agenda */
   body > * { display: none !important; }
   #root { display: block !important; }
