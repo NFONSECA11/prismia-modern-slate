@@ -752,6 +752,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking, selectedBookingId }
               availMap={availMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
+              selectedBookingId={selectedBookingId}
             />
           ) : (
             <WeekView
