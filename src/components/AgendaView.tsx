@@ -324,15 +324,15 @@ function DayView({
   }, [bookings, professionals, dateKey]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" style={{ background: "hsl(var(--calendar-bg))" }}>
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
-        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-          <div className="w-[60px] flex-shrink-0 border-r border-border" />
+        <div className="flex sticky top-0 z-10" style={{ borderBottom: "2px solid hsl(var(--calendar-grid-strong))", background: "hsl(var(--calendar-header-bg))" }}>
+          <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }} />
           {professionals.map((prof) => (
-            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5 border-border">
+            <div key={prof.id} className="w-[200px] last:border-r-0 px-3 py-2.5" style={{ borderRight: "1px solid hsl(var(--calendar-grid))" }}>
               <p className="text-xs font-semibold truncate text-foreground">{prof.name}</p>
-              <p className="text-[10px] truncate text-muted-foreground">{prof.specialty}</p>
+              <p className="text-[10px] truncate" style={{ color: "hsl(var(--calendar-time-text))" }}>{prof.specialty}</p>
             </div>
           ))}
         </div>
@@ -340,25 +340,25 @@ function DayView({
         {/* Time grid */}
         <div className="relative">
           {showNow && currentTimeTop !== null && currentTimeTop >= 0 && (
-            <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
-              <div className="w-[60px] flex-shrink-0 pr-2 text-right">
-                <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
+            <div className="absolute left-0 right-0 z-30 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
+              <div className="w-[60px] flex-shrink-0 pr-1.5 text-right">
+                <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color: "hsl(var(--calendar-header-active-text))", background: "hsl(var(--calendar-now-line))" }}>{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-px flex-1 bg-primary/70 relative">
-                <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
+              <div className="flex-1 relative" style={{ height: "2px", background: "hsl(var(--calendar-now-line))" }}>
+                <div className="absolute -left-1.5 -top-[4px] h-[10px] w-[10px] rounded-full" style={{ background: "hsl(var(--calendar-now-dot))", boxShadow: "0 0 8px hsl(var(--calendar-now-dot) / 0.5)" }} />
               </div>
             </div>
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
-                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid hsl(var(--calendar-grid))" }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }}>
+                <span className="text-[10px] font-mono font-medium" style={{ color: "hsl(var(--calendar-time-text))" }}>{String(hour).padStart(2, "0")}:00</span>
               </div>
               {professionals.map((prof) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
-                  <div key={prof.id} className="w-[200px] last:border-r-0 relative border-r border-border">
+                  <div key={prof.id} className="w-[200px] last:border-r-0 relative" style={{ borderRight: "1px solid hsl(var(--calendar-grid))" }}>
                     <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
