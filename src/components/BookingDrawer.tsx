@@ -818,17 +818,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <div className="flex items-center gap-2">
+            <div>
               <h2 className="text-sm font-semibold text-foreground leading-tight">
-                Agendamento
+                Detalhe do Agendamento
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-mono font-semibold bg-surface-elevated text-muted-foreground border border-border">
-                BR #{booking.id}
-              </span>
+              <p className="text-xs text-muted-foreground font-mono">#{booking.id}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -859,13 +857,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
                     <h3 className="text-base font-semibold text-foreground">{booking.lead_name}</h3>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {(booking.contact_phone || booking.phone)
-                    ? formatPhone(booking.contact_phone || booking.phone || "")
-                    : <span className="italic opacity-60">Não informado</span>
-                  }
-                </p>
+                {(booking.contact_phone || booking.phone) && (
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {formatPhone(booking.contact_phone || booking.phone || "")}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col items-end gap-1.5">
                 <StatusBadge status={booking.status} size="md" />

@@ -21,7 +21,6 @@ import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
 import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
 import bgSoftSlate4 from "@/assets/bg-soft-slate-4.jpg";
-import bgSoftSlate5 from "@/assets/bg-soft-slate-5.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
 import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
 import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
@@ -269,13 +268,13 @@ export default function Index() {
   const { theme, bgMode, bgVariant } = useTheme();
   const landscapeMap: Record<string, string[]> = {
     "night": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
-    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4, bgSoftSlate5],
+    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4],
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
     "night": ["215 63% 7%", "220 15% 10%", "260 30% 8%"],
     "slate": ["216 50% 12%", "220 15% 16%", "210 15% 18%"],
-    "frost": ["214 35% 94%", "40 22% 93%", "200 25% 93%"],
+    "frost": ["212 54% 96%", "40 30% 95%", "200 30% 95%"],
   };
   const gradientMap: Record<string, string[]> = {
     "night": [
@@ -285,7 +284,6 @@ export default function Index() {
     "slate": [
       "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))",
       "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))",
-      "linear-gradient(145deg, hsl(210 30% 14%), hsl(205 28% 24%), hsl(200 22% 38%))",
     ],
     "frost": [
       "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))",
@@ -510,7 +508,7 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pb-4 mb-1 border-b border-border/50">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
@@ -585,7 +583,6 @@ export default function Index() {
             <AgendaView
               onSelectBooking={setSelectedBooking}
               onSaveBooking={handleSaveBooking}
-              selectedBookingId={selectedBooking?.id ?? null}
             />
           )}
         </div>

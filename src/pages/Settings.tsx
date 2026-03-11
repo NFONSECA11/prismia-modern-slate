@@ -12,7 +12,6 @@ import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
 import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
 import bgSoftSlate4 from "@/assets/bg-soft-slate-4.jpg";
-import bgSoftSlate5 from "@/assets/bg-soft-slate-5.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
 import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
 import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
@@ -70,7 +69,6 @@ export default function Settings() {
       { label: "Floresta", src: bgSoftSlate2 },
       { label: "Costa", src: bgSoftSlate3 },
       { label: "Tempestade", src: bgSoftSlate4 },
-      { label: "Oceano", src: bgSoftSlate5 },
     ],
     "frost": [
       { label: "Praia", src: bgLightClean },
@@ -80,7 +78,6 @@ export default function Settings() {
     ],
   };
 
-  // Gradient variants per theme
   const gradientVariants: Record<ThemeId, { label: string; gradient: string }[]> = {
     "night": [
       { label: "Oceano Profundo", gradient: "linear-gradient(135deg, hsl(215 63% 7%), hsl(205 80% 20%), hsl(205 100% 59%))" },
@@ -89,7 +86,6 @@ export default function Settings() {
     "slate": [
       { label: "Névoa Azul", gradient: "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))" },
       { label: "Aço Quente", gradient: "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))" },
-      { label: "Oceano", gradient: "linear-gradient(145deg, hsl(210 30% 14%), hsl(205 28% 24%), hsl(200 22% 38%))" },
     ],
     "frost": [
       { label: "Céu Limpo", gradient: "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))" },
