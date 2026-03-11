@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer } from "lucide-react";
 
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
