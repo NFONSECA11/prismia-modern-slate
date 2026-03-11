@@ -21,6 +21,7 @@ import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
 import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
 import bgSoftSlate4 from "@/assets/bg-soft-slate-4.jpg";
+import bgSoftSlate5 from "@/assets/bg-soft-slate-5.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
 import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
 import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
@@ -268,7 +269,7 @@ export default function Index() {
   const { theme, bgMode, bgVariant } = useTheme();
   const landscapeMap: Record<string, string[]> = {
     "night": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
-    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4],
+    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4, bgSoftSlate5],
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
