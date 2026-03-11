@@ -212,62 +212,39 @@ function AppointmentCard({
   onClick: () => void;
 }) {
   const dt = getSlotDateTime(booking)!;
-  const phone = booking.contact_phone || booking.phone || "";
 
   // Check if this appointment is in the past
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
-  const isConfirmed = booking.status === "confirmed";
-  // Check if theme has custom appointment colors (Light Clean)
-  const root = document.documentElement;
-  const hasCustomAppointment = getComputedStyle(root).getPropertyValue('--appointment-bg').trim() !== '';
-
-  let bgColor: string;
-  let textColor: string;
-  let borderColor: string;
-
-  if (hasCustomAppointment) {
-    bgColor = "hsl(var(--appointment-bg))";
-    textColor = "hsl(var(--appointment-text))";
-    borderColor = "hsl(var(--appointment-border))";
-  } else {
-    bgColor = isPast
-      ? "hsl(var(--muted-foreground))"
-      : isConfirmed
-        ? "hsl(var(--status-confirmed))"
-        : "hsl(var(--status-handoff))";
-    textColor = "hsl(var(--primary-foreground))";
-    borderColor = isPast
-      ? "hsl(var(--muted-foreground) / 0.7)"
-      : isConfirmed
-        ? "hsl(var(--status-confirmed))"
-        : "hsl(var(--status-handoff))";
-  }
 
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1 right-1 rounded-md px-2 py-1 text-left transition-all hover:brightness-110 hover:z-10 hover:scale-[1.01] z-10 ${isPast ? "opacity-60" : ""}`}
+      className={`absolute left-1 right-1 rounded-lg text-left transition-all hover:brightness-105 hover:z-10 hover:scale-[1.01] z-10 ${isPast ? "opacity-50" : ""}`}
       style={{
         top: `${topOffset + 2}px`,
-        minHeight: compact ? "36px" : "48px",
-        background: bgColor,
-        color: textColor,
-        borderLeft: `3px solid ${borderColor}`,
+        minHeight: compact ? "40px" : "48px",
+        background: "hsl(var(--appointment-bg))",
+        color: "hsl(var(--appointment-text))",
+        borderLeft: "3px solid hsl(var(--status-confirmed))",
+        padding: "6px 8px",
+        boxShadow: "0 1px 3px hsl(var(--background) / 0.15)",
       }}
     >
-      <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight">
-        <Clock className="h-2.5 w-2.5 flex-shrink-0 opacity-70" />
-        {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
+      <span className="block text-[11px] font-bold truncate leading-tight">
+        {booking.lead_name}
       </span>
-      <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-tight">
-        <span className="font-mono opacity-80">#{booking.id}</span>
-        <span className="truncate">{booking.lead_name}</span>
+      <div className="mt-0.5 flex items-center gap-2 text-[10px] leading-tight" style={{ color: "hsl(var(--muted-foreground))" }}>
+        <span className="flex items-center gap-0.5">
+          <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+          {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
+        </span>
+        <span className="flex items-center gap-0.5">
+          <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
+          #{booking.id}
+        </span>
       </div>
-      {!compact && phone && (
-        <span className="block text-[9px] opacity-70 truncate">{phone}</span>
-      )}
     </button>
   );
 }
