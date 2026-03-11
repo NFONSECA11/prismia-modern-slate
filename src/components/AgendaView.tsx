@@ -22,6 +22,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus } from "lucide-rea
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
   onSaveBooking: (data: NewBookingFormData) => Promise<void>;
+  selectedBookingId?: number | null;
 }
 
 type AgendaMode = "day" | "week";
