@@ -572,7 +572,7 @@ function WeekView({
 }
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
-export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
+export function AgendaView({ onSelectBooking, onSaveBooking, selectedBookingId }: AgendaViewProps) {
   const { activeUnit } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
