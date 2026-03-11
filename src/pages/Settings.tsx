@@ -42,19 +42,19 @@ export default function Settings() {
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
-      { label: "Azul Profundo", color: "215 63% 7%" },
-      { label: "Carvão", color: "220 15% 10%" },
-      { label: "Púrpura Noturno", color: "260 30% 8%" },
+      { label: "Azul Profundo", color: "216 65% 7%" },
+      { label: "Carvão Azulado", color: "218 28% 9%" },
+      { label: "Púrpura Noturno", color: "258 32% 8%" },
     ],
     "slate": [
       { label: "Deep Blue", color: "216 50% 12%" },
-      { label: "Cinza Quente", color: "220 15% 16%" },
-      { label: "Aço Frio", color: "210 15% 18%" },
+      { label: "Grafite Frio", color: "215 22% 15%" },
+      { label: "Aço Petróleo", color: "200 30% 14%" },
     ],
     "frost": [
       { label: "Branco Gelo", color: "212 54% 96%" },
-      { label: "Creme", color: "40 30% 95%" },
-      { label: "Gelo Azul", color: "200 30% 95%" },
+      { label: "Névoa Neutra", color: "214 20% 94%" },
+      { label: "Azul Névoa", color: "208 35% 95%" },
     ],
   };
 
