@@ -646,6 +646,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   return (
     <>
       <div
+        id="agenda-print-area"
         className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
         style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
