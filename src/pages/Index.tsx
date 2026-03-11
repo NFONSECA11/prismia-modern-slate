@@ -21,6 +21,7 @@ import bgSoftSlate from "@/assets/bg-soft-slate.jpg";
 import bgSoftSlate2 from "@/assets/bg-soft-slate-2.jpg";
 import bgSoftSlate3 from "@/assets/bg-soft-slate-3.jpg";
 import bgSoftSlate4 from "@/assets/bg-soft-slate-4.jpg";
+import bgSoftSlate5 from "@/assets/bg-soft-slate-5.jpg";
 import bgLightClean from "@/assets/bg-light-clean.jpg";
 import bgLightClean2 from "@/assets/bg-light-clean-2.jpg";
 import bgLightClean3 from "@/assets/bg-light-clean-3.jpg";
