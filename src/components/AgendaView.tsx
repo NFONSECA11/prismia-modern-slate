@@ -15,10 +15,9 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi";
 import { useAuth } from "@/contexts/AuthContext";
-import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
-import { StatusBadge } from "@/components/StatusBadge";
+import { BookingRequest, Professional } from "@/types/booking";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus } from "lucide-react";
 
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
@@ -214,59 +213,39 @@ function AppointmentCard({
   const dt = getSlotDateTime(booking)!;
   const phone = booking.contact_phone || booking.phone || "";
 
-  // Check if this appointment is in the past
   const now = new Date();
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
-  const isConfirmed = booking.status === "confirmed";
-  // Check if theme has custom appointment colors (Light Clean)
-  const root = document.documentElement;
-  const hasCustomAppointment = getComputedStyle(root).getPropertyValue('--appointment-bg').trim() !== '';
-
-  let bgColor: string;
-  let textColor: string;
-  let borderColor: string;
-
-  if (hasCustomAppointment) {
-    bgColor = "hsl(var(--appointment-bg))";
-    textColor = "hsl(var(--appointment-text))";
-    borderColor = "hsl(var(--appointment-border))";
-  } else {
-    bgColor = isPast
-      ? "hsl(var(--muted-foreground))"
-      : isConfirmed
-        ? "hsl(var(--status-confirmed))"
-        : "hsl(var(--status-handoff))";
-    textColor = "hsl(var(--primary-foreground))";
-    borderColor = isPast
-      ? "hsl(var(--muted-foreground) / 0.7)"
-      : isConfirmed
-        ? "hsl(var(--status-confirmed))"
-        : "hsl(var(--status-handoff))";
-  }
 
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1 right-1 rounded-md px-2 py-1 text-left transition-all hover:brightness-110 hover:z-10 hover:scale-[1.01] z-10 ${isPast ? "opacity-60" : ""}`}
+      className={`absolute left-1.5 right-1.5 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-50" : ""}`}
       style={{
         top: `${topOffset + 2}px`,
-        minHeight: compact ? "36px" : "48px",
-        background: bgColor,
-        color: textColor,
-        borderLeft: `3px solid ${borderColor}`,
+        minHeight: compact ? "38px" : "50px",
+        background: "hsl(var(--calendar-event-bg))",
+        color: "hsl(var(--calendar-event-title))",
+        borderLeft: `3px solid hsl(var(--calendar-event-border))`,
+        boxShadow: "var(--calendar-event-shadow)",
+        padding: compact ? "4px 8px" : "6px 10px",
       }}
     >
-      <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight">
+      <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight" style={{ color: "hsl(var(--calendar-event-meta))" }}>
         <Clock className="h-2.5 w-2.5 flex-shrink-0 opacity-70" />
         {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
       </span>
-      <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium leading-tight">
-        <span className="font-mono opacity-80">#{booking.id}</span>
+      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold leading-tight" style={{ color: "hsl(var(--calendar-event-title))" }}>
         <span className="truncate">{booking.lead_name}</span>
       </div>
-      {!compact && phone && (
-        <span className="block text-[9px] opacity-70 truncate">{phone}</span>
+      {!compact && (
+        <div className="mt-0.5 flex items-center gap-1.5">
+          <span className="text-[9px] font-mono opacity-60">#{booking.id}</span>
+          {phone && <span className="text-[9px] opacity-50 truncate">{phone}</span>}
+        </div>
+      )}
+      {compact && (
+        <span className="text-[9px] font-mono opacity-50">#{booking.id}</span>
       )}
     </button>
   );
@@ -286,11 +265,9 @@ function EmptyCell({
   if (!available) {
     return (
       <div
-        className={`absolute inset-0 z-0 flex items-center justify-center ${className}`}
-        style={{ background: "rgba(0,0,0,0.04)" }}
-      >
-        <Ban className="h-3 w-3" style={{ color: "#ccc" }} />
-      </div>
+        className={`absolute inset-0 z-0 ${className}`}
+        style={{ background: "hsl(var(--calendar-empty) / 0.5)" }}
+      />
     );
   }
   return (
@@ -299,10 +276,10 @@ function EmptyCell({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className={`absolute inset-0 cursor-pointer flex items-center justify-center transition-colors rounded-sm ${className}`}
-      style={{ background: hover ? "hsl(var(--primary) / 0.06)" : "transparent" }}
+      style={{ background: hover ? "hsl(var(--calendar-column-today-bg) / 0.08)" : "transparent" }}
     >
       {hover && (
-        <span className="flex items-center gap-1 text-[9px] font-medium text-primary/70 select-none pointer-events-none">
+        <span className="flex items-center gap-1 text-[9px] font-medium select-none pointer-events-none" style={{ color: "hsl(var(--calendar-column-today-bg) / 0.6)" }}>
           <Plus className="h-3 w-3" />
           Agendar
         </span>
@@ -346,15 +323,15 @@ function DayView({
   }, [bookings, professionals, dateKey]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" style={{ background: "hsl(var(--calendar-bg))" }}>
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
-        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-          <div className="w-[60px] flex-shrink-0 border-r border-border" />
+        <div className="flex sticky top-0 z-10" style={{ borderBottom: "2px solid hsl(var(--calendar-grid-strong))", background: "hsl(var(--calendar-header-bg))" }}>
+          <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }} />
           {professionals.map((prof) => (
-            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5 border-border">
+            <div key={prof.id} className="w-[200px] last:border-r-0 px-3 py-2.5" style={{ borderRight: "1px solid hsl(var(--calendar-grid))" }}>
               <p className="text-xs font-semibold truncate text-foreground">{prof.name}</p>
-              <p className="text-[10px] truncate text-muted-foreground">{prof.specialty}</p>
+              <p className="text-[10px] truncate" style={{ color: "hsl(var(--calendar-time-text))" }}>{prof.specialty}</p>
             </div>
           ))}
         </div>
@@ -362,25 +339,25 @@ function DayView({
         {/* Time grid */}
         <div className="relative">
           {showNow && currentTimeTop !== null && currentTimeTop >= 0 && (
-            <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
-              <div className="w-[60px] flex-shrink-0 pr-2 text-right">
-                <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
+            <div className="absolute left-0 right-0 z-30 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
+              <div className="w-[60px] flex-shrink-0 pr-1.5 text-right">
+                <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color: "hsl(var(--calendar-header-active-text))", background: "hsl(var(--calendar-now-line))" }}>{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-px flex-1 bg-primary/70 relative">
-                <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
+              <div className="flex-1 relative" style={{ height: "2px", background: "hsl(var(--calendar-now-line))" }}>
+                <div className="absolute -left-1.5 -top-[4px] h-[10px] w-[10px] rounded-full" style={{ background: "hsl(var(--calendar-now-dot))", boxShadow: "0 0 8px hsl(var(--calendar-now-dot) / 0.5)" }} />
               </div>
             </div>
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
-                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid hsl(var(--calendar-grid))" }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }}>
+                <span className="text-[10px] font-mono font-medium" style={{ color: "hsl(var(--calendar-time-text))" }}>{String(hour).padStart(2, "0")}:00</span>
               </div>
               {professionals.map((prof) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
                 return (
-                  <div key={prof.id} className="w-[200px] last:border-r-0 relative border-r border-border">
+                  <div key={prof.id} className="w-[200px] last:border-r-0 relative" style={{ borderRight: "1px solid hsl(var(--calendar-grid))" }}>
                     <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
@@ -437,50 +414,65 @@ function WeekView({
   }, [bookings]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" style={{ background: "hsl(var(--calendar-bg))" }}>
       <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
         {/* Header grouped by professional */}
-        <div className="sticky top-0 z-10 border-b border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
+        <div className="sticky top-0 z-10" style={{ borderBottom: "2px solid hsl(var(--calendar-grid-strong))", background: "hsl(var(--calendar-header-bg))" }}>
           {professionals.length === 0 ? (
             <div className="flex">
-              <div className="w-[60px] flex-shrink-0 border-r border-border" />
+              <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }} />
               <div className="flex-1 px-3 py-2 text-xs italic text-muted-foreground">Sem profissionais</div>
             </div>
           ) : (
             <>
-              <div className="flex border-b border-border">
-                <div className="w-[60px] flex-shrink-0 border-r border-border" />
+              <div className="flex" style={{ borderBottom: "1px solid hsl(var(--calendar-grid))" }}>
+                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }} />
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
-                    className={`flex-1 px-2 py-1.5 text-center`}
-                    style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}
+                    className="flex-1 px-2 py-1.5 text-center"
+                    style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--calendar-grid-strong))" : undefined }}
                     title={`${prof.name} (${prof.specialty})`}
                   >
                     <p className="text-[11px] font-semibold leading-tight truncate text-foreground">{prof.name}</p>
-                    <p className="text-[9px] truncate text-muted-foreground">{prof.specialty}</p>
+                    <p className="text-[9px] truncate" style={{ color: "hsl(var(--calendar-time-text))" }}>{prof.specialty}</p>
                   </div>
                 ))}
               </div>
 
               <div className="flex">
-                <div className="w-[60px] flex-shrink-0 border-r border-border" />
+                <div className="w-[60px] flex-shrink-0" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }} />
                 {professionals.map((prof, pi) => (
-                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
+                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--calendar-grid-strong))" : undefined }}>
                     {days.map((day, di) => {
                       const today = isToday(day);
+                      const isWeekend = getDay(day) === 0 || getDay(day) === 6;
                       return (
                         <div
                           key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
-                          className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
-                          style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}
+                          className="flex-1 px-2 py-2 text-center"
+                          style={{
+                            borderLeft: di > 0 ? "1px solid hsl(var(--calendar-grid))" : undefined,
+                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.12)" : undefined,
+                          }}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}>
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "font-bold" : ""} ${isWeekend && !today ? "opacity-50" : ""}`}
+                            style={{ color: today ? "hsl(var(--calendar-column-today-bg))" : "hsl(var(--calendar-time-text))" }}
+                          >
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
-                            {format(day, "dd")}
-                          </p>
+                          {today ? (
+                            <span
+                              className="inline-flex items-center justify-center text-sm font-bold leading-tight rounded-full w-7 h-7"
+                              style={{ background: "hsl(var(--calendar-header-active-bg))", color: "hsl(var(--calendar-header-active-text))" }}
+                            >
+                              {format(day, "dd")}
+                            </span>
+                          ) : (
+                            <p className={`text-sm font-bold leading-tight text-foreground ${isWeekend ? "opacity-50" : ""}`}>
+                              {format(day, "dd")}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
@@ -494,27 +486,27 @@ function WeekView({
         {/* Grid */}
         <div className="relative">
           {currentTimeTop !== null && days.some((d) => isToday(d)) && currentTimeTop >= 0 && (
-            <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
-              <div className="w-[60px] flex-shrink-0 pr-2 text-right">
-                <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
+            <div className="absolute left-0 right-0 z-30 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
+              <div className="w-[60px] flex-shrink-0 pr-1.5 text-right">
+                <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color: "hsl(var(--calendar-header-active-text))", background: "hsl(var(--calendar-now-line))" }}>{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-px flex-1 bg-primary/70 relative">
-                <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
+              <div className="flex-1 relative" style={{ height: "2px", background: "hsl(var(--calendar-now-line))" }}>
+                <div className="absolute -left-1.5 -top-[4px] h-[10px] w-[10px] rounded-full" style={{ background: "hsl(var(--calendar-now-dot))", boxShadow: "0 0 8px hsl(var(--calendar-now-dot) / 0.5)" }} />
               </div>
             </div>
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
-                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="flex" style={{ height: `${CELL_HEIGHT}px`, borderBottom: "1px solid hsl(var(--calendar-grid))" }}>
+              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5" style={{ borderRight: "1px solid hsl(var(--calendar-grid-strong))" }}>
+                <span className="text-[10px] font-mono font-medium" style={{ color: "hsl(var(--calendar-time-text))" }}>{String(hour).padStart(2, "0")}:00</span>
               </div>
 
               {professionals.length === 0 ? (
                 <div className="flex-1" />
               ) : (
                 professionals.map((prof, pi) => (
-                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
+                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--calendar-grid-strong))" : undefined }}>
                     {days.map((day, di) => {
                       const dateKey = format(day, "yyyy-MM-dd");
                       const today = isToday(day);
@@ -522,7 +514,14 @@ function WeekView({
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}>
+                        <div
+                          key={bookingKey}
+                          className="flex-1 relative"
+                          style={{
+                            borderLeft: di > 0 ? "1px solid hsl(var(--calendar-grid))" : undefined,
+                            background: today ? "hsl(var(--calendar-column-today-bg) / 0.04)" : undefined,
+                          }}
+                        >
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
