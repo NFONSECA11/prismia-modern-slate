@@ -529,7 +529,7 @@ function WeekView({
 
 // ── Main AgendaView ─────────────────────────────────────────────────────────
 export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
-  const { activeUnit } = useAuth();
+  const { activeUnit, company } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
