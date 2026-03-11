@@ -269,7 +269,7 @@ export default function Index() {
   const { theme, bgMode, bgVariant } = useTheme();
   const landscapeMap: Record<string, string[]> = {
     "night": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
-    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4],
+    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4, bgSoftSlate5],
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {

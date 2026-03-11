@@ -70,6 +70,7 @@ export default function Settings() {
       { label: "Floresta", src: bgSoftSlate2 },
       { label: "Costa", src: bgSoftSlate3 },
       { label: "Tempestade", src: bgSoftSlate4 },
+      { label: "Oceano", src: bgSoftSlate5 },
     ],
     "frost": [
       { label: "Praia", src: bgLightClean },
