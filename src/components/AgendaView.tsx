@@ -312,6 +312,7 @@ function DayView({
   availMap,
   onSelectBooking,
   onCellClick,
+  selectedBookingId,
 }: {
   day: Date;
   professionals: Professional[];
