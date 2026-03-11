@@ -220,32 +220,31 @@ function AppointmentCard({
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1.5 right-1.5 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-50" : ""}`}
+      className={`absolute left-2 right-2 rounded-lg text-left transition-all hover:brightness-110 hover:z-20 hover:scale-[1.02] z-10 ${isPast ? "opacity-45" : ""}`}
       style={{
-        top: `${topOffset + 2}px`,
+        top: `${topOffset + 3}px`,
         minHeight: compact ? "38px" : "50px",
         background: "hsl(var(--calendar-event-bg))",
         color: "hsl(var(--calendar-event-title))",
         borderLeft: `3px solid hsl(var(--calendar-event-border))`,
         boxShadow: "var(--calendar-event-shadow)",
-        padding: compact ? "4px 8px" : "6px 10px",
+        padding: compact ? "3px 8px 4px" : "5px 10px 6px",
       }}
     >
-      <span className="flex items-center gap-1 text-[10px] font-semibold truncate leading-tight" style={{ color: "hsl(var(--calendar-event-meta))" }}>
-        <Clock className="h-2.5 w-2.5 flex-shrink-0 opacity-70" />
-        {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
-      </span>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold leading-tight" style={{ color: "hsl(var(--calendar-event-title))" }}>
-        <span className="truncate">{booking.lead_name}</span>
+      {/* Client name — primary info */}
+      <div className="text-[11px] font-bold leading-tight truncate" style={{ color: "hsl(var(--calendar-event-title))" }}>
+        {booking.lead_name}
       </div>
-      {!compact && (
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <span className="text-[9px] font-mono opacity-60">#{booking.id}</span>
-          {phone && <span className="text-[9px] opacity-50 truncate">{phone}</span>}
-        </div>
-      )}
-      {compact && (
+      {/* Time + ID — secondary */}
+      <div className="mt-0.5 flex items-center gap-1.5" style={{ color: "hsl(var(--calendar-event-meta))" }}>
+        <span className="flex items-center gap-0.5 text-[9px] font-medium">
+          <Clock className="h-2 w-2 flex-shrink-0 opacity-60" />
+          {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
+        </span>
         <span className="text-[9px] font-mono opacity-50">#{booking.id}</span>
+      </div>
+      {!compact && phone && (
+        <span className="block text-[9px] mt-0.5 truncate" style={{ color: "hsl(var(--calendar-event-meta))", opacity: 0.6 }}>{phone}</span>
       )}
     </button>
   );
