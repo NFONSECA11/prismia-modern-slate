@@ -682,6 +682,15 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border print:hidden"
+            title="Imprimir agenda"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Imprimir
+          </button>
         </div>
 
         {/* Grid scrollable */}
