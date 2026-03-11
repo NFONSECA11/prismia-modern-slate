@@ -168,6 +168,24 @@
     --shadow-md: 0 4px 16px rgba(4, 16, 34, 0.35);
     --shadow-lg: 0 10px 26px rgba(4, 16, 34, 0.24);
     --shadow-glow: 0 0 24px hsl(208 100% 59% / 0.15);
+
+    /* Calendar tokens */
+    --calendar-bg: 216 50% 14%;
+    --calendar-grid: 215 28% 25%;
+    --calendar-grid-strong: 215 28% 30%;
+    --calendar-header-bg: 215 42% 20%;
+    --calendar-header-active-bg: 208 100% 59%;
+    --calendar-header-active-text: 216 50% 12%;
+    --calendar-time-text: 214 30% 56%;
+    --calendar-now-line: 208 100% 59%;
+    --calendar-now-dot: 208 100% 59%;
+    --calendar-event-bg: 214 40% 28%;
+    --calendar-event-border: 208 80% 52%;
+    --calendar-event-title: 218 100% 98%;
+    --calendar-event-meta: 214 30% 72%;
+    --calendar-event-shadow: 0 2px 8px rgba(4, 16, 34, 0.3);
+    --calendar-empty: 216 50% 13%;
+    --calendar-column-today-bg: 208 100% 59%;
   }
 
   /* ══════ THEME 3: Prism Light (claro, corporativo premium) ══════ */
