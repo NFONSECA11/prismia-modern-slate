@@ -295,9 +295,9 @@ export default function Settings() {
                 </p>
                 <div className="flex items-center gap-4 px-1">
                   {([
-                    { id: "dark-navy" as ThemeId, label: "Dark Navy", colors: ["222 47% 7%", "213 94% 58%", "186 72% 48%"] },
-                    { id: "soft-slate" as ThemeId, label: "Soft Slate", colors: ["220 20% 18%", "213 80% 56%", "186 55% 45%"] },
-                    { id: "light-clean" as ThemeId, label: "Light Clean", colors: ["220 20% 97%", "213 90% 48%", "186 65% 40%"] },
+                    { id: "night" as ThemeId, label: "Prism Night", colors: ["215 63% 7%", "205 100% 59%", "186 72% 48%"] },
+                    { id: "slate" as ThemeId, label: "Prism Deep", colors: ["216 50% 12%", "208 100% 59%", "186 65% 46%"] },
+                    { id: "frost" as ThemeId, label: "Prism Light", colors: ["212 54% 96%", "211 83% 50%", "186 60% 38%"] },
                   ]).map((t) => {
                     const active = theme === t.id;
                     return (
