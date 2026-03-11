@@ -285,7 +285,7 @@ export default function Index() {
     "slate": [
       "linear-gradient(135deg, hsl(216 50% 10%), hsl(208 60% 28%), hsl(208 100% 59%))",
       "linear-gradient(160deg, hsl(216 50% 10%), hsl(30 15% 22%), hsl(215 40% 30%))",
-      "linear-gradient(145deg, hsl(210 35% 18%), hsl(205 30% 32%), hsl(200 25% 48%))",
+      "linear-gradient(145deg, hsl(210 30% 14%), hsl(205 28% 24%), hsl(200 22% 38%))",
     ],
     "frost": [
       "linear-gradient(135deg, hsl(212 54% 96%), hsl(200 40% 92%), hsl(211 83% 85%))",
