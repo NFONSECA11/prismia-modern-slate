@@ -273,9 +273,9 @@ export default function Index() {
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "night": ["215 63% 7%", "220 15% 10%", "260 30% 8%"],
-    "slate": ["216 50% 12%", "220 15% 16%", "210 15% 18%"],
-    "frost": ["212 54% 96%", "40 30% 95%", "200 30% 95%"],
+    "night": ["216 65% 7%", "218 28% 9%", "258 32% 8%"],
+    "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
+    "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
   const gradientMap: Record<string, string[]> = {
     "night": [
