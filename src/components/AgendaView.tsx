@@ -671,31 +671,46 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
       >
         {/* Toolbar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border surface-elevated flex-shrink-0 flex-wrap gap-y-2">
+        <div
+          className="flex items-center gap-3 px-4 py-3 flex-shrink-0 flex-wrap gap-y-2"
+          style={{
+            background: "hsl(var(--calendar-header-bg))",
+            borderBottom: "2px solid hsl(var(--calendar-grid-strong))",
+          }}
+        >
           <div className="flex items-center gap-1">
-            <button onClick={navigatePrev} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button onClick={navigatePrev} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors" style={{ background: "transparent" }}>
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={goToday} className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button
+              onClick={goToday}
+              className="px-3 py-1 text-xs font-semibold rounded-lg transition-colors"
+              style={{
+                background: "hsl(var(--calendar-column-today-bg) / 0.12)",
+                color: "hsl(var(--calendar-column-today-bg))",
+                border: "1px solid hsl(var(--calendar-column-today-bg) / 0.25)",
+              }}
+            >
               Hoje
             </button>
-            <button onClick={navigateNext} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors">
+            <button onClick={navigateNext} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors" style={{ background: "transparent" }}>
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <span className="text-sm font-semibold text-foreground capitalize flex-1 min-w-0 truncate">
+          <span className="text-sm font-bold text-foreground capitalize flex-1 min-w-0 truncate">
             {periodLabel}
           </span>
 
-          <div className="flex items-center gap-0.5 rounded-lg p-0.5 bg-surface border border-border">
+          <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "hsl(var(--calendar-bg))", border: "1px solid hsl(var(--calendar-grid))" }}>
             {(["day", "week"] as AgendaMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); if (m === "day") setCurrentDate(new Date()); }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                  mode === m ? "bg-surface-raised text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  mode === m ? "text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
+                style={mode === m ? { background: "hsl(var(--calendar-header-bg))" } : undefined}
               >
                 <CalendarDays className="h-3 w-3" />
                 {m === "day" ? "Dia" : "Semana"}
