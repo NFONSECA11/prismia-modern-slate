@@ -327,6 +327,8 @@
 }
 
 @layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .surface { background-color: hsl(var(--surface)); }
   .surface-raised { background-color: hsl(var(--surface-raised)); }
   .surface-elevated { background-color: hsl(var(--surface-elevated)); }
