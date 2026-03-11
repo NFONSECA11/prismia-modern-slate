@@ -15,8 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi";
 import { useAuth } from "@/contexts/AuthContext";
-import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
-import { StatusBadge } from "@/components/StatusBadge";
+import { BookingRequest, Professional } from "@/types/booking";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus } from "lucide-react";
 
