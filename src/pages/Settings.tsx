@@ -191,7 +191,7 @@ export default function Settings() {
     <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
       <header
         className="sticky top-0 z-30 flex items-center gap-3 px-6 py-3 border-b border-border"
-        style={{ background: "hsl(var(--surface))" }}
+        style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <button
           onClick={() => navigate("/")}
