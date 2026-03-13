@@ -5,7 +5,7 @@ import { fetchUsers, createUser, ManagedUser, UserRole } from "@/lib/authApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Users, X, Shield, Search, Circle } from "lucide-react";
+import { ChevronDown, Plus, Users, X, Shield, Search, Circle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_LABELS: Record<string, string> = {
