@@ -5,6 +5,7 @@ import { fetchUsers, createUser, deactivateUser, reactivateUser, ManagedUser, Us
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, Plus, Users, X, Shield, Search, Circle, Pencil, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import UserEditDrawer from "@/components/UserEditDrawer";
