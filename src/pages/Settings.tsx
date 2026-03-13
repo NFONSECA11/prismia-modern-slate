@@ -67,6 +67,7 @@ export default function Settings() {
     },
     enabled: !!activeUnit?.id,
   });
+  const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
       { label: "Azul Profundo", color: "216 65% 7%" },
       { label: "Carvão Azulado", color: "218 28% 9%" },
