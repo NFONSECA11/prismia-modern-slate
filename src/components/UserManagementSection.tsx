@@ -169,7 +169,7 @@ export default function UserManagementSection() {
           filteredUsers.map((u) => (
             <div
               key={u.membership_id}
-              className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-sm font-medium text-foreground truncate">{u.name}</span>
