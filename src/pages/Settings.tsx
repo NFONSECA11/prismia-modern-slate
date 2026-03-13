@@ -238,6 +238,9 @@ export default function Settings() {
             <div className="flex-1 h-px bg-border" />
           </div>
 
+          {/* Gerenciamento de Usuários */}
+          {canManageUsers && <UserManagementSection />}
+
           {/* Empresa */}
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
@@ -689,17 +692,6 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
         </section>
-
-        {/* ─── 6) Gerenciamento de Usuários ─── */}
-        {canManageUsers && (
-          <section className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">6 · Gerenciamento de usuários</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <UserManagementSection />
-          </section>
-        )}
 
       </main>
     </div>
