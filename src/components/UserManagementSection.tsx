@@ -60,17 +60,6 @@ export default function UserManagementSection() {
     );
   }, [users, search]);
 
-  const filteredUsers = useMemo(() => {
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.name?.toLowerCase().includes(q) ||
-        u.username?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q)
-    );
-  }, [users, search]);
-
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
