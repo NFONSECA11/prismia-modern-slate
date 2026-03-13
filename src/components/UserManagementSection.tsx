@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchUsers, createUser, updateUser, ManagedUser, UserRole } from "@/lib/authApi";
+import { fetchUsers, createUser, ManagedUser, UserRole } from "@/lib/authApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Users, Pencil, X, Shield } from "lucide-react";
+import { ChevronDown, Plus, Users, X, Shield, Search, Circle } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -16,24 +15,53 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
 };
 
+function UserStatusBadge({ user }: { user: ManagedUser }) {
+  const isActive = user.membership_is_active && user.user_is_active;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+      isActive
+        ? "text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800"
+        : "text-muted-foreground bg-muted/50 border-border"
+    }`}>
+      <Circle className={`h-2 w-2 fill-current`} />
+      {isActive ? "Ativo" : "Inativo"}
+    </span>
+  );
+}
+
 export default function UserManagementSection() {
-  const { role, units, isOwner } = useAuth();
+  const { role, units, isOwner, isAgent } = useAuth();
   const queryClient = useQueryClient();
 
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [search, setSearch] = useState("");
 
   // Form state
+  const [formUsername, setFormUsername] = useState("");
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState<UserRole>("agent");
   const [formUnitIds, setFormUnitIds] = useState<number[]>([]);
 
+  // Don't render for agents
+  if (isAgent) return null;
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["managed-users"],
     queryFn: fetchUsers,
   });
+
+  const filteredUsers = useMemo(() => {
+    if (!search.trim()) return users;
+    const q = search.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) ||
+        u.username?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
+    );
+  }, [users, search]);
 
   const createMutation = useMutation({
     mutationFn: createUser,
@@ -55,47 +83,9 @@ export default function UserManagementSection() {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, ...payload }: { id: number } & Parameters<typeof updateUser>[1]) =>
-      updateUser(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["managed-users"] });
-      resetForm();
-      toast.success("Usuário atualizado com sucesso");
-    },
-    onError: (err: any) => {
-      const status = err?.response?.status;
-      const detail = err?.response?.data?.detail ?? err?.response?.data?.error;
-      if (status === 403) {
-        toast.error("Você não tem permissão para editar este usuário.");
-      } else if (status === 400 && detail) {
-        toast.error(detail);
-      } else {
-        toast.error("Erro ao atualizar usuário");
-      }
-    },
-  });
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
-      updateUser(id, { is_active }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["managed-users"] });
-      toast.success("Status atualizado");
-    },
-    onError: (err: any) => {
-      const status = err?.response?.status;
-      if (status === 403) {
-        toast.error("Você não tem permissão para alterar este usuário.");
-      } else {
-        toast.error("Erro ao alterar status");
-      }
-    },
-  });
-
   const resetForm = () => {
     setShowForm(false);
-    setEditingUser(null);
+    setFormUsername("");
     setFormName("");
     setFormEmail("");
     setFormPassword("");
@@ -103,42 +93,18 @@ export default function UserManagementSection() {
     setFormUnitIds([]);
   };
 
-  const openEdit = (u: ManagedUser) => {
-    setEditingUser(u);
-    setFormName(u.name);
-    setFormEmail(u.email);
-    setFormPassword("");
-    setFormRole(u.role);
-    const uIds = u.units
-      ? u.units.map((x: any) => (typeof x === "number" ? x : x.id))
-      : [];
-    setFormUnitIds(uIds);
-    setShowForm(true);
-  };
-
   const handleSubmit = () => {
-    if (!formName.trim() || !formEmail.trim()) return;
-    if (editingUser) {
-      updateMutation.mutate({
-        id: editingUser.id,
-        name: formName.trim(),
-        email: formEmail.trim(),
-        role: formRole,
-        unit_ids: formUnitIds,
-      });
-    } else {
-      if (!formPassword.trim()) {
-        toast.error("Senha é obrigatória para criar usuário.");
-        return;
-      }
-      createMutation.mutate({
-        name: formName.trim(),
-        email: formEmail.trim(),
-        password: formPassword.trim(),
-        role: formRole,
-        unit_ids: formUnitIds,
-      });
+    if (!formUsername.trim() || !formEmail.trim() || !formPassword.trim()) {
+      toast.error("Preencha username, email e senha.");
+      return;
     }
+    createMutation.mutate({
+      username: formUsername.trim(),
+      email: formEmail.trim(),
+      password: formPassword.trim(),
+      role: formRole,
+      unit_ids: formUnitIds,
+    });
   };
 
   const toggleUnitId = (id: number) => {
@@ -147,10 +113,13 @@ export default function UserManagementSection() {
     );
   };
 
-  // Roles the current user can assign
   const allowedRoles: UserRole[] = isOwner ? ["manager", "agent"] : ["agent"];
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const unitNameMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    units.forEach((u) => (map[u.id] = u.name));
+    return map;
+  }, [units]);
 
   return (
     <Collapsible defaultOpen={false} id="section-usuarios">
@@ -162,83 +131,78 @@ export default function UserManagementSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-3" style={{ background: "hsl(var(--surface))" }}>
-        {/* Header */}
-        <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-1 items-center">
+        {/* Search + New */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, username ou email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 text-sm pl-8"
+            />
+          </div>
+          {!isAgent && (
+            <Button size="sm" className="h-8 text-xs gap-1" onClick={() => { resetForm(); setShowForm(true); }}>
+              <Plus className="h-3.5 w-3.5" />
+              Novo usuário
+            </Button>
+          )}
+        </div>
+
+        {/* Table header */}
+        <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Username</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Email</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Role</span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ativo</span>
-          <span />
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Units</span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
         </div>
 
         {isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhum usuário encontrado.</p>
         ) : (
-          users.map((u) => (
+          filteredUsers.map((u) => (
             <div
-              key={u.id}
-              className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              key={u.membership_id}
+              className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-sm font-medium text-foreground truncate">{u.name}</span>
-              <span className="text-xs text-muted-foreground truncate">{u.email}</span>
-              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface px-2 py-0.5 rounded-full border border-border">
+              <span className="text-xs text-muted-foreground truncate">{u.username}</span>
+              <span className="text-xs text-muted-foreground truncate">{u.email || "—"}</span>
+              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface px-2 py-0.5 rounded-full border border-border whitespace-nowrap">
                 <Shield className="h-3 w-3" />
                 {ROLE_LABELS[u.role] ?? u.role}
               </span>
-              <Switch
-                checked={u.is_active !== false}
-                onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: u.id, is_active: checked })}
-                className="scale-75"
-              />
-              <button
-                onClick={() => openEdit(u)}
-                className="text-muted-foreground hover:text-primary transition-colors"
-                title="Editar usuário"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
+              <span className="text-xs text-muted-foreground truncate">
+                {u.all_units
+                  ? "Todas"
+                  : u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ") || "—"}
+              </span>
+              <UserStatusBadge user={u} />
             </div>
           ))
         )}
 
-        {/* Create/Edit form */}
-        {showForm ? (
+        {/* Create form */}
+        {showForm && (
           <div className="space-y-3 pt-2 border-t border-border">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground">
-                {editingUser ? "Editar Usuário" : "Novo Usuário"}
-              </span>
+              <span className="text-xs font-semibold text-foreground">Novo Usuário</span>
               <button onClick={resetForm} className="text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Input
-                placeholder="Nome completo"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                className="h-8 text-sm"
-              />
-              <Input
-                placeholder="Email"
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                className="h-8 text-sm"
-              />
-              {!editingUser && (
-                <Input
-                  placeholder="Senha temporária"
-                  type="password"
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              )}
+              <Input placeholder="Username" value={formUsername} onChange={(e) => setFormUsername(e.target.value)} className="h-8 text-sm" />
+              <Input placeholder="Nome completo" value={formName} onChange={(e) => setFormName(e.target.value)} className="h-8 text-sm" />
+              <Input placeholder="Email" type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} className="h-8 text-sm" />
+              <Input placeholder="Senha" type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} className="h-8 text-sm" />
               <div>
                 <select
                   value={formRole}
@@ -251,18 +215,14 @@ export default function UserManagementSection() {
                   ))}
                 </select>
                 {!isOwner && (
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Managers só podem criar Agentes
-                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Managers só podem criar Agentes</p>
                 )}
               </div>
             </div>
 
             {/* Units selection */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Unidades vinculadas
-              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidades vinculadas</span>
               <div className="flex flex-wrap gap-1.5">
                 {units.map((u) => {
                   const selected = formUnitIds.includes(u.id);
@@ -287,24 +247,14 @@ export default function UserManagementSection() {
               <Button
                 size="sm"
                 className="h-8 text-xs"
-                disabled={!formName.trim() || !formEmail.trim() || isPending}
+                disabled={!formUsername.trim() || !formEmail.trim() || !formPassword.trim() || createMutation.isPending}
                 onClick={handleSubmit}
               >
-                {isPending ? "Salvando…" : editingUser ? "Atualizar" : "Criar Usuário"}
+                {createMutation.isPending ? "Criando…" : "Criar Usuário"}
               </Button>
-              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={resetForm}>
-                Cancelar
-              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={resetForm}>Cancelar</Button>
             </div>
           </div>
-        ) : (
-          <button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-3"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Novo usuário
-          </button>
         )}
       </CollapsibleContent>
     </Collapsible>
