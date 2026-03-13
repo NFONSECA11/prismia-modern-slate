@@ -597,13 +597,15 @@ export default function Index() {
                 Atualizar dados
               </button>
 
-              <button
-                onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
-              >
-                <Settings className="h-4 w-4 text-muted-foreground" />
-                Configurações
-              </button>
+              {canManage && (
+                <button
+                  onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Configurações
+                </button>
+              )}
 
               <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
