@@ -29,12 +29,17 @@ export interface MeResponse {
 
 // ── Managed user (for user management) ──────────────────────────────────────
 export interface ManagedUser {
-  id: number;
-  name: string;
+  membership_id: number;
+  user_id: number;
+  username: string;
   email: string;
+  name: string;
+  company_id: number;
   role: UserRole;
-  is_active: boolean;
-  units: Unit[] | number[];
+  all_units: boolean;
+  membership_is_active: boolean;
+  user_is_active: boolean;
+  unit_ids: number[];
 }
 
 // ── CSRF bootstrap ──────────────────────────────────────────────────────────
