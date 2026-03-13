@@ -4,8 +4,6 @@ import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Bu
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import UserManagementSection from "@/components/UserManagementSection";
-import { useNavigate } from "react-router-dom";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
