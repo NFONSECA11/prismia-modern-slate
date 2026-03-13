@@ -118,6 +118,9 @@ export default function UserManagementSection() {
     return map;
   }, [units]);
 
+  // Don't render for agents
+  if (isAgent) return null;
+
   return (
     <Collapsible defaultOpen={false} id="section-usuarios">
       <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
