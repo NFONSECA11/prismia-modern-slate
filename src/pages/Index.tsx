@@ -57,7 +57,7 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 ];
 
 export default function Index() {
-  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage } = useAuth();
+  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
@@ -468,14 +468,16 @@ export default function Index() {
               </button>
             )}
 
-            <button
-              onClick={() => navigate("/settings")}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-              title="Configurações"
-            >
-              <Settings className="h-3.5 w-3.5" />
-              Configurações
-            </button>
+            {canManage && (
+              <button
+                onClick={() => navigate("/settings")}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title="Configurações"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Configurações
+              </button>
+            )}
 
             <button
               onClick={handleLogout}
@@ -595,13 +597,15 @@ export default function Index() {
                 Atualizar dados
               </button>
 
-              <button
-                onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
-              >
-                <Settings className="h-4 w-4 text-muted-foreground" />
-                Configurações
-              </button>
+              {canManage && (
+                <button
+                  onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Configurações
+                </button>
+              )}
 
               <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}

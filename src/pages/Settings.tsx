@@ -1,8 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers, ShieldAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import UserManagementSection from "@/components/UserManagementSection";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
@@ -37,9 +38,35 @@ import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 
 export default function Settings() {
-  const { company, units, activeUnit } = useAuth();
+  const { company, units, activeUnit, canManage, canManageUsers, isAgent, role } = useAuth();
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
+  const [showNewProfessional, setShowNewProfessional] = useState(false);
+  const [newProfName, setNewProfName] = useState("");
+  const [newProfCode, setNewProfCode] = useState("");
+  const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+
+  const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ["booking-settings", activeUnit?.id],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
+      return data?.result ?? data;
+    },
+    enabled: !!activeUnit?.id,
+  });
+
+  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
+    queryKey: ["professionals", activeUnit?.id],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/booking/professionals/`, {
+        params: { unit: activeUnit!.id },
+      });
+      return Array.isArray(data) ? data : (data?.results ?? []);
+    },
+    enabled: !!activeUnit?.id,
+  });
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
       { label: "Azul Profundo", color: "216 65% 7%" },
@@ -98,33 +125,25 @@ export default function Settings() {
     ],
   };
 
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const [showNewProfessional, setShowNewProfessional] = useState(false);
-  const [newProfName, setNewProfName] = useState("");
-  const [newProfCode, setNewProfCode] = useState("");
-  const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+  // Agents should not access Settings at all
+  if (isAgent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
+        <div className="text-center space-y-3">
+          <ShieldAlert className="h-10 w-10 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">Você não tem permissão para acessar configurações.</p>
+          <button
+            onClick={() => navigate("/")}
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            Voltar ao Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
-    queryKey: ["booking-settings", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-      return data?.result ?? data;
-    },
-    enabled: !!activeUnit?.id,
-  });
-
-  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
-    queryKey: ["professionals", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professionals/`, {
-        params: { unit: activeUnit!.id },
-      });
-      return Array.isArray(data) ? data : (data?.results ?? []);
-    },
-    enabled: !!activeUnit?.id,
-  });
 
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
@@ -670,6 +689,17 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
         </section>
+
+        {/* ─── 6) Gerenciamento de Usuários ─── */}
+        {canManageUsers && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">6 · Gerenciamento de usuários</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <UserManagementSection />
+          </section>
+        )}
 
       </main>
     </div>

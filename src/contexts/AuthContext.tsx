@@ -16,7 +16,10 @@ interface AuthContextType extends AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setActiveUnit: (unit: Unit) => void;
-  canManage: boolean; // owner or manager
+  canManage: boolean;       // owner or manager — can access settings
+  canManageUsers: boolean;  // owner or manager — can access user management
+  isOwner: boolean;
+  isAgent: boolean;
   bootstrap: () => Promise<void>;
 }
 
@@ -40,6 +43,9 @@ const AUTH_FALLBACK: AuthContextType = {
   logout: async () => {},
   setActiveUnit: () => {},
   canManage: false,
+  canManageUsers: false,
+  isOwner: false,
+  isAgent: false,
   bootstrap: async () => {},
 };
 
@@ -97,7 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string) => {
     await apiLogin(username, password);
-    // bootstrap must succeed after login — re-throw so Login page can show the error
     try {
       const me = await fetchMe();
       console.log("[Auth] fetchMe response:", JSON.stringify(me));
@@ -141,8 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, activeUnit: unit }));
   };
 
-  const canManage = state.role === "owner" || state.role === "manager" || state.role === "admin";
-  console.log("[Auth] role:", JSON.stringify(state.role), "canManage:", canManage);
+  const r = state.role;
+  const canManage = r === "owner" || r === "manager" || r === "admin";
+  const canManageUsers = r === "owner" || r === "manager";
+  const isOwner = r === "owner" || r === "admin";
+  const isAgent = r === "agent";
 
   return (
     <AuthContext.Provider
@@ -152,6 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         setActiveUnit,
         canManage,
+        canManageUsers,
+        isOwner,
+        isAgent,
         bootstrap,
       }}
     >

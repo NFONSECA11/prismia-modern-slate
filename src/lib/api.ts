@@ -81,7 +81,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor: sanitize tunnel errors (avoid leaking long HTML payloads)
+// Interceptor: sanitize tunnel errors + handle 401/403
 api.interceptors.response.use(
   (res) => {
     const contentType = String((res.headers as any)?.["content-type"] ?? "").toLowerCase();
@@ -98,11 +98,20 @@ api.interceptors.response.use(
       contentType.includes("text/html") ||
       (typeof rawData === "string" && /<!doctype|<html|<body/i.test(rawData));
 
+    // 401 → redirect to login (skip if already on auth endpoints)
+    const url = String(err?.config?.url ?? "");
+    if (status === 401 && !url.includes("/api/auth/")) {
+      localStorage.removeItem("auth_token");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
     const msg = isHtml
       ? `Túnel indisponível (${status ?? "sem status"})`
       : err?.response?.data?.detail ?? err?.response?.data?.error ?? err?.message ?? "Erro desconhecido";
 
-    console.error("[API]", err?.config?.url, "→", status, msg);
+    console.error("[API]", url, "→", status, msg);
     return Promise.reject(err);
   }
 );
