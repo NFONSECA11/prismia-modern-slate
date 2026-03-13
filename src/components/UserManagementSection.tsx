@@ -5,7 +5,7 @@ import { fetchUsers, createUser, ManagedUser, UserRole } from "@/lib/authApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Users, X, Shield, Search, Circle } from "lucide-react";
+import { ChevronDown, Plus, Users, X, Shield, Search, Circle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -151,13 +151,14 @@ export default function UserManagementSection() {
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Username</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Email</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Role</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Units</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span />
         </div>
 
         {isLoading ? (
@@ -168,7 +169,7 @@ export default function UserManagementSection() {
           filteredUsers.map((u) => (
             <div
               key={u.membership_id}
-              className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-sm font-medium text-foreground truncate">{u.name}</span>
@@ -184,6 +185,13 @@ export default function UserManagementSection() {
                   : u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ") || "—"}
               </span>
               <UserStatusBadge user={u} />
+              <button
+                onClick={() => toast.info("Edição de usuários estará disponível em breve.")}
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="Editar usuário"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
             </div>
           ))
         )}
