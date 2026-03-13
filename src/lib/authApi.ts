@@ -100,18 +100,14 @@ export async function fetchUsers(): Promise<ManagedUser[]> {
 }
 
 export async function createUser(payload: {
-  name: string;
+  username: string;
   email: string;
   password: string;
   role: UserRole;
   unit_ids: number[];
-  is_active?: boolean;
 }): Promise<ManagedUser> {
   await fetchCsrf();
-  const { data } = await api.post("/api/settings/users/", {
-    ...payload,
-    is_active: payload.is_active ?? true,
-  });
+  const { data } = await api.post("/api/settings/users/", payload);
   return data?.result ?? data;
 }
 
