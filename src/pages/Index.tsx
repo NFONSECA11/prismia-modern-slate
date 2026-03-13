@@ -57,7 +57,7 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 ];
 
 export default function Index() {
-  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage } = useAuth();
+  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
