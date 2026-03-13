@@ -158,7 +158,9 @@ export async function deactivateUser(membershipId: number): Promise<void> {
 
 export async function reactivateUser(membershipId: number): Promise<void> {
   await fetchCsrf();
-  await api.post(`/api/settings/users/${membershipId}/reactivate/`);
+  console.log("[reactivateUser] POST", `/api/settings/users/${membershipId}/reactivate/`);
+  const resp = await api.post(`/api/settings/users/${membershipId}/reactivate/`);
+  console.log("[reactivateUser] response status:", resp.status, "data:", JSON.stringify(resp.data));
 }
 
 // ── Password Reset ──────────────────────────────────────────────────────────
