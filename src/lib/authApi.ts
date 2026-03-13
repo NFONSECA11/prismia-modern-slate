@@ -111,19 +111,34 @@ export async function createUser(payload: {
   return data?.result ?? data;
 }
 
+export async function fetchUserDetail(membershipId: number): Promise<ManagedUser> {
+  const { data } = await api.get(`/api/settings/users/${membershipId}/`);
+  return data?.result ?? data;
+}
+
 export async function updateUser(
-  id: number,
+  membershipId: number,
   payload: Partial<{
-    name: string;
+    username: string;
     email: string;
+    password: string;
     role: UserRole;
     unit_ids: number[];
-    is_active: boolean;
   }>
 ): Promise<ManagedUser> {
   await fetchCsrf();
-  const { data } = await api.patch(`/api/settings/users/${id}/`, payload);
+  const { data } = await api.patch(`/api/settings/users/${membershipId}/`, payload);
   return data?.result ?? data;
+}
+
+export async function deactivateUser(membershipId: number): Promise<void> {
+  await fetchCsrf();
+  await api.post(`/api/settings/users/${membershipId}/deactivate/`);
+}
+
+export async function reactivateUser(membershipId: number): Promise<void> {
+  await fetchCsrf();
+  await api.post(`/api/settings/users/${membershipId}/reactivate/`);
 }
 
 // ── Password Reset ──────────────────────────────────────────────────────────
