@@ -191,25 +191,27 @@ export default function UserManagementSection() {
                 className="h-8 text-sm pl-8"
               />
             </div>
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="h-8 text-xs rounded-md border border-border px-2 bg-background text-foreground"
-            >
-              <option value="all">Todas as roles</option>
-              <option value="owner">Owner</option>
-              <option value="manager">Manager</option>
-              <option value="agent">Agente</option>
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="h-8 text-xs rounded-md border border-border px-2 bg-background text-foreground"
-            >
-              <option value="all">Todos os status</option>
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
+                <SelectValue placeholder="Todas as roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as roles</SelectItem>
+                <SelectItem value="owner">Owner</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="agent">Agente</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
             {!isAgent && (
               <Button size="sm" className="h-8 text-xs gap-1" onClick={() => { resetForm(); setShowForm(true); }}>
                 <Plus className="h-3.5 w-3.5" />
