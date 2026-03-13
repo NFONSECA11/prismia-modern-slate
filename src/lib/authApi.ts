@@ -93,10 +93,30 @@ export async function fetchMe(): Promise<MeResponse> {
 }
 
 // ── User Management API ─────────────────────────────────────────────────────
+function toBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "sim", "active", "ativo"].includes(normalized)) return true;
+    if (["false", "0", "no", "nao", "não", "inactive", "inativo", ""].includes(normalized)) return false;
+  }
+  return Boolean(value);
+}
+
+function normalizeManagedUser(raw: any): ManagedUser {
+  return {
+    ...raw,
+    membership_is_active: toBoolean(raw?.membership_is_active),
+    user_is_active: toBoolean(raw?.user_is_active),
+    unit_ids: Array.isArray(raw?.unit_ids) ? raw.unit_ids.map(Number).filter(Number.isFinite) : [],
+  } as ManagedUser;
+}
+
 export async function fetchUsers(): Promise<ManagedUser[]> {
   const { data } = await api.get("/api/settings/users/?status=all");
   const payload = data?.results ?? data?.result ?? data;
-  return Array.isArray(payload) ? payload : [];
+  return Array.isArray(payload) ? payload.map(normalizeManagedUser) : [];
 }
 
 export async function createUser(payload: {
@@ -108,12 +128,12 @@ export async function createUser(payload: {
 }): Promise<ManagedUser> {
   await fetchCsrf();
   const { data } = await api.post("/api/settings/users/", payload);
-  return data?.result ?? data;
+  return normalizeManagedUser(data?.result ?? data);
 }
 
 export async function fetchUserDetail(membershipId: number): Promise<ManagedUser> {
   const { data } = await api.get(`/api/settings/users/${membershipId}/`);
-  return data?.result ?? data;
+  return normalizeManagedUser(data?.result ?? data);
 }
 
 export async function updateUser(
@@ -128,7 +148,7 @@ export async function updateUser(
 ): Promise<ManagedUser> {
   await fetchCsrf();
   const { data } = await api.patch(`/api/settings/users/${membershipId}/`, payload);
-  return data?.result ?? data;
+  return normalizeManagedUser(data?.result ?? data);
 }
 
 export async function deactivateUser(membershipId: number): Promise<void> {
