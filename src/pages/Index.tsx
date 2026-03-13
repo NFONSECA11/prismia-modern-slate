@@ -101,17 +101,19 @@ export default function Index() {
   const dateTo = todayStr;
 
   const apiParams = useMemo((): BookingFilterParams => {
-    if (searchId) return { limit: 0 };
-    if (statusFilter === "handoff") return { status: "handoff", limit: 100 };
-    if (statusFilter === "awaiting_choice") return { status: "awaiting_choice", limit: 100 };
-    if (isDateFilter) return { date_field: "created_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
-    return { limit: 100 };
-  }, [statusFilter, searchId, isDateFilter, dateFrom, dateTo]);
+    const base: BookingFilterParams = activeUnit ? { unit: activeUnit.id } : {};
+    if (searchId) return { ...base, limit: 0 };
+    if (statusFilter === "handoff") return { ...base, status: "handoff", limit: 100 };
+    if (statusFilter === "awaiting_choice") return { ...base, status: "awaiting_choice", limit: 100 };
+    if (isDateFilter) return { ...base, date_field: "created_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
+    return { ...base, limit: 100 };
+  }, [statusFilter, searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
 
   const apiParamsUpdated = useMemo((): BookingFilterParams | null => {
     if (searchId || !isDateFilter) return null;
-    return { date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
-  }, [searchId, isDateFilter, dateFrom, dateTo]);
+    const base: BookingFilterParams = activeUnit ? { unit: activeUnit.id } : {};
+    return { ...base, date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
+  }, [searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
 
   // Main list query (created_at)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({

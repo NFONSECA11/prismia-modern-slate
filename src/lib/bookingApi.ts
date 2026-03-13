@@ -175,6 +175,7 @@ export interface BookingFilterParams {
   date_to?: string;
   search?: string;
   limit?: number;
+  unit?: number;
 }
 
 /**
