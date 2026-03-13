@@ -20,10 +20,21 @@ export interface MeResponse {
     email: string;
     first_name: string;
     last_name: string;
+    name?: string;
   };
   company: Company;
   role: UserRole;
   units: Unit[];
+}
+
+// ── Managed user (for user management) ──────────────────────────────────────
+export interface ManagedUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+  units: Unit[] | number[];
 }
 
 // ── CSRF bootstrap ──────────────────────────────────────────────────────────
@@ -39,7 +50,6 @@ export async function login(username: string, password: string): Promise<void> {
   await fetchCsrf();
   const { data } = await api.post("/api/auth/login/", { username, password });
   const payload = data?.result ?? data;
-  // Accept DRF token payloads in flat or wrapped format
   const token = payload?.token ?? payload?.key ?? payload?.auth_token ?? payload?.access ?? null;
 
   if (token) {
@@ -59,7 +69,6 @@ export async function logout(): Promise<void> {
 // ── Me (bootstrap) ──────────────────────────────────────────────────────────
 export async function fetchMe(): Promise<MeResponse> {
   const { data } = await api.get("/api/me/");
-  // Handle wrapped response: { ok, result: { user, role, ... } }
   const payload = data?.result ?? data;
 
   const token =
@@ -76,6 +85,44 @@ export async function fetchMe(): Promise<MeResponse> {
   }
 
   return payload as MeResponse;
+}
+
+// ── User Management API ─────────────────────────────────────────────────────
+export async function fetchUsers(): Promise<ManagedUser[]> {
+  const { data } = await api.get("/api/settings/users/");
+  const payload = data?.results ?? data?.result ?? data;
+  return Array.isArray(payload) ? payload : [];
+}
+
+export async function createUser(payload: {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  unit_ids: number[];
+  is_active?: boolean;
+}): Promise<ManagedUser> {
+  await fetchCsrf();
+  const { data } = await api.post("/api/settings/users/", {
+    ...payload,
+    is_active: payload.is_active ?? true,
+  });
+  return data?.result ?? data;
+}
+
+export async function updateUser(
+  id: number,
+  payload: Partial<{
+    name: string;
+    email: string;
+    role: UserRole;
+    unit_ids: number[];
+    is_active: boolean;
+  }>
+): Promise<ManagedUser> {
+  await fetchCsrf();
+  const { data } = await api.patch(`/api/settings/users/${id}/`, payload);
+  return data?.result ?? data;
 }
 
 // ── Password Reset ──────────────────────────────────────────────────────────
