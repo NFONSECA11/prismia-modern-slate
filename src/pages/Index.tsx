@@ -228,6 +228,42 @@ export default function Index() {
   const filteredBookings = useMemo(() => {
     let list = bookings;
 
+    // Safety net: enforce active unit client-side if backend ignores filter
+    if (activeUnit) {
+      const activeUnitName = activeUnit.name.trim().toLowerCase();
+      list = list.filter((b) => {
+        const rawUnit =
+          (b as any).unit ??
+          (b as any).unit_id ??
+          (b as any).unitId ??
+          (b as any).booking_unit ??
+          (b as any).booking_unit_id;
+
+        const unitId =
+          typeof rawUnit === "object" && rawUnit
+            ? Number(rawUnit.id ?? rawUnit.pk)
+            : Number(rawUnit);
+
+        if (Number.isFinite(unitId)) {
+          return unitId === activeUnit.id;
+        }
+
+        const unitName = String(
+          (b as any).unit_name ??
+          (b as any).unitName ??
+          (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")
+        )
+          .trim()
+          .toLowerCase();
+
+        if (unitName) {
+          return unitName === activeUnitName;
+        }
+
+        return true;
+      });
+    }
+
     // Hide cancelled if toggled on
     if (hideCancelled) {
       list = list.filter((b) => b.status !== "canceled" && b.status !== "cancelled");
@@ -246,7 +282,7 @@ export default function Index() {
     }
 
     return list;
-  }, [bookings, debouncedSearch, searchId, hideCancelled]);
+  }, [bookings, activeUnit, debouncedSearch, searchId, hideCancelled]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     await createBooking(formData);
