@@ -151,13 +151,14 @@ export default function UserManagementSection() {
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Username</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Email</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Role</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Units</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+          <span />
         </div>
 
         {isLoading ? (
