@@ -185,6 +185,13 @@ export default function UserManagementSection() {
                   : u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ") || "—"}
               </span>
               <UserStatusBadge user={u} />
+              <button
+                onClick={() => toast.info("Edição de usuários estará disponível em breve.")}
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="Editar usuário"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
             </div>
           ))
         )}
