@@ -125,33 +125,25 @@ export default function Settings() {
     ],
   };
 
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const [showNewProfessional, setShowNewProfessional] = useState(false);
-  const [newProfName, setNewProfName] = useState("");
-  const [newProfCode, setNewProfCode] = useState("");
-  const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+  // Agents should not access Settings at all
+  if (isAgent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
+        <div className="text-center space-y-3">
+          <ShieldAlert className="h-10 w-10 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">Você não tem permissão para acessar configurações.</p>
+          <button
+            onClick={() => navigate("/")}
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            Voltar ao Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
-    queryKey: ["booking-settings", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-      return data?.result ?? data;
-    },
-    enabled: !!activeUnit?.id,
-  });
-
-  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
-    queryKey: ["professionals", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professionals/`, {
-        params: { unit: activeUnit!.id },
-      });
-      return Array.isArray(data) ? data : (data?.results ?? []);
-    },
-    enabled: !!activeUnit?.id,
-  });
 
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
