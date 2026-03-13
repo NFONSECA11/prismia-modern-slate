@@ -111,8 +111,9 @@ export default function Index() {
 
   const apiParamsUpdated = useMemo((): BookingFilterParams | null => {
     if (searchId || !isDateFilter) return null;
-    return { date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
-  }, [searchId, isDateFilter, dateFrom, dateTo]);
+    const base: BookingFilterParams = activeUnit ? { unit: activeUnit.id } : {};
+    return { ...base, date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
+  }, [searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
 
   // Main list query (created_at)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({
