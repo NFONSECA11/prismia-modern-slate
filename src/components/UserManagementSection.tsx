@@ -190,27 +190,47 @@ export default function UserManagementSection() {
                 className="h-8 text-sm pl-8"
               />
             </div>
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
-                <SelectValue placeholder="Todas as roles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as roles</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="agent">Agente</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
-                <SelectValue placeholder="Todos os status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="inactive">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Role filter chips */}
+            <div className="flex items-center gap-1">
+              {[
+                { value: "all", label: "Todos" },
+                { value: "owner", label: "Owner" },
+                { value: "manager", label: "Manager" },
+                { value: "agent", label: "Agente" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilterRole(opt.value)}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
+                    filterRole === opt.value
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {/* Status filter chips */}
+            <div className="flex items-center gap-1">
+              {[
+                { value: "all", label: "Todos" },
+                { value: "active", label: "Ativo" },
+                { value: "inactive", label: "Inativo" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilterStatus(opt.value)}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
+                    filterStatus === opt.value
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             {!isAgent && (
               <Button size="sm" className="h-8 text-xs gap-1" onClick={() => { resetForm(); setShowForm(true); }}>
                 <Plus className="h-3.5 w-3.5" />
