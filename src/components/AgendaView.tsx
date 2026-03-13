@@ -549,12 +549,26 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   }, [mode, currentDate, weekStart]);
 
   // Fetch agenda bookings with server-side filters
-  const { data: agendaBookings = [], isLoading: loadingBookings } = useQuery({
+  const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
     queryKey: ["agenda-bookings", activeUnit?.id, dateRange.from, dateRange.to],
     queryFn: () => fetchAgendaBookings(activeUnit!.id, dateRange.from, dateRange.to),
     enabled: !!activeUnit,
     staleTime: 30_000,
   });
+
+  // Client-side safety filter: only show BRs matching the active unit
+  const agendaBookings = useMemo(() => {
+    if (!activeUnit) return rawAgendaBookings;
+    const activeUnitName = activeUnit.name.trim().toLowerCase();
+    return rawAgendaBookings.filter((b: any) => {
+      const rawUnit = b.unit ?? b.unit_id ?? b.unitId ?? b.booking_unit ?? b.booking_unit_id;
+      const unitId = typeof rawUnit === "object" && rawUnit ? Number(rawUnit.id ?? rawUnit.pk) : Number(rawUnit);
+      if (Number.isFinite(unitId)) return unitId === activeUnit.id;
+      const unitName = String(b.unit_name ?? b.unitName ?? (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")).trim().toLowerCase();
+      if (unitName) return unitName === activeUnitName;
+      return true; // if no unit info, keep it
+    });
+  }, [rawAgendaBookings, activeUnit]);
 
   // Fetch professionals for active unit
   const { data: professionals = [] } = useQuery({
