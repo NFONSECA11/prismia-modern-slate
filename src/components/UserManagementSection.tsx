@@ -190,47 +190,27 @@ export default function UserManagementSection() {
                 className="h-8 text-sm pl-8"
               />
             </div>
-            {/* Role filter chips */}
-            <div className="flex items-center gap-1">
-              {[
-                { value: "all", label: "Todos" },
-                { value: "owner", label: "Owner" },
-                { value: "manager", label: "Manager" },
-                { value: "agent", label: "Agente" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setFilterRole(opt.value)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
-                    filterRole === opt.value
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {/* Status filter chips */}
-            <div className="flex items-center gap-1">
-              {[
-                { value: "all", label: "Todos" },
-                { value: "active", label: "Ativo" },
-                { value: "inactive", label: "Inativo" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setFilterStatus(opt.value)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
-                    filterStatus === opt.value
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            {/* Role filter */}
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="h-8 text-xs rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[100px]"
+            >
+              <option value="all">Todos os roles</option>
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+              <option value="agent">Agente</option>
+            </select>
+            {/* Status filter */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="h-8 text-xs rounded-md border border-border px-2 py-1 bg-background text-foreground min-w-[100px]"
+            >
+              <option value="all">Todos os status</option>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
             {!isAgent && (
               <Button size="sm" className="h-8 text-xs gap-1" onClick={() => { resetForm(); setShowForm(true); }}>
                 <Plus className="h-3.5 w-3.5" />
