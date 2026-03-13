@@ -29,12 +29,17 @@ export interface MeResponse {
 
 // ── Managed user (for user management) ──────────────────────────────────────
 export interface ManagedUser {
-  id: number;
-  name: string;
+  membership_id: number;
+  user_id: number;
+  username: string;
   email: string;
+  name: string;
+  company_id: number;
   role: UserRole;
-  is_active: boolean;
-  units: Unit[] | number[];
+  all_units: boolean;
+  membership_is_active: boolean;
+  user_is_active: boolean;
+  unit_ids: number[];
 }
 
 // ── CSRF bootstrap ──────────────────────────────────────────────────────────
@@ -95,18 +100,14 @@ export async function fetchUsers(): Promise<ManagedUser[]> {
 }
 
 export async function createUser(payload: {
-  name: string;
+  username: string;
   email: string;
   password: string;
   role: UserRole;
   unit_ids: number[];
-  is_active?: boolean;
 }): Promise<ManagedUser> {
   await fetchCsrf();
-  const { data } = await api.post("/api/settings/users/", {
-    ...payload,
-    is_active: payload.is_active ?? true,
-  });
+  const { data } = await api.post("/api/settings/users/", payload);
   return data?.result ?? data;
 }
 
