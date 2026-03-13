@@ -94,7 +94,7 @@ export async function fetchMe(): Promise<MeResponse> {
 
 // ── User Management API ─────────────────────────────────────────────────────
 export async function fetchUsers(): Promise<ManagedUser[]> {
-  const { data } = await api.get("/api/settings/users/");
+  const { data } = await api.get("/api/settings/users/?status=all");
   const payload = data?.results ?? data?.result ?? data;
   return Array.isArray(payload) ? payload : [];
 }
