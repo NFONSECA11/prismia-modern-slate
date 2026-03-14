@@ -57,6 +57,7 @@ export async function fetchPreferences(): Promise<UserPreferences> {
 export async function patchPreferences(
   partial: Partial<Omit<UserPreferences, "updated_at">>
 ): Promise<UserPreferences> {
+  await fetchCsrf();
   const { data } = await api.patch("/api/user-preferences/", partial);
   return (data?.result ?? data) as UserPreferences;
 }
