@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import UserManagementSection from "@/components/UserManagementSection";
