@@ -409,6 +409,7 @@ export default function Index() {
                             key={u.id}
                             onClick={() => {
                               setActiveUnit(u);
+                              savePreference({ last_unit_id: u.id });
                               setShowUnitMenu(false);
                             }}
                             className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
