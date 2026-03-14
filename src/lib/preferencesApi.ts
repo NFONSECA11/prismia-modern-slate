@@ -16,9 +16,14 @@ export function themeFromBackend(t: string | null | undefined): ThemeId | null {
   return THEME_FROM_BACKEND[t] ?? null;
 }
 
+// Backend valid maximums per mode
+const BG_MAX: Record<string, number> = { solid: 2, gradient: 2, landscape: 2 };
+
 /** Convert frontend bgMode+bgVariant (0-based) → backend string like "solid-1" */
 export function bgToBackend(mode: BgMode, variant: number): string {
-  return `${mode}-${variant + 1}`;
+  const max = BG_MAX[mode] ?? 2;
+  const clamped = Math.min(variant + 1, max);
+  return `${mode}-${clamped}`;
 }
 
 /** Convert backend "solid-1" → { mode, variant (0-based) } */
@@ -76,9 +81,23 @@ export function savePreference(fields: Record<string, unknown>) {
     _pending = {};
     _timer = null;
     try {
+      console.log("[Prefs] saving:", JSON.stringify(payload));
       await patchPreferences(payload as any);
-    } catch (err) {
-      console.warn("[Prefs] failed to save:", err);
+      console.log("[Prefs] saved OK");
+    } catch (err: any) {
+      const resp = err?.response?.data;
+      console.warn("[Prefs] failed to save:", JSON.stringify(resp ?? err?.message));
+      // If batch failed, retry each field individually so one bad field doesn't block others
+      if (resp && Object.keys(payload).length > 1) {
+        for (const [key, value] of Object.entries(payload)) {
+          try {
+            await patchPreferences({ [key]: value } as any);
+            console.log("[Prefs] individual save OK:", key);
+          } catch {
+            console.warn("[Prefs] individual save failed:", key);
+          }
+        }
+      }
     }
   }, DEBOUNCE_MS);
 }
