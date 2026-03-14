@@ -387,7 +387,7 @@ export default function Index() {
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 flex-shrink-0">
               {branding?.logo_url ? (
-                <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-7 max-w-[120px] object-contain" />
+                <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-9 max-w-[160px] object-contain" />
               ) : (
                 <>
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
