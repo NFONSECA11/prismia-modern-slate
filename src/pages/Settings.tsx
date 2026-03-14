@@ -234,7 +234,7 @@ export default function Settings() {
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">1 · Contexto da conta</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{isAgent ? "Personalização" : "1 · Contexto da conta"}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -242,6 +242,7 @@ export default function Settings() {
           {canManageUsers && <UserManagementSection />}
 
           {/* Empresa */}
+          {canManage && (
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
@@ -261,8 +262,10 @@ export default function Settings() {
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           {/* Unidades */}
+          {canManage && (
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
@@ -304,6 +307,7 @@ export default function Settings() {
               )}
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           {/* Aparência */}
           <Collapsible defaultOpen={false} id="section-aparencia">
@@ -490,6 +494,7 @@ export default function Settings() {
           </Collapsible>
         </section>
 
+        {canManage && (<>
         {/* ─── 2) Catálogo e oferta da unidade ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
@@ -692,6 +697,7 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
         </section>
+        </>)}
 
       </main>
     </div>

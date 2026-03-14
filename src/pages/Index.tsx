@@ -515,7 +515,7 @@ export default function Index() {
               </button>
             )}
 
-            {canManage && (
+            {(
               <button
                 onClick={() => navigate("/settings")}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
@@ -645,7 +645,7 @@ export default function Index() {
                 Atualizar dados
               </button>
 
-              {canManage && (
+              {(
                 <button
                   onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
                   className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
