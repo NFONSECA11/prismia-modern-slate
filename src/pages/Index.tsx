@@ -696,7 +696,7 @@ export default function Index() {
             <span className="text-foreground-muted" style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
             <span className="gradient-text font-bold">IA</span>
           </div>
-          <span className="text-foreground/30 text-sm font-light">|</span>
+          
           <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
             Agenda
           </span>
