@@ -695,7 +695,7 @@ export default function Index() {
             <span className="font-light opacity-90" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
             <span className="gradient-text font-bold">IA</span>
           </div>
-          <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
+          <span className="text-xs md:text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
             Agenda
           </span>
         </div>
