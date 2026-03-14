@@ -686,10 +686,8 @@ export default function Index() {
         <div
           className="inline-flex items-center justify-center gap-2 px-10 py-1.5 relative"
           style={{
-            background: isLandscape
-              ? "hsl(var(--surface) / 0.85)"
-              : "hsl(var(--surface))",
-            backdropFilter: isLandscape ? "blur(12px)" : undefined,
+            background: "hsl(0 0% 0% / 0.85)",
+            backdropFilter: "blur(12px)",
             clipPath: "polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%)",
           }}
         >
