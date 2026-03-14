@@ -17,7 +17,7 @@ export function themeFromBackend(t: string | null | undefined): ThemeId | null {
 }
 
 // Backend valid maximums per mode
-const BG_MAX: Record<string, number> = { solid: 2, gradient: 2, landscape: 2 };
+const BG_MAX: Record<string, number> = { solid: 4, gradient: 4, landscape: 5 };
 
 /** Convert frontend bgMode+bgVariant (0-based) → backend string like "solid-1" */
 export function bgToBackend(mode: BgMode, variant: number): string {
