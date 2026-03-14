@@ -38,7 +38,7 @@ import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 
 export default function Settings() {
-  const { company, units, activeUnit, canManage, canManageUsers, isAgent, role } = useAuth();
+  const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
