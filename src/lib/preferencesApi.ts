@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
 import type { ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
 
 // ── Backend ↔ Frontend mappings ──────────────────────────────────────────────
