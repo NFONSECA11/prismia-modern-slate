@@ -682,7 +682,7 @@ export default function Index() {
       </header>
 
       {/* Module banner */}
-      <div className="print:hidden relative -mb-1">
+      <div className="print:hidden relative -mb-2">
         <div
           className="inline-flex items-center gap-2 px-4 py-1 pr-10 relative mt-1"
           style={{
