@@ -228,7 +228,7 @@ export default function Settings() {
             <span className="gradient-text font-bold">IA</span>
           </div>
           <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
-            Configurações
+            Agenda
           </span>
         </div>
       </div>
