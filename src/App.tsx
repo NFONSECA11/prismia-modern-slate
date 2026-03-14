@@ -1,4 +1,4 @@
-/* app v4 */
+/* app v5 – preferences sync */
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import PreferencesSyncer from "@/components/PreferencesSyncer";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -20,6 +21,7 @@ const App = () => (
   <ThemeProvider>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <PreferencesSyncer />
       <TooltipProvider>
         <Toaster />
         <Sonner />

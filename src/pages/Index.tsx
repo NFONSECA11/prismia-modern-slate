@@ -59,7 +59,10 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 export default function Index() {
   const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
   const navigate = useNavigate();
-  const [view, setView] = useState<View>("table");
+  const [view, setViewState] = useState<View>(() => {
+    const saved = sessionStorage.getItem("prefs:last_view");
+    return saved === "agenda" ? "agenda" : "table";
+  });
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
