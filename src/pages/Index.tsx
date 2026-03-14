@@ -59,6 +59,14 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 
 export default function Index() {
   const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
+  const { data: branding } = useQuery({
+    queryKey: ["company-branding"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/company-branding/");
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
   const navigate = useNavigate();
   const [view, setViewState] = useState<View>(() => {
     const saved = sessionStorage.getItem("prefs:last_view");
