@@ -494,6 +494,7 @@ export default function Settings() {
           </Collapsible>
         </section>
 
+        {canManage && (<>
         {/* ─── 2) Catálogo e oferta da unidade ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
