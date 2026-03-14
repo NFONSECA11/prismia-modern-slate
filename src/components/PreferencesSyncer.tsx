@@ -48,19 +48,19 @@ export default function PreferencesSyncer() {
         console.log("[Prefs] loaded:", JSON.stringify(prefs));
         applying.current = true;
 
-        // Theme
+        // Theme – always apply (closure may hold stale values from previous user)
         const t = themeFromBackend(prefs.theme);
-        if (t && t !== theme) setTheme(t);
+        if (t) setTheme(t);
 
         // Background
         const bg = bgFromBackend(prefs.background);
         if (bg) {
-          if (bg.mode !== bgMode) setBgMode(bg.mode);
-          if (bg.variant !== bgVariant) setBgVariant(bg.variant);
+          setBgMode(bg.mode);
+          setBgVariant(bg.variant);
         }
 
         // Accent
-        if (prefs.accent && prefs.accent !== accent) {
+        if (prefs.accent) {
           setAccent(prefs.accent as any);
         }
 
