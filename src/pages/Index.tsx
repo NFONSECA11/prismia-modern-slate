@@ -681,26 +681,6 @@ export default function Index() {
         )}
       </header>
 
-      {/* Module banner */}
-      <div
-        className="print:hidden border-b border-border/40"
-        style={{
-          background: isLandscape
-            ? "hsl(var(--surface) / 0.85)"
-            : "hsl(var(--surface))",
-          backdropFilter: isLandscape ? "blur(12px)" : undefined,
-        }}
-      >
-        <div className="px-4 sm:px-6 py-1 flex items-center gap-2">
-          <span className="text-[10px] font-normal tracking-widest uppercase" style={{ color: "hsl(var(--foreground-subtle))", letterSpacing: "0.12em" }}>
-            PrismIA
-          </span>
-          <span className="w-px h-2.5 rounded-full" style={{ background: "hsl(var(--border))" }} />
-          <span className="text-xs font-medium tracking-wide" style={{ color: "hsl(var(--foreground-muted))" }}>
-            Agenda
-          </span>
-        </div>
-      </div>
 
       {/* Zen mode - fullscreen landscape */}
       {zenMode && isLandscape && (
