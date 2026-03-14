@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { isRescheduleFromNotes } from "@/lib/cancelledBookingCache";
+import { savePreference } from "@/lib/preferencesApi";
 import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { BookingRequest } from "@/types/booking";
 import { fetchFilteredBookings, fetchBookingRequestById, createBooking, patchBooking, BookingFilterParams } from "@/lib/bookingApi";
@@ -59,7 +60,14 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 export default function Index() {
   const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
   const navigate = useNavigate();
-  const [view, setView] = useState<View>("table");
+  const [view, setViewState] = useState<View>(() => {
+    const saved = sessionStorage.getItem("prefs:last_view");
+    return saved === "agenda" ? "agenda" : "table";
+  });
+  const setView = useCallback((v: View) => {
+    setViewState(v);
+    savePreference({ last_view: v });
+  }, []);
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
@@ -401,6 +409,7 @@ export default function Index() {
                             key={u.id}
                             onClick={() => {
                               setActiveUnit(u);
+                              savePreference({ last_unit_id: u.id });
                               setShowUnitMenu(false);
                             }}
                             className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
@@ -583,6 +592,7 @@ export default function Index() {
                     key={u.id}
                     onClick={() => {
                       setActiveUnit(u);
+                      savePreference({ last_unit_id: u.id });
                     }}
                     className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
                       activeUnit?.id === u.id
