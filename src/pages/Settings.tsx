@@ -247,6 +247,9 @@ export default function Settings() {
           </Collapsible>
           )}
 
+          {/* Logo */}
+          {canManage && <CompanyBrandingSection />}
+
           {/* Unidades */}
           {canManage && (
           <Collapsible defaultOpen={false}>
