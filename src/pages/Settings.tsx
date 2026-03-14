@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import UserManagementSection from "@/components/UserManagementSection";
@@ -38,7 +38,7 @@ import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 
 export default function Settings() {
-  const { company, units, activeUnit, canManage, canManageUsers, isAgent, role } = useAuth();
+  const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -126,23 +126,6 @@ export default function Settings() {
   };
 
 
-  // Agents should not access Settings at all
-  if (isAgent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
-        <div className="text-center space-y-3">
-          <ShieldAlert className="h-10 w-10 text-muted-foreground mx-auto" />
-          <p className="text-sm text-muted-foreground">Você não tem permissão para acessar configurações.</p>
-          <button
-            onClick={() => navigate("/")}
-            className="text-xs text-primary hover:text-primary/80 transition-colors"
-          >
-            Voltar ao Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
 
 
   const createProfessional = useMutation({
