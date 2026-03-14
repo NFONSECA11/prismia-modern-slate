@@ -684,7 +684,7 @@ export default function Index() {
       {/* Module banner */}
       <div className="print:hidden relative">
         <div
-          className="inline-flex items-center justify-center gap-2 px-10 py-1.5 relative"
+          className="inline-flex items-center gap-2 px-4 py-0.5 pr-10 relative"
           style={{
             background: "hsl(0 0% 0% / 0.85)",
             backdropFilter: "blur(12px)",
