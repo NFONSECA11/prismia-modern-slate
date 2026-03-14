@@ -216,18 +216,18 @@ export default function Settings() {
       {/* Module banner */}
       <div className="print:hidden relative -mb-3">
         <div
-          className="inline-flex items-center gap-2 px-4 py-1 pr-10 relative mt-1"
+          className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-0.5 md:py-1 pr-7 md:pr-10 relative mt-1"
           style={{
             background: "hsl(0 0% 0% / 0.85)",
             backdropFilter: "blur(12px)",
             clipPath: "polygon(0 0, 100% 0, calc(100% - 32px) 100%, 0 100%)",
           }}
         >
-          <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
+          <div className="flex items-center gap-0.5 text-xs md:text-sm font-semibold tracking-tight">
             <span className="font-light opacity-75" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
             <span className="gradient-text font-bold">IA</span>
           </div>
-          <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
+          <span className="text-xs md:text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
             Agenda
           </span>
         </div>
