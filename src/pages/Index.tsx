@@ -386,10 +386,16 @@ export default function Index() {
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
-                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-              </div>
-              <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
+              {branding?.logo_url ? (
+                <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-7 max-w-[120px] object-contain" />
+              ) : (
+                <>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                  </div>
+                  <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
+                </>
+              )}
             </div>
             <span className="text-border text-xs hidden sm:inline">|</span>
 
