@@ -466,6 +466,14 @@ export default function Index() {
 
           {/* Desktop actions */}
           <div className="hidden sm:flex items-center gap-2">
+            {/* Module identifier pill */}
+            <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground px-2.5 py-1 rounded-full border border-border/50" style={{ background: "hsl(var(--surface) / 0.6)" }}>
+              <CalendarDays className="h-3 w-3" style={{ color: "hsl(var(--foreground-subtle))" }} />
+              <span style={{ color: "hsl(var(--foreground-subtle))" }}>PrismIA</span>
+              <span style={{ color: "hsl(var(--foreground-muted))" }}>Agenda</span>
+            </span>
+
+            <div className="h-4 w-px bg-border/40" />
             {/* Role badge */}
             {role && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
@@ -681,26 +689,6 @@ export default function Index() {
         )}
       </header>
 
-      {/* Module banner */}
-      <div
-        className="print:hidden border-b border-border/40"
-        style={{
-          background: isLandscape
-            ? "hsl(var(--surface) / 0.85)"
-            : "hsl(var(--surface))",
-          backdropFilter: isLandscape ? "blur(12px)" : undefined,
-        }}
-      >
-        <div className="px-4 sm:px-6 py-1 flex items-center gap-2">
-          <span className="text-[10px] font-normal tracking-widest uppercase" style={{ color: "hsl(var(--foreground-subtle))", letterSpacing: "0.12em" }}>
-            PrismIA
-          </span>
-          <span className="w-px h-2.5 rounded-full" style={{ background: "hsl(var(--border))" }} />
-          <span className="text-xs font-medium tracking-wide" style={{ color: "hsl(var(--foreground-muted))" }}>
-            Agenda
-          </span>
-        </div>
-      </div>
 
       {/* Zen mode - fullscreen landscape */}
       {zenMode && isLandscape && (
