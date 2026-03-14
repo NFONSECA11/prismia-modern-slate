@@ -29,6 +29,10 @@ export default function PreferencesSyncer() {
     loaded.current = true;
 
     (async () => {
+      // Clear stale session data before loading fresh prefs
+      sessionStorage.removeItem("prefs:last_view");
+      sessionStorage.removeItem("prefs:last_date");
+
       try {
         const prefs = await fetchPreferences();
         console.log("[Prefs] loaded:", prefs);
