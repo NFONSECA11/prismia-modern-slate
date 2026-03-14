@@ -645,7 +645,7 @@ export default function Index() {
                 Atualizar dados
               </button>
 
-              {canManage && (
+              {(
                 <button
                   onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
                   className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-foreground hover:bg-surface-elevated transition-colors"
