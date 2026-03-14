@@ -684,7 +684,7 @@ export default function Index() {
       {/* Module banner */}
       <div className="print:hidden relative">
         <div
-          className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 pr-10 relative"
+          className="inline-flex items-center justify-center gap-2 px-10 py-1.5 relative"
           style={{
             background: isLandscape
               ? "hsl(var(--surface) / 0.85)"
