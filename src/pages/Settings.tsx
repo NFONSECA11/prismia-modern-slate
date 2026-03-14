@@ -242,6 +242,7 @@ export default function Settings() {
           {canManageUsers && <UserManagementSection />}
 
           {/* Empresa */}
+          {canManage && (
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
@@ -261,8 +262,10 @@ export default function Settings() {
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           {/* Unidades */}
+          {canManage && (
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
@@ -304,6 +307,7 @@ export default function Settings() {
               )}
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           {/* Aparência */}
           <Collapsible defaultOpen={false} id="section-aparencia">
