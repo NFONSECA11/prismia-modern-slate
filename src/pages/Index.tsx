@@ -692,7 +692,7 @@ export default function Index() {
           }}
         >
           <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
-            <span className="font-medium" style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
+            <span className="font-light opacity-60" style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
             <span className="gradient-text font-bold">IA</span>
           </div>
           <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
