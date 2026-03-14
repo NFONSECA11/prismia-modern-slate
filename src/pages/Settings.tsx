@@ -234,7 +234,7 @@ export default function Settings() {
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">1 · Contexto da conta</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{isAgent ? "Personalização" : "1 · Contexto da conta"}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
