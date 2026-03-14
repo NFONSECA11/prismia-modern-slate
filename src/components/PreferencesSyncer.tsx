@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
@@ -20,22 +20,32 @@ export default function PreferencesSyncer() {
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
 
   const loaded = useRef(false);
-  // Skip the first change events that come from applying loaded prefs
   const applying = useRef(false);
+
+  // ── Reset when user logs out ────────────────────────────────────────────
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      loaded.current = false;
+      applying.current = false;
+      sessionStorage.removeItem("prefs:last_view");
+      sessionStorage.removeItem("prefs:last_date");
+    }
+  }, [isAuthenticated, isLoading]);
 
   // ── Load on auth ready ──────────────────────────────────────────────────
   useEffect(() => {
     if (isLoading || !isAuthenticated || loaded.current) return;
     loaded.current = true;
 
-    (async () => {
-      // Clear stale session data before loading fresh prefs
-      sessionStorage.removeItem("prefs:last_view");
-      sessionStorage.removeItem("prefs:last_date");
+    // Clear stale session data before loading fresh prefs
+    sessionStorage.removeItem("prefs:last_view");
+    sessionStorage.removeItem("prefs:last_date");
 
+    (async () => {
       try {
+        console.log("[Prefs] fetching preferences…");
         const prefs = await fetchPreferences();
-        console.log("[Prefs] loaded:", prefs);
+        console.log("[Prefs] loaded:", JSON.stringify(prefs));
         applying.current = true;
 
         // Theme
@@ -57,7 +67,10 @@ export default function PreferencesSyncer() {
         // Unit
         if (prefs.last_unit_id && units.length > 0) {
           const unit = units.find((u) => u.id === prefs.last_unit_id);
-          if (unit) setActiveUnit(unit);
+          if (unit) {
+            console.log("[Prefs] restoring unit:", unit.id, unit.name);
+            setActiveUnit(unit);
+          }
         }
 
         // Store last_view and last_date for Index to pick up
