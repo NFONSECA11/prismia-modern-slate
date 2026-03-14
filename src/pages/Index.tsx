@@ -690,7 +690,7 @@ export default function Index() {
               ? "hsl(var(--surface) / 0.85)"
               : "hsl(var(--surface))",
             backdropFilter: isLandscape ? "blur(12px)" : undefined,
-            clipPath: "polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%)",
+            clipPath: "polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%)",
           }}
         >
           <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
