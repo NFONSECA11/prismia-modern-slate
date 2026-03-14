@@ -81,9 +81,23 @@ export function savePreference(fields: Record<string, unknown>) {
     _pending = {};
     _timer = null;
     try {
+      console.log("[Prefs] saving:", JSON.stringify(payload));
       await patchPreferences(payload as any);
-    } catch (err) {
-      console.warn("[Prefs] failed to save:", err);
+      console.log("[Prefs] saved OK");
+    } catch (err: any) {
+      const resp = err?.response?.data;
+      console.warn("[Prefs] failed to save:", JSON.stringify(resp ?? err?.message));
+      // If batch failed, retry each field individually so one bad field doesn't block others
+      if (resp && Object.keys(payload).length > 1) {
+        for (const [key, value] of Object.entries(payload)) {
+          try {
+            await patchPreferences({ [key]: value } as any);
+            console.log("[Prefs] individual save OK:", key);
+          } catch {
+            console.warn("[Prefs] individual save failed:", key);
+          }
+        }
+      }
     }
   }, DEBOUNCE_MS);
 }
