@@ -682,21 +682,21 @@ export default function Index() {
       </header>
 
       {/* Module banner */}
-      <div
-        className="print:hidden border-b border-border/40"
-        style={{
-          background: isLandscape
-            ? "hsl(var(--surface) / 0.85)"
-            : "hsl(var(--surface))",
-          backdropFilter: isLandscape ? "blur(12px)" : undefined,
-        }}
-      >
-        <div className="px-4 sm:px-6 py-1.5 flex items-center gap-2">
+      <div className="print:hidden border-b border-border/40 relative">
+        <div
+          className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 pr-10 relative"
+          style={{
+            background: isLandscape
+              ? "hsl(var(--surface) / 0.85)"
+              : "hsl(var(--surface))",
+            backdropFilter: isLandscape ? "blur(12px)" : undefined,
+            clipPath: "polygon(0 0, calc(100% - 24px) 0, 100% 100%, 0 100%)",
+          }}
+        >
           <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
-            <span className="text-foreground-muted" style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
+            <span style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
             <span className="gradient-text font-bold">IA</span>
           </div>
-          
           <span className="text-sm font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
             Agenda
           </span>
