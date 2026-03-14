@@ -688,7 +688,7 @@ export default function Index() {
           style={{
             background: "hsl(0 0% 0% / 0.85)",
             backdropFilter: "blur(12px)",
-            clipPath: "polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%)",
+            clipPath: "polygon(0 0, 100% 0, calc(100% - 32px) 100%, 0 100%)",
           }}
         >
           <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
