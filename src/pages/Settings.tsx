@@ -697,6 +697,7 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
         </section>
+        </>)}
 
       </main>
     </div>
