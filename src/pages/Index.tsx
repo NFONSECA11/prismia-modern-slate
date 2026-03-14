@@ -691,13 +691,12 @@ export default function Index() {
           backdropFilter: isLandscape ? "blur(12px)" : undefined,
         }}
       >
-        <div className="px-4 sm:px-6 py-1.5 flex items-center gap-2">
-          <div className="flex items-center gap-0.5 text-sm font-semibold tracking-tight">
-            <span className="text-foreground-muted" style={{ color: "hsl(var(--foreground-muted))" }}>Prism</span>
-            <span className="gradient-text font-bold">IA</span>
-          </div>
-          <span className="text-foreground/30 text-xs font-light">|</span>
-          <span className="text-xs font-medium tracking-wide uppercase" style={{ color: "hsl(var(--primary))" }}>
+        <div className="px-4 sm:px-6 py-1 flex items-center gap-2">
+          <span className="text-[10px] font-normal tracking-widest uppercase" style={{ color: "hsl(var(--foreground-subtle))", letterSpacing: "0.12em" }}>
+            PrismIA
+          </span>
+          <span className="w-px h-2.5 rounded-full" style={{ background: "hsl(var(--border))" }} />
+          <span className="text-xs font-medium tracking-wide" style={{ color: "hsl(var(--foreground-muted))" }}>
             Agenda
           </span>
         </div>
