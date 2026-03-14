@@ -63,6 +63,10 @@ export default function Index() {
     const saved = sessionStorage.getItem("prefs:last_view");
     return saved === "agenda" ? "agenda" : "table";
   });
+  const setView = useCallback((v: View) => {
+    setViewState(v);
+    savePreference({ last_view: v });
+  }, []);
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
