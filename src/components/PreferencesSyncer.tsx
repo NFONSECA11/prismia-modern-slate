@@ -14,19 +14,29 @@ import {
  * Sits inside Auth + Theme providers.
  * Loads prefs once after auth bootstrap, applies them,
  * and watches for changes to auto-save.
+ *
+ * Uses a "server snapshot" approach instead of timing-based guards:
+ * we track what the server last told us, and only save when the
+ * UI state diverges from that snapshot.
  */
 export default function PreferencesSyncer() {
   const { isAuthenticated, isLoading, units, setActiveUnit } = useAuth();
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
 
   const loaded = useRef(false);
-  const applying = useRef(false);
+
+  // Server-known values — saves only fire when UI diverges from these
+  const serverTheme = useRef<string | null>(null);
+  const serverBg = useRef<string | null>(null);
+  const serverAccent = useRef<string | null>(null);
 
   // ── Reset when user logs out ────────────────────────────────────────────
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
       loaded.current = false;
-      applying.current = false;
+      serverTheme.current = null;
+      serverBg.current = null;
+      serverAccent.current = null;
       sessionStorage.removeItem("prefs:last_view");
       sessionStorage.removeItem("prefs:last_date");
     }
@@ -46,21 +56,25 @@ export default function PreferencesSyncer() {
         console.log("[Prefs] fetching preferences…");
         const prefs = await fetchPreferences();
         console.log("[Prefs] loaded:", JSON.stringify(prefs));
-        applying.current = true;
 
-        // Theme – always apply (closure may hold stale values from previous user)
+        // Theme
         const t = themeFromBackend(prefs.theme);
-        if (t) setTheme(t);
+        if (t) {
+          serverTheme.current = themeToBackend(t); // store as backend key
+          setTheme(t);
+        }
 
         // Background
         const bg = bgFromBackend(prefs.background);
         if (bg) {
+          serverBg.current = bgToBackend(bg.mode, bg.variant);
           setBgMode(bg.mode);
           setBgVariant(bg.variant);
         }
 
         // Accent
         if (prefs.accent) {
+          serverAccent.current = prefs.accent;
           setAccent(prefs.accent as any);
         }
 
@@ -80,46 +94,41 @@ export default function PreferencesSyncer() {
         if (prefs.last_date) {
           sessionStorage.setItem("prefs:last_date", prefs.last_date);
         }
-
-        // Small delay so the watchers below don't treat applied values as user changes
-        setTimeout(() => {
-          applying.current = false;
-        }, 600);
       } catch (err) {
         console.warn("[Prefs] failed to load:", err);
-        applying.current = false;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading]);
 
   // ── Watch theme changes ─────────────────────────────────────────────────
-  const prevTheme = useRef(theme);
   useEffect(() => {
-    if (applying.current || !loaded.current) return;
-    if (theme !== prevTheme.current) {
-      prevTheme.current = theme;
-      savePreference({ theme: themeToBackend(theme) });
+    if (!loaded.current) return;
+    const backendVal = themeToBackend(theme);
+    if (backendVal !== serverTheme.current) {
+      console.log("[Prefs] theme changed:", serverTheme.current, "→", backendVal);
+      serverTheme.current = backendVal;
+      savePreference({ theme: backendVal });
     }
   }, [theme]);
 
   // ── Watch background changes ────────────────────────────────────────────
-  const prevBg = useRef(`${bgMode}-${bgVariant}`);
   useEffect(() => {
-    if (applying.current || !loaded.current) return;
-    const key = `${bgMode}-${bgVariant}`;
-    if (key !== prevBg.current) {
-      prevBg.current = key;
-      savePreference({ background: bgToBackend(bgMode, bgVariant) });
+    if (!loaded.current) return;
+    const backendVal = bgToBackend(bgMode, bgVariant);
+    if (backendVal !== serverBg.current) {
+      console.log("[Prefs] bg changed:", serverBg.current, "→", backendVal);
+      serverBg.current = backendVal;
+      savePreference({ background: backendVal });
     }
   }, [bgMode, bgVariant]);
 
   // ── Watch accent changes ────────────────────────────────────────────────
-  const prevAccent = useRef(accent);
   useEffect(() => {
-    if (applying.current || !loaded.current) return;
-    if (accent !== prevAccent.current) {
-      prevAccent.current = accent;
+    if (!loaded.current) return;
+    if (accent !== serverAccent.current) {
+      console.log("[Prefs] accent changed:", serverAccent.current, "→", accent);
+      serverAccent.current = accent;
       savePreference({ accent });
     }
   }, [accent]);
