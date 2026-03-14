@@ -712,10 +712,10 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col gap-2 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
-            {/* Search + result count row */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
+            {/* Search + result count */}
             <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:max-w-xs">
+              <div className="relative flex-1 sm:w-64 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   type="text"
@@ -739,7 +739,7 @@ export default function Index() {
               </span>
             </div>
 
-            {/* Filters row — horizontal scroll on mobile */}
+            {/* Filters — horizontal scroll on mobile, inline on desktop */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-0.5 flex-shrink-0 hidden sm:block" />
               {QUICK_FILTERS.map((f) => (
