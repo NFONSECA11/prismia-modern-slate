@@ -196,7 +196,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
       <header
-        className="sticky top-0 z-30 flex items-center gap-3 px-6 py-3 border-b border-border"
+        className="sticky top-0 z-30 flex items-center gap-3 px-6 py-5 border-b border-border"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <button
