@@ -663,8 +663,8 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     <>
       <div
         id="agenda-print-area"
-        className="rounded-xl border border-border shadow-md flex flex-col overflow-hidden"
-        style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface-raised))" }}
+        className="rounded-xl border border-border/60 shadow-md flex flex-col overflow-hidden"
+        style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
       >
         {/* Print-only header */}
         <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
