@@ -193,8 +193,54 @@ export default function Settings() {
     },
   });
 
+  const landscapeMap: Record<string, string[]> = {
+    "night": [bgDarkNavy, bgDarkNavy2, bgDarkNavy3, bgDarkNavy4],
+    "slate": [bgSoftSlate, bgSoftSlate2, bgSoftSlate3, bgSoftSlate4, bgSoftSlate5],
+    "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
+  };
+  const solidColors: Record<string, string[]> = {
+    "night": ["216 65% 7%", "218 28% 9%", "258 32% 8%"],
+    "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
+    "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
+  };
+  const gradientMap: Record<string, string[]> = {
+    "night": [
+      "linear-gradient(145deg, hsl(210 58% 6%), hsl(205 55% 12%), hsl(200 45% 18%))",
+      "linear-gradient(150deg, hsl(220 30% 7%), hsl(218 25% 11%), hsl(215 20% 16%))",
+      "linear-gradient(140deg, hsl(215 50% 7%), hsl(248 28% 12%), hsl(260 22% 16%))",
+    ],
+    "slate": [
+      "linear-gradient(145deg, hsl(216 48% 11%), hsl(212 42% 17%), hsl(208 38% 23%))",
+      "linear-gradient(150deg, hsl(215 22% 12%), hsl(214 18% 18%), hsl(212 15% 24%))",
+      "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))",
+    ],
+    "frost": [
+      "linear-gradient(145deg, hsl(210 40% 97%), hsl(208 35% 94%), hsl(205 45% 90%))",
+      "linear-gradient(150deg, hsl(214 18% 96%), hsl(212 15% 93%), hsl(210 20% 90%))",
+      "linear-gradient(140deg, hsl(208 30% 96%), hsl(206 35% 92%), hsl(210 25% 95%))",
+    ],
+  };
+  const isLandscape = bgMode === "landscape";
+  const isGradient = bgMode === "gradient";
+  const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
+  const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
+  const gradientBg = gradientMap[theme]?.[bgVariant] ?? gradientMap[theme]?.[0];
+  const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? "hsl(var(--background))" : `hsl(${solidBg})`;
+
   return (
-    <div className="min-h-screen" style={{ background: "hsl(var(--background))" }}>
+    <div className="min-h-screen relative" style={{ background: mainBg }}>
+      {isLandscape && (
+        <div
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${currentBg})` }}
+        />
+      )}
+      {isGradient && (
+        <div
+          className="fixed inset-0 z-0"
+          style={{ background: gradientBg }}
+        />
+      )}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 px-6 py-5 border-b border-border"
         style={{ background: "hsl(var(--topbar-bg))" }}
@@ -233,7 +279,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="px-6 py-6 max-w-3xl mx-auto space-y-6">
+      <main className="px-6 py-6 max-w-3xl mx-auto space-y-6 relative z-10">
 
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
