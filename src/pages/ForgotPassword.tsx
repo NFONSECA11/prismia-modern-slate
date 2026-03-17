@@ -26,11 +26,13 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "hsl(var(--background))" }}>
       <div className="w-full max-w-sm space-y-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary shadow-lg glow-primary">
-            <Sparkles className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl font-bold gradient-text">Recuperar Senha</h1>
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-2xl font-light tracking-wide">
+            <span style={{ color: "hsl(0 0% 85%)", opacity: 0.9 }}>Prism</span>
+            <span className="gradient-text font-semibold">IA</span>
+            <span className="text-primary ml-2 font-light">Agenda</span>
+          </h1>
+          <p className="text-sm font-medium text-foreground">Recuperar Senha</p>
         </div>
 
         <div className="rounded-2xl border border-border p-6 space-y-4 surface-raised shadow-md">
