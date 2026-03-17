@@ -238,16 +238,17 @@ function AppointmentCard({
       </span>
       <div className="mt-0.5 flex items-center gap-2 text-[10px] leading-tight" style={{ color: "hsl(var(--muted-foreground))" }}>
         <span className="flex items-center gap-0.5">
-          <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+          {booking.confirmation ? (
+            <ConfirmationIndicator confirmation={booking.confirmation} compact />
+          ) : (
+            <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+          )}
           {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
         </span>
         <span className="flex items-center gap-0.5">
           <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
           #{booking.id}
         </span>
-        {booking.confirmation ? (
-          <ConfirmationIndicator confirmation={booking.confirmation} compact />
-        ) : null}
       </div>
     </button>
   );
