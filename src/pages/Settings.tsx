@@ -290,7 +290,7 @@ export default function Settings() {
         />
       )}
       <header
-        className="sticky top-0 z-30 flex items-center gap-3 px-6 py-5 border-b border-border"
+        className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-border/60"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         {branding?.logo_url ? (
