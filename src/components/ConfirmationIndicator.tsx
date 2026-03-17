@@ -28,12 +28,12 @@ const STATUS_CONFIG: Record<ConfirmationStatus, ConfirmationConfig> = {
     colorClass: "text-status-pending",
   },
   confirmed: {
-    label: "Confirmado pelo paciente",
+    label: "Confirmado",
     icon: CheckCircle2,
     colorClass: "text-status-confirmed",
   },
   declined: {
-    label: "Recusado pelo paciente",
+    label: "Recusado",
     icon: XCircle,
     colorClass: "text-status-canceled",
   },
