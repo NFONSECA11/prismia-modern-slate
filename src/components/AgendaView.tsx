@@ -591,21 +591,22 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     };
   }, [mode, currentDate, weekStart]);
 
-  // Fetch holidays for visible year(s)
+  // Fetch holidays (cache-busted query key to avoid stale empty cache)
   const visibleYears = useMemo(() => {
-    const years = new Set<number>();
-    years.add(getYear(parseISO(dateRange.from)));
-    years.add(getYear(parseISO(dateRange.to)));
-    return Array.from(years);
+    const startYear = Number(dateRange.from.slice(0, 4));
+    const endYear = Number(dateRange.to.slice(0, 4));
+    return startYear === endYear ? [startYear] : [startYear, endYear];
   }, [dateRange.from, dateRange.to]);
 
   const { data: holidays = [] } = useQuery({
-    queryKey: ["holidays", ...visibleYears],
+    queryKey: ["holidays-v2", dateRange.from, dateRange.to],
     queryFn: async () => {
       const all = await Promise.all(visibleYears.map((y) => fetchHolidays(y)));
       return all.flat();
     },
-    staleTime: 24 * 60 * 60_000, // 24h
+    staleTime: 5 * 60_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const holidayMap = useMemo(() => buildHolidayMap(holidays), [holidays]);
