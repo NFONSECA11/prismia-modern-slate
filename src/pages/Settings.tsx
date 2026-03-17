@@ -293,7 +293,11 @@ export default function Settings() {
           Voltar
         </button>
         <div className="h-4 w-px bg-border" />
-        <h1 className="text-sm font-bold text-foreground">Configurações</h1>
+        {branding?.logo_url ? (
+          <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 max-w-[180px] object-contain" />
+        ) : (
+          <h1 className="text-sm font-bold text-foreground">Configurações</h1>
+        )}
         {company && (
           <span className="text-xs text-muted-foreground">— {company.name}</span>
         )}
