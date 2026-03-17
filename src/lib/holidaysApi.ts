@@ -11,10 +11,12 @@ export interface PublicHoliday {
 export async function fetchHolidays(year: number): Promise<PublicHoliday[]> {
   try {
     const { data } = await api.get("/api/holidays/", { params: { year } });
+    console.log("[holidaysApi] Raw response for year", year, ":", data);
     const results = Array.isArray(data) ? data : (data?.results ?? data?.result ?? []);
+    console.log("[holidaysApi] Parsed holidays:", results.length, "items. Sample:", results[0]);
     return Array.isArray(results) ? results : [];
-  } catch {
-    console.warn("[holidaysApi] Failed to fetch holidays for year", year);
+  } catch (err) {
+    console.warn("[holidaysApi] Failed to fetch holidays for year", year, err);
     return [];
   }
 }
