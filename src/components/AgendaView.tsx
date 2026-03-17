@@ -9,7 +9,6 @@ import {
   isToday,
   parseISO,
   getDay,
-  getYear,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
