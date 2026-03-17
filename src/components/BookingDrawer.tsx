@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 
 import {
