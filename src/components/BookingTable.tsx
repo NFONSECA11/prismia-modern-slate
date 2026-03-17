@@ -487,7 +487,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                         <div className="flex flex-col gap-1 items-start">
                           <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} />
                           {booking.confirmation && (
-                            <div className="pl-[0.65rem]">
+                            <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />
                             </div>
                           )}
