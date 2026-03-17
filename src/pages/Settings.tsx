@@ -762,18 +762,43 @@ export default function Settings() {
                   {/* Lista de campos */}
                   <div className="space-y-0 px-1">
                     {[
-                      { label: "Booking horizon days", value: bookingSettings.booking_horizon_days ?? "—" },
-                      { label: "Wa choice ui mode", value: bookingSettings.wa_choice_ui_mode ?? "—" },
-                      { label: "Default booking mode", value: bookingSettings.default_booking_mode ?? "—" },
-                      { label: "Confirmation enabled", value: bookingSettings.confirmation_enabled ? "Sim" : "Não" },
-                      { label: "Confirmation send before hours", value: bookingSettings.confirmation_send_before_hours ?? "—" },
-                      { label: "Confirmation expiration minutes", value: bookingSettings.confirmation_expiration_minutes ?? "—" },
-                      { label: "Confirmation allowed weekdays", value: Array.isArray(bookingSettings.confirmation_allowed_weekdays) && bookingSettings.confirmation_allowed_weekdays.length > 0
-                        ? bookingSettings.confirmation_allowed_weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ")
-                        : "—" },
-                      { label: "Confirmation allowed start time", value: bookingSettings.confirmation_allowed_start_time ?? "—" },
-                      { label: "Confirmation allowed end time", value: bookingSettings.confirmation_allowed_end_time ?? "—" },
-                      { label: "Confirmation allow weekends", value: bookingSettings.confirmation_allow_weekends ? "Sim" : "Não" },
+                      { label: "Booking horizon days", value: getSettingValue(bookingSettings, ["booking_horizon_days", "bookingHorizonDays"]) ?? "—" },
+                      { label: "Wa choice ui mode", value: getSettingValue(bookingSettings, ["wa_choice_ui_mode", "waChoiceUiMode"]) ?? "—" },
+                      { label: "Default booking mode", value: getSettingValue(bookingSettings, ["default_booking_mode", "defaultBookingMode"]) ?? "—" },
+                      {
+                        label: "Confirmation enabled",
+                        value: getSettingValue(bookingSettings, ["confirmation_enabled", "confirmationEnabled", "confirmation.enabled"]) ? "Sim" : "Não",
+                      },
+                      {
+                        label: "Confirmation send before hours",
+                        value: getSettingValue(bookingSettings, ["confirmation_send_before_hours", "confirmationSendBeforeHours", "confirmation.send_before_hours", "confirmation.sendBeforeHours"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation expiration minutes",
+                        value: getSettingValue(bookingSettings, ["confirmation_expiration_minutes", "confirmationExpirationMinutes", "confirmation.expiration_minutes", "confirmation.expirationMinutes"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allowed weekdays",
+                        value: (() => {
+                          const weekdays = getSettingValue(bookingSettings, ["confirmation_allowed_weekdays", "confirmationAllowedWeekdays", "confirmation.allowed_weekdays", "confirmation.allowedWeekdays"]);
+                          if (Array.isArray(weekdays) && weekdays.length > 0) {
+                            return weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ");
+                          }
+                          return "—";
+                        })(),
+                      },
+                      {
+                        label: "Confirmation allowed start time",
+                        value: getSettingValue(bookingSettings, ["confirmation_allowed_start_time", "confirmationAllowedStartTime", "confirmation.allowed_start_time", "confirmation.allowedStartTime"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allowed end time",
+                        value: getSettingValue(bookingSettings, ["confirmation_allowed_end_time", "confirmationAllowedEndTime", "confirmation.allowed_end_time", "confirmation.allowedEndTime"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allow weekends",
+                        value: getSettingValue(bookingSettings, ["confirmation_allow_weekends", "confirmationAllowWeekends", "confirmation.allow_weekends", "confirmation.allowWeekends"]) ? "Sim" : "Não",
+                      },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
                         <span className="text-[11px] text-muted-foreground">{item.label}</span>
