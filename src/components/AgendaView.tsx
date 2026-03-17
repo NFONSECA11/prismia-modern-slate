@@ -9,11 +9,13 @@ import {
   isToday,
   parseISO,
   getDay,
+  getYear,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi";
+import { fetchHolidays, buildHolidayMap, type PublicHoliday } from "@/lib/holidaysApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
