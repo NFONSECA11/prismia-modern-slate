@@ -298,7 +298,7 @@ export default function Settings() {
         ) : (
           <h1 className="text-sm font-bold text-foreground">Configurações</h1>
         )}
-        {company && !branding?.logo_url && (
+        {company && (
           <span className="text-xs text-muted-foreground">{company.name}</span>
         )}
         <div className="flex-1" />
