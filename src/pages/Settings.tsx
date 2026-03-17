@@ -100,6 +100,14 @@ export default function Settings() {
     },
     enabled: !!activeUnit?.id,
   });
+  const getSettingValue = (obj: any, paths: string[]) => {
+    for (const path of paths) {
+      const value = path.split(".").reduce((acc: any, key: string) => (acc == null ? undefined : acc[key]), obj);
+      if (value !== undefined && value !== null) return value;
+    }
+    return undefined;
+  };
+
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
       { label: "Azul Profundo", color: "216 65% 7%" },
