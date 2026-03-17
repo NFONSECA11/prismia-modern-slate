@@ -462,18 +462,32 @@ function WeekView({
                   <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
                     {days.map((day, di) => {
                       const today = isToday(day);
+                      const dateKey = format(day, "yyyy-MM-dd");
+                      const holiday = holidayMap.get(dateKey);
                       return (
                         <div
-                          key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
-                          className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
-                          style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}
+                          key={`${prof.id}_${dateKey}`}
+                          className={`flex-1 px-2 py-2 text-center ${today && !holiday ? "bg-primary/10" : ""}`}
+                          style={{
+                            borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined,
+                            ...(holiday ? { background: "hsl(var(--holiday-bg))" } : {}),
+                          }}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}>
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${holiday ? "text-[hsl(var(--holiday-text))]" : today ? "text-primary" : "text-muted-foreground"}`}
+                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
+                          >
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
+                          <p className={`text-sm font-bold leading-tight ${holiday ? "" : today ? "text-primary" : "text-foreground"}`}
+                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
+                          >
                             {format(day, "dd")}
                           </p>
+                          {holiday && (
+                            <p className="text-[8px] leading-tight mt-0.5 truncate font-medium" style={{ color: "hsl(var(--holiday-text))" }} title={holiday.local_name}>
+                              {holiday.local_name}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
