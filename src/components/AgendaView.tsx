@@ -9,11 +9,13 @@ import {
   isToday,
   parseISO,
   getDay,
+  getYear,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi";
+import { fetchHolidays, buildHolidayMap, type PublicHoliday } from "@/lib/holidaysApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -306,6 +308,7 @@ function DayView({
   professionals,
   bookings,
   availMap,
+  holidayMap,
   onSelectBooking,
   onCellClick,
 }: {
@@ -313,6 +316,7 @@ function DayView({
   professionals: Professional[];
   bookings: BookingRequest[];
   availMap: Record<number, ProfAvailability>;
+  holidayMap: Map<string, PublicHoliday>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
 }) {
@@ -334,8 +338,16 @@ function DayView({
     return map;
   }, [bookings, professionals, dateKey]);
 
+  const holiday = holidayMap.get(dateKey);
+
   return (
     <div className="overflow-x-auto">
+      {holiday && (
+        <div className="px-4 py-2 text-xs font-semibold flex items-center gap-2" style={{ background: "hsl(var(--holiday-bg))", color: "hsl(var(--holiday-text))", borderBottom: "1px solid hsl(var(--holiday-border))" }}>
+          <span>🎉</span>
+          <span>{holiday.local_name}</span>
+        </div>
+      )}
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
         <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
@@ -399,6 +411,7 @@ function WeekView({
   professionals,
   bookings,
   availMap,
+  holidayMap,
   onSelectBooking,
   onCellClick,
 }: {
@@ -406,6 +419,7 @@ function WeekView({
   professionals: Professional[];
   bookings: BookingRequest[];
   availMap: Record<number, ProfAvailability>;
+  holidayMap: Map<string, PublicHoliday>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
 }) {
@@ -458,18 +472,32 @@ function WeekView({
                   <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
                     {days.map((day, di) => {
                       const today = isToday(day);
+                      const dateKey = format(day, "yyyy-MM-dd");
+                      const holiday = holidayMap.get(dateKey);
                       return (
                         <div
-                          key={`${prof.id}_${format(day, "yyyy-MM-dd")}`}
-                          className={`flex-1 px-2 py-2 text-center ${today ? "bg-primary/10" : ""}`}
-                          style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}
+                          key={`${prof.id}_${dateKey}`}
+                          className={`flex-1 px-2 py-2 text-center ${today && !holiday ? "bg-primary/10" : ""}`}
+                          style={{
+                            borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined,
+                            ...(holiday ? { background: "hsl(var(--holiday-bg))" } : {}),
+                          }}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}>
+                          <p className={`text-[10px] font-medium uppercase tracking-wider ${holiday ? "text-[hsl(var(--holiday-text))]" : today ? "text-primary" : "text-muted-foreground"}`}
+                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
+                          >
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${today ? "text-primary" : "text-foreground"}`}>
+                          <p className={`text-sm font-bold leading-tight ${holiday ? "" : today ? "text-primary" : "text-foreground"}`}
+                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
+                          >
                             {format(day, "dd")}
                           </p>
+                          {holiday && (
+                            <p className="text-[8px] leading-tight mt-0.5 truncate font-medium" style={{ color: "hsl(var(--holiday-text))" }} title={holiday.local_name}>
+                              {holiday.local_name}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
@@ -507,11 +535,15 @@ function WeekView({
                     {days.map((day, di) => {
                       const dateKey = format(day, "yyyy-MM-dd");
                       const today = isToday(day);
+                      const holiday = holidayMap.get(dateKey);
                       const bookingKey = `${prof.id}_${dateKey}`;
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${today ? "bg-primary/[0.03]" : ""}`} style={{ borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined }}>
+                        <div key={bookingKey} className={`flex-1 relative ${today && !holiday ? "bg-primary/[0.03]" : ""}`} style={{
+                          borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined,
+                          ...(holiday ? { background: "hsl(var(--holiday-bg) / 0.5)" } : {}),
+                        }}>
                           <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
@@ -559,6 +591,25 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
       to: format(endOfWeek(currentDate, { weekStartsOn: 0 }), "yyyy-MM-dd"),
     };
   }, [mode, currentDate, weekStart]);
+
+  // Fetch holidays for visible year(s)
+  const visibleYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(getYear(parseISO(dateRange.from)));
+    years.add(getYear(parseISO(dateRange.to)));
+    return Array.from(years);
+  }, [dateRange.from, dateRange.to]);
+
+  const { data: holidays = [] } = useQuery({
+    queryKey: ["holidays", ...visibleYears],
+    queryFn: async () => {
+      const all = await Promise.all(visibleYears.map((y) => fetchHolidays(y)));
+      return all.flat();
+    },
+    staleTime: 24 * 60 * 60_000, // 24h
+  });
+
+  const holidayMap = useMemo(() => buildHolidayMap(holidays), [holidays]);
 
   // Fetch agenda bookings with server-side filters
   const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
@@ -738,6 +789,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               professionals={displayProfessionals}
               bookings={agendaBookings}
               availMap={availMap}
+              holidayMap={holidayMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
@@ -747,6 +799,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               professionals={displayProfessionals}
               bookings={agendaBookings}
               availMap={availMap}
+              holidayMap={holidayMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />

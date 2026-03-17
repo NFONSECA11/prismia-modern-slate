@@ -51,6 +51,10 @@
     --status-canceled: 352 100% 68%;
     --status-canceled-bg: 352 40% 14%;
 
+    --holiday-bg: 352 40% 12%;
+    --holiday-text: 352 70% 72%;
+    --holiday-border: 352 50% 28%;
+
     --border: 215 22% 18%;
     --border-subtle: 215 18% 14%;
     --input: 214 48% 12%;
@@ -129,6 +133,10 @@
     --status-canceled: 352 82% 65%;
     --status-canceled-bg: 352 40% 16%;
 
+    --holiday-bg: 352 35% 15%;
+    --holiday-text: 352 65% 70%;
+    --holiday-border: 352 45% 30%;
+
     --border: 215 25% 25%;
     --border-subtle: 215 20% 20%;
     --input: 214 44% 17%;
@@ -205,6 +213,10 @@
     --status-assisted-bg: 200 45% 92%;
     --status-canceled: 351 65% 57%;
     --status-canceled-bg: 351 40% 92%;
+
+    --holiday-bg: 352 60% 95%;
+    --holiday-text: 352 70% 45%;
+    --holiday-border: 352 50% 75%;
 
     --border: 215 22% 84%;
     --border-subtle: 215 18% 88%;
