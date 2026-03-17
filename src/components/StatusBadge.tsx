@@ -8,7 +8,7 @@ interface StatusConfig {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   confirmed: {
-    label: "Agendado",
+    label: "Confirmado",
     className: "bg-status-confirmed-bg text-status-confirmed border border-status-confirmed/25",
     dot: "bg-status-confirmed",
   },
