@@ -17,6 +17,7 @@ import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi"
 import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer } from "lucide-react";
 
@@ -244,6 +245,9 @@ function AppointmentCard({
           <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
           #{booking.id}
         </span>
+        {booking.confirmation && (
+          <ConfirmationIndicator confirmation={booking.confirmation} compact />
+        )}
       </div>
     </button>
   );
