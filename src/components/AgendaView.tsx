@@ -788,6 +788,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
               professionals={displayProfessionals}
               bookings={agendaBookings}
               availMap={availMap}
+              holidayMap={holidayMap}
               onSelectBooking={handleAppointmentClick}
               onCellClick={setNewSlot}
             />
