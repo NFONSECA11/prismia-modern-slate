@@ -32,6 +32,7 @@ export interface NewBookingSlot {
     notes?: string;
     confirmation?: BookingConfirmation | null;
   };
+}
 
 interface NewBookingModalProps {
   slot: NewBookingSlot | null;
