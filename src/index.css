@@ -51,6 +51,10 @@
     --status-canceled: 352 100% 68%;
     --status-canceled-bg: 352 40% 14%;
 
+    --holiday-bg: 352 40% 12%;
+    --holiday-text: 352 70% 72%;
+    --holiday-border: 352 50% 28%;
+
     --border: 215 22% 18%;
     --border-subtle: 215 18% 14%;
     --input: 214 48% 12%;
