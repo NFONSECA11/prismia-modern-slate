@@ -32,7 +32,7 @@ export default function ForgotPassword() {
             <span className="gradient-text font-semibold">IA</span>
             <span className="text-primary ml-2 font-light">Agenda</span>
           </h1>
-          <p className="text-sm font-medium text-foreground">Recuperar Senha</p>
+          <p className="text-xs text-muted-foreground">Esqueci minha senha</p>
         </div>
 
         <div className="rounded-2xl border border-border p-6 space-y-4 surface-raised shadow-md">
