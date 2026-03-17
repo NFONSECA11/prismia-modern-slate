@@ -293,14 +293,6 @@ export default function Settings() {
         className="sticky top-0 z-30 flex items-center gap-3 px-6 py-5 border-b border-border"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
-        <div className="h-4 w-px bg-border" />
         {branding?.logo_url ? (
           <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 max-w-[180px] object-contain" />
         ) : (
@@ -309,6 +301,14 @@ export default function Settings() {
         {company && (
           <span className="text-xs text-muted-foreground">— {company.name}</span>
         )}
+        <div className="flex-1" />
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
       </header>
 
       {/* Module banner */}
