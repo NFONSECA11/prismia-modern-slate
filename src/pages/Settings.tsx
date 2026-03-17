@@ -52,21 +52,40 @@ export default function Settings() {
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
     queryFn: async () => {
-      try {
-        const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-        console.log("[booking-settings] by-unit raw:", JSON.stringify(data));
-        if (data && typeof data === "object" && !Array.isArray(data) && data.id) return data;
-        if (Array.isArray(data) && data.length > 0) return data[0];
-        if (data?.result) return data.result;
-        if (data?.results?.[0]) return data.results[0];
-      } catch (e) {
-        console.warn("[booking-settings] by-unit failed, trying list endpoint", e);
-      }
-      // fallback: list endpoint filtered by unit
-      const { data: listData } = await api.get(`/api/settings/booking-settings/`);
-      console.log("[booking-settings] list raw:", JSON.stringify(listData));
-      const list = Array.isArray(listData) ? listData : (listData?.results ?? []);
-      return list.find((s: any) => s.unit === activeUnit!.id) ?? list[0] ?? null;
+      const unpack = (payload: any): any[] => {
+        if (!payload) return [];
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.results)) return payload.results;
+        if (payload?.result) return unpack(payload.result);
+        return [payload];
+      };
+
+      const pickByUnit = (items: any[]) => items.find((s) => Number(s?.unit) === Number(activeUnit!.id)) ?? items[0] ?? null;
+      const hasConfirmationFields = (s: any) =>
+        s && (
+          s.confirmation_send_before_hours != null ||
+          s.confirmation_expiration_minutes != null ||
+          s.confirmation_allowed_start_time != null ||
+          s.confirmation_allowed_end_time != null ||
+          (Array.isArray(s.confirmation_allowed_weekdays) && s.confirmation_allowed_weekdays.length > 0)
+        );
+
+      const [byUnitRes, listRes] = await Promise.allSettled([
+        api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`),
+        api.get(`/api/settings/booking-settings/`, { params: { unit: activeUnit!.id } }),
+      ]);
+
+      const byUnitItems = byUnitRes.status === "fulfilled" ? unpack(byUnitRes.value.data) : [];
+      const listItems = listRes.status === "fulfilled" ? unpack(listRes.value.data) : [];
+
+      const byUnitSetting = pickByUnit(byUnitItems);
+      const listSetting = pickByUnit(listItems);
+      const merged = { ...(byUnitSetting ?? {}), ...(listSetting ?? {}) };
+
+      if (hasConfirmationFields(merged)) return merged;
+      if (hasConfirmationFields(listSetting)) return listSetting;
+      if (hasConfirmationFields(byUnitSetting)) return byUnitSetting;
+      return Object.keys(merged).length > 0 ? merged : null;
     },
     enabled: !!activeUnit?.id,
   });
@@ -81,6 +100,14 @@ export default function Settings() {
     },
     enabled: !!activeUnit?.id,
   });
+  const getSettingValue = (obj: any, paths: string[]) => {
+    for (const path of paths) {
+      const value = path.split(".").reduce((acc: any, key: string) => (acc == null ? undefined : acc[key]), obj);
+      if (value !== undefined && value !== null) return value;
+    }
+    return undefined;
+  };
+
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
       { label: "Azul Profundo", color: "216 65% 7%" },
@@ -735,18 +762,43 @@ export default function Settings() {
                   {/* Lista de campos */}
                   <div className="space-y-0 px-1">
                     {[
-                      { label: "Booking horizon days", value: bookingSettings.booking_horizon_days ?? "—" },
-                      { label: "Wa choice ui mode", value: bookingSettings.wa_choice_ui_mode ?? "—" },
-                      { label: "Default booking mode", value: bookingSettings.default_booking_mode ?? "—" },
-                      { label: "Confirmation enabled", value: bookingSettings.confirmation_enabled ? "Sim" : "Não" },
-                      { label: "Confirmation send before hours", value: bookingSettings.confirmation_send_before_hours ?? "—" },
-                      { label: "Confirmation expiration minutes", value: bookingSettings.confirmation_expiration_minutes ?? "—" },
-                      { label: "Confirmation allowed weekdays", value: Array.isArray(bookingSettings.confirmation_allowed_weekdays) && bookingSettings.confirmation_allowed_weekdays.length > 0
-                        ? bookingSettings.confirmation_allowed_weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ")
-                        : "—" },
-                      { label: "Confirmation allowed start time", value: bookingSettings.confirmation_allowed_start_time ?? "—" },
-                      { label: "Confirmation allowed end time", value: bookingSettings.confirmation_allowed_end_time ?? "—" },
-                      { label: "Confirmation allow weekends", value: bookingSettings.confirmation_allow_weekends ? "Sim" : "Não" },
+                      { label: "Booking horizon days", value: getSettingValue(bookingSettings, ["booking_horizon_days", "bookingHorizonDays"]) ?? "—" },
+                      { label: "Wa choice ui mode", value: getSettingValue(bookingSettings, ["wa_choice_ui_mode", "waChoiceUiMode"]) ?? "—" },
+                      { label: "Default booking mode", value: getSettingValue(bookingSettings, ["default_booking_mode", "defaultBookingMode"]) ?? "—" },
+                      {
+                        label: "Confirmation enabled",
+                        value: getSettingValue(bookingSettings, ["confirmation_enabled", "confirmationEnabled", "confirmation.enabled"]) ? "Sim" : "Não",
+                      },
+                      {
+                        label: "Confirmation send before hours",
+                        value: getSettingValue(bookingSettings, ["confirmation_send_before_hours", "confirmationSendBeforeHours", "confirmation.send_before_hours", "confirmation.sendBeforeHours"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation expiration minutes",
+                        value: getSettingValue(bookingSettings, ["confirmation_expiration_minutes", "confirmationExpirationMinutes", "confirmation.expiration_minutes", "confirmation.expirationMinutes"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allowed weekdays",
+                        value: (() => {
+                          const weekdays = getSettingValue(bookingSettings, ["confirmation_allowed_weekdays", "confirmationAllowedWeekdays", "confirmation.allowed_weekdays", "confirmation.allowedWeekdays"]);
+                          if (Array.isArray(weekdays) && weekdays.length > 0) {
+                            return weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ");
+                          }
+                          return "—";
+                        })(),
+                      },
+                      {
+                        label: "Confirmation allowed start time",
+                        value: getSettingValue(bookingSettings, ["confirmation_allowed_start_time", "confirmationAllowedStartTime", "confirmation.allowed_start_time", "confirmation.allowedStartTime"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allowed end time",
+                        value: getSettingValue(bookingSettings, ["confirmation_allowed_end_time", "confirmationAllowedEndTime", "confirmation.allowed_end_time", "confirmation.allowedEndTime"]) ?? "—",
+                      },
+                      {
+                        label: "Confirmation allow weekends",
+                        value: getSettingValue(bookingSettings, ["confirmation_allow_weekends", "confirmationAllowWeekends", "confirmation.allow_weekends", "confirmation.allowWeekends"]) ? "Sim" : "Não",
+                      },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
                         <span className="text-[11px] text-muted-foreground">{item.label}</span>
