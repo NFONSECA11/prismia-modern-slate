@@ -17,6 +17,7 @@ import { fetchAgendaBookings, fetchProfessionalsByUnit } from "@/lib/bookingApi"
 import { useAuth } from "@/contexts/AuthContext";
 import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer } from "lucide-react";
 
