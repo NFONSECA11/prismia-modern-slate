@@ -43,6 +43,14 @@ export default function Settings() {
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: branding } = useQuery({
+    queryKey: ["company-branding"],
+    queryFn: async () => {
+      const { data } = await api.get("/api/settings/company-branding/");
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [showNewProfessional, setShowNewProfessional] = useState(false);
   const [newProfName, setNewProfName] = useState("");
