@@ -555,9 +555,14 @@ function WeekView({
                             {format(day, "dd")}
                           </p>
                           {holiday && (
-                            <p className="text-[8px] leading-tight mt-0.5 truncate font-medium" style={{ color: "hsl(var(--holiday-text))" }} title={holiday.local_name}>
-                              {holiday.local_name}
-                            </p>
+                            <div className="mt-1 leading-tight" title={holiday.local_name}>
+                              <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: "hsl(var(--holiday-text))" }}>
+                                Feriado
+                              </p>
+                              <p className="text-[10px] font-medium truncate" style={{ color: "hsl(var(--holiday-text))" }}>
+                                {holiday.local_name}
+                              </p>
+                            </div>
                           )}
                         </div>
                       );
