@@ -65,7 +65,18 @@ function pickHolidayArray(data: any): any[] {
 export async function fetchHolidays(year: number): Promise<PublicHoliday[]> {
   try {
     const { data } = await api.get("/api/holidays/", { params: { year } });
-    const items = pickHolidayArray(data);
+    let items = pickHolidayArray(data);
+
+    // Fallback for APIs that filter by range instead of year
+    if (items.length === 0) {
+      const { data: rangedData } = await api.get("/api/holidays/", {
+        params: {
+          date_from: `${year}-01-01`,
+          date_to: `${year}-12-31`,
+        },
+      });
+      items = pickHolidayArray(rangedData);
+    }
 
     return items
       .filter((item) => item && typeof item === "object")
