@@ -52,11 +52,21 @@ export default function Settings() {
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
     queryFn: async () => {
-      const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-      console.log("[booking-settings] raw response:", JSON.stringify(data));
-      // handle array (list endpoint) or object (detail endpoint)
-      const obj = Array.isArray(data) ? data[0] : (data?.result ?? data);
-      return obj ?? null;
+      try {
+        const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
+        console.log("[booking-settings] by-unit raw:", JSON.stringify(data));
+        if (data && typeof data === "object" && !Array.isArray(data) && data.id) return data;
+        if (Array.isArray(data) && data.length > 0) return data[0];
+        if (data?.result) return data.result;
+        if (data?.results?.[0]) return data.results[0];
+      } catch (e) {
+        console.warn("[booking-settings] by-unit failed, trying list endpoint", e);
+      }
+      // fallback: list endpoint filtered by unit
+      const { data: listData } = await api.get(`/api/settings/booking-settings/`);
+      console.log("[booking-settings] list raw:", JSON.stringify(listData));
+      const list = Array.isArray(listData) ? listData : (listData?.results ?? []);
+      return list.find((s: any) => s.unit === activeUnit!.id) ?? list[0] ?? null;
     },
     enabled: !!activeUnit?.id,
   });
