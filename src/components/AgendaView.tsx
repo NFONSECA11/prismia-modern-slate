@@ -308,6 +308,7 @@ function DayView({
   professionals,
   bookings,
   availMap,
+  holidayMap,
   onSelectBooking,
   onCellClick,
 }: {
@@ -315,6 +316,7 @@ function DayView({
   professionals: Professional[];
   bookings: BookingRequest[];
   availMap: Record<number, ProfAvailability>;
+  holidayMap: Map<string, PublicHoliday>;
   onSelectBooking: (b: BookingRequest) => void;
   onCellClick: (slot: NewBookingSlot) => void;
 }) {
