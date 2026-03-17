@@ -587,11 +587,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
   // Cancel a confirmed booking: reopen first, then cancel
   const cancelConfirmedMut = useMutation({
     mutationFn: async () => {
-      // Step 1: reopen (moves from confirmed → handoff)
-      await reopenBooking(booking!.id);
-      // Small delay to let backend commit
-      await new Promise(r => setTimeout(r, 500));
-      // Step 2: cancel (moves from handoff → cancelled)
+      // Step 1: try reopen (moves from confirmed → handoff)
+      try {
+        await reopenBooking(booking!.id);
+        await new Promise(r => setTimeout(r, 500));
+      } catch (reopenErr: any) {
+        // If reopen fails (e.g. duplicate key / integrity error), proceed to cancel anyway
+        console.warn("[cancelConfirmedMut] reopen failed, attempting cancel directly:", reopenErr?.response?.status);
+      }
+      // Step 2: cancel
       await cancelBooking(booking!.id);
     },
     onSuccess: async () => {

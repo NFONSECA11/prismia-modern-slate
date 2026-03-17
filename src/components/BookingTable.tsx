@@ -298,12 +298,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
           break;
         case "cancel":
           if (booking.status === "confirmed") {
-            await reopenBooking(booking.id);
-            await new Promise(r => setTimeout(r, 500));
-            await cancelBooking(booking.id);
-          } else {
-            await cancelBooking(booking.id);
+            try {
+              await reopenBooking(booking.id);
+              await new Promise(r => setTimeout(r, 500));
+            } catch (reopenErr: any) {
+              console.warn("[QuickAction] reopen failed, attempting cancel directly:", reopenErr?.response?.status);
+            }
           }
+          await cancelBooking(booking.id);
           break;
         case "reopen":
           await reopenBooking(booking.id);
