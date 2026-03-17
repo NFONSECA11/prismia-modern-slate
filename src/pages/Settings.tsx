@@ -53,7 +53,10 @@ export default function Settings() {
     queryKey: ["booking-settings", activeUnit?.id],
     queryFn: async () => {
       const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-      return data?.result ?? data;
+      console.log("[booking-settings] raw response:", JSON.stringify(data));
+      // handle array (list endpoint) or object (detail endpoint)
+      const obj = Array.isArray(data) ? data[0] : (data?.result ?? data);
+      return obj ?? null;
     },
     enabled: !!activeUnit?.id,
   });
