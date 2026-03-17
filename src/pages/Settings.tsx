@@ -52,21 +52,40 @@ export default function Settings() {
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
     queryFn: async () => {
-      try {
-        const { data } = await api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`);
-        console.log("[booking-settings] by-unit raw:", JSON.stringify(data));
-        if (data && typeof data === "object" && !Array.isArray(data) && data.id) return data;
-        if (Array.isArray(data) && data.length > 0) return data[0];
-        if (data?.result) return data.result;
-        if (data?.results?.[0]) return data.results[0];
-      } catch (e) {
-        console.warn("[booking-settings] by-unit failed, trying list endpoint", e);
-      }
-      // fallback: list endpoint filtered by unit
-      const { data: listData } = await api.get(`/api/settings/booking-settings/`);
-      console.log("[booking-settings] list raw:", JSON.stringify(listData));
-      const list = Array.isArray(listData) ? listData : (listData?.results ?? []);
-      return list.find((s: any) => s.unit === activeUnit!.id) ?? list[0] ?? null;
+      const unpack = (payload: any): any[] => {
+        if (!payload) return [];
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.results)) return payload.results;
+        if (payload?.result) return unpack(payload.result);
+        return [payload];
+      };
+
+      const pickByUnit = (items: any[]) => items.find((s) => Number(s?.unit) === Number(activeUnit!.id)) ?? items[0] ?? null;
+      const hasConfirmationFields = (s: any) =>
+        s && (
+          s.confirmation_send_before_hours != null ||
+          s.confirmation_expiration_minutes != null ||
+          s.confirmation_allowed_start_time != null ||
+          s.confirmation_allowed_end_time != null ||
+          (Array.isArray(s.confirmation_allowed_weekdays) && s.confirmation_allowed_weekdays.length > 0)
+        );
+
+      const [byUnitRes, listRes] = await Promise.allSettled([
+        api.get(`/api/booking/booking-settings/by-unit/${activeUnit!.id}/`),
+        api.get(`/api/settings/booking-settings/`, { params: { unit: activeUnit!.id } }),
+      ]);
+
+      const byUnitItems = byUnitRes.status === "fulfilled" ? unpack(byUnitRes.value.data) : [];
+      const listItems = listRes.status === "fulfilled" ? unpack(listRes.value.data) : [];
+
+      const byUnitSetting = pickByUnit(byUnitItems);
+      const listSetting = pickByUnit(listItems);
+      const merged = { ...(byUnitSetting ?? {}), ...(listSetting ?? {}) };
+
+      if (hasConfirmationFields(merged)) return merged;
+      if (hasConfirmationFields(listSetting)) return listSetting;
+      if (hasConfirmationFields(byUnitSetting)) return byUnitSetting;
+      return Object.keys(merged).length > 0 ? merged : null;
     },
     enabled: !!activeUnit?.id,
   });
