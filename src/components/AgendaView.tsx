@@ -219,6 +219,16 @@ function AppointmentCard({
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
 
+  const confirmationStatus = String(booking.confirmation?.status ?? "").toLowerCase();
+  const hasSentConfirmation = Boolean(
+    booking.confirmation &&
+      (
+        booking.confirmation.sent_at ||
+        booking.confirmation.responded_at ||
+        ["sent", "confirmed", "declined", "reschedule_requested", "canceled", "expired"].includes(confirmationStatus)
+      )
+  );
+
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
@@ -245,7 +255,7 @@ function AppointmentCard({
           <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
           #{booking.id}
         </span>
-        {booking.confirmation && (
+        {hasSentConfirmation && booking.confirmation && (
           <ConfirmationIndicator confirmation={booking.confirmation} compact />
         )}
       </div>
