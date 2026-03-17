@@ -245,6 +245,9 @@ function AppointmentCard({
           <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
           #{booking.id}
         </span>
+        {booking.confirmation && (
+          <ConfirmationIndicator confirmation={booking.confirmation} compact />
+        )}
       </div>
     </button>
   );
