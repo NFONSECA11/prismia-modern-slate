@@ -671,7 +671,16 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     refetchOnWindowFocus: true,
   });
 
-  const holidayMap = useMemo(() => buildHolidayMap(holidays), [holidays]);
+  const holidayMap = useMemo(() => {
+    const localFallback = buildLocalHolidayMap(visibleYears);
+    const apiMap = buildHolidayMap(holidays);
+
+    for (const [date, holiday] of localFallback.entries()) {
+      if (!apiMap.has(date)) apiMap.set(date, holiday);
+    }
+
+    return apiMap;
+  }, [holidays, visibleYears]);
 
   // Fetch agenda bookings with server-side filters
   const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
