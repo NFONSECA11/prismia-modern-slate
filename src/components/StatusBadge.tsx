@@ -53,12 +53,22 @@ interface StatusBadgeProps {
   status: BookingStatus;
   size?: "sm" | "md";
   hasSchedule?: boolean;
+  procedureName?: string;
 }
 
-export function StatusBadge({ status, size = "md", hasSchedule }: StatusBadgeProps) {
+export function StatusBadge({ status, size = "md", hasSchedule, procedureName }: StatusBadgeProps) {
   const config = STATUS_MAP[status] ?? STATUS_MAP.pending;
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs";
-  const label = status === "confirmed" && hasSchedule ? "Agendado" : config.label;
+
+  let label = config.label;
+  if (status === "confirmed") {
+    const isCancelProcedure = procedureName?.toLowerCase().trim() === "cancelar";
+    if (isCancelProcedure) {
+      label = "Executado";
+    } else if (hasSchedule) {
+      label = "Agendado";
+    }
+  }
 
   return (
     <span
