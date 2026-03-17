@@ -29,9 +29,9 @@ export interface NewBookingSlot {
     phone?: string;
     procedure_name?: string;
     unit_name?: string;
-      notes?: string;
-      confirmation?: BookingConfirmation | null;
-}
+    notes?: string;
+    confirmation?: BookingConfirmation | null;
+  };
 
 interface NewBookingModalProps {
   slot: NewBookingSlot | null;
