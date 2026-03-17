@@ -56,6 +56,31 @@ export interface BookingRequest {
   chosen_slot?: ChosenSlot;
   chosen_slot_label?: string;
   scheduled_at?: string;
+  confirmation?: BookingConfirmation | null;
+}
+
+export type ConfirmationStatus =
+  | "sent"
+  | "confirmed"
+  | "declined"
+  | "reschedule_requested"
+  | "canceled"
+  | "expired";
+
+export type ConfirmationResponseType =
+  | "positive"
+  | "negative"
+  | "reschedule"
+  | null;
+
+export interface BookingConfirmation {
+  id: number;
+  status: ConfirmationStatus;
+  send_at?: string;
+  expires_at?: string;
+  sent_at?: string;
+  responded_at?: string;
+  response_type?: ConfirmationResponseType;
 }
 
 export interface Professional {
