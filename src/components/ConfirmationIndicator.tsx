@@ -105,9 +105,9 @@ export function ConfirmationIndicator({ confirmation, compact }: ConfirmationInd
   if (compact) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
+      <TooltipTrigger asChild>
           <span className={`inline-flex ${config.colorClass}`}>
-            <Icon className="h-3 w-3" />
+            <Icon className="h-3.5 w-3.5" />
           </span>
         </TooltipTrigger>
         <TooltipContent side="top">{tooltipContent}</TooltipContent>
