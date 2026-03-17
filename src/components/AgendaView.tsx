@@ -582,6 +582,25 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     };
   }, [mode, currentDate, weekStart]);
 
+  // Fetch holidays for visible year(s)
+  const visibleYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(getYear(parseISO(dateRange.from)));
+    years.add(getYear(parseISO(dateRange.to)));
+    return Array.from(years);
+  }, [dateRange.from, dateRange.to]);
+
+  const { data: holidays = [] } = useQuery({
+    queryKey: ["holidays", ...visibleYears],
+    queryFn: async () => {
+      const all = await Promise.all(visibleYears.map((y) => fetchHolidays(y)));
+      return all.flat();
+    },
+    staleTime: 24 * 60 * 60_000, // 24h
+  });
+
+  const holidayMap = useMemo(() => buildHolidayMap(holidays), [holidays]);
+
   // Fetch agenda bookings with server-side filters
   const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
     queryKey: ["agenda-bookings", activeUnit?.id, dateRange.from, dateRange.to],
