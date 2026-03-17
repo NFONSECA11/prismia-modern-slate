@@ -110,7 +110,7 @@ export function ConfirmationIndicator({ confirmation, compact }: ConfirmationInd
             <Icon className="h-3.5 w-3.5" />
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top" className="z-[100]">{tooltipContent}</TooltipContent>
+        <TooltipContent side="top" className="z-[9999]">{tooltipContent}</TooltipContent>
       </Tooltip>
     );
   }
