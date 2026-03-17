@@ -338,8 +338,16 @@ function DayView({
     return map;
   }, [bookings, professionals, dateKey]);
 
+  const holiday = holidayMap.get(dateKey);
+
   return (
     <div className="overflow-x-auto">
+      {holiday && (
+        <div className="px-4 py-2 text-xs font-semibold flex items-center gap-2" style={{ background: "hsl(var(--holiday-bg))", color: "hsl(var(--holiday-text))", borderBottom: "1px solid hsl(var(--holiday-border))" }}>
+          <span>🎉</span>
+          <span>{holiday.local_name}</span>
+        </div>
+      )}
       <div className="inline-flex flex-col min-w-full">
         {/* Prof headers */}
         <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
