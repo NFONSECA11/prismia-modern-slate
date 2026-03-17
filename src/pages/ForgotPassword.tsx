@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { requestPasswordReset } from "@/lib/authApi";
-import { Sparkles, Loader2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
