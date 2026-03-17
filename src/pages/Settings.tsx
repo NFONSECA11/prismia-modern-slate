@@ -719,75 +719,28 @@ export default function Settings() {
                     <span className="text-[10px] text-muted-foreground">ID: {bookingSettings.id ?? "—"}</span>
                   </div>
 
-                  {/* Grid de campos */}
-                  <div className="grid grid-cols-2 gap-2 px-1">
-                    {/* Modo padrão */}
-                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Modo padrão</span>
-                      <span className="text-xs font-medium text-foreground">
-                        {{ handoff_manual: "Handoff Manual", assisted_slots_dashboard: "Assistido (Dashboard)", auto_slots_bot: "Automático (Bot)" }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode ?? "—"}
-                      </span>
-                    </div>
-
-                    {/* Horizonte */}
-                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Horizonte de agendamento</span>
-                      <span className="text-xs font-medium text-foreground">{bookingSettings.booking_horizon_days ?? "—"} dias</span>
-                    </div>
-
-                    {/* UI WhatsApp */}
-                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">UI de escolha (WhatsApp)</span>
-                      <span className="text-xs font-medium text-foreground">{bookingSettings.wa_choice_ui_mode ?? "—"}</span>
-                    </div>
-
-                    {/* Confirmação habilitada */}
-                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Confirmação automática</span>
-                      <span className={`text-xs font-medium ${bookingSettings.confirmation_enabled ? "text-emerald-400" : "text-muted-foreground"}`}>
-                        {bookingSettings.confirmation_enabled ? "Ativada" : "Desativada"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bloco de confirmação (detalhes) */}
-                  {bookingSettings.confirmation_enabled && (
-                    <div className="rounded-lg border border-border p-3 space-y-2" style={{ background: "hsl(var(--surface-elevated))" }}>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Detalhes da confirmação</span>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Enviar antes de</span>
-                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_send_before_hours ?? "—"}h</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Expira em</span>
-                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_expiration_minutes ?? "—"} min</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Horário início</span>
-                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_allowed_start_time ?? "—"}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Horário fim</span>
-                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_allowed_end_time ?? "—"}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Dias permitidos</span>
-                          <span className="text-[11px] font-medium text-foreground">
-                            {Array.isArray(bookingSettings.confirmation_allowed_weekdays) && bookingSettings.confirmation_allowed_weekdays.length > 0
-                              ? bookingSettings.confirmation_allowed_weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ")
-                              : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Fins de semana</span>
-                          <span className={`text-[11px] font-medium ${bookingSettings.confirmation_allow_weekends ? "text-emerald-400" : "text-muted-foreground"}`}>
-                            {bookingSettings.confirmation_allow_weekends ? "Sim" : "Não"}
-                          </span>
-                        </div>
+                  {/* Lista de campos */}
+                  <div className="space-y-0 px-1">
+                    {[
+                      { label: "Booking horizon days", value: bookingSettings.booking_horizon_days ?? "—" },
+                      { label: "Wa choice ui mode", value: bookingSettings.wa_choice_ui_mode ?? "—" },
+                      { label: "Default booking mode", value: bookingSettings.default_booking_mode ?? "—" },
+                      { label: "Confirmation enabled", value: bookingSettings.confirmation_enabled ? "Sim" : "Não" },
+                      { label: "Confirmation send before hours", value: bookingSettings.confirmation_send_before_hours ?? "—" },
+                      { label: "Confirmation expiration minutes", value: bookingSettings.confirmation_expiration_minutes ?? "—" },
+                      { label: "Confirmation allowed weekdays", value: Array.isArray(bookingSettings.confirmation_allowed_weekdays) && bookingSettings.confirmation_allowed_weekdays.length > 0
+                        ? bookingSettings.confirmation_allowed_weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ")
+                        : "—" },
+                      { label: "Confirmation allowed start time", value: bookingSettings.confirmation_allowed_start_time ?? "—" },
+                      { label: "Confirmation allowed end time", value: bookingSettings.confirmation_allowed_end_time ?? "—" },
+                      { label: "Confirmation allow weekends", value: bookingSettings.confirmation_allow_weekends ? "Sim" : "Não" },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
+                        <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                        <span className="text-[11px] font-medium text-foreground">{String(item.value)}</span>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
 
                   {/* Menu router options */}
                   {Array.isArray(bookingSettings.router_menu_options) && bookingSettings.router_menu_options.length > 0 && (
