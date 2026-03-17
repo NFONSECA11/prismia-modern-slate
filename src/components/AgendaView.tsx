@@ -219,13 +219,11 @@ function AppointmentCard({
   const slotDate = new Date(`${dt.date}T${String(dt.hour).padStart(2, "0")}:${String(dt.minute).padStart(2, "0")}:00`);
   const isPast = slotDate < now;
 
-  const confirmationStatus = String(booking.confirmation?.status ?? "").toLowerCase();
   const hasSentConfirmation = Boolean(
     booking.confirmation &&
       (
-        booking.confirmation.sent_at ||
-        booking.confirmation.responded_at ||
-        ["sent", "confirmed", "declined", "reschedule_requested", "canceled", "expired"].includes(confirmationStatus)
+        (booking.confirmation.sent_at && booking.confirmation.sent_at.trim()) ||
+        (booking.confirmation.responded_at && booking.confirmation.responded_at.trim())
       )
   );
 
