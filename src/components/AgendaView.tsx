@@ -95,10 +95,23 @@ function buildLocalHolidayMap(years: number[]): Map<string, PublicHoliday> {
     add(`${year}-11-20`, "Dia da Consciência Negra", "Black Awareness Day");
     add(`${year}-12-25`, "Natal", "Christmas Day");
 
+    // Feriado estadual SP
+    add(`${year}-07-09`, "Revolução Constitucionalista (SP)", "Constitutionalist Revolution");
+
+    // Móveis baseados na Páscoa
     const easter = calculateEasterSunday(year);
+
     const goodFriday = new Date(easter);
     goodFriday.setDate(easter.getDate() - 2);
     add(formatDateLocal(goodFriday), "Sexta-feira Santa", "Good Friday");
+
+    const carnival = new Date(easter);
+    carnival.setDate(easter.getDate() - 47);
+    add(formatDateLocal(carnival), "Carnaval", "Carnival");
+
+    const corpusChristi = new Date(easter);
+    corpusChristi.setDate(easter.getDate() + 60);
+    add(formatDateLocal(corpusChristi), "Corpus Christi", "Corpus Christi");
   }
 
   return map;
