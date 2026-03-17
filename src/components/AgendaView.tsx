@@ -42,6 +42,68 @@ interface ProfAvailability {
   is_active: boolean;
 }
 
+function formatDateLocal(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function calculateEasterSunday(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month, day);
+}
+
+function buildLocalHolidayMap(years: number[]): Map<string, PublicHoliday> {
+  const map = new Map<string, PublicHoliday>();
+
+  for (const year of years) {
+    if (!Number.isFinite(year)) continue;
+
+    const add = (date: string, local_name: string, english_name: string) => {
+      if (!map.has(date)) {
+        map.set(date, {
+          holiday_date: date,
+          local_name,
+          english_name,
+          scope: "national",
+          state_code: null,
+        });
+      }
+    };
+
+    add(`${year}-01-01`, "Confraternização Universal", "New Year's Day");
+    add(`${year}-04-21`, "Tiradentes", "Tiradentes Day");
+    add(`${year}-05-01`, "Dia do Trabalhador", "Labour Day");
+    add(`${year}-09-07`, "Independência do Brasil", "Independence Day");
+    add(`${year}-10-12`, "Nossa Senhora Aparecida", "Our Lady of Aparecida");
+    add(`${year}-11-02`, "Finados", "All Souls' Day");
+    add(`${year}-11-15`, "Proclamação da República", "Republic Proclamation Day");
+    add(`${year}-11-20`, "Dia da Consciência Negra", "Black Awareness Day");
+    add(`${year}-12-25`, "Natal", "Christmas Day");
+
+    const easter = calculateEasterSunday(year);
+    const goodFriday = new Date(easter);
+    goodFriday.setDate(easter.getDate() - 2);
+    add(formatDateLocal(goodFriday), "Sexta-feira Santa", "Good Friday");
+  }
+
+  return map;
+}
+
 /** Check if a professional is available at a given date+hour */
 function isProfAvailable(
   availMap: Record<number, ProfAvailability>,
@@ -344,7 +406,7 @@ function DayView({
       {holiday && (
         <div className="px-4 py-2 text-xs font-semibold flex items-center gap-2" style={{ background: "hsl(var(--holiday-bg))", color: "hsl(var(--holiday-text))", borderBottom: "1px solid hsl(var(--holiday-border))" }}>
           <span>🎉</span>
-          <span>{holiday.local_name}</span>
+          <span>FERIADO: {holiday.local_name}</span>
         </div>
       )}
       <div className="inline-flex flex-col min-w-full">
@@ -493,9 +555,14 @@ function WeekView({
                             {format(day, "dd")}
                           </p>
                           {holiday && (
-                            <p className="text-[8px] leading-tight mt-0.5 truncate font-medium" style={{ color: "hsl(var(--holiday-text))" }} title={holiday.local_name}>
-                              {holiday.local_name}
-                            </p>
+                            <div className="mt-1 leading-tight" title={holiday.local_name}>
+                              <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: "hsl(var(--holiday-text))" }}>
+                                Feriado
+                              </p>
+                              <p className="text-[10px] font-medium truncate" style={{ color: "hsl(var(--holiday-text))" }}>
+                                {holiday.local_name}
+                              </p>
+                            </div>
                           )}
                         </div>
                       );
@@ -609,7 +676,16 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     refetchOnWindowFocus: true,
   });
 
-  const holidayMap = useMemo(() => buildHolidayMap(holidays), [holidays]);
+  const holidayMap = useMemo(() => {
+    const localFallback = buildLocalHolidayMap(visibleYears);
+    const apiMap = buildHolidayMap(holidays);
+
+    for (const [date, holiday] of localFallback.entries()) {
+      if (!apiMap.has(date)) apiMap.set(date, holiday);
+    }
+
+    return apiMap;
+  }, [holidays, visibleYears]);
 
   // Fetch agenda bookings with server-side filters
   const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
