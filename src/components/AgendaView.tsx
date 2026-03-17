@@ -240,9 +240,7 @@ function AppointmentCard({
         <span className="flex items-center gap-0.5">
           {booking.confirmation ? (
             <ConfirmationIndicator confirmation={booking.confirmation} compact />
-          ) : (
-            <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-          )}
+          ) : null}
           {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
         </span>
         <span className="flex items-center gap-0.5">
