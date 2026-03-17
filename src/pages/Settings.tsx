@@ -704,28 +704,111 @@ export default function Settings() {
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
-              <div className="flex items-center justify-between px-3 py-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Modo</span>
-              </div>
+            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-4" style={{ background: "hsl(var(--surface))" }}>
               {!activeUnit ? (
                 <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
               ) : isLoadingSettings ? (
                 <p className="text-xs text-muted-foreground px-3">Carregando…</p>
+              ) : !bookingSettings ? (
+                <p className="text-xs text-muted-foreground px-3">Configuração não encontrada para esta unidade.</p>
               ) : (
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 border border-border" style={{ background: "hsl(var(--surface-elevated))" }}>
-                  <span className="text-sm font-medium text-foreground">{activeUnit.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {bookingSettings?.default_booking_mode
-                      ? {
-                          handoff_manual: "Handoff Manual",
-                          assisted_slots_dashboard: "Assistido (Dashboard)",
-                          auto_slots_bot: "Automático (Bot)",
-                        }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode
-                      : "—"}
-                  </span>
-                </div>
+                <>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-3 py-1">
+                    <span className="text-xs font-semibold text-foreground">{activeUnit.name}</span>
+                    <span className="text-[10px] text-muted-foreground">ID: {bookingSettings.id ?? "—"}</span>
+                  </div>
+
+                  {/* Grid de campos */}
+                  <div className="grid grid-cols-2 gap-2 px-1">
+                    {/* Modo padrão */}
+                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Modo padrão</span>
+                      <span className="text-xs font-medium text-foreground">
+                        {{ handoff_manual: "Handoff Manual", assisted_slots_dashboard: "Assistido (Dashboard)", auto_slots_bot: "Automático (Bot)" }[bookingSettings.default_booking_mode as string] ?? bookingSettings.default_booking_mode ?? "—"}
+                      </span>
+                    </div>
+
+                    {/* Horizonte */}
+                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Horizonte de agendamento</span>
+                      <span className="text-xs font-medium text-foreground">{bookingSettings.booking_horizon_days ?? "—"} dias</span>
+                    </div>
+
+                    {/* UI WhatsApp */}
+                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">UI de escolha (WhatsApp)</span>
+                      <span className="text-xs font-medium text-foreground">{bookingSettings.wa_choice_ui_mode ?? "—"}</span>
+                    </div>
+
+                    {/* Confirmação habilitada */}
+                    <div className="rounded-lg border border-border px-3 py-2" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Confirmação automática</span>
+                      <span className={`text-xs font-medium ${bookingSettings.confirmation_enabled ? "text-emerald-400" : "text-muted-foreground"}`}>
+                        {bookingSettings.confirmation_enabled ? "Ativada" : "Desativada"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bloco de confirmação (detalhes) */}
+                  {bookingSettings.confirmation_enabled && (
+                    <div className="rounded-lg border border-border p-3 space-y-2" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Detalhes da confirmação</span>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Enviar antes de</span>
+                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_send_before_hours ?? "—"}h</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Expira em</span>
+                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_expiration_minutes ?? "—"} min</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Horário início</span>
+                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_allowed_start_time ?? "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Horário fim</span>
+                          <span className="text-[11px] font-medium text-foreground">{bookingSettings.confirmation_allowed_end_time ?? "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Dias permitidos</span>
+                          <span className="text-[11px] font-medium text-foreground">
+                            {Array.isArray(bookingSettings.confirmation_allowed_weekdays) && bookingSettings.confirmation_allowed_weekdays.length > 0
+                              ? bookingSettings.confirmation_allowed_weekdays.map((d: number) => ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d] ?? d).join(", ")
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">Fins de semana</span>
+                          <span className={`text-[11px] font-medium ${bookingSettings.confirmation_allow_weekends ? "text-emerald-400" : "text-muted-foreground"}`}>
+                            {bookingSettings.confirmation_allow_weekends ? "Sim" : "Não"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Menu router options */}
+                  {Array.isArray(bookingSettings.router_menu_options) && bookingSettings.router_menu_options.length > 0 && (
+                    <div className="rounded-lg border border-border p-3 space-y-1" style={{ background: "hsl(var(--surface-elevated))" }}>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Opções do menu router</span>
+                      {bookingSettings.router_menu_options.map((opt: any, i: number) => (
+                        <div key={i} className="text-xs text-foreground">{typeof opt === "string" ? opt : JSON.stringify(opt)}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Timestamps */}
+                  <div className="flex items-center gap-4 px-3 pt-1">
+                    <span className="text-[10px] text-muted-foreground">
+                      Criado: {bookingSettings.created_at ? new Date(bookingSettings.created_at).toLocaleDateString("pt-BR") : "—"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      Atualizado: {bookingSettings.updated_at ? new Date(bookingSettings.updated_at).toLocaleDateString("pt-BR") : "—"}
+                    </span>
+                  </div>
+                </>
               )}
             </CollapsibleContent>
           </Collapsible>
