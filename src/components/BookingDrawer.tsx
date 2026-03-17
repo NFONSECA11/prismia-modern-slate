@@ -60,6 +60,8 @@ interface BookingDrawerProps {
   booking: BookingRequest | null;
   onClose: () => void;
   onConfirmed: () => void;
+  logoUrl?: string | null;
+  logoAlt?: string | null;
 }
 
 const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];
@@ -148,7 +150,7 @@ function ActionButton({
 
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 
-export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerProps) {
+export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
@@ -824,9 +826,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt={logoAlt || "Logo"} className="h-8 w-8 rounded-lg object-contain" />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
+                <Sparkles className="h-4 w-4 text-primary-foreground" />
+              </div>
+            )}
             <div>
               <h2 className="text-sm font-semibold text-foreground leading-tight">
                 Detalhe do Agendamento

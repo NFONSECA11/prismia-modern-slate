@@ -820,6 +820,8 @@ export default function Index() {
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
         onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["booking-requests"] })}
+        logoUrl={branding?.logo_url}
+        logoAlt={branding?.logo_alt}
       />
     </div>
   );
