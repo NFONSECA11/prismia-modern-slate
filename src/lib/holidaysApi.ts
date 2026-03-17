@@ -37,7 +37,7 @@ function normalizeHoliday(raw: Record<string, unknown>): PublicHoliday | null {
     raw.english_name ?? raw.englishName ?? raw.name ?? ""
   ).trim();
 
-  const scope = String(raw.scope ?? raw.type ?? (raw.global ? "national" : "state") ?? "").trim();
+  const scope = String(raw.scope ?? raw.type ?? (raw.global ? "national" : "state")).trim();
 
   const state_code_raw = raw.state_code ?? raw.stateCode ?? raw.county ?? null;
   const state_code = typeof state_code_raw === "string" && state_code_raw.trim()
