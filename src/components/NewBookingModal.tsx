@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Professional } from "@/types/booking";
+import { Professional, BookingConfirmation } from "@/types/booking";
+import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import {
   X,
   User,
