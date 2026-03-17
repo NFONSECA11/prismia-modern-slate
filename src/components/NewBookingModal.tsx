@@ -234,14 +234,14 @@ function ModalBody({
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[90] bg-background/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[120] bg-background/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div
-        className="fixed z-[91] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg border border-border animate-fade-in flex flex-col"
+        className="fixed z-[121] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg border border-border animate-fade-in flex flex-col"
         style={{ background: "hsl(var(--surface-raised))", maxHeight: "90vh" }}
       >
         {/* Header */}
@@ -439,6 +439,7 @@ function ModalBody({
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
