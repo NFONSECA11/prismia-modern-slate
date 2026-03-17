@@ -8,6 +8,37 @@ export interface PublicHoliday {
   state_code: string | null;
 }
 
+function formatUTCDate(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function addUTCDateDays(date: Date, days: number): Date {
+  const copy = new Date(date.getTime());
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy;
+}
+
+function calculateEasterSundayUTC(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 function normalizeHolidayDate(value: unknown): string {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
@@ -27,11 +58,7 @@ function normalizeHolidayDate(value: unknown): string {
 
   const parsed = new Date(trimmed);
   if (Number.isNaN(parsed.getTime())) return "";
-
-  const y = parsed.getFullYear();
-  const m = String(parsed.getMonth() + 1).padStart(2, "0");
-  const d = String(parsed.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return formatUTCDate(parsed);
 }
 
 function normalizeHoliday(raw: Record<string, unknown>): PublicHoliday | null {
@@ -58,19 +85,86 @@ function normalizeHoliday(raw: Record<string, unknown>): PublicHoliday | null {
   return { holiday_date, local_name, english_name, scope, state_code };
 }
 
-function pickHolidayArray(data: any): any[] {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.results)) return data.results;
-  if (Array.isArray(data?.result)) return data.result;
-  if (Array.isArray(data?.holidays)) return data.holidays;
-  if (Array.isArray(data?.data)) return data.data;
-  return [];
+function collectHolidayRecords(payload: unknown): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const queue: unknown[] = [payload];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+
+    if (Array.isArray(current)) {
+      queue.push(...current);
+      continue;
+    }
+
+    if (typeof current !== "object") continue;
+
+    const obj = current as Record<string, unknown>;
+    const hasDateLikeField =
+      typeof obj.holiday_date === "string" ||
+      typeof obj.holidayDate === "string" ||
+      typeof obj.date === "string" ||
+      typeof obj.day === "string" ||
+      typeof obj.holiday_day === "string";
+
+    if (hasDateLikeField) out.push(obj);
+
+    for (const value of Object.values(obj)) {
+      if (value && (Array.isArray(value) || typeof value === "object")) {
+        queue.push(value);
+      }
+    }
+  }
+
+  return out;
 }
 
-async function fetchHolidayItems(params: Record<string, string | number>): Promise<any[] | null> {
+function buildBrazilFallbackHolidays(year: number): PublicHoliday[] {
+  const easterSunday = calculateEasterSundayUTC(year);
+
+  const fixed = [
+    ["01-01", "Confraternização Universal", "New Year's Day"],
+    ["04-21", "Tiradentes", "Tiradentes Day"],
+    ["05-01", "Dia do Trabalhador", "Labour Day"],
+    ["09-07", "Independência do Brasil", "Independence Day"],
+    ["10-12", "Nossa Senhora Aparecida", "Our Lady of Aparecida"],
+    ["11-02", "Finados", "All Souls' Day"],
+    ["11-15", "Proclamação da República", "Republic Proclamation Day"],
+    ["11-20", "Dia da Consciência Negra", "Black Awareness Day"],
+    ["12-25", "Natal", "Christmas Day"],
+  ] as const;
+
+  const movable = [
+    {
+      date: formatUTCDate(addUTCDateDays(easterSunday, -2)),
+      local_name: "Sexta-feira Santa",
+      english_name: "Good Friday",
+    },
+  ];
+
+  return [
+    ...fixed.map(([mmdd, local_name, english_name]) => ({
+      holiday_date: `${year}-${mmdd}`,
+      local_name,
+      english_name,
+      scope: "national",
+      state_code: null,
+    })),
+    ...movable.map((item) => ({
+      holiday_date: item.date,
+      local_name: item.local_name,
+      english_name: item.english_name,
+      scope: "national",
+      state_code: null,
+    })),
+  ];
+}
+
+async function fetchHolidayRecords(params: Record<string, string | number>): Promise<Record<string, unknown>[] | null> {
   try {
     const { data } = await api.get("/api/holidays/", { params });
-    return pickHolidayArray(data);
+    return collectHolidayRecords(data);
   } catch {
     return null;
   }
@@ -79,29 +173,32 @@ async function fetchHolidayItems(params: Record<string, string | number>): Promi
 export async function fetchHolidays(year: number): Promise<PublicHoliday[]> {
   const attempts: Array<Record<string, string | number>> = [
     { year },
+    { ano: year },
     { date_from: `${year}-01-01`, date_to: `${year}-12-31` },
     { from: `${year}-01-01`, to: `${year}-12-31` },
+    { start_date: `${year}-01-01`, end_date: `${year}-12-31` },
   ];
 
-  let items: any[] = [];
+  let apiRecords: Record<string, unknown>[] = [];
 
   for (const params of attempts) {
-    const responseItems = await fetchHolidayItems(params);
-    if (responseItems === null) continue;
-    if (responseItems.length > 0) {
-      items = responseItems;
+    const records = await fetchHolidayRecords(params);
+    if (records === null) continue;
+    if (records.length > 0) {
+      apiRecords = records;
       break;
     }
-    if (items.length === 0) items = responseItems;
+    if (apiRecords.length === 0) apiRecords = records;
   }
 
-  const normalized = items
-    .filter((item) => item && typeof item === "object")
-    .map((item) => normalizeHoliday(item as Record<string, unknown>))
+  const normalizedApi = apiRecords
+    .map((item) => normalizeHoliday(item))
     .filter((item): item is PublicHoliday => Boolean(item));
 
+  const merged = [...normalizedApi, ...buildBrazilFallbackHolidays(year)];
+
   const unique = new Map<string, PublicHoliday>();
-  for (const holiday of normalized) {
+  for (const holiday of merged) {
     unique.set(`${holiday.holiday_date}_${holiday.local_name}`, holiday);
   }
 
@@ -113,8 +210,7 @@ export function buildHolidayMap(holidays: PublicHoliday[]): Map<string, PublicHo
   const map = new Map<string, PublicHoliday>();
   for (const h of holidays) {
     const key = normalizeHolidayDate(h.holiday_date);
-    if (key) map.set(key, h);
+    if (key && !map.has(key)) map.set(key, h);
   }
   return map;
 }
-
