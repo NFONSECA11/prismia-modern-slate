@@ -629,6 +629,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         phone: booking.contact_phone || booking.phone || "",
         procedure_name: booking.procedure_name,
         unit_name: booking.unit_name,
+        confirmation: booking.confirmation ?? null,
       },
     });
   };
