@@ -871,6 +871,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed }: BookingDrawerPr
               </div>
               <div className="flex flex-col items-end gap-1.5">
                 <StatusBadge status={booking.status} size="md" hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} />
+                <ConfirmationIndicator confirmation={booking.confirmation} />
                 
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
