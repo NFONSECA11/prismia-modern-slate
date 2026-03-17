@@ -8,7 +8,7 @@ interface StatusConfig {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   confirmed: {
-    label: "Agendado",
+    label: "Confirmado",
     className: "bg-status-confirmed-bg text-status-confirmed border border-status-confirmed/25",
     dot: "bg-status-confirmed",
   },
@@ -52,18 +52,20 @@ const STATUS_MAP: Record<string, StatusConfig> = {
 interface StatusBadgeProps {
   status: BookingStatus;
   size?: "sm" | "md";
+  hasSchedule?: boolean;
 }
 
-export function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
+export function StatusBadge({ status, size = "md", hasSchedule }: StatusBadgeProps) {
   const config = STATUS_MAP[status] ?? STATUS_MAP.pending;
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs";
+  const label = status === "confirmed" && hasSchedule ? "Agendado" : config.label;
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${config.className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${config.dot} flex-shrink-0`} />
-      {config.label}
+      {label}
     </span>
   );
 }
