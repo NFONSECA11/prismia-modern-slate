@@ -477,15 +477,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         try {
           console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
           await handoffOff(booking!.id);
-          // Auto-trigger suggest slots for reschedule
-          try {
-            console.log("[BookingDrawer] Reschedule flow — auto-triggering suggestSlots for BR #", booking!.id);
-            await suggestSlots(booking!.id);
-            setActionDone(`Agenda #${cancelledId} cancelada, bot ligado e horários enviados!`);
-          } catch (slotErr) {
-            console.warn("[BookingDrawer] Auto suggestSlots failed:", slotErr);
-            setActionDone(`Agenda #${cancelledId} cancelada e bot ligado! (falha ao enviar horários)`);
-          }
+          setActionDone(`Agenda #${cancelledId} cancelada e bot ligado!`);
         } catch (err) {
           console.error("[BookingDrawer] handoffOff after reschedule failed:", err);
           setActionDone(`Agenda #${cancelledId} cancelada, mas falha ao ligar bot.`);
