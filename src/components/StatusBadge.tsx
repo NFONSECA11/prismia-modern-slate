@@ -71,22 +71,22 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     regex: /BR_TAG_AI_DIRECT_CANCEL/i,
     label: "IA",
     tooltip: "Cancelado diretamente pela IA",
-    bgClass: "bg-background border border-border",
-    textClass: "text-status-canceled",
+    bgClass: "bg-status-canceled",
+    textClass: "text-white",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
     label: "IA",
     tooltip: "Reagendado diretamente pela IA",
-    bgClass: "bg-background border border-border",
-    textClass: "text-status-pending",
+    bgClass: "bg-status-pending",
+    textClass: "text-white",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
     label: "IA",
     tooltip: "Agendado diretamente pela IA",
-    bgClass: "bg-background border border-border",
-    textClass: "text-status-confirmed",
+    bgClass: "bg-status-confirmed",
+    textClass: "text-white",
   },
 };
 
