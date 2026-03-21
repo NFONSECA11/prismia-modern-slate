@@ -6,7 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus, BookingMode } from "@/types/booking";
-import { StatusBadge } from "@/components/StatusBadge";
+import { StatusBadge, detectAiTag, type AiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import {
