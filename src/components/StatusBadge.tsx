@@ -71,22 +71,22 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     regex: /BR_TAG_AI_DIRECT_CANCEL/i,
     label: "IA",
     tooltip: "Cancelado diretamente pela IA",
-    bgClass: "bg-status-canceled",
-    textClass: "text-white",
+    bgClass: "bg-status-canceled/20",
+    textClass: "text-status-canceled",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
     label: "IA",
     tooltip: "Reagendado diretamente pela IA",
-    bgClass: "bg-status-pending",
-    textClass: "text-white",
+    bgClass: "bg-status-pending/20",
+    textClass: "text-status-pending",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
     label: "IA",
     tooltip: "Agendado diretamente pela IA",
-    bgClass: "bg-status-confirmed",
-    textClass: "text-white",
+    bgClass: "bg-status-confirmed/20",
+    textClass: "text-status-confirmed",
   },
 };
 
@@ -136,9 +136,8 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
       {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`relative inline-flex items-center justify-center h-[18px] min-w-[22px] px-1 rounded-[4px] ${tagConfig.bgClass} ${tagConfig.textClass} text-[8px] font-extrabold tracking-wide leading-none cursor-default shadow-sm mb-1`}>
+            <span className={`inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded ${tagConfig.bgClass} ${tagConfig.textClass} text-[9px] font-bold leading-none cursor-default`}>
               {tagConfig.label}
-              <span className={`absolute -bottom-[4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] ${tagConfig.bgClass.replace("bg-", "border-t-")}`} />
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
