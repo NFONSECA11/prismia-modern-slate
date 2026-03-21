@@ -286,34 +286,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => { cancelled = true; };
   }, [bookings]);
 
-  // Fetch notes for canceled bookings to detect BR_TAG_AI_DIRECT_CANCEL
+  // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
-    const canceled = bookings.filter(
-      (b) => (b.status === "canceled" || b.status === "cancelled") && !aiDirectCancelSet.has(b.id)
-    );
-    if (canceled.length === 0) return;
+    const candidates = bookings.filter((b) => !aiTagMap[b.id]);
+    if (candidates.length === 0) return;
 
     let cancelled = false;
-    const batch = canceled.slice(0, 20);
+    const batch = candidates.slice(0, 20);
 
     (async () => {
-      const newIds: number[] = [];
+      const newTags: Record<number, AiTag> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
           const detailNotes = (detail as any).notes ?? "";
-          if (/BR_TAG_AI_DIRECT_CANCEL/i.test(detailNotes)) {
-            newIds.push(b.id);
+          const tag = detectAiTag(detailNotes);
+          if (tag) {
+            newTags[b.id] = tag;
           }
         } catch { /* ignore */ }
       }
-      if (!cancelled && newIds.length > 0) {
-        setAiDirectCancelSet((prev) => {
-          const next = new Set(prev);
-          newIds.forEach((id) => next.add(id));
-          return next;
-        });
+      if (!cancelled && Object.keys(newTags).length > 0) {
+        setAiTagMap((prev) => ({ ...prev, ...newTags }));
       }
     })();
 
