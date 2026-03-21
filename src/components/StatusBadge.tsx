@@ -79,7 +79,7 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     label: "IA",
     tooltip: "Reagendado diretamente pela IA",
     bgClass: "border-amber-500",
-    textClass: "text-sky-400",
+    textClass: "text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.6)]",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
