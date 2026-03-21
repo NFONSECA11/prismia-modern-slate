@@ -215,7 +215,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
-  const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
+  const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag | "none">>({});
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -288,23 +288,38 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
-    const candidates = bookings.filter((b) => !aiTagMap[b.id]);
+    const candidates = bookings.filter((b) => !(b.id in aiTagMap));
     if (candidates.length === 0) return;
 
+    // First, check notes already present in listing
+    const immediateResults: Record<number, AiTag | "none"> = {};
+    const needsFetch: BookingRequest[] = [];
+    for (const b of candidates) {
+      if (b.notes) {
+        const tag = detectAiTag(b.notes);
+        immediateResults[b.id] = tag ?? "none";
+      } else {
+        needsFetch.push(b);
+      }
+    }
+    if (Object.keys(immediateResults).length > 0) {
+      setAiTagMap((prev) => ({ ...prev, ...immediateResults }));
+    }
+
+    if (needsFetch.length === 0) return;
+
     let cancelled = false;
-    const batch = candidates.slice(0, 20);
+    const batch = needsFetch.slice(0, 20);
 
     (async () => {
-      const newTags: Record<number, AiTag> = {};
+      const newTags: Record<number, AiTag | "none"> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
           const detailNotes = (detail as any).notes ?? "";
           const tag = detectAiTag(detailNotes);
-          if (tag) {
-            newTags[b.id] = tag;
-          }
+          newTags[b.id] = tag ?? "none";
         } catch { /* ignore */ }
       }
       if (!cancelled && Object.keys(newTags).length > 0) {
@@ -515,7 +530,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={aiTagMap[booking.id] ?? null} />
+                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={aiTagMap[booking.id] === "none" ? null : (aiTagMap[booking.id] as AiTag) ?? null} />
                           {booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />
