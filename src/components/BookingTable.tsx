@@ -485,7 +485,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} />
+                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} notes={booking.notes} />
                           {booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />
