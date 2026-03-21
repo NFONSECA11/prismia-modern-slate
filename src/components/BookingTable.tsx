@@ -288,23 +288,38 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
-    const candidates = bookings.filter((b) => !aiTagMap[b.id]);
+    const candidates = bookings.filter((b) => !(b.id in aiTagMap));
     if (candidates.length === 0) return;
 
+    // First, check notes already present in listing
+    const immediateResults: Record<number, AiTag | "none"> = {};
+    const needsFetch: BookingRequest[] = [];
+    for (const b of candidates) {
+      if (b.notes) {
+        const tag = detectAiTag(b.notes);
+        immediateResults[b.id] = tag ?? "none";
+      } else {
+        needsFetch.push(b);
+      }
+    }
+    if (Object.keys(immediateResults).length > 0) {
+      setAiTagMap((prev) => ({ ...prev, ...immediateResults }));
+    }
+
+    if (needsFetch.length === 0) return;
+
     let cancelled = false;
-    const batch = candidates.slice(0, 20);
+    const batch = needsFetch.slice(0, 20);
 
     (async () => {
-      const newTags: Record<number, AiTag> = {};
+      const newTags: Record<number, AiTag | "none"> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
           const detailNotes = (detail as any).notes ?? "";
           const tag = detectAiTag(detailNotes);
-          if (tag) {
-            newTags[b.id] = tag;
-          }
+          newTags[b.id] = tag ?? "none";
         } catch { /* ignore */ }
       }
       if (!cancelled && Object.keys(newTags).length > 0) {
