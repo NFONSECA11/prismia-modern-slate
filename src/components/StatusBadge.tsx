@@ -86,7 +86,7 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     label: "IA",
     tooltip: "Agendado diretamente pela IA",
     bgClass: "border-emerald-500",
-    textClass: "text-sky-400",
+    textClass: "text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.6)]",
   },
 };
 
