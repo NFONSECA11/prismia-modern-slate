@@ -215,6 +215,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
+  const [aiDirectCancelSet, setAiDirectCancelSet] = useState<Set<number>>(new Set());
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -279,6 +280,40 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       }
       if (!cancelled && Object.keys(newProcNames).length > 0) {
         setRescheduleProcNameMap((prev) => ({ ...prev, ...newProcNames }));
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookings]);
+
+  // Fetch notes for canceled bookings to detect BR_TAG_AI_DIRECT_CANCEL
+  useEffect(() => {
+    const canceled = bookings.filter(
+      (b) => (b.status === "canceled" || b.status === "cancelled") && !aiDirectCancelSet.has(b.id)
+    );
+    if (canceled.length === 0) return;
+
+    let cancelled = false;
+    const batch = canceled.slice(0, 20);
+
+    (async () => {
+      const newIds: number[] = [];
+      for (const b of batch) {
+        if (cancelled) break;
+        try {
+          const detail = await fetchBookingRequestById(b.id);
+          const detailNotes = (detail as any).notes ?? "";
+          if (/BR_TAG_AI_DIRECT_CANCEL/i.test(detailNotes)) {
+            newIds.push(b.id);
+          }
+        } catch { /* ignore */ }
+      }
+      if (!cancelled && newIds.length > 0) {
+        setAiDirectCancelSet((prev) => {
+          const next = new Set(prev);
+          newIds.forEach((id) => next.add(id));
+          return next;
+        });
       }
     })();
 
@@ -485,7 +520,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} notes={booking.notes} />
+                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiDirectCancel={aiDirectCancelSet.has(booking.id)} />
                           {booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />

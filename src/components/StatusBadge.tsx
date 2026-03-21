@@ -55,20 +55,16 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   },
 };
 
-function hasAiDirectCancelTag(notes?: string | null): boolean {
-  if (!notes) return false;
-  return /BR_TAG_AI_DIRECT_CANCEL/i.test(notes);
-}
-
 interface StatusBadgeProps {
   status: BookingStatus;
   size?: "sm" | "md";
   hasSchedule?: boolean;
   procedureName?: string;
-  notes?: string | null;
+  /** When true, shows a tooltip indicating the booking was canceled directly by AI */
+  aiDirectCancel?: boolean;
 }
 
-export function StatusBadge({ status, size = "md", hasSchedule, procedureName, notes }: StatusBadgeProps) {
+export function StatusBadge({ status, size = "md", hasSchedule, procedureName, aiDirectCancel }: StatusBadgeProps) {
   const config = STATUS_MAP[status] ?? STATUS_MAP.pending;
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs";
 
@@ -83,7 +79,7 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, n
   }
 
   const isCanceled = status === "canceled" || status === "cancelled";
-  const showAiDirectCancel = isCanceled && hasAiDirectCancelTag(notes);
+  const showAiDirectCancel = isCanceled && aiDirectCancel;
 
   const badge = (
     <span
