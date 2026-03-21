@@ -4,7 +4,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 interface StatusConfig {
   label: string;
@@ -60,7 +59,6 @@ interface StatusBadgeProps {
   size?: "sm" | "md";
   hasSchedule?: boolean;
   procedureName?: string;
-  /** When true, shows a tooltip indicating the booking was canceled directly by AI */
   aiDirectCancel?: boolean;
 }
 
@@ -81,28 +79,26 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
   const isCanceled = status === "canceled" || status === "cancelled";
   const showAiDirectCancel = isCanceled && aiDirectCancel;
 
-  const badge = (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${config.className}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${config.dot} flex-shrink-0`} />
-      {label}
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${config.className}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot} flex-shrink-0`} />
+        {label}
+      </span>
       {showAiDirectCancel && (
-        <Info className="h-3 w-3 flex-shrink-0 opacity-70" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded bg-primary/20 text-primary text-[9px] font-bold leading-none cursor-default">
+              IA
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
+            Cancelado diretamente pela IA
+          </TooltipContent>
+        </Tooltip>
       )}
     </span>
   );
-
-  if (showAiDirectCancel) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{badge}</TooltipTrigger>
-        <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
-          Cancelado diretamente pela IA
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return badge;
 }
