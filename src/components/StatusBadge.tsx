@@ -136,12 +136,9 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
       {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`relative inline-flex items-center justify-center h-[18px] min-w-[22px] px-1 rounded-[4px] bg-white ${tagConfig.textClass} text-[8px] font-extrabold tracking-wide leading-none cursor-default shadow-[0_1px_3px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] mb-1`}>
+            <span className={`relative inline-flex items-center justify-center h-[18px] min-w-[22px] px-1 rounded-[4px] ${tagConfig.bgClass} ${tagConfig.textClass} text-[8px] font-extrabold tracking-wide leading-none cursor-default shadow-sm mb-1`}>
               {tagConfig.label}
-              <svg className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-[8px] h-[5px]" viewBox="0 0 8 5" fill="none">
-                <path d="M0 0L4 5L8 0" fill="white" />
-                <path d="M0 0L4 5L8 0" stroke="rgba(0,0,0,0.06)" strokeWidth="0.5" strokeLinejoin="round" fill="none" />
-              </svg>
+              <span className={`absolute -bottom-[4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] ${tagConfig.bgClass.replace("bg-", "border-t-")}`} />
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
