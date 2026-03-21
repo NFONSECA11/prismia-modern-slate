@@ -1,4 +1,10 @@
 import { BookingStatus } from "@/types/booking";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface StatusConfig {
   label: string;
@@ -49,14 +55,20 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   },
 };
 
+function hasAiDirectCancelTag(notes?: string | null): boolean {
+  if (!notes) return false;
+  return /BR_TAG_AI_DIRECT_CANCEL/i.test(notes);
+}
+
 interface StatusBadgeProps {
   status: BookingStatus;
   size?: "sm" | "md";
   hasSchedule?: boolean;
   procedureName?: string;
+  notes?: string | null;
 }
 
-export function StatusBadge({ status, size = "md", hasSchedule, procedureName }: StatusBadgeProps) {
+export function StatusBadge({ status, size = "md", hasSchedule, procedureName, notes }: StatusBadgeProps) {
   const config = STATUS_MAP[status] ?? STATUS_MAP.pending;
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs";
 
@@ -70,12 +82,31 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName }:
     }
   }
 
-  return (
+  const isCanceled = status === "canceled" || status === "cancelled";
+  const showAiDirectCancel = isCanceled && hasAiDirectCancelTag(notes);
+
+  const badge = (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClass} ${config.className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${config.dot} flex-shrink-0`} />
       {label}
+      {showAiDirectCancel && (
+        <Info className="h-3 w-3 flex-shrink-0 opacity-70" />
+      )}
     </span>
   );
+
+  if (showAiDirectCancel) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
+          Cancelado diretamente pela IA
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return badge;
 }
