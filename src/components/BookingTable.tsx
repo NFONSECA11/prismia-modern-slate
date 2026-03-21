@@ -286,6 +286,40 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => { cancelled = true; };
   }, [bookings]);
 
+  // Fetch notes for canceled bookings to detect BR_TAG_AI_DIRECT_CANCEL
+  useEffect(() => {
+    const canceled = bookings.filter(
+      (b) => (b.status === "canceled" || b.status === "cancelled") && !aiDirectCancelSet.has(b.id)
+    );
+    if (canceled.length === 0) return;
+
+    let cancelled = false;
+    const batch = canceled.slice(0, 20);
+
+    (async () => {
+      const newIds: number[] = [];
+      for (const b of batch) {
+        if (cancelled) break;
+        try {
+          const detail = await fetchBookingRequestById(b.id);
+          const detailNotes = (detail as any).notes ?? "";
+          if (/BR_TAG_AI_DIRECT_CANCEL/i.test(detailNotes)) {
+            newIds.push(b.id);
+          }
+        } catch { /* ignore */ }
+      }
+      if (!cancelled && newIds.length > 0) {
+        setAiDirectCancelSet((prev) => {
+          const next = new Set(prev);
+          newIds.forEach((id) => next.add(id));
+          return next;
+        });
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [bookings]);
+
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
     setBusyActionKey(key);
