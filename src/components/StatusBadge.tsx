@@ -54,15 +54,62 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   },
 };
 
+// ── AI Tag configs ───────────────────────────────────────────────────────────
+
+export type AiTag = "cancel" | "reschedule" | "schedule";
+
+interface AiTagConfig {
+  regex: RegExp;
+  label: string;
+  tooltip: string;
+  bgClass: string;
+  textClass: string;
+}
+
+const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
+  cancel: {
+    regex: /BR_TAG_AI_DIRECT_CANCEL/i,
+    label: "IA",
+    tooltip: "Cancelado diretamente pela IA",
+    bgClass: "bg-status-canceled/20",
+    textClass: "text-status-canceled",
+  },
+  reschedule: {
+    regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
+    label: "IA",
+    tooltip: "Reagendado diretamente pela IA",
+    bgClass: "bg-status-pending/20",
+    textClass: "text-status-pending",
+  },
+  schedule: {
+    regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
+    label: "IA",
+    tooltip: "Agendado diretamente pela IA",
+    bgClass: "bg-status-confirmed/20",
+    textClass: "text-status-confirmed",
+  },
+};
+
+/** Detect which AI tag (if any) is present in notes */
+export function detectAiTag(notes?: string | null): AiTag | null {
+  if (!notes) return null;
+  for (const [key, config] of Object.entries(AI_TAG_CONFIG)) {
+    if (config.regex.test(notes)) return key as AiTag;
+  }
+  return null;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 interface StatusBadgeProps {
   status: BookingStatus;
   size?: "sm" | "md";
   hasSchedule?: boolean;
   procedureName?: string;
-  aiDirectCancel?: boolean;
+  aiTag?: AiTag | null;
 }
 
-export function StatusBadge({ status, size = "md", hasSchedule, procedureName, aiDirectCancel }: StatusBadgeProps) {
+export function StatusBadge({ status, size = "md", hasSchedule, procedureName, aiTag }: StatusBadgeProps) {
   const config = STATUS_MAP[status] ?? STATUS_MAP.pending;
   const sizeClass = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs";
 
@@ -76,8 +123,7 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
     }
   }
 
-  const isCanceled = status === "canceled" || status === "cancelled";
-  const showAiDirectCancel = isCanceled && aiDirectCancel;
+  const tagConfig = aiTag ? AI_TAG_CONFIG[aiTag] : null;
 
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -87,15 +133,15 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
         <span className={`h-1.5 w-1.5 rounded-full ${config.dot} flex-shrink-0`} />
         {label}
       </span>
-      {showAiDirectCancel && (
+      {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded bg-primary/20 text-primary text-[9px] font-bold leading-none cursor-default">
-              IA
+            <span className={`inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded ${tagConfig.bgClass} ${tagConfig.textClass} text-[9px] font-bold leading-none cursor-default`}>
+              {tagConfig.label}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
-            Cancelado diretamente pela IA
+            {tagConfig.tooltip}
           </TooltipContent>
         </Tooltip>
       )}

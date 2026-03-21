@@ -6,7 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus, BookingMode } from "@/types/booking";
-import { StatusBadge } from "@/components/StatusBadge";
+import { StatusBadge, detectAiTag, type AiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import {
@@ -215,7 +215,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
-  const [aiDirectCancelSet, setAiDirectCancelSet] = useState<Set<number>>(new Set());
+  const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -286,34 +286,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => { cancelled = true; };
   }, [bookings]);
 
-  // Fetch notes for canceled bookings to detect BR_TAG_AI_DIRECT_CANCEL
+  // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
-    const canceled = bookings.filter(
-      (b) => (b.status === "canceled" || b.status === "cancelled") && !aiDirectCancelSet.has(b.id)
-    );
-    if (canceled.length === 0) return;
+    const candidates = bookings.filter((b) => !aiTagMap[b.id]);
+    if (candidates.length === 0) return;
 
     let cancelled = false;
-    const batch = canceled.slice(0, 20);
+    const batch = candidates.slice(0, 20);
 
     (async () => {
-      const newIds: number[] = [];
+      const newTags: Record<number, AiTag> = {};
       for (const b of batch) {
         if (cancelled) break;
         try {
           const detail = await fetchBookingRequestById(b.id);
           const detailNotes = (detail as any).notes ?? "";
-          if (/BR_TAG_AI_DIRECT_CANCEL/i.test(detailNotes)) {
-            newIds.push(b.id);
+          const tag = detectAiTag(detailNotes);
+          if (tag) {
+            newTags[b.id] = tag;
           }
         } catch { /* ignore */ }
       }
-      if (!cancelled && newIds.length > 0) {
-        setAiDirectCancelSet((prev) => {
-          const next = new Set(prev);
-          newIds.forEach((id) => next.add(id));
-          return next;
-        });
+      if (!cancelled && Object.keys(newTags).length > 0) {
+        setAiTagMap((prev) => ({ ...prev, ...newTags }));
       }
     })();
 
@@ -520,7 +515,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiDirectCancel={aiDirectCancelSet.has(booking.id)} />
+                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={aiTagMap[booking.id] ?? null} />
                           {booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />

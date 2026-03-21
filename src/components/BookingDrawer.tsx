@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
-import { StatusBadge } from "@/components/StatusBadge";
+import { StatusBadge, detectAiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 
@@ -868,7 +868,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 )}
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <StatusBadge status={booking.status} size="md" hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiDirectCancel={/BR_TAG_AI_DIRECT_CANCEL/i.test(booking.notes ?? "")} />
+                <StatusBadge status={booking.status} size="md" hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={detectAiTag(booking.notes)} />
                 <div className="pr-[0.35rem]">
                   <ConfirmationIndicator confirmation={booking.confirmation ?? (bookingDetailForBot as any)?.confirmation ?? null} />
                 </div>
