@@ -215,6 +215,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
+  const [aiDirectCancelSet, setAiDirectCancelSet] = useState<Set<number>>(new Set());
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
