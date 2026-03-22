@@ -291,6 +291,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     const candidates = bookings.filter((b) => !(b.id in aiTagMap));
     if (candidates.length === 0) return;
 
+    console.log(`[AI-TAG] ${candidates.length} candidates to check, total bookings: ${bookings.length}`);
+
     // Detect directly from list payload when possible
     const immediateResults: Record<number, AiTag | "none"> = {};
     const needsFetch: BookingRequest[] = [];
@@ -298,8 +300,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       const listNotes = typeof b.notes === "string" ? b.notes : "";
       const listTag = detectAiTag(listNotes);
 
-      // If list notes don't contain the tag, fetch full detail to avoid false negatives
       if (listTag) {
+        console.log(`[AI-TAG] #${b.id} detected from list notes: ${listTag}`);
         immediateResults[b.id] = listTag;
       } else {
         needsFetch.push(b);
@@ -311,6 +313,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     }
 
     if (needsFetch.length === 0) return;
+
+    console.log(`[AI-TAG] ${needsFetch.length} need individual fetch`);
 
     let cancelled = false;
 
@@ -327,8 +331,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
               const detail = await fetchBookingRequestById(b.id);
               const detailNotes = (detail as any).notes ?? "";
               const tag = detectAiTag(detailNotes);
+              console.log(`[AI-TAG] #${b.id} fetched detail, notes="${detailNotes?.substring(0, 80)}", tag=${tag}`);
               return [b.id, tag ?? "none"] as const;
-            } catch {
+            } catch (err) {
+              console.error(`[AI-TAG] #${b.id} fetch failed`, err);
               return [b.id, "none"] as const;
             }
           })
