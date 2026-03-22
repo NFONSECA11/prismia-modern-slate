@@ -93,10 +93,29 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
 /** Detect which AI tag (if any) is present in notes */
 export function detectAiTag(notes?: string | null): AiTag | null {
   if (!notes) return null;
+
+  let latestTag: AiTag | null = null;
+  let latestIndex = -1;
+
   for (const [key, config] of Object.entries(AI_TAG_CONFIG)) {
-    if (config.regex.test(notes)) return key as AiTag;
+    const flags = config.regex.flags.includes("g") ? config.regex.flags : `${config.regex.flags}g`;
+    const matcher = new RegExp(config.regex.source, flags);
+
+    let match: RegExpExecArray | null = null;
+    let lastMatchIndex = -1;
+
+    while ((match = matcher.exec(notes)) !== null) {
+      lastMatchIndex = match.index;
+      if (match.index === matcher.lastIndex) matcher.lastIndex += 1;
+    }
+
+    if (lastMatchIndex > latestIndex) {
+      latestIndex = lastMatchIndex;
+      latestTag = key as AiTag;
+    }
   }
-  return null;
+
+  return latestTag;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
