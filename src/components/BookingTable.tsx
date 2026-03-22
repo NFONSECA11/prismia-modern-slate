@@ -291,17 +291,21 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     const candidates = bookings.filter((b) => !(b.id in aiTagMap));
     if (candidates.length === 0) return;
 
-    // First, check notes already present in listing
+    // Detect directly from list payload when possible
     const immediateResults: Record<number, AiTag | "none"> = {};
     const needsFetch: BookingRequest[] = [];
     for (const b of candidates) {
-      if (b.notes) {
-        const tag = detectAiTag(b.notes);
-        immediateResults[b.id] = tag ?? "none";
+      const listNotes = typeof b.notes === "string" ? b.notes : "";
+      const listTag = detectAiTag(listNotes);
+
+      // If list notes don't contain the tag, fetch full detail to avoid false negatives
+      if (listTag) {
+        immediateResults[b.id] = listTag;
       } else {
         needsFetch.push(b);
       }
     }
+
     if (Object.keys(immediateResults).length > 0) {
       setAiTagMap((prev) => ({ ...prev, ...immediateResults }));
     }
@@ -309,26 +313,36 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     if (needsFetch.length === 0) return;
 
     let cancelled = false;
-    const batch = needsFetch.slice(0, 80);
 
     (async () => {
-      const newTags: Record<number, AiTag | "none"> = {};
-      for (const b of batch) {
+      const CHUNK_SIZE = 20;
+
+      for (let i = 0; i < needsFetch.length; i += CHUNK_SIZE) {
         if (cancelled) break;
-        try {
-          const detail = await fetchBookingRequestById(b.id);
-          const detailNotes = (detail as any).notes ?? "";
-          const tag = detectAiTag(detailNotes);
-          newTags[b.id] = tag ?? "none";
-        } catch { /* ignore */ }
-      }
-      if (!cancelled && Object.keys(newTags).length > 0) {
+
+        const chunk = needsFetch.slice(i, i + CHUNK_SIZE);
+        const entries = await Promise.all(
+          chunk.map(async (b) => {
+            try {
+              const detail = await fetchBookingRequestById(b.id);
+              const detailNotes = (detail as any).notes ?? "";
+              const tag = detectAiTag(detailNotes);
+              return [b.id, tag ?? "none"] as const;
+            } catch {
+              return [b.id, "none"] as const;
+            }
+          })
+        );
+
+        if (cancelled || entries.length === 0) continue;
+
+        const newTags = Object.fromEntries(entries) as Record<number, AiTag | "none">;
         setAiTagMap((prev) => ({ ...prev, ...newTags }));
       }
     })();
 
     return () => { cancelled = true; };
-  }, [bookings]);
+  }, [bookings, aiTagMap]);
 
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
