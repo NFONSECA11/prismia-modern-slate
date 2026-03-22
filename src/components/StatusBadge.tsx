@@ -69,21 +69,21 @@ interface AiTagConfig {
 const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
   cancel: {
     regex: /BR_TAG_AI_DIRECT_CANCEL/i,
-    label: "IA",
+    label: "✨",
     tooltip: "Cancelado diretamente pela IA",
     bgClass: "border-red-500",
     textClass: "text-sky-400",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
-    label: "IA",
+    label: "✨",
     tooltip: "Reagendado diretamente pela IA",
     bgClass: "border-amber-500",
     textClass: "text-sky-400",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
-    label: "IA",
+    label: "✨",
     tooltip: "Agendado diretamente pela IA",
     bgClass: "border-emerald-500",
     textClass: "text-sky-400",
