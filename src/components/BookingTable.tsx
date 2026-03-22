@@ -288,20 +288,25 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
-    const candidates = bookings.filter((b) => !(b.id in aiTagMap));
-    if (candidates.length === 0) return;
+    if (bookings.length === 0) return;
 
-    console.log(`[AI-TAG] ${candidates.length} candidates to check, total bookings: ${bookings.length}`);
+    const visibleIds = new Set(bookings.map((b) => b.id));
+    setAiTagMap((prev) => {
+      const next: Record<number, AiTag> = {};
+      for (const [id, tag] of Object.entries(prev)) {
+        const numericId = Number(id);
+        if (visibleIds.has(numericId)) next[numericId] = tag as AiTag;
+      }
+      return next;
+    });
 
-    // Detect directly from list payload when possible
-    const immediateResults: Record<number, AiTag | "none"> = {};
+    const immediateResults: Record<number, AiTag> = {};
     const needsFetch: BookingRequest[] = [];
-    for (const b of candidates) {
+
+    for (const b of bookings) {
       const listNotes = typeof b.notes === "string" ? b.notes : "";
       const listTag = detectAiTag(listNotes);
-
       if (listTag) {
-        console.log(`[AI-TAG] #${b.id} detected from list notes: ${listTag}`);
         immediateResults[b.id] = listTag;
       } else {
         needsFetch.push(b);
@@ -313,8 +318,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     }
 
     if (needsFetch.length === 0) return;
-
-    console.log(`[AI-TAG] ${needsFetch.length} need individual fetch`);
 
     let cancelled = false;
 
@@ -331,24 +334,27 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
               const detail = await fetchBookingRequestById(b.id);
               const detailNotes = (detail as any).notes ?? "";
               const tag = detectAiTag(detailNotes);
-              console.log(`[AI-TAG] #${b.id} fetched detail, notes="${detailNotes?.substring(0, 80)}", tag=${tag}`);
-              return [b.id, tag ?? "none"] as const;
-            } catch (err) {
-              console.error(`[AI-TAG] #${b.id} fetch failed`, err);
-              return [b.id, "none"] as const;
+              return [b.id, tag] as const;
+            } catch {
+              return [b.id, null] as const;
             }
           })
         );
 
         if (cancelled || entries.length === 0) continue;
 
-        const newTags = Object.fromEntries(entries) as Record<number, AiTag | "none">;
+        const foundEntries = entries.filter((entry): entry is readonly [number, AiTag] => Boolean(entry[1]));
+        if (foundEntries.length === 0) continue;
+
+        const newTags = Object.fromEntries(foundEntries) as Record<number, AiTag>;
         setAiTagMap((prev) => ({ ...prev, ...newTags }));
       }
     })();
 
-    return () => { cancelled = true; };
-  }, [bookings, aiTagMap]);
+    return () => {
+      cancelled = true;
+    };
+  }, [bookings]);
 
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
