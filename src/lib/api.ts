@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://drilling-virgin-jones-encoding.trycloudflare.com",
+  baseURL: "https://projection-plain-stuck-waiting.trycloudflare.com",
   timeout: 30_000,
   withCredentials: true,
   headers: {
