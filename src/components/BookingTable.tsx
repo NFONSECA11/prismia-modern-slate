@@ -308,9 +308,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
       const listTag = detectAiTag(listNotes);
       if (listTag) {
         immediateResults[b.id] = listTag;
-      } else {
-        needsFetch.push(b);
       }
+
+      // Sempre busca detalhe em background para garantir a ÚLTIMA tag temporal
+      // (a listagem pode vir truncada/defasada em relação ao detalhe).
+      needsFetch.push(b);
     }
 
     if (Object.keys(immediateResults).length > 0) {
@@ -556,7 +558,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? aiTagMap[booking.id] ?? null} />
+                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null} />
                           {booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />
