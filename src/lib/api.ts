@@ -44,7 +44,7 @@ function getCookie(name: string): string | null {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://cargo-seek-contributing-clusters.trycloudflare.com",
+  baseURL: "https://drilling-virgin-jones-encoding.trycloudflare.com",
   timeout: 30_000,
   withCredentials: true,
   headers: {
