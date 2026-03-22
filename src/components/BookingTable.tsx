@@ -309,7 +309,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     if (needsFetch.length === 0) return;
 
     let cancelled = false;
-    const batch = needsFetch.slice(0, 20);
+    const batch = needsFetch.slice(0, 80);
 
     (async () => {
       const newTags: Record<number, AiTag | "none"> = {};
