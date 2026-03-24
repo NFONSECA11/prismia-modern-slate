@@ -155,7 +155,7 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
       {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center justify-center text-[12px] leading-none cursor-default">
+            <span className={`inline-flex items-center justify-center text-[12px] leading-none cursor-default ${tagConfig.textClass}`}>
               {tagConfig.label}
             </span>
           </TooltipTrigger>
