@@ -62,7 +62,6 @@ interface AiTagConfig {
   regex: RegExp;
   label: string;
   tooltip: string;
-  bgClass: string;
   textClass: string;
 }
 
