@@ -62,7 +62,6 @@ interface AiTagConfig {
   regex: RegExp;
   label: string;
   tooltip: string;
-  bgClass: string;
   textClass: string;
 }
 
@@ -71,22 +70,19 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     regex: /BR_TAG_AI_DIRECT_CANCEL/i,
     label: "✨",
     tooltip: "Cancelado diretamente pela IA",
-    bgClass: "border-red-500",
-    textClass: "text-sky-400",
+    textClass: "text-red-500",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
     label: "✨",
     tooltip: "Reagendado diretamente pela IA",
-    bgClass: "border-amber-500",
     textClass: "text-sky-400",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
     label: "✨",
     tooltip: "Agendado diretamente pela IA",
-    bgClass: "border-emerald-500",
-    textClass: "text-sky-400",
+    textClass: "text-emerald-500",
   },
 };
 
@@ -155,7 +151,7 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
       {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center justify-center text-[12px] leading-none cursor-default">
+            <span className={`inline-flex items-center justify-center text-[12px] leading-none cursor-default ${tagConfig.textClass}`}>
               {tagConfig.label}
             </span>
           </TooltipTrigger>
