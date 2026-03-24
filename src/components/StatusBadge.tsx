@@ -4,6 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Sparkles } from "lucide-react";
 
 interface StatusConfig {
   label: string;
@@ -151,8 +152,8 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
       {tagConfig && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`inline-flex items-center justify-center text-[12px] leading-none cursor-default ${tagConfig.textClass}`}>
-              {tagConfig.label}
+            <span className={`inline-flex items-center justify-center leading-none cursor-default ${tagConfig.textClass}`}>
+              <Sparkles className="h-3.5 w-3.5" />
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
