@@ -4,6 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Sparkles } from "lucide-react";
 
 interface StatusConfig {
   label: string;
