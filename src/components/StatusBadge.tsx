@@ -71,8 +71,7 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     regex: /BR_TAG_AI_DIRECT_CANCEL/i,
     label: "✨",
     tooltip: "Cancelado diretamente pela IA",
-    bgClass: "border-red-500",
-    textClass: "text-sky-400",
+    textClass: "text-red-500",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
