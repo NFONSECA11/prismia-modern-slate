@@ -76,15 +76,13 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
     label: "✨",
     tooltip: "Reagendado diretamente pela IA",
-    bgClass: "border-amber-500",
     textClass: "text-sky-400",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
     label: "✨",
     tooltip: "Agendado diretamente pela IA",
-    bgClass: "border-emerald-500",
-    textClass: "text-sky-400",
+    textClass: "text-emerald-500",
   },
 };
 
