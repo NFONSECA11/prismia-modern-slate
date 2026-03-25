@@ -875,6 +875,21 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
             ))}
           </div>
 
+          {mode === "week" && displayProfessionals.length > 1 && (
+            <Select value={weekProfId} onValueChange={setWeekProfId}>
+              <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
+                <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                <SelectValue placeholder="Profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {displayProfessionals.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border"
