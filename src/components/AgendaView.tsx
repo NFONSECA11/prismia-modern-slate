@@ -759,6 +759,13 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     return Array.from(byId.values());
   }, [professionals, agendaBookings]);
 
+  // Professionals filtered for week view (single selection)
+  const weekProfessionals = useMemo(() => {
+    if (weekProfId === "all") return displayProfessionals;
+    const found = displayProfessionals.find((p) => String(p.id) === weekProfId);
+    return found ? [found] : displayProfessionals;
+  }, [displayProfessionals, weekProfId]);
+
   // When clicking an existing appointment, open the creation modal pre-filled
   const handleAppointmentClick = (booking: BookingRequest) => {
     const dt = getSlotDateTime(booking);
