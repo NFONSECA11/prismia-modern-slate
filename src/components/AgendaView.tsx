@@ -874,18 +874,36 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
           </div>
 
           {mode === "week" && displayProfessionals.length > 1 && (
-            <Select value={weekProfId} onValueChange={setWeekProfId}>
-              <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
-                <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                <SelectValue placeholder="Profissional" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {displayProfessionals.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setWeekProfIdx((i) => Math.max(0, i - 1))}
+                disabled={safeWeekProfIdx === 0}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <Select
+                value={String(safeWeekProfIdx)}
+                onValueChange={(v) => setWeekProfIdx(Number(v))}
+              >
+                <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
+                  <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                  <SelectValue placeholder="Profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {displayProfessionals.map((p, idx) => (
+                    <SelectItem key={p.id} value={String(idx)}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                onClick={() => setWeekProfIdx((i) => Math.min(displayProfessionals.length - 1, i + 1))}
+                disabled={safeWeekProfIdx >= displayProfessionals.length - 1}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
 
           <button
