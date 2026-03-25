@@ -915,7 +915,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
           ) : (
             <WeekView
               weekStart={weekStart}
-              professionals={displayProfessionals}
+              professionals={weekProfessionals}
               bookings={agendaBookings}
               availMap={availMap}
               holidayMap={holidayMap}
