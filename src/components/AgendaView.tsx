@@ -20,7 +20,14 @@ import { BookingRequest, Professional, BookingStatus } from "@/types/booking";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { NewBookingModal, NewBookingSlot, NewBookingFormData } from "@/components/NewBookingModal";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Plus, Ban, Printer, User } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AgendaViewProps {
   onSelectBooking: (booking: BookingRequest) => void;
@@ -656,6 +663,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
+  const [weekProfId, setWeekProfId] = useState<string>("all");
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
 
@@ -750,6 +758,13 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
     return Array.from(byId.values());
   }, [professionals, agendaBookings]);
+
+  // Professionals filtered for week view (single selection)
+  const weekProfessionals = useMemo(() => {
+    if (weekProfId === "all") return displayProfessionals;
+    const found = displayProfessionals.find((p) => String(p.id) === weekProfId);
+    return found ? [found] : displayProfessionals;
+  }, [displayProfessionals, weekProfId]);
 
   // When clicking an existing appointment, open the creation modal pre-filled
   const handleAppointmentClick = (booking: BookingRequest) => {
@@ -860,6 +875,21 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
             ))}
           </div>
 
+          {mode === "week" && displayProfessionals.length > 1 && (
+            <Select value={weekProfId} onValueChange={setWeekProfId}>
+              <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
+                <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                <SelectValue placeholder="Profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {displayProfessionals.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border"
@@ -885,7 +915,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
           ) : (
             <WeekView
               weekStart={weekStart}
-              professionals={displayProfessionals}
+              professionals={weekProfessionals}
               bookings={agendaBookings}
               availMap={availMap}
               holidayMap={holidayMap}
