@@ -663,6 +663,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
+  const [weekProfId, setWeekProfId] = useState<string>("all");
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
 
