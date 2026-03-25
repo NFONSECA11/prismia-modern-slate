@@ -663,7 +663,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
-  const [weekProfId, setWeekProfId] = useState<string>("all");
+  const [weekProfIdx, setWeekProfIdx] = useState<number>(0);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
 
@@ -759,12 +759,10 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     return Array.from(byId.values());
   }, [professionals, agendaBookings]);
 
-  // Professionals filtered for week view (single selection)
-  const weekProfessionals = useMemo(() => {
-    if (weekProfId === "all") return displayProfessionals;
-    const found = displayProfessionals.find((p) => String(p.id) === weekProfId);
-    return found ? [found] : displayProfessionals;
-  }, [displayProfessionals, weekProfId]);
+  // Single professional for week view with index-based navigation
+  const safeWeekProfIdx = Math.min(weekProfIdx, Math.max(displayProfessionals.length - 1, 0));
+  const weekProfessional = displayProfessionals[safeWeekProfIdx] ?? null;
+  const weekProfessionals = weekProfessional ? [weekProfessional] : displayProfessionals;
 
   // When clicking an existing appointment, open the creation modal pre-filled
   const handleAppointmentClick = (booking: BookingRequest) => {
@@ -838,7 +836,10 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
           <h1 className="text-base font-bold">{company?.name || "PrismIA"}</h1>
           <p className="text-xs text-muted-foreground">{activeUnit?.name || "Unidade"}</p>
-          <p className="text-sm font-semibold mt-1">Agenda Semanal — {printPeriodLabel}</p>
+          <p className="text-sm font-semibold mt-1">
+            Agenda Semanal — {printPeriodLabel}
+            {mode === "week" && weekProfessional && ` — ${weekProfessional.name}`}
+          </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">Impresso em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
@@ -876,18 +877,36 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
           </div>
 
           {mode === "week" && displayProfessionals.length > 1 && (
-            <Select value={weekProfId} onValueChange={setWeekProfId}>
-              <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
-                <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                <SelectValue placeholder="Profissional" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {displayProfessionals.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setWeekProfIdx((i) => Math.max(0, i - 1))}
+                disabled={safeWeekProfIdx === 0}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <Select
+                value={String(safeWeekProfIdx)}
+                onValueChange={(v) => setWeekProfIdx(Number(v))}
+              >
+                <SelectTrigger className="h-7 w-[180px] text-xs border-border bg-surface">
+                  <User className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                  <SelectValue placeholder="Profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {displayProfessionals.map((p, idx) => (
+                    <SelectItem key={p.id} value={String(idx)}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                onClick={() => setWeekProfIdx((i) => Math.min(displayProfessionals.length - 1, i + 1))}
+                disabled={safeWeekProfIdx >= displayProfessionals.length - 1}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
 
           <button
