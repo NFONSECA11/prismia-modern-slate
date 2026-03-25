@@ -836,7 +836,10 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
           <h1 className="text-base font-bold">{company?.name || "PrismIA"}</h1>
           <p className="text-xs text-muted-foreground">{activeUnit?.name || "Unidade"}</p>
-          <p className="text-sm font-semibold mt-1">Agenda Semanal — {printPeriodLabel}</p>
+          <p className="text-sm font-semibold mt-1">
+            Agenda Semanal — {printPeriodLabel}
+            {mode === "week" && weekProfessional && ` — ${weekProfessional.name}`}
+          </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">Impresso em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
         </div>
 
