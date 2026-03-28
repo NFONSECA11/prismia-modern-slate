@@ -42,9 +42,17 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
+const DEFAULT_API_BASE_URL = "https://ddr-companion-quality-arch.trycloudflare.com";
+
+function normalizeApiBaseUrl(url: string): string {
+  return url.trim().replace(/\.trycloudflare\.co(?=\/?$)/i, ".trycloudflare.com");
+}
+
+const resolvedApiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL);
+
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: "https://ddr-companion-quality-arch.trycloudflare.com",
+  baseURL: resolvedApiBaseUrl,
   timeout: 30_000,
   withCredentials: true,
   headers: {
