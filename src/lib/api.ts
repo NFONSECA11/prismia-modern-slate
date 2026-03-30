@@ -1,6 +1,11 @@
 import axios from "axios";
 
 const AUTH_TOKEN_STORAGE_KEYS = ["auth_token", "token", "authToken", "access", "access_token", "key"] as const;
+const API_BASE_URL_STORAGE_KEY = "api_base_url";
+
+type RetryableRequestConfig = {
+  __retriedApiBaseUrls?: string[];
+};
 
 function readPersistedAuthToken(): string | null {
   for (const key of AUTH_TOKEN_STORAGE_KEYS) {
@@ -48,7 +53,61 @@ function normalizeApiBaseUrl(url: string): string {
   return url.trim().replace(/\.trycloudflare\.co(?=\/?$)/i, ".trycloudflare.com");
 }
 
-const resolvedApiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL);
+function isTryCloudflareUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname.endsWith(".trycloudflare.com");
+  } catch {
+    return false;
+  }
+}
+
+function readPersistedApiBaseUrl(): string | null {
+  const persisted = localStorage.getItem(API_BASE_URL_STORAGE_KEY);
+  return persisted ? normalizeApiBaseUrl(persisted) : null;
+}
+
+function persistApiBaseUrl(url: string) {
+  localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalizeApiBaseUrl(url));
+}
+
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  ? normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
+  : null;
+
+function resolveApiBaseUrl(): string {
+  const persistedApiBaseUrl = readPersistedApiBaseUrl();
+  const shouldPreferDefaultTunnel =
+    Boolean(envApiBaseUrl) &&
+    isTryCloudflareUrl(envApiBaseUrl!) &&
+    isTryCloudflareUrl(DEFAULT_API_BASE_URL) &&
+    envApiBaseUrl !== DEFAULT_API_BASE_URL;
+
+  if (persistedApiBaseUrl && !isTryCloudflareUrl(persistedApiBaseUrl)) {
+    return persistedApiBaseUrl;
+  }
+
+  if (envApiBaseUrl && !shouldPreferDefaultTunnel) {
+    return envApiBaseUrl;
+  }
+
+  if (persistedApiBaseUrl === DEFAULT_API_BASE_URL) {
+    return persistedApiBaseUrl;
+  }
+
+  return DEFAULT_API_BASE_URL;
+}
+
+function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
+  return Array.from(
+    new Set(
+      [currentBaseUrl, DEFAULT_API_BASE_URL, readPersistedApiBaseUrl(), envApiBaseUrl]
+        .filter((value): value is string => Boolean(value))
+        .map(normalizeApiBaseUrl)
+    )
+  );
+}
+
+let resolvedApiBaseUrl = resolveApiBaseUrl();
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
@@ -69,6 +128,8 @@ function buildAuthHeader(token: string) {
 
 // Interceptor: inject Auth Token + CSRF on mutating requests
 api.interceptors.request.use((config) => {
+  config.baseURL = normalizeApiBaseUrl(String(config.baseURL ?? resolvedApiBaseUrl));
+
   const token = _authToken || readPersistedAuthToken();
   if (token) {
     _authToken = token;
@@ -92,6 +153,11 @@ api.interceptors.request.use((config) => {
 // Interceptor: sanitize tunnel errors + handle 401/403
 api.interceptors.response.use(
   (res) => {
+    const successfulBaseUrl = normalizeApiBaseUrl(String(res.config?.baseURL ?? resolvedApiBaseUrl));
+    resolvedApiBaseUrl = successfulBaseUrl;
+    api.defaults.baseURL = successfulBaseUrl;
+    persistApiBaseUrl(successfulBaseUrl);
+
     const contentType = String((res.headers as any)?.["content-type"] ?? "").toLowerCase();
     if (contentType.includes("text/html") && String(res.config?.url ?? "").includes("/api/")) {
       return Promise.reject(new Error("API retornou HTML em vez de JSON. Verifique se o túnel está ativo."));
@@ -99,15 +165,17 @@ api.interceptors.response.use(
     return res;
   },
   (err) => {
+    const config = (err?.config ?? {}) as typeof err.config & RetryableRequestConfig;
     const status = err?.response?.status;
     const contentType = String(err?.response?.headers?.["content-type"] ?? "").toLowerCase();
     const rawData = err?.response?.data;
     const isHtml =
       contentType.includes("text/html") ||
       (typeof rawData === "string" && /<!doctype|<html|<body/i.test(rawData));
+    const isNetworkError = err?.code === "ERR_NETWORK";
 
     // 401 → redirect to login (skip if already on auth endpoints)
-    const url = String(err?.config?.url ?? "");
+    const url = String(config?.url ?? "");
     if (status === 401 && !url.includes("/api/auth/")) {
       localStorage.removeItem("auth_token");
       if (window.location.pathname !== "/login") {
@@ -115,11 +183,32 @@ api.interceptors.response.use(
       }
     }
 
+    if ((isNetworkError || isHtml) && url.includes("/api/")) {
+      const triedBaseUrls = new Set(config.__retriedApiBaseUrls ?? []);
+      const currentBaseUrl = normalizeApiBaseUrl(String(config.baseURL ?? resolvedApiBaseUrl));
+      triedBaseUrls.add(currentBaseUrl);
+
+      const nextBaseUrl = getApiBaseUrlCandidates(currentBaseUrl).find((candidate) => !triedBaseUrls.has(candidate));
+
+      if (nextBaseUrl) {
+        resolvedApiBaseUrl = nextBaseUrl;
+        api.defaults.baseURL = nextBaseUrl;
+
+        console.warn("[API] retrying with fallback base URL:", nextBaseUrl);
+
+        return api.request({
+          ...config,
+          baseURL: nextBaseUrl,
+          __retriedApiBaseUrls: [...triedBaseUrls],
+        });
+      }
+    }
+
     const msg = isHtml
       ? `Túnel indisponível (${status ?? "sem status"})`
       : err?.response?.data?.detail ?? err?.response?.data?.error ?? err?.message ?? "Erro desconhecido";
 
-    console.error("[API]", url, "→", status, msg);
+    console.error("[API]", url, "→", status, msg, "baseURL:", config.baseURL ?? resolvedApiBaseUrl);
     return Promise.reject(err);
   }
 );
