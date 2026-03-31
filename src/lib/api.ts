@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const AUTH_TOKEN_STORAGE_KEYS = ["auth_token", "token", "authToken", "access", "access_token", "key"] as const;
-const API_BASE_URL_STORAGE_KEY = "api_base_url";
+const API_BASE_URL_STORAGE_KEY = "api_base_url_v2";
 
 type RetryableRequestConfig = {
   __retriedApiBaseUrls?: string[];
@@ -70,37 +70,37 @@ function persistApiBaseUrl(url: string) {
   localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalizeApiBaseUrl(url));
 }
 
-const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const rawEnvApiBaseUrl = import.meta.env.VITE_API_BASE_URL
   ? normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
   : null;
 
+const envApiBaseUrl = rawEnvApiBaseUrl && !isTryCloudflareUrl(rawEnvApiBaseUrl) ? rawEnvApiBaseUrl : null;
+
 function resolveApiBaseUrl(): string {
   const persistedApiBaseUrl = readPersistedApiBaseUrl();
-  const shouldPreferDefaultTunnel =
-    Boolean(envApiBaseUrl) &&
-    isTryCloudflareUrl(envApiBaseUrl!) &&
-    isTryCloudflareUrl(DEFAULT_API_BASE_URL) &&
-    envApiBaseUrl !== DEFAULT_API_BASE_URL;
 
   if (persistedApiBaseUrl && !isTryCloudflareUrl(persistedApiBaseUrl)) {
     return persistedApiBaseUrl;
   }
 
-  if (envApiBaseUrl && !shouldPreferDefaultTunnel) {
+  if (envApiBaseUrl) {
     return envApiBaseUrl;
   }
 
-  if (persistedApiBaseUrl === DEFAULT_API_BASE_URL) {
-    return persistedApiBaseUrl;
+  if (isTryCloudflareUrl(DEFAULT_API_BASE_URL)) {
+    if (persistedApiBaseUrl && persistedApiBaseUrl !== DEFAULT_API_BASE_URL) {
+      localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
+    }
+    return DEFAULT_API_BASE_URL;
   }
 
-  return DEFAULT_API_BASE_URL;
+  return persistedApiBaseUrl ?? rawEnvApiBaseUrl ?? DEFAULT_API_BASE_URL;
 }
 
 function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
   return Array.from(
     new Set(
-      [currentBaseUrl, DEFAULT_API_BASE_URL, readPersistedApiBaseUrl(), envApiBaseUrl]
+      [currentBaseUrl, DEFAULT_API_BASE_URL, readPersistedApiBaseUrl(), rawEnvApiBaseUrl]
         .filter((value): value is string => Boolean(value))
         .map(normalizeApiBaseUrl)
     )
