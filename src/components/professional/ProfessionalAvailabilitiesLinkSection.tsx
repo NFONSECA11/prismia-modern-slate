@@ -332,25 +332,25 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                               </button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-7 gap-1">
+                          <div className="grid grid-cols-7 gap-2">
                             {DAY_KEYS.map((d) => {
                               const slots = item.weekly?.[d] ?? [];
                               return (
                                 <div
                                   key={d}
-                                  className="rounded-md border border-border px-1.5 py-1 min-h-[3.5rem]"
+                                  className="rounded-md border border-border px-2 py-2 min-h-[5rem]"
                                   style={{ background: "hsl(var(--surface-elevated))" }}
                                 >
-                                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-center">
+                                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
                                     {DAY_LABELS[d]}
                                   </div>
-                                  <div className="space-y-0.5 mt-1">
+                                  <div className="space-y-1 mt-1.5">
                                     {slots.length === 0 ? (
-                                      <div className="text-[10px] text-muted-foreground/60 text-center">—</div>
+                                      <div className="text-sm text-muted-foreground/60 text-center">—</div>
                                     ) : (
                                       slots.map((s, i) => (
-                                        <div key={i} className="text-[10px] font-mono text-foreground text-center">
-                                          {fmt(s.start)}–{fmt(s.end)}
+                                        <div key={i} className="text-sm font-mono text-foreground text-center leading-tight">
+                                          {fmt(s.start)}<br />{fmt(s.end)}
                                         </div>
                                       ))
                                     )}
