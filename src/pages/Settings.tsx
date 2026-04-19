@@ -35,6 +35,7 @@ import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
 import ProfessionalUnitsLinkSection from "@/components/professional/ProfessionalUnitsLinkSection";
+import ProfessionalProceduresLinkSection from "@/components/professional/ProfessionalProceduresLinkSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
