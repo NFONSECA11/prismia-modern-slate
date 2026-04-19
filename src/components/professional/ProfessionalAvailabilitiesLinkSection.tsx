@@ -13,6 +13,15 @@ type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type Slot = { start: string; end: string };
 type Weekly = Partial<Record<DayKey, Slot[]>>;
 
+interface PuOption {
+  id: number;
+  label: string;
+  professional_id: number;
+  professional_name: string;
+  unit_id: number;
+  unit_name: string;
+}
+
 interface Availability {
   id: number;
   company_id?: number;
@@ -39,37 +48,10 @@ const unpack = (data: any): any[] => {
   return [];
 };
 
-const normalize = (item: any): Availability => {
-  const puId = Number(
-    item?.professional_unit_id ??
-    item?.professional_unit ??
-    (typeof item?.professional_unit === "object" ? item?.professional_unit?.id : 0) ??
-    0
-  );
-  return {
-    id: Number(item?.id),
-    company_id: item?.company_id,
-    professional_unit_id: puId,
-    professional_unit: puId,
-    professional_name:
-      item?.professional_unit__professional__name ??
-      item?.professional_name ??
-      item?.professional__name,
-    unit_name:
-      item?.professional_unit__unit__name ??
-      item?.unit_name ??
-      item?.unit__name,
-    slot_minutes: Number(item?.slot_minutes ?? 60),
-    buffer_minutes: Number(item?.buffer_minutes ?? 0),
-    weekly: (item?.weekly && typeof item.weekly === "object") ? item.weekly as Weekly : {},
-    is_active: item?.is_active,
-  };
-};
-
 const fmt = (t: string) => (t || "").slice(0, 5);
 
 export default function ProfessionalAvailabilitiesLinkSection() {
-  const { company, units, isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { company, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
   const [openProfName, setOpenProfName] = useState<string | null>(null);
@@ -79,45 +61,29 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const [newBuffer, setNewBuffer] = useState<number>(0);
   const [newWeekly, setNewWeekly] = useState<Weekly>({});
 
-  // Profissionais (global + por unidade) só para enriquecer o select de PU no formulário
-  const { data: professionalsCatalog = [] } = useQuery<any[]>({
-    queryKey: ["professionals-catalog-availabilities", units.map((u) => u.id).join(",")],
+  // Fonte única: PUs já enriquecidos com nome do profissional e da unidade
+  const { data: puOptions = [] } = useQuery<PuOption[]>({
+    queryKey: ["professional-units-as-options"],
     queryFn: async () => {
-      const seen = new Set<number>();
-      const all: any[] = [];
-      const push = (list: any[]) => {
-        for (const p of list) {
-          const id = Number(p?.id);
-          if (id && !seen.has(id)) { seen.add(id); all.push(p); }
-        }
-      };
-      try {
-        const { data } = await api.get(`/api/booking/professionals/`, { params: { page_size: 500 } });
-        push(unpack(data));
-      } catch {}
-      if (units.length > 0) {
-        const reqs = units.map((u) =>
-          api.get(`/api/booking/professionals/`, { params: { unit: u.id, page_size: 500 } })
-            .then((r) => unpack(r.data))
-            .catch(() => [])
-        );
-        const results = await Promise.all(reqs);
-        for (const list of results) push(list);
-      }
-      return all;
+      const { data } = await api.get(`/api/booking/professional-units/as-options/`);
+      return unpack(data).map((o: any) => ({
+        id: Number(o?.id),
+        label: String(o?.label ?? ""),
+        professional_id: Number(o?.professional_id),
+        professional_name: String(o?.professional_name ?? ""),
+        unit_id: Number(o?.unit_id),
+        unit_name: String(o?.unit_name ?? ""),
+      })).filter((o) => o.id);
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  // Vínculos professional_unit (todos) — para popular o select do form
-  const { data: allPuLinks = [] } = useQuery<any[]>({
-    queryKey: ["professional-units-all-availabilities"],
-    queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professional-units/`, { params: { page_size: 1000 } });
-      return unpack(data);
-    },
-    enabled: !isAuthLoading && isAuthenticated,
-  });
+  // Map id -> opção para enriquecer availabilities sem nomes
+  const puById = useMemo(() => {
+    const map = new Map<number, PuOption>();
+    for (const o of puOptions) map.set(o.id, o);
+    return map;
+  }, [puOptions]);
 
   const queryKey = ["professional-availabilities-all"];
 
@@ -125,68 +91,67 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     queryKey,
     queryFn: async () => {
       const { data } = await api.get(`/api/booking/professional-availabilities/`, { params: { page_size: 500 } });
-      const list = unpack(data).map(normalize).filter((it) => it.id);
-      console.info("[professional-availabilities] count:", list.length);
-      return list;
+      return unpack(data).map((item: any): Availability => {
+        const puId = Number(
+          item?.professional_unit_id ??
+          item?.professional_unit ??
+          (typeof item?.professional_unit === "object" ? item?.professional_unit?.id : 0) ??
+          0
+        );
+        return {
+          id: Number(item?.id),
+          company_id: item?.company_id,
+          professional_unit_id: puId,
+          professional_unit: puId,
+          professional_name:
+            item?.professional_unit__professional__name ??
+            item?.professional_name ??
+            item?.professional__name,
+          unit_name:
+            item?.professional_unit__unit__name ??
+            item?.unit_name ??
+            item?.unit__name,
+          slot_minutes: Number(item?.slot_minutes ?? 60),
+          buffer_minutes: Number(item?.buffer_minutes ?? 0),
+          weekly: (item?.weekly && typeof item.weekly === "object") ? item.weekly as Weekly : {},
+          is_active: item?.is_active,
+        };
+      }).filter((it) => it.id);
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
+  // Agrupa por nome de profissional usando puOptions como base
   const professionalGroups = useMemo(() => {
     const byName = new Map<string, { profName: string; list: Availability[] }>();
 
-    for (const link of allPuLinks) {
-      if (link?.is_active === false) continue;
-      const profV = link?.professional ?? link?.professional_id;
-      const profName =
-        link?.professional_name ??
-        link?.professional__name ??
-        (typeof profV === "object" ? profV?.name : undefined);
-
-      if (!profName) continue;
-      if (!byName.has(profName)) byName.set(profName, { profName, list: [] });
-    }
-
-    for (const prof of professionalsCatalog) {
-      const profName = String(prof?.name ?? "").trim();
-      if (profName && !byName.has(profName)) byName.set(profName, { profName, list: [] });
+    // Garante grupos para todos os profissionais com PU
+    for (const o of puOptions) {
+      if (!o.professional_name) continue;
+      if (!byName.has(o.professional_name)) {
+        byName.set(o.professional_name, { profName: o.professional_name, list: [] });
+      }
     }
 
     for (const it of items) {
-      const profName = it.professional_name ?? `#${it.professional_unit_id}`;
+      const enriched = puById.get(it.professional_unit_id);
+      const profName = enriched?.professional_name ?? it.professional_name ?? `#${it.professional_unit_id}`;
+      const unitName = enriched?.unit_name ?? it.unit_name;
       const group = byName.get(profName) ?? { profName, list: [] };
-      group.list.push(it);
+      group.list.push({ ...it, professional_name: profName, unit_name: unitName });
       byName.set(profName, group);
     }
 
     return Array.from(byName.values()).sort((a, b) => a.profName.localeCompare(b.profName));
-  }, [allPuLinks, professionalsCatalog, items]);
+  }, [puOptions, puById, items]);
 
+  // PUs disponíveis para um profissional específico (apenas unidade, prof já é fixo pelo grupo)
   const puOptionsByProf = useMemo(() => {
-    return (profName: string) => {
-      const profId = professionalsCatalog.find((p: any) => p?.name === profName)?.id;
-      return allPuLinks
-        .filter((l: any) => {
-          if (l?.is_active === false) return false;
-          const pid = typeof l?.professional === "object" ? l?.professional?.id : (l?.professional ?? l?.professional_id);
-          const linkProfName =
-            l?.professional_name ??
-            l?.professional__name ??
-            (typeof l?.professional === "object" ? l?.professional?.name : undefined);
-          return Number(pid) === Number(profId) || linkProfName === profName;
-        })
-        .map((l: any) => {
-          const unitV = l?.unit ?? l?.unit_id;
-          const unitId = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
-          const unitName =
-            l?.unit_name ?? l?.unit__name ??
-            (typeof unitV === "object" ? unitV?.name : undefined) ??
-            units.find((u) => u.id === unitId)?.name ?? `#${unitId}`;
-          return { id: Number(l?.id), unitName };
-        })
-        .filter((o) => o.id);
-    };
-  }, [allPuLinks, professionalsCatalog, units]);
+    return (profName: string) =>
+      puOptions
+        .filter((o) => o.professional_name === profName)
+        .map((o) => ({ id: o.id, unitName: o.unit_name }));
+  }, [puOptions]);
 
   const createAvailability = useMutation({
     mutationFn: async (payload: {
