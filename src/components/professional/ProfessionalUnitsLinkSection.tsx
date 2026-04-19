@@ -13,9 +13,13 @@ import { toast } from "sonner";
 interface ProfessionalUnit {
   id: number;
   professional: number;
+  professional_id?: number;
   professional_name?: string;
+  professional__name?: string;
   unit: number;
+  unit_id?: number;
   unit_name?: string;
+  unit__name?: string;
   is_active?: boolean;
   priority?: number;
 }
@@ -24,11 +28,12 @@ const unpack = (data: any): any[] => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.results)) return data.results;
   if (Array.isArray(data?.data)) return data.data;
+  if (data?.result) return unpack(data.result);
   return [];
 };
 
 export default function ProfessionalUnitsLinkSection() {
-  const { company, units, activeUnit } = useAuth();
+  const { company, units, activeUnit, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
@@ -45,6 +50,7 @@ export default function ProfessionalUnitsLinkSection() {
       });
       return unpack(data);
     },
+    enabled: !isAuthLoading && isAuthenticated && !!activeUnit?.id,
   });
 
   // Aggregate links: try unfiltered first, then per professional
@@ -74,8 +80,18 @@ export default function ProfessionalUnitsLinkSection() {
       }
       return all;
     },
-    enabled: professionals.length > 0,
+    enabled: !isAuthLoading && isAuthenticated,
   });
+
+  const normalizedItems = items
+    .map((item) => ({
+      ...item,
+      professional: item.professional ?? item.professional_id ?? 0,
+      professional_name: item.professional_name ?? item.professional__name,
+      unit: item.unit ?? item.unit_id ?? 0,
+      unit_name: item.unit_name ?? item.unit__name,
+    }))
+    .filter((item) => item.id && item.professional && item.unit);
 
   const createLink = useMutation({
     mutationFn: async (payload: { professional: number; unit: number; priority: number }) => {
@@ -160,12 +176,12 @@ export default function ProfessionalUnitsLinkSection() {
           <span />
         </div>
 
-        {isLoading ? (
+        {isAuthLoading || isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : items.length === 0 ? (
+        ) : normalizedItems.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhum vínculo encontrado.</p>
         ) : (
-          items.map((item) => {
+          normalizedItems.map((item) => {
             const active = item.is_active !== false;
             return (
               <div

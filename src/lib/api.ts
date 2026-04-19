@@ -47,7 +47,11 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-const DEFAULT_API_BASE_URL = "https://bracelet-facts-anderson-executive.trycloudflare.com";
+const DEFAULT_API_BASE_URL = "https://algebra-kruger-husband-guitar.trycloudflare.com";
+const FALLBACK_API_BASE_URLS = [
+  DEFAULT_API_BASE_URL,
+  "https://bracelet-facts-anderson-executive.trycloudflare.com",
+];
 
 function normalizeApiBaseUrl(url: string): string {
   return url.trim().replace(/\.trycloudflare\.co(?=\/?$)/i, ".trycloudflare.com");
@@ -100,7 +104,7 @@ function resolveApiBaseUrl(): string {
 function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
   return Array.from(
     new Set(
-      [currentBaseUrl, DEFAULT_API_BASE_URL, readPersistedApiBaseUrl(), rawEnvApiBaseUrl]
+      [currentBaseUrl, readPersistedApiBaseUrl(), rawEnvApiBaseUrl, ...FALLBACK_API_BASE_URLS]
         .filter((value): value is string => Boolean(value))
         .map(normalizeApiBaseUrl)
     )
