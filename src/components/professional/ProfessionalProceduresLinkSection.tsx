@@ -85,10 +85,12 @@ export default function ProfessionalProceduresLinkSection() {
   });
 
   const { data: procedures = [] } = useQuery<any[]>({
-    queryKey: ["procedures-all"],
+    queryKey: ["procedures-all-settings"],
     queryFn: async () => {
-      const { data } = await api.get(`/api/booking/procedures/`, { params: { page_size: 500 } });
-      return unpack(data);
+      const { data } = await api.get(`/api/settings/procedures/`, { params: { page_size: 500 } });
+      const list = unpack(data);
+      console.info("[procedures-all] count:", list.length);
+      return list;
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
