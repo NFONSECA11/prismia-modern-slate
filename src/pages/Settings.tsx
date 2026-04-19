@@ -657,25 +657,12 @@ export default function Settings() {
                   className="rounded-lg border border-border p-3 mt-2 space-y-2"
                   style={{ background: "hsl(var(--surface-elevated))" }}
                 >
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
                       <div className="h-8 px-2 flex items-center text-xs text-foreground rounded-md border border-border bg-background/60 truncate">
                         {company?.name ?? "—"}
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-                      <select
-                        value={newProfUnitId}
-                        onChange={(e) => setNewProfUnitId(e.target.value ? Number(e.target.value) : "")}
-                        className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
-                      >
-                        <option value="">Selecione…</option>
-                        {units.map((u) => (
-                          <option key={u.id} value={u.id}>{u.name}</option>
-                        ))}
-                      </select>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
@@ -708,8 +695,8 @@ export default function Settings() {
                     <Button
                       size="sm"
                       className="h-8 text-xs"
-                      disabled={!newProfName.trim() || !newProfUnitId || createProfessional.isPending}
-                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: newProfUnitId as number, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
+                      disabled={!newProfName.trim() || !activeUnit?.id || createProfessional.isPending}
+                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: activeUnit!.id, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
                     >
                       {createProfessional.isPending ? "…" : "Salvar"}
                     </Button>
