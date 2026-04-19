@@ -112,7 +112,9 @@ export default function ProfessionalProceduresLinkSection() {
       // 1) Global
       try {
         const { data } = await api.get(`/api/booking/professional-procedures/`, { params: { page_size: 500 } });
-        const list = unpack(data).map(normalizeLink).filter((it) => it.id && it.professional && it.procedure);
+        const raw = unpack(data);
+        console.info("[professional-procedures] global raw:", raw.slice(0, 3), "totalRaw:", raw.length);
+        const list = raw.map(normalizeLink).filter((it) => it.id);
         console.info("[professional-procedures] global count:", list.length);
         pushList(list);
       } catch (e) {
@@ -128,7 +130,7 @@ export default function ProfessionalProceduresLinkSection() {
         );
         const results = await Promise.all(reqs);
         for (const list of results) {
-          pushList(list.filter((it) => it.id && it.professional && it.procedure));
+          pushList(list.filter((it) => it.id));
         }
       }
 
@@ -141,7 +143,7 @@ export default function ProfessionalProceduresLinkSection() {
         );
         const results = await Promise.all(reqs);
         for (const list of results) {
-          pushList(list.filter((it) => it.id && it.professional && it.procedure));
+          pushList(list.filter((it) => it.id));
         }
       }
 
