@@ -373,7 +373,7 @@ export default function ProfessionalProceduresLinkSection() {
                 disabled={!newProfId || !newUnitId || !newProcId || createLink.isPending}
                 onClick={() => createLink.mutate({
                   professional: newProfId as number,
-                  unit: newUnitId as number,
+                  professional_unit: newUnitId as number,
                   procedure: newProcId as number,
                 })}
               >
