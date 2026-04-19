@@ -720,6 +720,8 @@ export default function Settings() {
 
           <ProfessionalUnitsLinkSection />
 
+          <ProfessionalProceduresLinkSection />
+
         </section>
 
         {/* ─── 5) Modo e validação final ─── */}
