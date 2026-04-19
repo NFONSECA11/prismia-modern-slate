@@ -34,11 +34,10 @@ import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
-import ProfessionalSubSectionListCard from "@/components/professional/ProfessionalSubSectionListCard";
-import ProfessionalUnitsSubSection from "@/components/professional/ProfessionalUnitsSubSection";
-import ProfessionalSpecialtiesSubSection from "@/components/professional/ProfessionalSpecialtiesSubSection";
-import ProfessionalAvailabilitiesSubSection from "@/components/professional/ProfessionalAvailabilitiesSubSection";
-import ProfessionalTimeOffsSubSection from "@/components/professional/ProfessionalTimeOffsSubSection";
+import ProfessionalUnitsSection from "@/components/professional/ProfessionalUnitsSection";
+import ProfessionalSpecialtiesSection from "@/components/professional/ProfessionalSpecialtiesSection";
+import ProfessionalAvailabilitiesSection from "@/components/professional/ProfessionalAvailabilitiesSection";
+import ProfessionalTimeOffsSection from "@/components/professional/ProfessionalTimeOffsSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -702,45 +701,13 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
 
-          <ProfessionalSubSectionListCard
-            icon={MapPin}
-            title="Profissionais → Unidades"
-            description="Unidades vinculadas a cada profissional"
-            professionals={(professionals as any[]) ?? []}
-            isLoading={!activeUnit || isLoadingProfessionals}
-            emptyMessage="Nenhum profissional encontrado."
-            renderSubSection={(professionalId) => <ProfessionalUnitsSubSection professionalId={professionalId} />}
-          />
+          <ProfessionalUnitsSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
 
-          <ProfessionalSubSectionListCard
-            icon={Layers}
-            title="Profissionais → Especialidades"
-            description="Especialidades disponíveis por profissional"
-            professionals={(professionals as any[]) ?? []}
-            isLoading={!activeUnit || isLoadingProfessionals}
-            emptyMessage="Nenhum profissional encontrado."
-            renderSubSection={(professionalId) => <ProfessionalSpecialtiesSubSection professionalId={professionalId} />}
-          />
+          <ProfessionalSpecialtiesSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
 
-          <ProfessionalSubSectionListCard
-            icon={Palette}
-            title="Profissionais → Disponibilidades"
-            description="Horários e dias de disponibilidade"
-            professionals={(professionals as any[]) ?? []}
-            isLoading={!activeUnit || isLoadingProfessionals}
-            emptyMessage="Nenhum profissional encontrado."
-            renderSubSection={(professionalId) => <ProfessionalAvailabilitiesSubSection professionalId={professionalId} />}
-          />
+          <ProfessionalAvailabilitiesSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
 
-          <ProfessionalSubSectionListCard
-            icon={Settings2}
-            title="Profissionais → Adição / Bloqueios"
-            description="Períodos de adição e bloqueio na agenda"
-            professionals={(professionals as any[]) ?? []}
-            isLoading={!activeUnit || isLoadingProfessionals}
-            emptyMessage="Nenhum profissional encontrado."
-            renderSubSection={(professionalId) => <ProfessionalTimeOffsSubSection professionalId={professionalId} />}
-          />
+          <ProfessionalTimeOffsSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
           
         </section>
 
