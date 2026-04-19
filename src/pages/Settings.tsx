@@ -653,45 +653,67 @@ export default function Settings() {
               )}
 
               {showNewProfessional ? (
-                <div className="flex items-center gap-2 pt-2">
-                  <select
-                    value={newProfUnitId}
-                    onChange={(e) => setNewProfUnitId(e.target.value ? Number(e.target.value) : "")}
-                    className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground z-50"
-                  >
-                    <option value="">Unidade</option>
-                    {units.map((u) => (
-                      <option key={u.id} value={u.id}>{u.name}</option>
-                    ))}
-                  </select>
-                  <Input
-                    placeholder="Nome"
-                    value={newProfName}
-                    onChange={(e) => setNewProfName(e.target.value)}
-                    className="h-8 text-sm flex-1"
-                  />
-                  <Input
-                    placeholder="Código"
-                    value={newProfCode}
-                    onChange={(e) => setNewProfCode(e.target.value)}
-                    className="h-8 text-sm w-24"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8 text-xs"
-                    disabled={!newProfName.trim() || !newProfUnitId || createProfessional.isPending}
-                    onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: newProfUnitId as number, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
-                  >
-                    {createProfessional.isPending ? "…" : "Salvar"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 text-xs"
-                    onClick={() => { setShowNewProfessional(false); setNewProfName(""); setNewProfCode(""); }}
-                  >
-                    Cancelar
-                  </Button>
+                <div
+                  className="rounded-lg border border-border p-3 mt-2 space-y-2"
+                  style={{ background: "hsl(var(--surface-elevated))" }}
+                >
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
+                      <div className="h-8 px-2 flex items-center text-xs text-foreground rounded-md border border-border bg-background/60 truncate">
+                        {company?.name ?? "—"}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
+                      <select
+                        value={newProfUnitId}
+                        onChange={(e) => setNewProfUnitId(e.target.value ? Number(e.target.value) : "")}
+                        className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                      >
+                        <option value="">Selecione…</option>
+                        {units.map((u) => (
+                          <option key={u.id} value={u.id}>{u.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
+                      <Input
+                        placeholder="Nome"
+                        value={newProfName}
+                        onChange={(e) => setNewProfName(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
+                      <Input
+                        placeholder="Ex: ana"
+                        value={newProfCode}
+                        onChange={(e) => setNewProfCode(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => { setShowNewProfessional(false); setNewProfName(""); setNewProfCode(""); }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs"
+                      disabled={!newProfName.trim() || !newProfUnitId || createProfessional.isPending}
+                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: newProfUnitId as number, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
+                    >
+                      {createProfessional.isPending ? "…" : "Salvar"}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <button
