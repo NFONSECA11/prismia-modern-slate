@@ -130,7 +130,7 @@ export default function ProfessionalProceduresLinkSection() {
         );
         const results = await Promise.all(reqs);
         for (const list of results) {
-          pushList(list.filter((it) => it.id && it.professional && it.procedure));
+          pushList(list.filter((it) => it.id));
         }
       }
 
@@ -143,7 +143,7 @@ export default function ProfessionalProceduresLinkSection() {
         );
         const results = await Promise.all(reqs);
         for (const list of results) {
-          pushList(list.filter((it) => it.id && it.professional && it.procedure));
+          pushList(list.filter((it) => it.id));
         }
       }
 
