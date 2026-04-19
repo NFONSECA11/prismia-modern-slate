@@ -334,10 +334,11 @@ export default function ProfessionalProceduresLinkSection() {
                 <select
                   value={newUnitId}
                   onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
-                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                  disabled={!newProfId}
+                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground disabled:opacity-50"
                 >
-                  <option value="">Selecione…</option>
-                  {units.map((u) => (
+                  <option value="">{newProfId ? "Selecione…" : "Escolha o profissional"}</option>
+                  {availableUnits.map((u) => (
                     <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
