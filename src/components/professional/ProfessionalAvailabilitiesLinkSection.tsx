@@ -66,7 +66,9 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     queryKey: ["professional-units-as-options"],
     queryFn: async () => {
       const { data } = await api.get(`/api/booking/professional-units/as-options/`);
-      return unpack(data).map((o: any) => ({
+      const raw = unpack(data);
+      console.info("[pu-as-options] raw response:", raw);
+      const mapped = raw.map((o: any) => ({
         id: Number(o?.id),
         label: String(o?.label ?? ""),
         professional_id: Number(o?.professional_id),
@@ -74,6 +76,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         unit_id: Number(o?.unit_id),
         unit_name: String(o?.unit_name ?? ""),
       })).filter((o) => o.id);
+      console.info("[pu-as-options] mapped:", mapped);
+      return mapped;
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
