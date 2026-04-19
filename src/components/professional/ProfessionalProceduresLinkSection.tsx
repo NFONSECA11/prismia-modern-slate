@@ -66,11 +66,12 @@ const normalizeLink = (item: any): ProfessionalProcedure => {
 };
 
 export default function ProfessionalProceduresLinkSection() {
-  const { units, isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { company, units, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
   const [showNew, setShowNew] = useState(false);
   const [newProfId, setNewProfId] = useState<number | "">("");
+  const [newUnitId, setNewUnitId] = useState<number | "">("");
   const [newProcId, setNewProcId] = useState<number | "">("");
 
   // Catalogs
