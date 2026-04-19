@@ -191,11 +191,6 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const createAvailability = useMutation({
     mutationFn: async (payload: {
       professional_unit: number;
-      professional_unit_id?: number;
-      professional?: number;
-      professional_id?: number;
-      company?: number;
-      company_id?: number;
       slot_minutes: number;
       buffer_minutes: number;
       weekly: Weekly;
@@ -208,29 +203,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         weekly: payload.weekly,
         is_active: true,
       };
-      if (payload.company_id ?? payload.company) {
-        body.company = Number(payload.company_id ?? payload.company);
-      }
-      if (payload.professional_id ?? payload.professional) {
-        body.professional = Number(payload.professional_id ?? payload.professional);
-      }
-
       console.info("[create-availability] post payload:", body);
       const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
-
-      const createdId = Number(data?.id ?? 0);
-      const professionalId = Number(payload.professional_id ?? payload.professional ?? 0);
-      const companyId = Number(payload.company_id ?? payload.company ?? 0);
-      if (createdId && professionalId) {
-        const patchBody: Record<string, any> = {
-          professional: professionalId,
-          professional_unit: payload.professional_unit,
-        };
-        if (companyId) patchBody.company = companyId;
-        console.info("[create-availability] patch payload:", patchBody);
-        await api.patch(`/api/booking/professional-availabilities/${createdId}/`, patchBody);
-      }
-
       return data;
     },
     onSuccess: () => {
@@ -510,24 +484,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                             className="h-8 text-xs"
                             disabled={!newPuId || Object.keys(newWeekly).length === 0 || createAvailability.isPending}
                             onClick={() => {
-                              const selectedLink = allPuLinks.find((l: any) => Number(l?.id) === Number(newPuId));
-                              const fallbackProfessionalId = professionalsCatalog.find((p: any) => p?.name === profName)?.id;
-                              const professionalId =
-                                (typeof selectedLink?.professional === "object" ? selectedLink?.professional?.id : selectedLink?.professional) ??
-                                selectedLink?.professional_id ??
-                                fallbackProfessionalId;
-                              const companyId =
-                                (typeof selectedLink?.company === "object" ? selectedLink?.company?.id : selectedLink?.company) ??
-                                selectedLink?.company_id ??
-                                company?.id;
-
                               createAvailability.mutate({
                                 professional_unit: newPuId as number,
-                                professional_unit_id: newPuId as number,
-                                professional: professionalId ? Number(professionalId) : undefined,
-                                professional_id: professionalId ? Number(professionalId) : undefined,
-                                company: companyId ? Number(companyId) : undefined,
-                                company_id: companyId ? Number(companyId) : undefined,
                                 slot_minutes: newSlot,
                                 buffer_minutes: newBuffer,
                                 weekly: newWeekly,
