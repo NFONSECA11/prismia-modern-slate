@@ -12,6 +12,8 @@ import { toast } from "sonner";
 
 interface ProfessionalUnit {
   id: number;
+  company_id?: number;
+  company_name?: string;
   professional: number;
   professional_id?: number;
   professional_name?: string;
@@ -32,6 +34,29 @@ const unpack = (data: any): any[] => {
   return [];
 };
 
+const normalizeLink = (item: any): ProfessionalUnit => {
+  const professionalValue = item?.professional ?? item?.professional_id;
+  const unitValue = item?.unit ?? item?.unit_id;
+  const professional = typeof professionalValue === "object" ? Number(professionalValue?.id ?? 0) : Number(professionalValue ?? 0);
+  const unit = typeof unitValue === "object" ? Number(unitValue?.id ?? 0) : Number(unitValue ?? 0);
+
+  return {
+    ...item,
+    professional,
+    professional_id: professional || undefined,
+    professional_name:
+      item?.professional_name ??
+      item?.professional__name ??
+      (typeof professionalValue === "object" ? professionalValue?.name : undefined),
+    unit,
+    unit_id: unit || undefined,
+    unit_name:
+      item?.unit_name ??
+      item?.unit__name ??
+      (typeof unitValue === "object" ? unitValue?.name : undefined),
+  };
+};
+
 export default function ProfessionalUnitsLinkSection() {
   const { company, units, activeUnit, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
@@ -50,24 +75,32 @@ export default function ProfessionalUnitsLinkSection() {
       });
       return unpack(data);
     },
-    enabled: !isAuthLoading && isAuthenticated && !!activeUnit?.id,
+    enabled: !isAuthLoading && isAuthenticated,
   });
 
-  // Aggregate links: try unfiltered first, then per professional
-  const queryKey = ["professional-units-all", professionals.map((p: any) => p.id).join(",")];
+  const queryKey = ["professional-units-all", activeUnit?.id ?? "all", professionals.map((p: any) => p.id).join(",")];
   const { data: items = [], isLoading } = useQuery<ProfessionalUnit[]>({
     queryKey,
     queryFn: async () => {
-      try {
-        const { data } = await api.get(`/api/booking/professional-units/`);
-        const list = unpack(data);
-        if (list.length > 0) return list;
-      } catch {}
+      const requestVariants = [
+        activeUnit?.id ? { unit: activeUnit.id } : undefined,
+        undefined,
+      ];
+
+      for (const params of requestVariants) {
+        try {
+          const { data } = await api.get(`/api/booking/professional-units/`, params ? { params } : undefined);
+          const list = unpack(data).map(normalizeLink).filter((item) => item.id && item.professional && item.unit);
+          if (list.length > 0) return list;
+        } catch {
+          // tenta o próximo formato de chamada
+        }
+      }
 
       if (professionals.length === 0) return [];
       const reqs = professionals.map((p: any) =>
         api.get(`/api/booking/professional-units/`, { params: { professional: p.id } })
-          .then((r) => unpack(r.data))
+          .then((r) => unpack(r.data).map(normalizeLink))
           .catch(() => [])
       );
       const results = await Promise.all(reqs);
@@ -83,15 +116,7 @@ export default function ProfessionalUnitsLinkSection() {
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  const normalizedItems = items
-    .map((item) => ({
-      ...item,
-      professional: item.professional ?? item.professional_id ?? 0,
-      professional_name: item.professional_name ?? item.professional__name,
-      unit: item.unit ?? item.unit_id ?? 0,
-      unit_name: item.unit_name ?? item.unit__name,
-    }))
-    .filter((item) => item.id && item.professional && item.unit);
+  const normalizedItems = items.map(normalizeLink).filter((item) => item.id && item.professional && item.unit);
 
   const createLink = useMutation({
     mutationFn: async (payload: { professional: number; unit: number; priority: number }) => {
