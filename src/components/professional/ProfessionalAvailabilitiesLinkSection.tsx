@@ -90,7 +90,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const { data: items = [], isLoading } = useQuery<Availability[]>({
     queryKey,
     queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professional-availabilities/`, { params: { page_size: 500 } });
+      const { data } = await api.get(`/api/settings/professional-availabilities/`, { params: { page_size: 500 } });
       return unpack(data).map((item: any): Availability => {
         const puId = Number(
           item?.professional_unit_id ??
@@ -169,7 +169,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         is_active: true,
       };
       console.info("[create-availability] post payload:", body);
-      const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
+      const { data } = await api.post(`/api/settings/professional-availabilities/`, body);
       return data;
     },
     onSuccess: () => {
@@ -184,7 +184,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/booking/professional-availabilities/${id}/`, { is_active });
+      await api.patch(`/api/settings/professional-availabilities/${id}/`, { is_active });
     },
     onMutate: async ({ id, is_active }) => {
       await qc.cancelQueries({ queryKey });
@@ -204,7 +204,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const removeAvailability = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professional-availabilities/${id}/`);
+      await api.delete(`/api/settings/professional-availabilities/${id}/`);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey }); toast.success("Disponibilidade removida"); },
     onError: () => toast.error("Erro ao remover disponibilidade"),
