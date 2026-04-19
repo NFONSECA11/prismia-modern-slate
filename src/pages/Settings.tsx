@@ -31,10 +31,14 @@ import { toast } from "sonner";
 import DiagnosticCard from "@/components/DiagnosticCard";
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
-import ServicesByProfessionalSection from "@/components/ServicesByProfessionalSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
+import ProfessionalSubSectionListCard from "@/components/professional/ProfessionalSubSectionListCard";
+import ProfessionalUnitsSubSection from "@/components/professional/ProfessionalUnitsSubSection";
+import ProfessionalSpecialtiesSubSection from "@/components/professional/ProfessionalSpecialtiesSubSection";
+import ProfessionalAvailabilitiesSubSection from "@/components/professional/ProfessionalAvailabilitiesSubSection";
+import ProfessionalTimeOffsSubSection from "@/components/professional/ProfessionalTimeOffsSubSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -645,7 +649,6 @@ export default function Settings() {
                 ))
               )}
 
-              {/* Criar profissional */}
               {showNewProfessional ? (
                 <div className="flex items-center gap-2 pt-2">
                   <select
@@ -699,7 +702,45 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
 
-          <ServicesByProfessionalSection />
+          <ProfessionalSubSectionListCard
+            icon={MapPin}
+            title="Profissionais → Unidades"
+            description="Unidades vinculadas a cada profissional"
+            professionals={professionals as any[]}
+            isLoading={!activeUnit || isLoadingProfessionals}
+            emptyMessage="Nenhum profissional encontrado."
+            renderSubSection={(professionalId) => <ProfessionalUnitsSubSection professionalId={professionalId} />}
+          />
+
+          <ProfessionalSubSectionListCard
+            icon={Layers}
+            title="Profissionais → Especialidades"
+            description="Especialidades disponíveis por profissional"
+            professionals={professionals as any[]}
+            isLoading={!activeUnit || isLoadingProfessionals}
+            emptyMessage="Nenhum profissional encontrado."
+            renderSubSection={(professionalId) => <ProfessionalSpecialtiesSubSection professionalId={professionalId} />}
+          />
+
+          <ProfessionalSubSectionListCard
+            icon={Palette}
+            title="Profissionais → Disponibilidades"
+            description="Horários e dias de disponibilidade"
+            professionals={professionals as any[]}
+            isLoading={!activeUnit || isLoadingProfessionals}
+            emptyMessage="Nenhum profissional encontrado."
+            renderSubSection={(professionalId) => <ProfessionalAvailabilitiesSubSection professionalId={professionalId} />}
+          />
+
+          <ProfessionalSubSectionListCard
+            icon={Settings2}
+            title="Profissionais → Adição / Bloqueios"
+            description="Períodos de adição e bloqueio na agenda"
+            professionals={professionals as any[]}
+            isLoading={!activeUnit || isLoadingProfessionals}
+            emptyMessage="Nenhum profissional encontrado."
+            renderSubSection={(professionalId) => <ProfessionalTimeOffsSubSection professionalId={professionalId} />}
+          />
           
         </section>
 
