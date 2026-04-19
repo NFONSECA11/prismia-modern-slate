@@ -84,6 +84,33 @@ export default function ProfessionalProceduresLinkSection() {
     enabled: !isAuthLoading && isAuthenticated,
   });
 
+  // Unidades vinculadas ao profissional selecionado (Profissionais → Unidades)
+  const { data: profUnitLinks = [] } = useQuery<any[]>({
+    queryKey: ["professional-units-for-procedure-link", newProfId],
+    queryFn: async () => {
+      if (!newProfId) return [];
+      const { data } = await api.get(`/api/booking/professional-units/`, {
+        params: { professional: newProfId, page_size: 500 },
+      });
+      return unpack(data).filter((it: any) => it?.is_active !== false);
+    },
+    enabled: !isAuthLoading && isAuthenticated && !!newProfId,
+  });
+
+  const availableUnits = profUnitLinks
+    .map((link: any) => {
+      const unitV = link?.unit ?? link?.unit_id;
+      const id = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
+      const name =
+        link?.unit_name ??
+        link?.unit__name ??
+        (typeof unitV === "object" ? unitV?.name : undefined) ??
+        units.find((u) => u.id === id)?.name ??
+        `#${id}`;
+      return { id, name };
+    })
+    .filter((u) => u.id);
+
   const { data: procedures = [] } = useQuery<any[]>({
     queryKey: ["procedures-all-settings"],
     queryFn: async () => {
@@ -290,7 +317,10 @@ export default function ProfessionalProceduresLinkSection() {
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
                 <select
                   value={newProfId}
-                  onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
+                  onChange={(e) => {
+                    setNewProfId(e.target.value ? Number(e.target.value) : "");
+                    setNewUnitId("");
+                  }}
                   className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                 >
                   <option value="">Selecione…</option>
@@ -304,10 +334,11 @@ export default function ProfessionalProceduresLinkSection() {
                 <select
                   value={newUnitId}
                   onChange={(e) => setNewUnitId(e.target.value ? Number(e.target.value) : "")}
-                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                  disabled={!newProfId}
+                  className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground disabled:opacity-50"
                 >
-                  <option value="">Selecione…</option>
-                  {units.map((u) => (
+                  <option value="">{newProfId ? "Selecione…" : "Escolha o profissional"}</option>
+                  {availableUnits.map((u) => (
                     <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
