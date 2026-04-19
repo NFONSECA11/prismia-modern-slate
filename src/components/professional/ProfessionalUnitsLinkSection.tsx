@@ -47,14 +47,20 @@ export default function ProfessionalUnitsLinkSection() {
     },
   });
 
-  // Aggregate links across all units
-  const queryKey = ["professional-units-all", units.map((u) => u.id).join(",")];
+  // Aggregate links: try unfiltered first, then per professional
+  const queryKey = ["professional-units-all", professionals.map((p: any) => p.id).join(",")];
   const { data: items = [], isLoading } = useQuery<ProfessionalUnit[]>({
     queryKey,
     queryFn: async () => {
-      if (units.length === 0) return [];
-      const reqs = units.map((u) =>
-        api.get(`/api/booking/professional-units/`, { params: { unit: u.id } })
+      try {
+        const { data } = await api.get(`/api/booking/professional-units/`);
+        const list = unpack(data);
+        if (list.length > 0) return list;
+      } catch {}
+
+      if (professionals.length === 0) return [];
+      const reqs = professionals.map((p: any) =>
+        api.get(`/api/booking/professional-units/`, { params: { professional: p.id } })
           .then((r) => unpack(r.data))
           .catch(() => [])
       );
@@ -68,7 +74,7 @@ export default function ProfessionalUnitsLinkSection() {
       }
       return all;
     },
-    enabled: units.length > 0,
+    enabled: professionals.length > 0,
   });
 
   const createLink = useMutation({
