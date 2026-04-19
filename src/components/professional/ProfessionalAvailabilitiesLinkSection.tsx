@@ -276,10 +276,10 @@ export default function ProfessionalAvailabilitiesLinkSection() {
       >
         {isAuthLoading || isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : grouped.length === 0 ? (
+        ) : professionalGroups.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhuma disponibilidade encontrada.</p>
         ) : (
-          grouped.map(([profName, list]) => {
+          professionalGroups.map(({ profName, list }) => {
             const isOpen = openProfName === profName;
             return (
               <div
