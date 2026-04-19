@@ -189,23 +189,25 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   }, [allPuLinks, professionalsCatalog, units]);
 
   const createAvailability = useMutation({
-    mutationFn: async (payload: { professional_unit: number; slot_minutes: number; buffer_minutes: number; weekly: Weekly }) => {
+    mutationFn: async (payload: {
+      professional_unit: number;
+      professional_unit_id?: number;
+      professional?: number;
+      professional_id?: number;
+      company?: number;
+      company_id?: number;
+      slot_minutes: number;
+      buffer_minutes: number;
+      weekly: Weekly;
+    }) => {
       await fetchCsrf();
-      // Derive professional + company from the selected professional_unit link
-      const link = allPuLinks.find((l: any) => Number(l?.id) === Number(payload.professional_unit));
-      const professionalId =
-        (typeof link?.professional === "object" ? link?.professional?.id : link?.professional) ??
-        link?.professional_id;
-      const companyId =
-        (typeof link?.company === "object" ? link?.company?.id : link?.company) ??
-        link?.company_id ??
-        company?.id;
       const body: Record<string, any> = {
         ...payload,
+        professional_unit_id: payload.professional_unit_id ?? payload.professional_unit,
+        professional_id: payload.professional_id ?? payload.professional,
+        company_id: payload.company_id ?? payload.company,
         is_active: true,
       };
-      if (professionalId) body.professional = Number(professionalId);
-      if (companyId) body.company = Number(companyId);
       console.info("[create-availability] payload:", body);
       const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
       return data;
@@ -216,7 +218,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
       setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({});
       toast.success("Disponibilidade criada");
     },
-    onError: () => toast.error("Erro ao criar disponibilidade"),
+    onError: (err: any) => toast.error("Erro ao criar disponibilidade", { description: JSON.stringify(err?.response?.data ?? err?.message ?? "") }),
   });
 
   const toggleActive = useMutation({
