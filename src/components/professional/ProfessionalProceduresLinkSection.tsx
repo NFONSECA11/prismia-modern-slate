@@ -97,17 +97,18 @@ export default function ProfessionalProceduresLinkSection() {
     enabled: !isAuthLoading && isAuthenticated && !!newProfId,
   });
 
+  // O valor do select é o ID do vínculo ProfessionalUnit (link.id), não o unit.id
   const availableUnits = profUnitLinks
     .map((link: any) => {
       const unitV = link?.unit ?? link?.unit_id;
-      const id = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
+      const unitId = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
       const name =
         link?.unit_name ??
         link?.unit__name ??
         (typeof unitV === "object" ? unitV?.name : undefined) ??
-        units.find((u) => u.id === id)?.name ??
-        `#${id}`;
-      return { id, name };
+        units.find((u) => u.id === unitId)?.name ??
+        `#${unitId}`;
+      return { id: Number(link?.id), unitId, name };
     })
     .filter((u) => u.id);
 
@@ -184,7 +185,7 @@ export default function ProfessionalProceduresLinkSection() {
   });
 
   const createLink = useMutation({
-    mutationFn: async (payload: { professional: number; unit: number; procedure: number }) => {
+    mutationFn: async (payload: { professional: number; professional_unit: number; procedure: number }) => {
       await fetchCsrf();
       const { data } = await api.post(`/api/booking/professional-procedures/`, {
         ...payload,
@@ -372,7 +373,7 @@ export default function ProfessionalProceduresLinkSection() {
                 disabled={!newProfId || !newUnitId || !newProcId || createLink.isPending}
                 onClick={() => createLink.mutate({
                   professional: newProfId as number,
-                  unit: newUnitId as number,
+                  professional_unit: newUnitId as number,
                   procedure: newProcId as number,
                 })}
               >
