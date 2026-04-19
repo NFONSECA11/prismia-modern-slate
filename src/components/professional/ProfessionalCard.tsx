@@ -11,19 +11,21 @@ interface Professional {
 
 interface Props {
   professional: Professional;
+  companyName?: string;
   onToggleActive: (id: number, isActive: boolean) => void;
   onDelete: (id: number) => void;
 }
 
-export default function ProfessionalCard({ professional, onToggleActive, onDelete }: Props) {
+export default function ProfessionalCard({ professional, companyName, onToggleActive, onDelete }: Props) {
   const active = professional.is_active !== false && professional.status !== "inactive";
 
   return (
     <div
-      className="grid grid-cols-[3rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+      className="grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
       style={{ background: "hsl(var(--surface-elevated))" }}
     >
       <span className="text-xs font-mono text-muted-foreground">{professional.id}</span>
+      <span className="text-xs text-muted-foreground truncate">{companyName ?? "—"}</span>
       <div className="flex min-w-0 items-center gap-3">
         <User className="h-4 w-4 text-primary shrink-0" />
         <span className="text-sm font-medium text-foreground truncate">{professional.name}</span>
