@@ -29,14 +29,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 import DiagnosticCard from "@/components/DiagnosticCard";
-// ProfessionalProceduresSection removed
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
-import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
 import ServicesByProfessionalSection from "@/components/ServicesByProfessionalSection";
-import ProfessionalAvailabilitySection from "@/components/ProfessionalAvailabilitySection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
+import ProfessionalCard from "@/components/professional/ProfessionalCard";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -629,15 +627,7 @@ export default function Settings() {
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
-              <div className="grid grid-cols-[3rem_1fr_1fr_auto_5rem_2rem] gap-2 px-3 py-1 items-center">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome Unidade</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-right">Código</span>
-                <span />
-              </div>
+            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
               {!activeUnit ? (
                 <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
               ) : isLoadingProfessionals ? (
@@ -646,28 +636,12 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground px-3">Nenhum profissional encontrado.</p>
               ) : (
                 professionals.map((prof: any) => (
-                  <div
+                  <ProfessionalCard
                     key={prof.id}
-                    className="grid grid-cols-[3rem_1fr_1fr_auto_5rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
-                    style={{ background: "hsl(var(--surface-elevated))" }}
-                  >
-                    <span className="text-xs font-mono text-muted-foreground">{prof.unit ?? "—"}</span>
-                    <span className="text-xs text-muted-foreground">{prof.unit_name ?? units.find((u) => u.id === prof.unit)?.name ?? "—"}</span>
-                    <span className="text-sm font-medium text-foreground">{prof.name}</span>
-                    <Switch
-                      checked={prof.is_active !== false && prof.status !== "inactive"}
-                      onCheckedChange={(checked) => toggleProfessional.mutate({ id: prof.id, is_active: checked })}
-                      className="scale-75"
-                    />
-                    <span className="text-xs font-mono text-muted-foreground text-right">{prof.code ?? prof.slug ?? "—"}</span>
-                    <button
-                      onClick={() => deleteProfessional.mutate(prof.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                      title="Remover profissional"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                    professional={prof}
+                    onToggleActive={(id, isActive) => toggleProfessional.mutate({ id, is_active: isActive })}
+                    onDelete={(id) => deleteProfessional.mutate(id)}
+                  />
                 ))
               )}
 
@@ -729,21 +703,10 @@ export default function Settings() {
           
         </section>
 
-        {/* ─── 4) Agenda e bloqueios ─── */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">4 · Agenda e bloqueios</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          <ProfessionalAvailabilitySection />
-          <ScheduleBlocksSection />
-        </section>
-
         {/* ─── 5) Modo e validação final ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">5 · Modo e validação</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">4 · Modo e validação</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
