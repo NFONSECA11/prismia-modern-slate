@@ -29,14 +29,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 import DiagnosticCard from "@/components/DiagnosticCard";
-// ProfessionalProceduresSection removed
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
-import ScheduleBlocksSection from "@/components/ScheduleBlocksSection";
 import ServicesByProfessionalSection from "@/components/ServicesByProfessionalSection";
-import ProfessionalAvailabilitySection from "@/components/ProfessionalAvailabilitySection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
+import ProfessionalCard from "@/components/professional/ProfessionalCard";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
