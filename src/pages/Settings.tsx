@@ -34,6 +34,7 @@ import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
+import ProfessionalUnitsLinkSection from "@/components/professional/ProfessionalUnitsLinkSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -715,6 +716,8 @@ export default function Settings() {
               )}
             </CollapsibleContent>
           </Collapsible>
+
+          <ProfessionalUnitsLinkSection />
 
         </section>
 
