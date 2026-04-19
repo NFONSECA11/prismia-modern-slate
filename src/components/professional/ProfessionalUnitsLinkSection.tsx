@@ -82,35 +82,35 @@ export default function ProfessionalUnitsLinkSection() {
   const { data: items = [], isLoading } = useQuery<ProfessionalUnit[]>({
     queryKey,
     queryFn: async () => {
-      const requestVariants = [
-        activeUnit?.id ? { unit: activeUnit.id } : undefined,
-        undefined,
-      ];
-
-      for (const params of requestVariants) {
-        try {
-          const { data } = await api.get(`/api/booking/professional-units/`, params ? { params } : undefined);
-          const list = unpack(data).map(normalizeLink).filter((item) => item.id && item.professional && item.unit);
-          if (list.length > 0) return list;
-        } catch {
-          // tenta o próximo formato de chamada
-        }
-      }
-
-      if (professionals.length === 0) return [];
-      const reqs = professionals.map((p: any) =>
-        api.get(`/api/booking/professional-units/`, { params: { professional: p.id } })
-          .then((r) => unpack(r.data).map(normalizeLink))
-          .catch(() => [])
-      );
-      const results = await Promise.all(reqs);
+      // Busca TODOS os vínculos (sem filtro por unidade) para listar tudo
       const all: ProfessionalUnit[] = [];
       const seen = new Set<number>();
-      for (const list of results) {
+      const pushList = (list: ProfessionalUnit[]) => {
         for (const it of list) {
-          if (!seen.has(it.id)) { seen.add(it.id); all.push(it); }
+          if (it.id && !seen.has(it.id)) { seen.add(it.id); all.push(it); }
+        }
+      };
+
+      try {
+        const { data } = await api.get(`/api/booking/professional-units/`, { params: { page_size: 500 } });
+        pushList(unpack(data).map(normalizeLink).filter((item) => item.id && item.professional && item.unit));
+      } catch {
+        // ignora e tenta fallback abaixo
+      }
+
+      // Fallback: itera por profissional caso a listagem global venha vazia
+      if (all.length === 0 && professionals.length > 0) {
+        const reqs = professionals.map((p: any) =>
+          api.get(`/api/booking/professional-units/`, { params: { professional: p.id, page_size: 500 } })
+            .then((r) => unpack(r.data).map(normalizeLink))
+            .catch(() => [])
+        );
+        const results = await Promise.all(reqs);
+        for (const list of results) {
+          pushList(list.filter((item) => item.id && item.professional && item.unit));
         }
       }
+
       return all;
     },
     enabled: !isAuthLoading && isAuthenticated,
