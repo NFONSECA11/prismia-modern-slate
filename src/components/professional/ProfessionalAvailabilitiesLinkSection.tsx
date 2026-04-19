@@ -72,10 +72,36 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const [newEnd, setNewEnd] = useState<string>("18:00");
 
   const { data: professionals = [] } = useQuery<any[]>({
-    queryKey: ["professionals-all-availabilities"],
+    queryKey: ["professionals-all-availabilities", units.map((u) => u.id).join(",")],
     queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professionals/`, { params: { page_size: 500 } });
-      return unpack(data);
+      const seen = new Set<number>();
+      const all: any[] = [];
+      const push = (list: any[]) => {
+        for (const p of list) {
+          const id = Number(p?.id);
+          if (id && !seen.has(id)) { seen.add(id); all.push(p); }
+        }
+      };
+      // Global
+      try {
+        const { data } = await api.get(`/api/booking/professionals/`, { params: { page_size: 500 } });
+        push(unpack(data));
+      } catch (e) {
+        console.warn("[professionals] global fetch failed", e);
+      }
+      // Por unidade
+      if (units.length > 0) {
+        const reqs = units.map((u) =>
+          api.get(`/api/booking/professionals/`, { params: { unit: u.id, page_size: 500 } })
+            .then((r) => unpack(r.data))
+            .catch(() => [])
+        );
+        const results = await Promise.all(reqs);
+        for (const list of results) push(list);
+      }
+      all.sort((a, b) => String(a?.name ?? "").localeCompare(String(b?.name ?? "")));
+      console.info("[professionals-availabilities] total:", all.length);
+      return all;
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
