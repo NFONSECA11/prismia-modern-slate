@@ -185,7 +185,7 @@ export default function ProfessionalProceduresLinkSection() {
   });
 
   const createLink = useMutation({
-    mutationFn: async (payload: { professional: number; unit: number; procedure: number }) => {
+    mutationFn: async (payload: { professional: number; professional_unit: number; procedure: number }) => {
       await fetchCsrf();
       const { data } = await api.post(`/api/booking/professional-procedures/`, {
         ...payload,
