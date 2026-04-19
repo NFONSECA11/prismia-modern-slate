@@ -3,29 +3,33 @@ import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Trash2, CalendarClock } from "lucide-react";
+import { ChevronDown, Plus, Trash2, CalendarClock, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+type Slot = { start: string; end: string };
+type Weekly = Partial<Record<DayKey, Slot[]>>;
+
 interface Availability {
   id: number;
-  professional: number;
-  professional_name?: string;
-  professional__name?: string;
-  unit?: number;
-  unit_id?: number;
-  unit_name?: string;
-  unit__name?: string;
+  company_id?: number;
+  professional_unit_id: number;
   professional_unit?: number;
-  weekday: number;
-  start_time: string;
-  end_time: string;
+  professional_name?: string;
+  unit_name?: string;
+  slot_minutes: number;
+  buffer_minutes: number;
+  weekly: Weekly;
   is_active?: boolean;
 }
 
-const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const DAY_KEYS: DayKey[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const DAY_LABELS: Record<DayKey, string> = {
+  mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom",
+};
 
 const unpack = (data: any): any[] => {
   if (Array.isArray(data)) return data;
@@ -36,43 +40,48 @@ const unpack = (data: any): any[] => {
 };
 
 const normalize = (item: any): Availability => {
-  const profV = item?.professional ?? item?.professional_id;
-  const unitV = item?.unit ?? item?.unit_id;
-  const professional = typeof profV === "object" ? Number(profV?.id ?? 0) : Number(profV ?? 0);
-  const unit = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
+  const puId = Number(
+    item?.professional_unit_id ??
+    item?.professional_unit ??
+    (typeof item?.professional_unit === "object" ? item?.professional_unit?.id : 0) ??
+    0
+  );
   return {
-    ...item,
-    professional,
+    id: Number(item?.id),
+    company_id: item?.company_id,
+    professional_unit_id: puId,
+    professional_unit: puId,
     professional_name:
+      item?.professional_unit__professional__name ??
       item?.professional_name ??
-      item?.professional__name ??
-      (typeof profV === "object" ? profV?.name : undefined),
-    unit: unit || undefined,
+      item?.professional__name,
     unit_name:
+      item?.professional_unit__unit__name ??
       item?.unit_name ??
-      item?.unit__name ??
-      (typeof unitV === "object" ? unitV?.name : undefined),
-    weekday: Number(item?.weekday ?? 0),
-    start_time: String(item?.start_time ?? "").slice(0, 5),
-    end_time: String(item?.end_time ?? "").slice(0, 5),
+      item?.unit__name,
+    slot_minutes: Number(item?.slot_minutes ?? 60),
+    buffer_minutes: Number(item?.buffer_minutes ?? 0),
+    weekly: (item?.weekly && typeof item.weekly === "object") ? item.weekly as Weekly : {},
+    is_active: item?.is_active,
   };
 };
 
-const fmtTime = (t: string) => (t || "").slice(0, 5);
+const fmt = (t: string) => (t || "").slice(0, 5);
 
 export default function ProfessionalAvailabilitiesLinkSection() {
   const { company, units, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
 
-  const [openProfId, setOpenProfId] = useState<number | null>(null);
-  const [showNewFor, setShowNewFor] = useState<number | null>(null);
+  const [openProfName, setOpenProfName] = useState<string | null>(null);
+  const [showNewFor, setShowNewFor] = useState<string | null>(null);
   const [newPuId, setNewPuId] = useState<number | "">("");
-  const [newWeekday, setNewWeekday] = useState<number | "">("");
-  const [newStart, setNewStart] = useState<string>("08:00");
-  const [newEnd, setNewEnd] = useState<string>("18:00");
+  const [newSlot, setNewSlot] = useState<number>(60);
+  const [newBuffer, setNewBuffer] = useState<number>(0);
+  const [newWeekly, setNewWeekly] = useState<Weekly>({});
 
-  const { data: professionals = [] } = useQuery<any[]>({
-    queryKey: ["professionals-all-availabilities", units.map((u) => u.id).join(",")],
+  // Profissionais (global + por unidade) só para enriquecer o select de PU no formulário
+  const { data: professionalsCatalog = [] } = useQuery<any[]>({
+    queryKey: ["professionals-catalog-availabilities", units.map((u) => u.id).join(",")],
     queryFn: async () => {
       const seen = new Set<number>();
       const all: any[] = [];
@@ -82,14 +91,10 @@ export default function ProfessionalAvailabilitiesLinkSection() {
           if (id && !seen.has(id)) { seen.add(id); all.push(p); }
         }
       };
-      // Global
       try {
         const { data } = await api.get(`/api/booking/professionals/`, { params: { page_size: 500 } });
         push(unpack(data));
-      } catch (e) {
-        console.warn("[professionals] global fetch failed", e);
-      }
-      // Por unidade
+      } catch {}
       if (units.length > 0) {
         const reqs = units.map((u) =>
           api.get(`/api/booking/professionals/`, { params: { unit: u.id, page_size: 500 } })
@@ -99,92 +104,71 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         const results = await Promise.all(reqs);
         for (const list of results) push(list);
       }
-      all.sort((a, b) => String(a?.name ?? "").localeCompare(String(b?.name ?? "")));
-      console.info("[professionals-availabilities] total:", all.length);
       return all;
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  const { data: profUnitLinks = [] } = useQuery<any[]>({
-    queryKey: ["professional-units-for-availability", showNewFor],
+  // Vínculos professional_unit (todos) — para popular o select do form
+  const { data: allPuLinks = [] } = useQuery<any[]>({
+    queryKey: ["professional-units-all-availabilities"],
     queryFn: async () => {
-      if (!showNewFor) return [];
-      const { data } = await api.get(`/api/booking/professional-units/`, {
-        params: { professional: showNewFor, page_size: 500 },
-      });
-      return unpack(data).filter((it: any) => it?.is_active !== false);
+      const { data } = await api.get(`/api/booking/professional-units/`, { params: { page_size: 1000 } });
+      return unpack(data);
     },
-    enabled: !isAuthLoading && isAuthenticated && !!showNewFor,
+    enabled: !isAuthLoading && isAuthenticated,
   });
 
-  const availableUnits = profUnitLinks
-    .map((link: any) => {
-      const unitV = link?.unit ?? link?.unit_id;
-      const unitId = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
-      const name =
-        link?.unit_name ??
-        link?.unit__name ??
-        (typeof unitV === "object" ? unitV?.name : undefined) ??
-        units.find((u) => u.id === unitId)?.name ??
-        `#${unitId}`;
-      return { id: Number(link?.id), unitId, name };
-    })
-    .filter((u) => u.id);
-
-  const queryKey = [
-    "professional-availabilities-all",
-    professionals.map((p: any) => p.id).join(","),
-    units.map((u) => u.id).join(","),
-  ];
+  const queryKey = ["professional-availabilities-all"];
 
   const { data: items = [], isLoading } = useQuery<Availability[]>({
     queryKey,
     queryFn: async () => {
-      const all: Availability[] = [];
-      const seen = new Set<number>();
-      const push = (list: Availability[]) => {
-        for (const it of list) if (it.id && !seen.has(it.id)) { seen.add(it.id); all.push(it); }
-      };
-
-      try {
-        const { data } = await api.get(`/api/booking/professional-availabilities/`, { params: { page_size: 500 } });
-        push(unpack(data).map(normalize).filter((it) => it.id));
-      } catch (e) {
-        console.warn("[professional-availabilities] global fetch failed", e);
-      }
-
-      if (professionals.length > 0) {
-        const reqs = professionals.map((p: any) =>
-          api.get(`/api/booking/professional-availabilities/`, { params: { professional: p.id, page_size: 500 } })
-            .then((r) => unpack(r.data).map(normalize))
-            .catch(() => [])
-        );
-        const results = await Promise.all(reqs);
-        for (const list of results) push(list.filter((it) => it.id));
-      }
-
-      console.info("[professional-availabilities] total merged:", all.length);
-      return all;
+      const { data } = await api.get(`/api/booking/professional-availabilities/`, { params: { page_size: 500 } });
+      const list = unpack(data).map(normalize).filter((it) => it.id);
+      console.info("[professional-availabilities] count:", list.length);
+      return list;
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
+  // Agrupa por nome do profissional
   const grouped = useMemo(() => {
-    const map = new Map<number, Availability[]>();
+    const map = new Map<string, Availability[]>();
     for (const it of items) {
-      const arr = map.get(it.professional) ?? [];
+      const key = it.professional_name ?? `#${it.professional_unit_id}`;
+      const arr = map.get(key) ?? [];
       arr.push(it);
-      map.set(it.professional, arr);
+      map.set(key, arr);
     }
-    for (const [, arr] of map) {
-      arr.sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time));
-    }
-    return map;
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [items]);
 
+  const puOptionsByProf = useMemo(() => {
+    // Para o profissional aberto, pegamos os PU links cujo professional_name bate
+    return (profName: string) => {
+      const profId = professionalsCatalog.find((p: any) => p?.name === profName)?.id;
+      return allPuLinks
+        .filter((l: any) => {
+          if (l?.is_active === false) return false;
+          const pid = typeof l?.professional === "object" ? l?.professional?.id : (l?.professional ?? l?.professional_id);
+          return Number(pid) === Number(profId);
+        })
+        .map((l: any) => {
+          const unitV = l?.unit ?? l?.unit_id;
+          const unitId = typeof unitV === "object" ? Number(unitV?.id ?? 0) : Number(unitV ?? 0);
+          const unitName =
+            l?.unit_name ?? l?.unit__name ??
+            (typeof unitV === "object" ? unitV?.name : undefined) ??
+            units.find((u) => u.id === unitId)?.name ?? `#${unitId}`;
+          return { id: Number(l?.id), unitName };
+        })
+        .filter((o) => o.id);
+    };
+  }, [allPuLinks, professionalsCatalog, units]);
+
   const createAvailability = useMutation({
-    mutationFn: async (payload: { professional: number; professional_unit: number; weekday: number; start_time: string; end_time: string }) => {
+    mutationFn: async (payload: { professional_unit: number; slot_minutes: number; buffer_minutes: number; weekly: Weekly }) => {
       await fetchCsrf();
       const { data } = await api.post(`/api/booking/professional-availabilities/`, {
         ...payload,
@@ -195,7 +179,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
       setShowNewFor(null);
-      setNewPuId(""); setNewWeekday(""); setNewStart("08:00"); setNewEnd("18:00");
+      setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({});
       toast.success("Disponibilidade criada");
     },
     onError: () => toast.error("Erro ao criar disponibilidade"),
@@ -230,8 +214,25 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     onError: () => toast.error("Erro ao remover disponibilidade"),
   });
 
-  const unitName = (id?: number, fallback?: string) =>
-    fallback ?? (id ? units.find((u) => u.id === id)?.name : undefined) ?? "—";
+  const addSlot = (day: DayKey) => {
+    setNewWeekly((w) => ({ ...w, [day]: [...(w[day] ?? []), { start: "08:00", end: "12:00" }] }));
+  };
+  const removeSlot = (day: DayKey, idx: number) => {
+    setNewWeekly((w) => {
+      const arr = [...(w[day] ?? [])];
+      arr.splice(idx, 1);
+      const next = { ...w };
+      if (arr.length) next[day] = arr; else delete next[day];
+      return next;
+    });
+  };
+  const updateSlot = (day: DayKey, idx: number, field: "start" | "end", value: string) => {
+    setNewWeekly((w) => {
+      const arr = [...(w[day] ?? [])];
+      arr[idx] = { ...arr[idx], [field]: value };
+      return { ...w, [day]: arr };
+    });
+  };
 
   return (
     <Collapsible defaultOpen={false} id="section-profissionais-disponibilidades">
@@ -243,7 +244,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
           <CalendarClock className="h-4 w-4 text-primary shrink-0" />
           <div className="text-left">
             <span className="text-sm font-bold text-foreground">Profissionais → Disponibilidades</span>
-            <p className="text-xs text-muted-foreground">Horários semanais por profissional e unidade</p>
+            <p className="text-xs text-muted-foreground">Horários semanais por profissional/unidade (slot + buffer)</p>
           </div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
@@ -254,82 +255,99 @@ export default function ProfessionalAvailabilitiesLinkSection() {
       >
         {isAuthLoading || isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : professionals.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-3">Nenhum profissional encontrado.</p>
+        ) : grouped.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-3">Nenhuma disponibilidade encontrada.</p>
         ) : (
-          professionals.map((prof: any) => {
-            const list = grouped.get(prof.id) ?? [];
-            const isOpen = openProfId === prof.id;
+          grouped.map(([profName, list]) => {
+            const isOpen = openProfName === profName;
             return (
               <div
-                key={prof.id}
+                key={profName}
                 className="rounded-lg border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <button
-                  onClick={() => setOpenProfId(isOpen ? null : prof.id)}
+                  onClick={() => setOpenProfName(isOpen ? null : profName)}
                   className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-surface/50 transition-colors rounded-lg"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <ChevronDown
                       className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isOpen ? "" : "-rotate-90"}`}
                     />
-                    <span className="text-sm font-medium text-foreground truncate">{prof.name}</span>
+                    <span className="text-sm font-medium text-foreground truncate">{profName}</span>
                     <span className="text-[10px] text-muted-foreground">({list.length})</span>
                   </div>
                 </button>
 
                 {isOpen && (
-                  <div className="px-3 pb-3 space-y-1">
-                    <div className="grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_auto_2rem] gap-2 px-2 py-1 items-center">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Fim</span>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
-                      <span />
-                    </div>
-
-                    {list.length === 0 ? (
-                      <p className="text-xs text-muted-foreground px-2">Nenhuma disponibilidade.</p>
-                    ) : (
-                      list.map((item) => {
-                        const active = item.is_active !== false;
-                        return (
-                          <div
-                            key={item.id}
-                            className="grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_auto_2rem] gap-2 items-center rounded-md px-2 py-1.5 border border-border"
-                            style={{ background: "hsl(var(--surface))" }}
-                          >
-                            <span className="text-xs font-mono text-muted-foreground">{item.id}</span>
-                            <span className="text-xs text-muted-foreground truncate">{unitName(item.unit, item.unit_name)}</span>
-                            <span className="text-xs text-foreground">{WEEKDAYS[item.weekday] ?? `#${item.weekday}`}</span>
-                            <span className="text-xs font-mono text-foreground">{fmtTime(item.start_time)}</span>
-                            <span className="text-xs font-mono text-foreground">{fmtTime(item.end_time)}</span>
-                            <Switch
-                              checked={active}
-                              onCheckedChange={(checked) => toggleActive.mutate({ id: item.id, is_active: checked })}
-                              className="scale-75"
-                            />
-                            <button
-                              onClick={() => removeAvailability.mutate(item.id)}
-                              className="flex items-center justify-end text-muted-foreground hover:text-destructive transition-colors"
-                              title="Remover"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                  <div className="px-3 pb-3 space-y-2">
+                    {list.map((item) => {
+                      const active = item.is_active !== false;
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-md px-3 py-2 border border-border space-y-2"
+                          style={{ background: "hsl(var(--surface))" }}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                              <span className="text-xs font-mono text-muted-foreground">#{item.id}</span>
+                              <span className="text-xs text-foreground font-medium truncate">{item.unit_name ?? "—"}</span>
+                              <span className="text-[10px] text-muted-foreground">slot {item.slot_minutes}min</span>
+                              <span className="text-[10px] text-muted-foreground">buffer {item.buffer_minutes}min</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={active}
+                                onCheckedChange={(checked) => toggleActive.mutate({ id: item.id, is_active: checked })}
+                                className="scale-75"
+                              />
+                              <button
+                                onClick={() => removeAvailability.mutate(item.id)}
+                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                title="Remover"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        );
-                      })
-                    )}
+                          <div className="grid grid-cols-7 gap-1">
+                            {DAY_KEYS.map((d) => {
+                              const slots = item.weekly?.[d] ?? [];
+                              return (
+                                <div
+                                  key={d}
+                                  className="rounded-md border border-border px-1.5 py-1 min-h-[3.5rem]"
+                                  style={{ background: "hsl(var(--surface-elevated))" }}
+                                >
+                                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-center">
+                                    {DAY_LABELS[d]}
+                                  </div>
+                                  <div className="space-y-0.5 mt-1">
+                                    {slots.length === 0 ? (
+                                      <div className="text-[10px] text-muted-foreground/60 text-center">—</div>
+                                    ) : (
+                                      slots.map((s, i) => (
+                                        <div key={i} className="text-[10px] font-mono text-foreground text-center">
+                                          {fmt(s.start)}–{fmt(s.end)}
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
 
-                    {showNewFor === prof.id ? (
+                    {showNewFor === profName ? (
                       <div
-                        className="rounded-md border border-border p-3 mt-2 space-y-2"
+                        className="rounded-md border border-border p-3 mt-2 space-y-3"
                         style={{ background: "hsl(var(--surface))" }}
                       >
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                           <div className="flex flex-col gap-1">
                             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
                             <div className="h-8 px-2 flex items-center text-xs text-foreground rounded-md border border-border bg-background/60 truncate">
@@ -344,62 +362,101 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                             >
                               <option value="">Selecione…</option>
-                              {availableUnits.map((u) => (
-                                <option key={u.id} value={u.id}>{u.name}</option>
+                              {puOptionsByProf(profName).map((u) => (
+                                <option key={u.id} value={u.id}>{u.unitName}</option>
                               ))}
                             </select>
                           </div>
                           <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
-                            <select
-                              value={newWeekday}
-                              onChange={(e) => setNewWeekday(e.target.value === "" ? "" : Number(e.target.value))}
-                              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
-                            >
-                              <option value="">Selecione…</option>
-                              {WEEKDAYS.map((d, i) => (
-                                <option key={i} value={i}>{d}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Slot (min)</span>
                             <input
-                              type="time"
-                              value={newStart}
-                              onChange={(e) => setNewStart(e.target.value)}
+                              type="number"
+                              min={5}
+                              step={5}
+                              value={newSlot}
+                              onChange={(e) => setNewSlot(Number(e.target.value || 0))}
                               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Fim</span>
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Buffer (min)</span>
                             <input
-                              type="time"
-                              value={newEnd}
-                              onChange={(e) => setNewEnd(e.target.value)}
+                              type="number"
+                              min={0}
+                              step={5}
+                              value={newBuffer}
+                              onChange={(e) => setNewBuffer(Number(e.target.value || 0))}
                               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                             />
                           </div>
                         </div>
+
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Horários semanais</span>
+                          {DAY_KEYS.map((d) => {
+                            const slots = newWeekly[d] ?? [];
+                            return (
+                              <div key={d} className="flex items-start gap-2">
+                                <div className="w-12 pt-1.5 text-xs font-medium text-foreground">{DAY_LABELS[d]}</div>
+                                <div className="flex-1 space-y-1">
+                                  {slots.length === 0 && (
+                                    <div className="text-[11px] text-muted-foreground/70 italic pt-1.5">sem horários</div>
+                                  )}
+                                  {slots.map((s, i) => (
+                                    <div key={i} className="flex items-center gap-1.5">
+                                      <input
+                                        type="time"
+                                        value={s.start}
+                                        onChange={(e) => updateSlot(d, i, "start", e.target.value)}
+                                        className="h-7 text-xs rounded-md border border-border px-2 bg-background text-foreground"
+                                      />
+                                      <span className="text-xs text-muted-foreground">–</span>
+                                      <input
+                                        type="time"
+                                        value={s.end}
+                                        onChange={(e) => updateSlot(d, i, "end", e.target.value)}
+                                        className="h-7 text-xs rounded-md border border-border px-2 bg-background text-foreground"
+                                      />
+                                      <button
+                                        onClick={() => removeSlot(d, i)}
+                                        className="text-muted-foreground hover:text-destructive transition-colors"
+                                        title="Remover slot"
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => addSlot(d)}
+                                  className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors pt-1.5"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  slot
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+
                         <div className="flex items-center justify-end gap-2 pt-1">
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-8 text-xs"
-                            onClick={() => { setShowNewFor(null); setNewPuId(""); setNewWeekday(""); setNewStart("08:00"); setNewEnd("18:00"); }}
+                            onClick={() => { setShowNewFor(null); setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({}); }}
                           >
                             Cancelar
                           </Button>
                           <Button
                             size="sm"
                             className="h-8 text-xs"
-                            disabled={!newPuId || newWeekday === "" || !newStart || !newEnd || createAvailability.isPending}
+                            disabled={!newPuId || Object.keys(newWeekly).length === 0 || createAvailability.isPending}
                             onClick={() => createAvailability.mutate({
-                              professional: prof.id,
                               professional_unit: newPuId as number,
-                              weekday: newWeekday as number,
-                              start_time: newStart,
-                              end_time: newEnd,
+                              slot_minutes: newSlot,
+                              buffer_minutes: newBuffer,
+                              weekly: newWeekly,
                             })}
                           >
                             {createAvailability.isPending ? "…" : "Salvar"}
@@ -409,8 +466,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                     ) : (
                       <button
                         onClick={() => {
-                          setShowNewFor(prof.id);
-                          setNewPuId(""); setNewWeekday(""); setNewStart("08:00"); setNewEnd("18:00");
+                          setShowNewFor(profName);
+                          setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({});
                         }}
                         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-2"
                       >
