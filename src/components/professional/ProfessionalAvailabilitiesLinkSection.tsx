@@ -132,27 +132,48 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  // Agrupa por nome do profissional
-  const grouped = useMemo(() => {
-    const map = new Map<string, Availability[]>();
-    for (const it of items) {
-      const key = it.professional_name ?? `#${it.professional_unit_id}`;
-      const arr = map.get(key) ?? [];
-      arr.push(it);
-      map.set(key, arr);
+  const professionalGroups = useMemo(() => {
+    const byName = new Map<string, { profName: string; list: Availability[] }>();
+
+    for (const link of allPuLinks) {
+      if (link?.is_active === false) continue;
+      const profV = link?.professional ?? link?.professional_id;
+      const profName =
+        link?.professional_name ??
+        link?.professional__name ??
+        (typeof profV === "object" ? profV?.name : undefined);
+
+      if (!profName) continue;
+      if (!byName.has(profName)) byName.set(profName, { profName, list: [] });
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [items]);
+
+    for (const prof of professionalsCatalog) {
+      const profName = String(prof?.name ?? "").trim();
+      if (profName && !byName.has(profName)) byName.set(profName, { profName, list: [] });
+    }
+
+    for (const it of items) {
+      const profName = it.professional_name ?? `#${it.professional_unit_id}`;
+      const group = byName.get(profName) ?? { profName, list: [] };
+      group.list.push(it);
+      byName.set(profName, group);
+    }
+
+    return Array.from(byName.values()).sort((a, b) => a.profName.localeCompare(b.profName));
+  }, [allPuLinks, professionalsCatalog, items]);
 
   const puOptionsByProf = useMemo(() => {
-    // Para o profissional aberto, pegamos os PU links cujo professional_name bate
     return (profName: string) => {
       const profId = professionalsCatalog.find((p: any) => p?.name === profName)?.id;
       return allPuLinks
         .filter((l: any) => {
           if (l?.is_active === false) return false;
           const pid = typeof l?.professional === "object" ? l?.professional?.id : (l?.professional ?? l?.professional_id);
-          return Number(pid) === Number(profId);
+          const linkProfName =
+            l?.professional_name ??
+            l?.professional__name ??
+            (typeof l?.professional === "object" ? l?.professional?.name : undefined);
+          return Number(pid) === Number(profId) || linkProfName === profName;
         })
         .map((l: any) => {
           const unitV = l?.unit ?? l?.unit_id;
@@ -255,10 +276,10 @@ export default function ProfessionalAvailabilitiesLinkSection() {
       >
         {isAuthLoading || isLoading ? (
           <p className="text-xs text-muted-foreground px-3">Carregando…</p>
-        ) : grouped.length === 0 ? (
+        ) : professionalGroups.length === 0 ? (
           <p className="text-xs text-muted-foreground px-3">Nenhuma disponibilidade encontrada.</p>
         ) : (
-          grouped.map(([profName, list]) => {
+          professionalGroups.map(({ profName, list }) => {
             const isOpen = openProfName === profName;
             return (
               <div
