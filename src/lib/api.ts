@@ -48,10 +48,7 @@ function getCookie(name: string): string | null {
 }
 
 const DEFAULT_API_BASE_URL = "https://algebra-kruger-husband-guitar.trycloudflare.com";
-const FALLBACK_API_BASE_URLS = [
-  DEFAULT_API_BASE_URL,
-  "https://bracelet-facts-anderson-executive.trycloudflare.com",
-];
+const FALLBACK_API_BASE_URLS = [DEFAULT_API_BASE_URL];
 
 function normalizeApiBaseUrl(url: string): string {
   return url.trim().replace(/\.trycloudflare\.co(?=\/?$)/i, ".trycloudflare.com");
@@ -68,6 +65,15 @@ function isTryCloudflareUrl(url: string): boolean {
 function readPersistedApiBaseUrl(): string | null {
   const persisted = localStorage.getItem(API_BASE_URL_STORAGE_KEY);
   return persisted ? normalizeApiBaseUrl(persisted) : null;
+}
+
+function isTrustedApiBaseUrl(url: string): boolean {
+  const normalized = normalizeApiBaseUrl(url);
+  return (
+    !isTryCloudflareUrl(normalized) ||
+    normalized === DEFAULT_API_BASE_URL ||
+    normalized === rawEnvApiBaseUrl
+  );
 }
 
 function persistApiBaseUrl(url: string) {
@@ -107,6 +113,7 @@ function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
       [currentBaseUrl, readPersistedApiBaseUrl(), rawEnvApiBaseUrl, ...FALLBACK_API_BASE_URLS]
         .filter((value): value is string => Boolean(value))
         .map(normalizeApiBaseUrl)
+        .filter(isTrustedApiBaseUrl)
     )
   );
 }
@@ -132,7 +139,15 @@ function buildAuthHeader(token: string) {
 
 // Interceptor: inject Auth Token + CSRF on mutating requests
 api.interceptors.request.use((config) => {
-  config.baseURL = normalizeApiBaseUrl(String(config.baseURL ?? resolvedApiBaseUrl));
+  const nextBaseUrl = normalizeApiBaseUrl(String(config.baseURL ?? resolvedApiBaseUrl));
+  if (!isTrustedApiBaseUrl(nextBaseUrl)) {
+    localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
+    resolvedApiBaseUrl = DEFAULT_API_BASE_URL;
+    api.defaults.baseURL = DEFAULT_API_BASE_URL;
+    config.baseURL = DEFAULT_API_BASE_URL;
+  } else {
+    config.baseURL = nextBaseUrl;
+  }
 
   const token = _authToken || readPersistedAuthToken();
   if (token) {
