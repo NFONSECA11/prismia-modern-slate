@@ -34,10 +34,6 @@ import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
 import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSection";
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
-import ProfessionalUnitsSection from "@/components/professional/ProfessionalUnitsSection";
-import ProfessionalSpecialtiesSection from "@/components/professional/ProfessionalSpecialtiesSection";
-import ProfessionalAvailabilitiesSection from "@/components/professional/ProfessionalAvailabilitiesSection";
-import ProfessionalTimeOffsSection from "@/components/professional/ProfessionalTimeOffsSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -701,14 +697,6 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
 
-          <ProfessionalUnitsSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
-
-          <ProfessionalSpecialtiesSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
-
-          <ProfessionalAvailabilitiesSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
-
-          <ProfessionalTimeOffsSection professionals={(professionals as any[]) ?? []} isLoading={!activeUnit || isLoadingProfessionals} />
-          
         </section>
 
         {/* ─── 5) Modo e validação final ─── */}
