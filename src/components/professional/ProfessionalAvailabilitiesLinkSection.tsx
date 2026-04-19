@@ -191,11 +191,6 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const createAvailability = useMutation({
     mutationFn: async (payload: {
       professional_unit: number;
-      professional_unit_id?: number;
-      professional?: number;
-      professional_id?: number;
-      company?: number;
-      company_id?: number;
       slot_minutes: number;
       buffer_minutes: number;
       weekly: Weekly;
@@ -208,29 +203,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         weekly: payload.weekly,
         is_active: true,
       };
-      if (payload.company_id ?? payload.company) {
-        body.company = Number(payload.company_id ?? payload.company);
-      }
-      if (payload.professional_id ?? payload.professional) {
-        body.professional = Number(payload.professional_id ?? payload.professional);
-      }
-
       console.info("[create-availability] post payload:", body);
       const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
-
-      const createdId = Number(data?.id ?? 0);
-      const professionalId = Number(payload.professional_id ?? payload.professional ?? 0);
-      const companyId = Number(payload.company_id ?? payload.company ?? 0);
-      if (createdId && professionalId) {
-        const patchBody: Record<string, any> = {
-          professional: professionalId,
-          professional_unit: payload.professional_unit,
-        };
-        if (companyId) patchBody.company = companyId;
-        console.info("[create-availability] patch payload:", patchBody);
-        await api.patch(`/api/booking/professional-availabilities/${createdId}/`, patchBody);
-      }
-
       return data;
     },
     onSuccess: () => {
