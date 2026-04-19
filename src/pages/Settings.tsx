@@ -36,6 +36,7 @@ import ProceduresByUnitLinkSection from "@/components/ProceduresByUnitLinkSectio
 import ProfessionalCard from "@/components/professional/ProfessionalCard";
 import ProfessionalUnitsLinkSection from "@/components/professional/ProfessionalUnitsLinkSection";
 import ProfessionalProceduresLinkSection from "@/components/professional/ProfessionalProceduresLinkSection";
+import ProfessionalAvailabilitiesLinkSection from "@/components/professional/ProfessionalAvailabilitiesLinkSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
@@ -721,6 +722,8 @@ export default function Settings() {
           <ProfessionalUnitsLinkSection />
 
           <ProfessionalProceduresLinkSection />
+
+          <ProfessionalAvailabilitiesLinkSection />
 
         </section>
 
