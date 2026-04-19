@@ -627,8 +627,9 @@ export default function Settings() {
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
-              <div className="grid grid-cols-[3rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 px-3 py-1 items-center">
+              <div className="grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
@@ -646,6 +647,7 @@ export default function Settings() {
                   <ProfessionalCard
                     key={prof.id}
                     professional={prof}
+                    companyName={company?.name}
                     onToggleActive={(id, isActive) => toggleProfessional.mutate({ id, is_active: isActive })}
                     onDelete={(id) => deleteProfessional.mutate(id)}
                   />
