@@ -706,7 +706,7 @@ export default function Settings() {
             icon={MapPin}
             title="Profissionais → Unidades"
             description="Unidades vinculadas a cada profissional"
-            professionals={professionals as any[]}
+            professionals={(professionals as any[]) ?? []}
             isLoading={!activeUnit || isLoadingProfessionals}
             emptyMessage="Nenhum profissional encontrado."
             renderSubSection={(professionalId) => <ProfessionalUnitsSubSection professionalId={professionalId} />}
@@ -716,7 +716,7 @@ export default function Settings() {
             icon={Layers}
             title="Profissionais → Especialidades"
             description="Especialidades disponíveis por profissional"
-            professionals={professionals as any[]}
+            professionals={(professionals as any[]) ?? []}
             isLoading={!activeUnit || isLoadingProfessionals}
             emptyMessage="Nenhum profissional encontrado."
             renderSubSection={(professionalId) => <ProfessionalSpecialtiesSubSection professionalId={professionalId} />}
@@ -726,7 +726,7 @@ export default function Settings() {
             icon={Palette}
             title="Profissionais → Disponibilidades"
             description="Horários e dias de disponibilidade"
-            professionals={professionals as any[]}
+            professionals={(professionals as any[]) ?? []}
             isLoading={!activeUnit || isLoadingProfessionals}
             emptyMessage="Nenhum profissional encontrado."
             renderSubSection={(professionalId) => <ProfessionalAvailabilitiesSubSection professionalId={professionalId} />}
@@ -736,7 +736,7 @@ export default function Settings() {
             icon={Settings2}
             title="Profissionais → Adição / Bloqueios"
             description="Períodos de adição e bloqueio na agenda"
-            professionals={professionals as any[]}
+            professionals={(professionals as any[]) ?? []}
             isLoading={!activeUnit || isLoadingProfessionals}
             emptyMessage="Nenhum profissional encontrado."
             renderSubSection={(professionalId) => <ProfessionalTimeOffsSubSection professionalId={professionalId} />}
