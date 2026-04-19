@@ -191,10 +191,23 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const createAvailability = useMutation({
     mutationFn: async (payload: { professional_unit: number; slot_minutes: number; buffer_minutes: number; weekly: Weekly }) => {
       await fetchCsrf();
-      const { data } = await api.post(`/api/booking/professional-availabilities/`, {
+      // Derive professional + company from the selected professional_unit link
+      const link = allPuLinks.find((l: any) => Number(l?.id) === Number(payload.professional_unit));
+      const professionalId =
+        (typeof link?.professional === "object" ? link?.professional?.id : link?.professional) ??
+        link?.professional_id;
+      const companyId =
+        (typeof link?.company === "object" ? link?.company?.id : link?.company) ??
+        link?.company_id ??
+        company?.id;
+      const body: Record<string, any> = {
         ...payload,
         is_active: true,
-      });
+      };
+      if (professionalId) body.professional = Number(professionalId);
+      if (companyId) body.company = Number(companyId);
+      console.info("[create-availability] payload:", body);
+      const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
       return data;
     },
     onSuccess: () => {
