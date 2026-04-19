@@ -627,6 +627,14 @@ export default function Settings() {
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+              <div className="grid grid-cols-[3rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 px-3 py-1 items-center">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Código</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
+                <span />
+              </div>
+
               {!activeUnit ? (
                 <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
               ) : isLoadingProfessionals ? (
