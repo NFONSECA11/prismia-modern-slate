@@ -484,24 +484,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                             className="h-8 text-xs"
                             disabled={!newPuId || Object.keys(newWeekly).length === 0 || createAvailability.isPending}
                             onClick={() => {
-                              const selectedLink = allPuLinks.find((l: any) => Number(l?.id) === Number(newPuId));
-                              const fallbackProfessionalId = professionalsCatalog.find((p: any) => p?.name === profName)?.id;
-                              const professionalId =
-                                (typeof selectedLink?.professional === "object" ? selectedLink?.professional?.id : selectedLink?.professional) ??
-                                selectedLink?.professional_id ??
-                                fallbackProfessionalId;
-                              const companyId =
-                                (typeof selectedLink?.company === "object" ? selectedLink?.company?.id : selectedLink?.company) ??
-                                selectedLink?.company_id ??
-                                company?.id;
-
                               createAvailability.mutate({
                                 professional_unit: newPuId as number,
-                                professional_unit_id: newPuId as number,
-                                professional: professionalId ? Number(professionalId) : undefined,
-                                professional_id: professionalId ? Number(professionalId) : undefined,
-                                company: companyId ? Number(companyId) : undefined,
-                                company_id: companyId ? Number(companyId) : undefined,
                                 slot_minutes: newSlot,
                                 buffer_minutes: newBuffer,
                                 weekly: newWeekly,
