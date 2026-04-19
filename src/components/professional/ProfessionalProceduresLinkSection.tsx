@@ -317,7 +317,10 @@ export default function ProfessionalProceduresLinkSection() {
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
                 <select
                   value={newProfId}
-                  onChange={(e) => setNewProfId(e.target.value ? Number(e.target.value) : "")}
+                  onChange={(e) => {
+                    setNewProfId(e.target.value ? Number(e.target.value) : "");
+                    setNewUnitId("");
+                  }}
                   className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                 >
                   <option value="">Selecione…</option>
