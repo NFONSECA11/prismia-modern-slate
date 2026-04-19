@@ -202,14 +202,35 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     }) => {
       await fetchCsrf();
       const body: Record<string, any> = {
-        ...payload,
-        professional_unit_id: payload.professional_unit_id ?? payload.professional_unit,
-        professional_id: payload.professional_id ?? payload.professional,
-        company_id: payload.company_id ?? payload.company,
+        professional_unit: payload.professional_unit,
+        slot_minutes: payload.slot_minutes,
+        buffer_minutes: payload.buffer_minutes,
+        weekly: payload.weekly,
         is_active: true,
       };
-      console.info("[create-availability] payload:", body);
+      if (payload.company_id ?? payload.company) {
+        body.company = Number(payload.company_id ?? payload.company);
+      }
+      if (payload.professional_id ?? payload.professional) {
+        body.professional = Number(payload.professional_id ?? payload.professional);
+      }
+
+      console.info("[create-availability] post payload:", body);
       const { data } = await api.post(`/api/booking/professional-availabilities/`, body);
+
+      const createdId = Number(data?.id ?? 0);
+      const professionalId = Number(payload.professional_id ?? payload.professional ?? 0);
+      const companyId = Number(payload.company_id ?? payload.company ?? 0);
+      if (createdId && professionalId) {
+        const patchBody: Record<string, any> = {
+          professional: professionalId,
+          professional_unit: payload.professional_unit,
+        };
+        if (companyId) patchBody.company = companyId;
+        console.info("[create-availability] patch payload:", patchBody);
+        await api.patch(`/api/booking/professional-availabilities/${createdId}/`, patchBody);
+      }
+
       return data;
     },
     onSuccess: () => {
