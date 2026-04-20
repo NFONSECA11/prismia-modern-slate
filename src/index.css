@@ -368,6 +368,7 @@
   [data-theme="frost"] header.sticky {
     border-bottom: 2px solid hsl(var(--border)) !important;
   }
+  [data-theme="frost"] .rounded-2xl.border,
   [data-theme="frost"] .rounded-xl.border,
   [data-theme="frost"] .rounded-lg.border {
     border-width: 3px !important;
