@@ -131,6 +131,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [theme, bgMode, bgVariant]);
 
+  // Override ONLY --background when user picks a solid swatch in the Night theme.
+  // Does not touch --topbar-bg, --surface, --surface-raised, --surface-elevated, etc.
+  useEffect(() => {
+    const NIGHT_SOLID_BACKGROUNDS = ["216 65% 7%", "240 3% 9%", "200 40% 8%"];
+    if (theme === "night" && bgMode === "solid") {
+      const value = NIGHT_SOLID_BACKGROUNDS[bgVariant] ?? NIGHT_SOLID_BACKGROUNDS[0];
+      document.documentElement.style.setProperty("--background", value);
+    } else {
+      document.documentElement.style.removeProperty("--background");
+    }
+  }, [theme, bgMode, bgVariant]);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent }}>
       {children}
