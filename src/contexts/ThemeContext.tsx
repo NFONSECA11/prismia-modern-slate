@@ -114,6 +114,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute("data-accent", accent);
   }, [accent]);
 
+  useEffect(() => {
+    // Map (theme, bgMode, bgVariant) → data-background tokens defined in index.css
+    let token: string | null = null;
+    if (theme === "night") {
+      if (bgMode === "solid") {
+        token = ["solid-night", "solid-abissal", "solid-steel"][bgVariant] ?? "solid-night";
+      } else if (bgMode === "gradient") {
+        token = ["gradient-fumaca", "gradient-aurora", "gradient-nevoa"][bgVariant] ?? "gradient-fumaca";
+      }
+    }
+    if (token) {
+      document.documentElement.setAttribute("data-background", token);
+    } else {
+      document.documentElement.removeAttribute("data-background");
+    }
+  }, [theme, bgMode, bgVariant]);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent }}>
       {children}
