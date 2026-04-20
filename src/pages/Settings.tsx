@@ -315,9 +315,7 @@ export default function Settings() {
       {/* Module banner — barra dupla full-width */}
       <div
         className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-b border-border/60"
-        style={{
-          background: "hsl(var(--topbar-bg))",
-        }}
+        style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center gap-1 text-xs md:text-sm font-semibold tracking-tight max-w-3xl mx-auto w-full">
           <span className="font-light opacity-90" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
