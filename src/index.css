@@ -364,6 +364,29 @@
   [data-theme="frost"] td {
     color: #0f172a !important;
   }
+  /* Frost: bordas mais grossas em containers e controles */
+  [data-theme="frost"] header.sticky {
+    border-bottom-width: 2px !important;
+  }
+  [data-theme="frost"] .border,
+  [data-theme="frost"] .border-border,
+  [data-theme="frost"] [class*="border-border"]:not(.border-b):not(.border-t):not(.border-l):not(.border-r) {
+    border-width: 2px !important;
+  }
+  [data-theme="frost"] .border-b,
+  [data-theme="frost"] .border-b-2 {
+    border-bottom-width: 2px !important;
+  }
+  [data-theme="frost"] .border-t { border-top-width: 2px !important; }
+  [data-theme="frost"] table,
+  [data-theme="frost"] thead,
+  [data-theme="frost"] tbody,
+  [data-theme="frost"] tr {
+    border-color: hsl(var(--border)) !important;
+  }
+  [data-theme="frost"] tbody tr {
+    border-bottom: 2px solid hsl(var(--border)) !important;
+  }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
     --primary: 220 10% 45%;
