@@ -325,9 +325,8 @@
   }
   /* PrismIA Agenda banner: mantém aparência original (fundo escuro) também no Frost */
   /* Frost: reforçar peso e contraste dos textos */
-  [data-theme="frost"] header.sticky,
-  [data-theme="frost"] header.sticky * {
-    color: #0a1428 !important;
+  [data-theme="frost"] header.sticky {
+    color: #0a1428;
   }
   [data-theme="frost"] header.sticky .gradient-text,
   [data-theme="frost"] header.sticky [data-prism-brand-ia],
@@ -356,9 +355,8 @@
     border-bottom: none !important;
     box-shadow: none !important;
   }
-  [data-theme="frost"] header.sticky,
-  [data-theme="frost"] header.sticky * {
-    color: #1a2b3c !important;
+  [data-theme="frost"] header.sticky {
+    color: #1a2b3c;
   }
   /* Frost: filter bar background (matches navbar) */
   [data-theme="frost"] .rounded-xl.border-2.border-border.px-3.py-2 {
