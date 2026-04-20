@@ -222,7 +222,7 @@
 
   [data-theme="frost"] {
     --background: 220 16% 97%;
-    --surface: 213 25% 93%;
+    --surface: 0 0% 100%;
     --surface-raised: 213 30% 97%;
     --surface-elevated: 220 14% 98%;
     --row-hover: 220 20% 96%;
