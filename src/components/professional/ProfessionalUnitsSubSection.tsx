@@ -63,6 +63,9 @@ export default function ProfessionalUnitsSubSection({ professionalId }: Props) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-all"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-as-options"] });
       setShowNew(false);
       setNewUnitId("");
       setNewPriority("0");
@@ -88,7 +91,10 @@ export default function ProfessionalUnitsSubSection({ professionalId }: Props) {
       if (ctx?.prev) qc.setQueryData(queryKey, ctx.prev);
       toast.error("Erro ao alterar status");
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+    },
   });
 
   const removeLink = useMutation({
@@ -98,6 +104,9 @@ export default function ProfessionalUnitsSubSection({ professionalId }: Props) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-all"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-as-options"] });
       toast.success("Vínculo removido");
     },
     onError: () => toast.error("Erro ao remover vínculo"),

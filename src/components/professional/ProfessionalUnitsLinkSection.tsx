@@ -145,6 +145,9 @@ export default function ProfessionalUnitsLinkSection() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+      qc.invalidateQueries({ queryKey: ["professional-units"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-as-options"] });
       setShowNew(false);
       setNewProfId("");
       setNewUnitId("");
@@ -171,7 +174,10 @@ export default function ProfessionalUnitsLinkSection() {
       if (ctx?.prev) qc.setQueryData(queryKey, ctx.prev);
       toast.error("Erro ao alterar status");
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+    },
   });
 
   const removeLink = useMutation({
@@ -179,7 +185,13 @@ export default function ProfessionalUnitsLinkSection() {
       await fetchCsrf();
       await api.delete(`/api/booking/professional-units/${id}/`);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey }); toast.success("Vínculo removido"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey });
+      qc.invalidateQueries({ queryKey: ["professional-units-by-unit"] });
+      qc.invalidateQueries({ queryKey: ["professional-units"] });
+      qc.invalidateQueries({ queryKey: ["professional-units-as-options"] });
+      toast.success("Vínculo removido");
+    },
     onError: () => toast.error("Erro ao remover vínculo"),
   });
 
