@@ -58,7 +58,7 @@ export default function Settings() {
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
   const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
-  const [nightSolidVariantOverride, setNightSolidVariantOverride] = useState<number | null>(null);
+  // Override removed: the active swatch must reflect the persisted bgVariant directly.
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
@@ -177,11 +177,6 @@ export default function Settings() {
     ],
   };
 
-  useEffect(() => {
-    if (theme !== "night" || bgMode !== "solid") {
-      setNightSolidVariantOverride(null);
-    }
-  }, [theme, bgMode]);
 
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
@@ -276,7 +271,7 @@ export default function Settings() {
   };
   const isLandscape = bgMode === "landscape";
   const isGradient = bgMode === "gradient";
-  const effectiveBgVariant = theme === "night" && bgMode === "solid" ? (nightSolidVariantOverride ?? 0) : bgVariant;
+  const effectiveBgVariant = bgVariant;
   const currentBg = landscapeMap[theme]?.[effectiveBgVariant] ?? landscapeMap[theme]?.[0];
   const solidBg = solidColors[theme]?.[effectiveBgVariant] ?? solidColors[theme]?.[0];
   const gradientBg = gradientMap[theme]?.[effectiveBgVariant] ?? gradientMap[theme]?.[0];
@@ -468,7 +463,6 @@ export default function Settings() {
                         key={bg.id}
                         onClick={() => {
                           setBgMode(bg.id);
-                          if (theme === "night" && bg.id === "solid") setNightSolidVariantOverride(0);
                         }}
                         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all ${
                           active
@@ -505,7 +499,6 @@ export default function Settings() {
                           <button
                             key={i}
                             onClick={() => {
-                              if (theme === "night") setNightSolidVariantOverride(i);
                               setBgVariant(i);
                             }}
                             className={`flex flex-col items-center gap-1.5 transition-all`}
