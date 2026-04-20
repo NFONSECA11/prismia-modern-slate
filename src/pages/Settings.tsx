@@ -23,7 +23,7 @@ import bgLightClean4 from "@/assets/bg-light-clean-4.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -58,7 +58,7 @@ export default function Settings() {
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
   const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
-  const didManuallyPickNightSolid = useRef(false);
+  const [nightSolidVariantOverride, setNightSolidVariantOverride] = useState<number | null>(null);
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
@@ -178,15 +178,10 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    if (theme === "night" && bgMode === "solid") {
-      if (!didManuallyPickNightSolid.current && bgVariant !== 0) {
-        setBgVariant(0);
-      }
-      return;
+    if (theme !== "night" || bgMode !== "solid") {
+      setNightSolidVariantOverride(null);
     }
-
-    didManuallyPickNightSolid.current = false;
-  }, [theme, bgMode, bgVariant, setBgVariant]);
+  }, [theme, bgMode]);
 
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
@@ -281,9 +276,10 @@ export default function Settings() {
   };
   const isLandscape = bgMode === "landscape";
   const isGradient = bgMode === "gradient";
-  const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
-  const solidBg = solidColors[theme]?.[bgVariant] ?? solidColors[theme]?.[0];
-  const gradientBg = gradientMap[theme]?.[bgVariant] ?? gradientMap[theme]?.[0];
+  const effectiveBgVariant = theme === "night" && bgMode === "solid" ? (nightSolidVariantOverride ?? 0) : bgVariant;
+  const currentBg = landscapeMap[theme]?.[effectiveBgVariant] ?? landscapeMap[theme]?.[0];
+  const solidBg = solidColors[theme]?.[effectiveBgVariant] ?? solidColors[theme]?.[0];
+  const gradientBg = gradientMap[theme]?.[effectiveBgVariant] ?? gradientMap[theme]?.[0];
   const mainBg = isLandscape ? "hsl(var(--background))" : isGradient ? "hsl(var(--background))" : `hsl(${solidBg})`;
 
   return (
@@ -470,7 +466,10 @@ export default function Settings() {
                     return (
                       <button
                         key={bg.id}
-                        onClick={() => setBgMode(bg.id)}
+                        onClick={() => {
+                          setBgMode(bg.id);
+                          if (theme === "night" && bg.id === "solid") setNightSolidVariantOverride(0);
+                        }}
                         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all ${
                           active
                             ? "border-primary bg-primary/10 text-foreground"
@@ -501,14 +500,12 @@ export default function Settings() {
                 <div className="flex items-center gap-3 px-1">
                   {bgMode === "solid"
                     ? solidVariants[theme].map((v, i) => {
-                        const active = bgVariant === i;
+                        const active = effectiveBgVariant === i;
                         return (
                           <button
                             key={i}
                             onClick={() => {
-                              if (theme === "night") {
-                                didManuallyPickNightSolid.current = true;
-                              }
+                              if (theme === "night") setNightSolidVariantOverride(i);
                               setBgVariant(i);
                             }}
                             className={`flex flex-col items-center gap-1.5 transition-all`}
