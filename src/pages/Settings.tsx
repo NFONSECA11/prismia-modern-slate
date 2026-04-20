@@ -736,7 +736,7 @@ export default function Settings() {
         {/* ─── 5) Modo e validação final ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">4 · Modo e validação</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Operação e Confirmação</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
