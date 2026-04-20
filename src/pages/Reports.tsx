@@ -1,9 +1,25 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3 } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  LayoutList,
+  LogOut,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+  Settings,
+  Shield,
+  Sparkles,
+  Wifi,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { savePreference } from "@/lib/preferencesApi";
 import api from "@/lib/api";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
@@ -26,10 +42,28 @@ const landscapeMap: Record<string, string[]> = {
   frost: [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
 };
 
+const roleLabel: Record<string, string> = {
+  owner: "Owner",
+  manager: "Manager",
+  agent: "Agent",
+};
+
 export default function Reports() {
   const navigate = useNavigate();
-  const { company, canManage, isLoading } = useAuth();
+  const {
+    user,
+    company,
+    role,
+    units,
+    activeUnit,
+    setActiveUnit,
+    canManage,
+    isLoading,
+    logout,
+  } = useAuth();
   const { theme, bgMode, bgVariant } = useTheme();
+  const [showUnitMenu, setShowUnitMenu] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !canManage) navigate("/", { replace: true });
@@ -47,6 +81,17 @@ export default function Reports() {
   const isLandscape = bgMode === "landscape";
   const currentBg = landscapeMap[theme]?.[bgVariant] ?? landscapeMap[theme]?.[0];
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  const goToView = (view: "table" | "agenda") => {
+    sessionStorage.setItem("prefs:last_view", view);
+    savePreference({ last_view: view });
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen relative" style={{ background: "hsl(var(--background))" }}>
       {isLandscape && (
@@ -56,28 +101,195 @@ export default function Reports() {
         />
       )}
 
+      {/* Top navigation bar — replica do Index */}
       <header
-        className="sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-border/60"
-        style={{ background: "hsl(var(--topbar-bg))" }}
+        className="sticky top-0 z-30 border-b border-border/60 print:hidden"
+        style={{
+          background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
+          backdropFilter: isLandscape ? "blur(16px)" : undefined,
+        }}
       >
-        {branding?.logo_url ? (
-          <img
-            src={branding.logo_url}
-            alt={branding.logo_alt || "Logo"}
-            className="h-11 max-w-[180px] object-contain"
-          />
-        ) : (
-          <h1 className="text-sm font-bold text-foreground">Relatórios</h1>
-        )}
-        {company && <span className="text-xs text-muted-foreground">{company.name}</span>}
-        <div className="flex-1" />
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {branding?.logo_url ? (
+                <img
+                  src={branding.logo_url}
+                  alt={branding.logo_alt || "Logo"}
+                  className="h-11 max-w-[180px] object-contain"
+                />
+              ) : (
+                <>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                  </div>
+                  <span className="text-sm font-bold tracking-tight gradient-text">PrismIA</span>
+                </>
+              )}
+            </div>
+            <span className="text-border text-xs hidden sm:inline">|</span>
+
+            {/* Company + Unit selector */}
+            <div className="hidden sm:flex items-center gap-2 min-w-0">
+              {company && (
+                <span className="text-xs text-muted-foreground font-medium truncate">
+                  {company.name}
+                </span>
+              )}
+              {units.length > 1 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUnitMenu(!showUnitMenu)}
+                    className="flex items-center gap-1 text-xs font-medium text-foreground px-2 py-1 rounded-lg border border-border hover:bg-surface-elevated transition-colors"
+                  >
+                    <Building2 className="h-3 w-3 text-muted-foreground" />
+                    {activeUnit?.name ?? "Unidade"}
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                  {showUnitMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowUnitMenu(false)}
+                      />
+                      <div className="absolute top-full left-0 mt-1 z-50 rounded-lg border border-border surface-raised shadow-md py-1 min-w-[160px]">
+                        {units.map((u) => (
+                          <button
+                            key={u.id}
+                            onClick={() => {
+                              setActiveUnit(u);
+                              savePreference({ last_unit_id: u.id });
+                              setShowUnitMenu(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                              activeUnit?.id === u.id
+                                ? "text-primary font-semibold bg-primary/5"
+                                : "text-foreground hover:bg-surface-elevated"
+                            }`}
+                          >
+                            {u.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {units.length <= 1 && activeUnit && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  {activeUnit.name}
+                </span>
+              )}
+            </div>
+
+            {/* Connectivity */}
+            <div className="hidden sm:flex">
+              <span className="flex items-center gap-1 text-[10px] font-medium text-status-confirmed bg-status-confirmed-bg px-2 py-0.5 rounded-full border border-status-confirmed/25">
+                <Wifi className="h-3 w-3" />
+                Conectado
+              </span>
+            </div>
+          </div>
+
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-2">
+            {role && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-surface-elevated px-2 py-0.5 rounded-full border border-border">
+                <Shield className="h-3 w-3" />
+                {roleLabel[role] ?? role}
+              </span>
+            )}
+            {user && (
+              <span className="text-xs text-muted-foreground">
+                {user.first_name || user.username}
+              </span>
+            )}
+
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-surface-elevated"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Atualizar
+            </button>
+
+            <div className="h-4 w-px bg-border" />
+
+            <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
+              <button
+                onClick={() => goToView("table")}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground"
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+                Tabela
+              </button>
+              <button
+                onClick={() => goToView("agenda")}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground"
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                Agenda
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-border" />
+
+            {canManage && (
+              <button
+                onClick={() => navigate("/reports")}
+                className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-lg bg-surface-raised text-foreground shadow-sm"
+                title="Relatórios"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Relatórios
+              </button>
+            )}
+
+            <button
+              onClick={() => navigate("/settings")}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+              title="Configurações"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Configurações
+            </button>
+
+            {isLandscape && (
+              <button
+                onClick={() => setZenMode(!zenMode)}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title={zenMode ? "Voltar ao dashboard" : "Modo paisagem"}
+              >
+                {zenMode ? (
+                  <Minimize2 className="h-3.5 w-3.5" />
+                ) : (
+                  <Maximize2 className="h-3.5 w-3.5" />
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-status-canceled transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+              title="Sair"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sair
+            </button>
+          </div>
+
+          {/* Mobile: voltar */}
+          <div className="flex sm:hidden items-center gap-2">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Module banner */}
@@ -91,7 +303,9 @@ export default function Reports() {
           }}
         >
           <div className="flex items-center gap-0.5 text-xs md:text-sm font-semibold tracking-tight">
-            <span className="font-light opacity-75" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
+            <span className="font-light opacity-75" style={{ color: "hsl(0 0% 85%)" }}>
+              Prism
+            </span>
             <span className="gradient-text font-bold">IA</span>
           </div>
           <span
