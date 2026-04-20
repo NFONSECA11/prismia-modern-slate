@@ -96,7 +96,7 @@ export function ConversaoTab({ filters }: Props) {
       <div className="grid md:grid-cols-2 gap-3">
         <ReportCard title="Funil de conversão">
           <div className="space-y-3">
-            {funnel.data?.steps.map((s, idx) => {
+            {(funnel.data?.steps ?? []).map((s, idx) => {
               const colors = ["bg-primary", "bg-primary/70", "bg-status-confirmed"];
               return (
                 <div key={s.key} className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export function ConversaoTab({ filters }: Props) {
             tentativas sem conversão
           </p>
           <div className="space-y-2.5">
-            {losses.data?.items.map((it, idx) => {
+            {(losses.data?.items ?? []).map((it, idx) => {
               const palette = ["bg-status-pending", "bg-muted-foreground/60", "bg-muted-foreground/40"];
               return (
                 <div key={it.key} className="flex items-center gap-3">
