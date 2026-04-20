@@ -346,7 +346,7 @@ export default function Reports() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-b border-border/60"
+        className="print:hidden relative w-full flex items-center px-4 sm:px-6 py-1 border-b border-border/60"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
