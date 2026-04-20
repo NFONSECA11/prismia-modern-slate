@@ -122,7 +122,7 @@ export function ConversaoTab({ filters }: Props) {
                 </div>
               );
             })}
-            {!funnel.data?.steps.length && !funnel.isLoading && (
+            {!(funnel.data?.steps?.length) && !funnel.isLoading && (
               <p className="text-xs text-muted-foreground italic">Sem dados.</p>
             )}
           </div>
@@ -180,7 +180,7 @@ export function ConversaoTab({ filters }: Props) {
                 </div>
               );
             })}
-            {!losses.data?.items.length && !losses.isLoading && (
+            {!(losses.data?.items?.length) && !losses.isLoading && (
               <p className="text-xs text-muted-foreground italic">Sem perdas no período.</p>
             )}
           </div>
