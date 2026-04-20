@@ -58,6 +58,7 @@ export default function Settings() {
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
   const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+  const [didNormalizeNightSolid, setDidNormalizeNightSolid] = useState(false);
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
