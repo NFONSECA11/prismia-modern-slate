@@ -120,9 +120,9 @@ export default function Settings() {
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
-      { label: "Azul Profundo", color: "216 65% 7%" },
-      { label: "Carvão Azulado", color: "218 28% 9%" },
-      { label: "Púrpura Noturno", color: "262 71% 14%" },
+      { label: "Azul Profundo", color: "222 45% 9%" },
+      { label: "Carvão Azulado", color: "240 3% 11%" },
+      { label: "Púrpura Noturno", color: "264 71% 14%" },
     ],
     "slate": [
       { label: "Deep Blue", color: "216 50% 12%" },
