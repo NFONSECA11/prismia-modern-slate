@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Area,
   AreaChart,
@@ -65,15 +71,49 @@ export function ConversaoTab({ filters }: Props) {
           value={fmtNum(o?.conversations_started)}
           sub="no período"
         />
-        <ReportKpi
-          label="Tentativas de booking"
-          value={fmtNum(o?.booking_attempts)}
-          sub={
-            o
-              ? `${fmtPct(o.conversation_to_attempt_rate)} das conversas`
-              : undefined
+        {(() => {
+          const rate = o?.conversation_to_attempt_rate;
+          const distorted = rate !== undefined && rate !== null && rate > 100;
+          if (!distorted) {
+            return (
+              <ReportKpi
+                label="Tentativas de booking"
+                value={fmtNum(o?.booking_attempts)}
+                sub={o ? `${fmtPct(rate)} das conversas` : undefined}
+              />
+            );
           }
-        />
+          return (
+            <div
+              className="rounded-xl border border-border p-4"
+              style={{ background: "hsl(var(--surface-elevated))" }}
+            >
+              <div className="text-xs text-muted-foreground mb-1.5">Tentativas de booking</div>
+              <div className="text-2xl font-semibold text-foreground">{fmtNum(o?.booking_attempts)}</div>
+              <div className="flex items-center gap-1 text-xs text-status-pending mt-1">
+                <span>{fmtPct(rate)} das conversas</span>
+                <TooltipProvider delayDuration={150}>
+                  <UiTooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex"
+                        aria-label="Aviso de distorção de dados"
+                      >
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs">
+                      Taxa acima de 100% indica possível distorção dos dados de
+                      desenvolvimento (tentativas registradas sem conversa
+                      correspondente no período filtrado).
+                    </TooltipContent>
+                  </UiTooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          );
+        })()}
         <ReportKpi
           label="Confirmados"
           value={fmtNum(o?.confirmed_bookings)}
@@ -117,7 +157,7 @@ export function ConversaoTab({ filters }: Props) {
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground w-12 text-right">
-                    {fmtPct(s.pct)}
+                    {s.pct > 100 ? "—" : fmtPct(s.pct)}
                   </span>
                 </div>
               );
