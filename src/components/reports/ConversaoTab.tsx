@@ -76,17 +76,17 @@ export function ConversaoTab({ filters }: Props) {
         />
         <ReportKpi
           label="Confirmados"
-          value={fmtNum(o?.confirmed)}
+          value={fmtNum(o?.confirmed_bookings)}
           sub={
             o
-              ? `${fmtPct(o.attempt_to_confirmation_rate)} das tentativas`
+              ? `${fmtPct(o.attempt_to_confirm_rate)} das tentativas`
               : undefined
           }
           tone="good"
         />
         <ReportKpi
           label="Conversa → confirmação"
-          value={fmtPct(o?.conversation_to_confirmation_rate)}
+          value={fmtPct(o?.conversation_to_confirm_rate)}
           sub="taxa global"
           tone="warn"
         />
@@ -131,10 +131,10 @@ export function ConversaoTab({ filters }: Props) {
         <ReportCard title="Taxas de conversão">
           <ul className="divide-y divide-border">
             <RateRow label="Conversa → tentativa" value={fmtPct(o?.conversation_to_attempt_rate)} />
-            <RateRow label="Tentativa → confirmação" value={fmtPct(o?.attempt_to_confirmation_rate)} />
+            <RateRow label="Tentativa → confirmação" value={fmtPct(o?.attempt_to_confirm_rate)} />
             <RateRow
               label="Conversa → confirmação"
-              value={fmtPct(o?.conversation_to_confirmation_rate)}
+              value={fmtPct(o?.conversation_to_confirm_rate)}
               tone="warn"
             />
             <RateRow
