@@ -170,4 +170,66 @@ export interface ResultsRevenueBreakdown {
 export const fetchResultsRevenueBreakdown = (f: ReportFilters) =>
   get<ResultsRevenueBreakdown>("/api/reports/results/revenue-breakdown", f);
 
+// ===== Performance =====
+export interface PerformanceOverview {
+  handoff_rate: number;
+  handoff_count: number;
+  ai_bookings_pct: number;
+  ai_bookings_count: number;
+  waitlist_bookings_pct: number;
+  waitlist_bookings_count: number;
+  total_confirmed: number;
+}
+export const fetchPerformanceOverview = (f: ReportFilters) =>
+  get<PerformanceOverview>("/api/reports/performance/overview", f);
+
+export interface AiIntentItem {
+  key: string;
+  label: string;
+  count: number;
+  pct: number;
+}
+export interface PerformanceAiIntents {
+  total: number;
+  items: AiIntentItem[];
+  illustrative?: boolean;
+}
+export const fetchPerformanceAiIntents = (f: ReportFilters) =>
+  get<PerformanceAiIntents>("/api/reports/performance/ai-intents", f);
+
+export interface AiVsHumanItem {
+  key: string;
+  label: string;
+  count: number;
+  pct: number;
+}
+export interface PerformanceAiVsHuman {
+  total: number;
+  items: AiVsHumanItem[];
+}
+export const fetchPerformanceAiVsHuman = (f: ReportFilters) =>
+  get<PerformanceAiVsHuman>("/api/reports/performance/ai-vs-human", f);
+
+export interface HumanAgentRow {
+  user_id?: number | string;
+  name: string;
+  handoffs: number;
+  avg_minutes: number;
+}
+export interface HumanUnitRow {
+  key: string;
+  label: string;
+  count: number;
+  pct: number;
+}
+export interface PerformanceHumanService {
+  agents: HumanAgentRow[];
+  by_unit: HumanUnitRow[];
+  avg_minutes_to_confirmation?: number;
+  illustrative?: boolean;
+}
+export const fetchPerformanceHumanService = (f: ReportFilters) =>
+  get<PerformanceHumanService>("/api/reports/performance/human-service", f);
+
+
 
