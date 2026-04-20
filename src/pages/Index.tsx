@@ -728,21 +728,59 @@ export default function Index() {
         )}
       </header>
 
-      {/* Module banner — barra dupla full-width */}
+      {/* Module banner — demonstração de fontes */}
       <div
-        className="print:hidden relative w-full flex items-center px-4 sm:px-6 py-1 border-b border-border/60"
+        className="print:hidden relative w-full px-4 sm:px-6 py-3 border-b border-border/60"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight w-full">
-          <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
-          <span className="font-light text-foreground/80">Prism</span>
-          <span className="gradient-text font-bold -ml-1.5">IA</span>
-          <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
-            Agenda
-          </span>
+        <div className="flex flex-col gap-2">
+          {/* Fonte atual: Inter */}
+          <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
+            <span className="font-light text-foreground/80">Prism</span>
+            <span className="gradient-text font-bold -ml-1.5">IA</span>
+            <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>Agenda</span>
+            <span className="ml-2 text-[10px] text-muted-foreground font-normal">(Inter - atual)</span>
+          </div>
+
+          {/* Opção: Poppins */}
+          <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
+            <span className="font-light text-foreground/80">Prism</span>
+            <span className="gradient-text font-bold -ml-1.5">IA</span>
+            <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>Agenda</span>
+            <span className="ml-2 text-[10px] text-muted-foreground font-normal">(Poppins)</span>
+          </div>
+
+          {/* Opção: Montserrat */}
+          <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
+            <span className="font-light text-foreground/80">Prism</span>
+            <span className="gradient-text font-bold -ml-1.5">IA</span>
+            <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>Agenda</span>
+            <span className="ml-2 text-[10px] text-muted-foreground font-normal">(Montserrat)</span>
+          </div>
+
+          {/* Opção: Outfit */}
+          <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
+            <span className="font-light text-foreground/80">Prism</span>
+            <span className="gradient-text font-bold -ml-1.5">IA</span>
+            <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>Agenda</span>
+            <span className="ml-2 text-[10px] text-muted-foreground font-normal">(Outfit)</span>
+          </div>
+
+          {/* Opção: Space Grotesk */}
+          <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
+            <span className="font-light text-foreground/80">Prism</span>
+            <span className="gradient-text font-bold -ml-1.5">IA</span>
+            <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>Agenda</span>
+            <span className="ml-2 text-[10px] text-muted-foreground font-normal">(Space Grotesk)</span>
+          </div>
         </div>
       </div>
 
