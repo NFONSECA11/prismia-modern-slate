@@ -346,10 +346,27 @@
   [data-theme="frost"] td {
     color: #0f172a !important;
   }
-  /* Frost: bordas grossas APENAS em containers principais */
+  /* Frost: navbar background */
   [data-theme="frost"] header.sticky {
+    background: #5571b9 !important;
     border-bottom: none !important;
     box-shadow: none !important;
+  }
+  /* Frost: Module banner below navbar */
+  [data-theme="frost"] header.sticky + [class*="relative w-full"] .prismia-banner,
+  [data-theme="frost"] [class*="relative w-full"]:has(.prismia-banner) {
+    background: #5571b9 !important;
+  }
+  /* Frost: filter bar background */
+  [data-theme="frost"] main [style*="background: hsl(var(--surface)"],
+  [data-theme="frost"] .rounded-xl.border-2.border-border.px-3.py-2 {
+    background: #c6d4e6 !important;
+  }
+  /* Frost: table header background */
+  [data-theme="frost"] thead,
+  [data-theme="frost"] [style*="surface-elevated"]:has(th),
+  [data-theme="frost"] th {
+    background: #b3c5dd !important;
   }
   [data-theme="frost"] .rounded-2xl.border,
   [data-theme="frost"] .rounded-xl.border,
