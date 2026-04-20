@@ -45,6 +45,7 @@ import {
   Maximize2,
   Minimize2,
   Menu,
+  BarChart3,
 } from "lucide-react";
 
 type View = "table" | "agenda";
