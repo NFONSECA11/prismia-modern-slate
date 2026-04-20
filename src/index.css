@@ -336,6 +336,33 @@
     fill: #2563eb !important;
     stroke: none !important;
   }
+  /* Frost: reforçar peso e contraste dos textos */
+  [data-theme="frost"] header.sticky,
+  [data-theme="frost"] header.sticky * {
+    color: #0a1428 !important;
+  }
+  [data-theme="frost"] header.sticky .gradient-text,
+  [data-theme="frost"] header.sticky [data-prism-brand-ia],
+  [data-theme="frost"] header.sticky [data-prism-brand-agenda] {
+    color: #1d4ed8 !important;
+    -webkit-text-fill-color: #1d4ed8 !important;
+  }
+  [data-theme="frost"] header.sticky [data-prism-brand-prism] {
+    color: #0a1428 !important;
+    -webkit-text-fill-color: #0a1428 !important;
+    font-weight: 600;
+  }
+  [data-theme="frost"] header.sticky button,
+  [data-theme="frost"] header.sticky a {
+    font-weight: 500;
+  }
+  [data-theme="frost"] th {
+    color: #1a2540 !important;
+    font-weight: 600 !important;
+  }
+  [data-theme="frost"] td {
+    color: #0f172a !important;
+  }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
     --primary: 220 10% 45%;
