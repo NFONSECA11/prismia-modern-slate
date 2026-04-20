@@ -370,7 +370,8 @@
   }
   [data-theme="frost"] .rounded-xl.border,
   [data-theme="frost"] .rounded-lg.border {
-    border-width: 2px !important;
+    border-width: 3px !important;
+    border-color: hsl(216 20% 78%) !important;
   }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
