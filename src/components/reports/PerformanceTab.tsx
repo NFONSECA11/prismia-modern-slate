@@ -71,15 +71,15 @@ export function PerformanceTab({ filters }: Props) {
           tone="accent"
         />
         <ReportKpi
-          label="Agendamentos pela IA"
-          value={fmtPct(o?.ai_bookings_pct)}
-          sub={o ? `${fmtNum(o.ai_bookings_count)} de ${fmtNum(o.total_confirmed)} confirmados` : undefined}
+          label="Tempo médio confirmação"
+          value={o?.human_confirmation_avg_minutes != null ? `${o.human_confirmation_avg_minutes} min` : "—"}
+          sub="após handoff"
           tone="good"
         />
         <ReportKpi
-          label="Agendamentos via waitlist"
-          value={fmtPct(o?.waitlist_bookings_pct)}
-          sub={o ? `${fmtNum(o.waitlist_bookings_count)} de ${fmtNum(o.total_confirmed)} confirmados` : undefined}
+          label="Total agendamentos"
+          value={fmtNum(aiVsHuman.data?.total)}
+          sub="IA + Humano"
           tone="good"
         />
       </div>
