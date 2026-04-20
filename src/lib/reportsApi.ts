@@ -132,3 +132,42 @@ export interface OperationsBookingSources {
 export const fetchOperationsBookingSources = (f: ReportFilters) =>
   get<OperationsBookingSources>("/api/reports/operations/booking-sources", f);
 
+// ===== Resultado =====
+export interface ResultsOverview {
+  estimated_revenue: number;
+  avg_ticket: number;
+  recovered_revenue_waitlist: number;
+  recovered_revenue_pct: number;
+  confirmed_with_value: number;
+}
+export const fetchResultsOverview = (f: ReportFilters) =>
+  get<ResultsOverview>("/api/reports/results/overview", f);
+
+export interface ResultsRevenuePoint {
+  date: string;
+  revenue: number;
+}
+export interface ResultsRevenue {
+  group_by: "day" | "week" | "month";
+  series: ResultsRevenuePoint[];
+}
+export const fetchResultsRevenue = (f: ReportFilters) =>
+  get<ResultsRevenue>("/api/reports/results/revenue", f);
+
+export interface ResultsBreakdownItem {
+  key: string;
+  label: string;
+  revenue: number;
+  pct: number;
+}
+export interface ResultsRevenueBreakdown {
+  dimension: "unit" | "professional" | "procedure" | "source";
+  total: number;
+  items: ResultsBreakdownItem[];
+  recovered_waitlist?: { revenue: number; bookings: number };
+  recovered_reschedule?: { revenue: number; bookings: number };
+}
+export const fetchResultsRevenueBreakdown = (f: ReportFilters) =>
+  get<ResultsRevenueBreakdown>("/api/reports/results/revenue-breakdown", f);
+
+

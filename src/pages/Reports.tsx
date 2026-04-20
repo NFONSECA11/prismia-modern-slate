@@ -25,6 +25,7 @@ import { fetchReportsBootstrap, type ReportFilters } from "@/lib/reportsApi";
 import { ReportsFilters } from "@/components/reports/ReportsFilters";
 import { ConversaoTab } from "@/components/reports/ConversaoTab";
 import { OperacaoTab } from "@/components/reports/OperacaoTab";
+import { ResultadoTab } from "@/components/reports/ResultadoTab";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
@@ -384,8 +385,9 @@ export default function Reports() {
 
         {activeTab === "conversao" && <ConversaoTab filters={filters} />}
         {activeTab === "operacao" && <OperacaoTab filters={filters} />}
+        {activeTab === "resultado" && <ResultadoTab filters={filters} />}
 
-        {(activeTab === "resultado" || activeTab === "performance") && (
+        {activeTab === "performance" && (
           <div
             className="rounded-2xl border border-border p-10 text-center"
             style={{ background: "hsl(var(--surface))" }}
