@@ -732,7 +732,7 @@ export default function Index() {
       <div
         className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-y"
         style={{
-          background: "hsl(0 0% 0% / 0.55)",
+          background: "hsl(var(--topbar-bg))",
           backdropFilter: "blur(12px)",
           borderColor: "hsl(var(--border) / 0.5)",
         }}
