@@ -516,16 +516,6 @@ export default function Index() {
                 <CalendarDays className="h-3.5 w-3.5" />
                 Agenda
               </button>
-              {canManage && (
-                <button
-                  onClick={() => navigate("/reports")}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground"
-                  title="Relatórios"
-                >
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Relatórios
-                </button>
-              )}
             </div>
 
             {(
