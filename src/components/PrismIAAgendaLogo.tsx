@@ -42,6 +42,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
     >
       {/* Ícone calendário */}
       <svg
+        data-prism-icon
         width={iconSize}
         height={iconSize}
         viewBox="0 0 54 54"
