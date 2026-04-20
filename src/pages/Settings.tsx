@@ -336,9 +336,8 @@ export default function Settings() {
 
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{isAgent ? "Personalização" : "Contexto da conta"}</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center px-1 pb-1 border-b border-border/70">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{isAgent ? "Personalização" : "Contexto da conta"}</span>
           </div>
 
           {/* Gerenciamento de Usuários */}
@@ -603,9 +602,8 @@ export default function Settings() {
         {canManage && (<>
         {/* ─── 2) Catálogo e oferta da unidade ─── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Catálogo e oferta da unidade</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center px-1 pb-1 border-b border-border/70">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Catálogo e oferta da unidade</span>
           </div>
 
           <SpecialtiesSection />
@@ -616,9 +614,8 @@ export default function Settings() {
 
         {/* ─── 3) Equipe e responsabilidades ─── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Equipe e responsabilidades</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center px-1 pb-1 border-b border-border/70">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Equipe e responsabilidades</span>
           </div>
 
           {/* Profissionais */}
@@ -735,9 +732,8 @@ export default function Settings() {
 
         {/* ─── 5) Modo e validação final ─── */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Modo e validação final</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="flex items-center px-1 pb-1 border-b border-border/70">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Modo e validação final</span>
           </div>
 
           {/* Modo de Atendimento */}
