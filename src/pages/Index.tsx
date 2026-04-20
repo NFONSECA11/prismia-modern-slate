@@ -514,7 +514,7 @@ export default function Index() {
                 onClick={() => handleSetView("table")}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                   view === "table"
-                    ? "bg-surface-raised text-foreground shadow-sm"
+                    ? "bg-surface-raised text-primary shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -525,7 +525,7 @@ export default function Index() {
                 onClick={() => handleSetView("agenda")}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                   view === "agenda"
-                    ? "bg-surface-raised text-foreground shadow-sm"
+                    ? "bg-surface-raised text-primary shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -535,7 +535,11 @@ export default function Index() {
               {canManage && (
                 <button
                   onClick={() => navigate("/reports")}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all text-muted-foreground hover:text-foreground"
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    typeof window !== "undefined" && window.location.pathname.startsWith("/reports")
+                      ? "bg-surface-raised text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                   title="Relatórios"
                 >
                   <BarChart3 className="h-3.5 w-3.5" />
