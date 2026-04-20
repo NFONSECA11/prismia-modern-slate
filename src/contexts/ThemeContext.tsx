@@ -123,6 +123,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       } else if (bgMode === "gradient") {
         token = ["gradient-fumaca", "gradient-aurora", "gradient-nevoa"][bgVariant] ?? "gradient-fumaca";
       }
+    } else if (theme === "slate") {
+      if (bgMode === "solid") {
+        token = ["solid-deep-blue", "solid-grafite", "solid-petroleo"][bgVariant] ?? "solid-deep-blue";
+      }
     }
     if (token) {
       document.documentElement.setAttribute("data-background", token);
