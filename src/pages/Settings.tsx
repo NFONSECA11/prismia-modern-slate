@@ -122,7 +122,7 @@ export default function Settings() {
     "night": [
       { label: "Azul Profundo", color: "216 65% 7%" },
       { label: "Carvão Azulado", color: "218 28% 9%" },
-      { label: "Púrpura Noturno", color: "257 48% 20%" },
+      { label: "Púrpura Noturno", color: "262 71% 14%" },
     ],
     "slate": [
       { label: "Deep Blue", color: "216 50% 12%" },
@@ -249,7 +249,7 @@ export default function Settings() {
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "night": ["216 65% 7%", "218 28% 9%", "257 48% 20%"],
+    "night": ["216 65% 7%", "218 28% 9%", "262 71% 14%"],
     "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
