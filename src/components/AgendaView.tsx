@@ -788,25 +788,85 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   };
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch professional availabilities
-  const { data: rawAvailabilities = [] } = useQuery({
-    queryKey: ["professional-availabilities"],
+  // Fetch professional-unit links for the active unit (to resolve professional_unit → professional)
+  const { data: profUnitLinks = [] } = useQuery({
+    queryKey: ["professional-units-by-unit", activeUnit?.id],
     queryFn: async () => {
-      const { data } = await api.get("/api/settings/professional-availabilities/");
-      return Array.isArray(data) ? data : (data?.results ?? []);
+      const { data } = await api.get("/api/booking/professional-units/", {
+        params: { unit: activeUnit!.id, page_size: 500 },
+      });
+      const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
+      return list as any[];
     },
+    enabled: !!activeUnit,
     staleTime: 60_000,
   });
+
+  // Fetch professional availabilities filtered by active unit
+  const { data: rawAvailabilities = [] } = useQuery({
+    queryKey: ["professional-availabilities", activeUnit?.id],
+    queryFn: async () => {
+      // Try filtering server-side by unit; fallback to global list and filter client-side
+      const tryFetch = async (params: Record<string, any>) => {
+        const { data } = await api.get("/api/booking/professional-availabilities/", { params });
+        return Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
+      };
+      try {
+        const list = await tryFetch({ unit: activeUnit!.id, page_size: 500 });
+        if (Array.isArray(list) && list.length >= 0) return list;
+      } catch (e) {
+        console.warn("[availabilities] unit-filtered fetch failed, falling back", e);
+      }
+      try {
+        return await tryFetch({ page_size: 500 });
+      } catch {
+        const { data } = await api.get("/api/settings/professional-availabilities/");
+        return Array.isArray(data) ? data : (data?.results ?? []);
+      }
+    },
+    enabled: !!activeUnit,
+    staleTime: 60_000,
+  });
+
+  // Resolve: professional_unit_id → professional_id (limited to active unit)
+  const profUnitToProf = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const link of profUnitLinks) {
+      const linkId = Number(link?.id);
+      const profVal = link?.professional ?? link?.professional_id;
+      const profId = typeof profVal === "object" ? Number(profVal?.id) : Number(profVal);
+      const unitVal = link?.unit ?? link?.unit_id;
+      const unitId = typeof unitVal === "object" ? Number(unitVal?.id) : Number(unitVal);
+      if (linkId && profId && (!activeUnit || unitId === activeUnit.id)) {
+        m.set(linkId, profId);
+      }
+    }
+    return m;
+  }, [profUnitLinks, activeUnit]);
 
   const availMap = useMemo(() => {
     const map: Record<number, ProfAvailability> = {};
     for (const a of rawAvailabilities) {
-      if (a.is_active !== false) {
-        map[a.professional] = a;
-      }
+      if (a.is_active === false) continue;
+
+      // Resolve professional id, preferring professional_unit when present
+      const puVal = a?.professional_unit ?? a?.professional_unit_id;
+      const puId = typeof puVal === "object" ? Number(puVal?.id) : Number(puVal);
+      const profFromPu = Number.isFinite(puId) && puId > 0 ? profUnitToProf.get(puId) : undefined;
+
+      const profVal = a?.professional ?? a?.professional_id;
+      const profDirect = typeof profVal === "object" ? Number(profVal?.id) : Number(profVal);
+
+      // If a professional_unit is present, only keep the row when it belongs to the active unit
+      if (Number.isFinite(puId) && puId > 0 && !profFromPu) continue;
+
+      const profId = profFromPu ?? profDirect;
+      if (!profId || !Number.isFinite(profId)) continue;
+
+      map[profId] = { ...a, professional: profId };
     }
     return map;
-  }, [rawAvailabilities]);
+  }, [rawAvailabilities, profUnitToProf]);
 
   const navigatePrev = () =>
     mode === "day" ? setCurrentDate((d) => addDays(d, -1)) : setCurrentDate((d) => subWeeks(d, 1));
