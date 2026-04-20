@@ -186,7 +186,7 @@ export default function Reports() {
                     className="flex items-center gap-1 text-xs font-medium text-foreground px-2 py-1 rounded-lg border border-border hover:bg-surface-elevated transition-colors"
                   >
                     <Building2 className="h-3 w-3 text-muted-foreground" />
-                    {activeUnit?.name ?? "Unidade"}
+                    {activeUnit?.name ?? "Todas as unidades"}
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                   {showUnitMenu && (
@@ -196,6 +196,21 @@ export default function Reports() {
                         onClick={() => setShowUnitMenu(false)}
                       />
                       <div className="absolute top-full left-0 mt-1 z-50 rounded-lg border border-border surface-raised shadow-md py-1 min-w-[160px]">
+                        <button
+                          onClick={() => {
+                            setActiveUnit(null);
+                            savePreference({ last_unit_id: null });
+                            setShowUnitMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                            !activeUnit
+                              ? "text-primary font-semibold bg-primary/5"
+                              : "text-foreground hover:bg-surface-elevated"
+                          }`}
+                        >
+                          Todas as unidades
+                        </button>
+                        <div className="my-1 h-px bg-border" />
                         {units.map((u) => (
                           <button
                             key={u.id}
