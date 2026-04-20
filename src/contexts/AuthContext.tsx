@@ -15,7 +15,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  setActiveUnit: (unit: Unit) => void;
+  setActiveUnit: (unit: Unit | null) => void;
   canManage: boolean;       // owner or manager — can access settings
   canManageUsers: boolean;  // owner or manager — can access user management
   isOwner: boolean;
