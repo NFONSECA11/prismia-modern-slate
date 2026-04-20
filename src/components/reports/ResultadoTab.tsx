@@ -87,12 +87,12 @@ export function ResultadoTab({ filters }: Props) {
         <ReportKpi
           label="Receita recuperada — waitlist"
           value={fmtBRL(o?.recovered_revenue_waitlist)}
-          sub={o ? `${fmtPct(o.recovered_revenue_pct)} da receita total` : undefined}
+          sub="no período"
           tone="good"
         />
         <ReportKpi
           label="Agendamentos confirmados"
-          value={fmtNum(o?.confirmed_with_value)}
+          value={fmtNum(o?.confirmed_bookings)}
           sub="com valor associado"
         />
       </div>
