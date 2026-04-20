@@ -127,8 +127,8 @@ export default function Settings() {
     ],
     "slate": [
       { label: "Deep Blue", color: "#1e3a5f" },
-      { label: "Grafite Frio", color: "#2d3748" },
-      { label: "Aço Petróleo", color: "#0d3331" },
+      { label: "Grafite Frio", color: "#2a3f5f" },
+      { label: "Aço Petróleo", color: "#1a3a4a" },
     ],
     "frost": [
       { label: "Branco Gelo", color: "212 54% 96%" },
