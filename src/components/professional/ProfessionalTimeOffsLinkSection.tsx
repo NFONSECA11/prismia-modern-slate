@@ -48,19 +48,39 @@ const parsePuLabel = (label?: string | null) => {
 };
 
 type Mode = "all_day" | "period";
+type ExceptionMode = "block" | "allow";
+
+const todayISO = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const nowTimeISO = () => {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${min}`;
+};
 
 export default function ProfessionalTimeOffsLinkSection() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, isAuthenticated, company } = useAuth();
   const qc = useQueryClient();
 
   const [openProfName, setOpenProfName] = useState<string | null>(null);
   const [showNewFor, setShowNewFor] = useState<string | null>(null);
   const [formProfUnit, setFormProfUnit] = useState<number | "">("");
+  const [exceptionMode, setExceptionMode] = useState<ExceptionMode>("block");
   const [mode, setMode] = useState<Mode>("all_day");
   const [day, setDay] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-  const [endsAt, setEndsAt] = useState("");
+  const [startsDate, setStartsDate] = useState("");
+  const [startsTime, setStartsTime] = useState("");
+  const [endsDate, setEndsDate] = useState("");
+  const [endsTime, setEndsTime] = useState("");
   const [reason, setReason] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   const { data: puOptions = [] } = useQuery<PuOption[]>({
     queryKey: ["professional-units-as-options"],
