@@ -520,16 +520,6 @@ export default function Index() {
 
             <div className="h-4 w-px bg-border" />
 
-            {isLandscape && (
-              <button
-                onClick={() => setZenMode(!zenMode)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-                title={zenMode ? "Voltar ao dashboard" : "Modo paisagem"}
-              >
-                {zenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              </button>
-            )}
-
             {canManage && (
               <button
                 onClick={() => navigate("/reports")}
@@ -549,6 +539,16 @@ export default function Index() {
               >
                 <Settings className="h-3.5 w-3.5" />
                 Configurações
+              </button>
+            )}
+
+            {isLandscape && (
+              <button
+                onClick={() => setZenMode(!zenMode)}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title={zenMode ? "Voltar ao dashboard" : "Modo paisagem"}
+              >
+                {zenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               </button>
             )}
 
