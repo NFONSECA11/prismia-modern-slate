@@ -300,6 +300,20 @@
     --shadow-glow: 0 0 24px hsl(211 83% 50% / 0.08);
   }
 
+  /* Frost: adapt PrismIA logo square + brand text to light theme */
+  [data-theme="frost"] .gradient-primary {
+    background: #d9e2ee !important;
+    border: 1px solid #b3c5dd;
+  }
+  [data-theme="frost"] .gradient-primary > svg {
+    color: #1a2b3c !important;
+  }
+  [data-theme="frost"] .gradient-text,
+  [data-theme="frost"] [data-prism-brand-text] {
+    background: none !important;
+    -webkit-text-fill-color: #1a2b3c !important;
+    color: #1a2b3c !important;
+  }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
     --primary: 220 10% 45%;
