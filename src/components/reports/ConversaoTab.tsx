@@ -157,7 +157,7 @@ export function ConversaoTab({ filters }: Props) {
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground w-12 text-right">
-                    {fmtPct(s.pct)}
+                    {s.pct > 100 ? "—" : fmtPct(s.pct)}
                   </span>
                 </div>
               );
