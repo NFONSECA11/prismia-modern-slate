@@ -86,7 +86,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 800,
-            color: "#60a5fa",
+            color: "#1d4ed8",
             letterSpacing: "-0.5px",
           }}
         >
@@ -98,7 +98,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 700,
-            color: "#38bdf8",
+            color: "#0284c7",
             letterSpacing: "-0.5px",
             marginLeft: Math.round(6 * s),
           }}
