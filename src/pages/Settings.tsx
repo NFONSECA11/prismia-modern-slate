@@ -187,6 +187,8 @@ export default function Settings() {
 
     didManuallyPickNightSolid.current = false;
   }, [theme, bgMode, bgVariant, setBgVariant]);
+
+  const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/booking/professionals/", {
