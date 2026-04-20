@@ -354,10 +354,12 @@
   [data-theme="frost"] header.sticky,
   [data-theme="frost"] header.sticky * {
     color: #1a2b3c !important;
+  }
   /* Frost: filter bar background (matches navbar) */
   [data-theme="frost"] .rounded-xl.border-2.border-border.px-3.py-2 {
     background: hsl(213 25% 93%) !important;
   }
+  [data-theme="frost"] .rounded-2xl.border,
   [data-theme="frost"] .rounded-xl.border,
   [data-theme="frost"] .rounded-lg.border {
     border-width: 3px !important;
