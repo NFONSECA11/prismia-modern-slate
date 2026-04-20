@@ -481,9 +481,14 @@ export default function Settings() {
 
               {/* Variant selection */}
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
-                  {bgMode === "solid" ? "Variação de cor" : bgMode === "gradient" ? "Escolha o gradiente" : "Escolha a paisagem"}
-                </p>
+                <div className="px-1 space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    {bgMode === "solid" ? "Cor do Fundo" : "Escolha o gradiente"}
+                  </p>
+                  {bgMode === "solid" && (
+                    <p className="text-[10px] text-muted-foreground/70">Tonalidade base da interface</p>
+                  )}
+                </div>
                 <div className="flex items-center gap-3 px-1">
                   {bgMode === "solid"
                     ? solidVariants[theme].map((v, i) => {
@@ -558,9 +563,12 @@ export default function Settings() {
 
               {/* Accent / color variation */}
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
-                  Variação de cor
-                </p>
+                <div className="px-1 space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Cor de Destaque
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70">Cor de botões, ícones e elementos ativos</p>
+                </div>
                 <div className="flex items-center gap-3 px-1">
                   {([
                     { id: "deep-blue" as AccentId, label: "Deep Blue", colors: ["205 100% 59%", "186 72% 48%"] },
