@@ -425,6 +425,51 @@
     --sidebar-ring: 262 55% 50%;
     --gradient-primary: linear-gradient(135deg, hsl(262 55% 50%), hsl(280 45% 45%));
   }
+
+  /* ══════ ACCENT: Deep Blue (exclusivo night) ══════ */
+  [data-theme="night"][data-accent="deep-blue"] {
+    --primary: 205 100% 59%;
+    --primary-foreground: 216 65% 7%;
+    --primary-glow: 204 100% 67%;
+    --accent: 186 72% 48%;
+    --accent-foreground: 216 65% 7%;
+    --ring: 205 100% 59%;
+    --sidebar-primary: 205 100% 59%;
+    --sidebar-primary-foreground: 216 65% 7%;
+    --sidebar-ring: 205 100% 59%;
+    --gradient-primary: linear-gradient(135deg, hsl(205 100% 59%), hsl(186 72% 48%));
+    --shadow-glow: 0 0 24px hsl(205 100% 59% / 0.22);
+  }
+
+  /* ══════ ACCENT: Charcoal refinado para night ══════ */
+  [data-theme="night"][data-accent="charcoal"] {
+    --primary: 218 12% 52%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 218 14% 62%;
+    --accent: 215 8% 46%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 218 12% 52%;
+    --sidebar-primary: 218 12% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 218 12% 52%;
+    --gradient-primary: linear-gradient(135deg, hsl(218 12% 52%), hsl(215 8% 46%));
+    --shadow-glow: 0 0 24px hsl(218 12% 52% / 0.18);
+  }
+
+  /* ══════ ACCENT: Purple Night refinado para night ══════ */
+  [data-theme="night"][data-accent="purple-night"] {
+    --primary: 262 62% 62%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 262 68% 72%;
+    --accent: 280 52% 56%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 262 62% 62%;
+    --sidebar-primary: 262 62% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 262 62% 62%;
+    --gradient-primary: linear-gradient(135deg, hsl(262 62% 62%), hsl(280 52% 56%));
+    --shadow-glow: 0 0 24px hsl(262 62% 62% / 0.22);
+  }
 }
 
 @layer base {
@@ -439,6 +484,8 @@
 
   body {
     background-color: hsl(var(--background));
+    background-image: var(--gradient-bg, none);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
