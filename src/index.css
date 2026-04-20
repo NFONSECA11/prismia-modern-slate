@@ -366,7 +366,8 @@
   }
   /* Frost: bordas grossas APENAS em containers principais */
   [data-theme="frost"] header.sticky {
-    border-bottom: 2px solid hsl(var(--border)) !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
   }
   [data-theme="frost"] .rounded-2xl.border,
   [data-theme="frost"] .rounded-xl.border,
