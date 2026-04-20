@@ -730,11 +730,9 @@ export default function Index() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-y"
+        className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-b border-border/60"
         style={{
           background: "hsl(var(--topbar-bg))",
-          backdropFilter: "blur(12px)",
-          borderColor: "hsl(var(--border) / 0.5)",
         }}
       >
         <div className="flex items-center gap-1 text-xs md:text-sm font-semibold tracking-tight max-w-[1440px] mx-auto w-full">
