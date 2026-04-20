@@ -23,7 +23,7 @@ import bgLightClean4 from "@/assets/bg-light-clean-4.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -58,6 +58,7 @@ export default function Settings() {
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
   const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+  const [didNormalizeNightSolid, setDidNormalizeNightSolid] = useState(false);
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
@@ -120,9 +121,9 @@ export default function Settings() {
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
-      { label: "Azul Profundo", color: "216 65% 7%" },
-      { label: "Carvão Azulado", color: "218 28% 9%" },
-      { label: "Púrpura Noturno", color: "262 71% 14%" },
+      { label: "Azul Profundo", color: "222 45% 9%" },
+      { label: "Carvão Azulado", color: "240 3% 11%" },
+      { label: "Púrpura Noturno", color: "264 71% 14%" },
     ],
     "slate": [
       { label: "Deep Blue", color: "216 50% 12%" },
@@ -176,8 +177,17 @@ export default function Settings() {
     ],
   };
 
+  useEffect(() => {
+    if (theme === "night" && bgMode === "solid" && !didNormalizeNightSolid) {
+      setDidNormalizeNightSolid(true);
+      if (bgVariant !== 0) setBgVariant(0);
+      return;
+    }
 
-
+    if (didNormalizeNightSolid && (theme !== "night" || bgMode !== "solid")) {
+      setDidNormalizeNightSolid(false);
+    }
+  }, [theme, bgMode, bgVariant, didNormalizeNightSolid, setBgVariant]);
 
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
@@ -249,7 +259,7 @@ export default function Settings() {
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "night": ["216 65% 7%", "218 28% 9%", "262 71% 14%"],
+    "night": ["222 45% 9%", "240 3% 11%", "264 71% 14%"],
     "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
