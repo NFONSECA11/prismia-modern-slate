@@ -106,20 +106,20 @@
 
   /* ══════ GRADIENTE: Fumaça — apenas --background e --gradient-bg ══════ */
   [data-theme="night"][data-background="gradient-fumaca"] {
-    --background: 216 65% 7%;
-    --gradient-bg: linear-gradient(135deg, hsl(220 8% 12%) 0%, hsl(216 65% 7%) 100%);
+    --background: 216 65% 5%;
+    --gradient-bg: linear-gradient(135deg, hsl(216 65% 5%) 0%, hsl(180 40% 12%) 100%);
   }
 
   /* ══════ GRADIENTE: Aurora — apenas --background e --gradient-bg ══════ */
   [data-theme="night"][data-background="gradient-aurora"] {
-    --background: 216 65% 7%;
-    --gradient-bg: linear-gradient(135deg, hsl(222 15% 8%) 0%, hsl(216 60% 10%) 50%, hsl(213 55% 13%) 100%);
+    --background: 216 65% 5%;
+    --gradient-bg: linear-gradient(180deg, hsl(216 65% 5%) 0%, hsl(240 50% 15%) 100%);
   }
 
   /* ══════ GRADIENTE: Névoa — apenas --background e --gradient-bg ══════ */
   [data-theme="night"][data-background="gradient-nevoa"] {
-    --background: 216 65% 7%;
-    --gradient-bg: linear-gradient(135deg, hsl(218 12% 14%) 0%, hsl(214 42% 20%) 100%);
+    --background: 216 65% 5%;
+    --gradient-bg: linear-gradient(180deg, hsl(216 65% 5%) 0%, hsl(270 45% 12%) 100%);
   }
 
   /* ══════ THEME 2: Prism Deep (dark equilibrado, confortável, daily-use) ══════ */
