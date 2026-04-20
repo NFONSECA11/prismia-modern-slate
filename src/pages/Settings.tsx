@@ -625,8 +625,11 @@ export default function Settings() {
           <Collapsible defaultOpen={false} id="section-profissionais">
             <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">Profissionais</span>
+                <Users className="h-4 w-4 text-primary shrink-0" />
+                <div className="text-left">
+                  <span className="text-sm font-bold text-foreground">Profissionais</span>
+                  <p className="text-xs text-muted-foreground">Cadastrar Profissionais</p>
+                </div>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
