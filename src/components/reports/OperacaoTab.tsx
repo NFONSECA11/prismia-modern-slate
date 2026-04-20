@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import {
@@ -45,24 +46,25 @@ const BAR_COLORS = [
 ];
 
 export function OperacaoTab({ filters }: Props) {
+  const [groupBy, setGroupBy] = useState<"day" | "week" | "month">("day");
+  const [dimension, setDimension] = useState<"unit" | "professional" | "procedure">("professional");
+
   const overview = useQuery({
     queryKey: ["reports", "operations", "overview", filters],
     queryFn: () => fetchOperationsOverview(filters),
   });
-
-  const [groupBy, setGroupBy] = useStateGroupBy();
   const bookings = useQuery({
     queryKey: ["reports", "operations", "bookings", filters, groupBy],
     queryFn: () => fetchOperationsBookings({ ...filters, group_by: groupBy }),
   });
-
-  const [dimension, setDimension] = useStateDimension();
+  const occupancyByUnit = useQuery({
+    queryKey: ["reports", "operations", "distribution", filters, "unit"],
+    queryFn: () => fetchOperationsDistribution({ ...filters, dimension: "unit" }),
+  });
   const distribution = useQuery({
     queryKey: ["reports", "operations", "distribution", filters, dimension],
-    queryFn: () =>
-      fetchOperationsDistribution({ ...filters, dimension }),
+    queryFn: () => fetchOperationsDistribution({ ...filters, dimension }),
   });
-
   const sources = useQuery({
     queryKey: ["reports", "operations", "booking-sources", filters],
     queryFn: () => fetchOperationsBookingSources(filters),
@@ -70,7 +72,11 @@ export function OperacaoTab({ filters }: Props) {
 
   const o = overview.data;
   const isLoadingAny =
-    overview.isLoading || bookings.isLoading || distribution.isLoading || sources.isLoading;
+    overview.isLoading ||
+    bookings.isLoading ||
+    distribution.isLoading ||
+    occupancyByUnit.isLoading ||
+    sources.isLoading;
 
   return (
     <div className="space-y-4">
@@ -102,7 +108,7 @@ export function OperacaoTab({ filters }: Props) {
           action={
             <select
               value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as any)}
+              onChange={(e) => setGroupBy(e.target.value as "day" | "week" | "month")}
               className="text-xs px-2 py-1 rounded-md border border-border bg-background text-foreground"
             >
               <option value="day">Por dia</option>
@@ -111,6 +117,11 @@ export function OperacaoTab({ filters }: Props) {
             </select>
           }
         >
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> Confirmados
+            </span>
+          </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={bookings.data?.series ?? []}>
@@ -145,19 +156,12 @@ export function OperacaoTab({ filters }: Props) {
         </ReportCard>
 
         <ReportCard title="Ocupação por unidade">
-          <BarList items={(sourcesUnitFromOverview(o) ?? []).length ? [] : []} />
           <BarList
-            items={
-              (distribution.data?.dimension === "unit"
-                ? distribution.data?.items
-                : []) ?? []
-            }
+            items={occupancyByUnit.data?.items ?? []}
             valueLabel={(v) => `${v} agend.`}
           />
-          {distribution.data?.dimension !== "unit" && (
-            <p className="text-xs text-muted-foreground italic">
-              Selecione "Unidade" no card abaixo para alimentar este painel, ou aguarde dados específicos.
-            </p>
+          {!(occupancyByUnit.data?.items?.length) && !occupancyByUnit.isLoading && (
+            <p className="text-xs text-muted-foreground italic">Sem dados.</p>
           )}
         </ReportCard>
       </div>
@@ -168,7 +172,9 @@ export function OperacaoTab({ filters }: Props) {
           action={
             <select
               value={dimension}
-              onChange={(e) => setDimension(e.target.value as any)}
+              onChange={(e) =>
+                setDimension(e.target.value as "unit" | "professional" | "procedure")
+              }
               className="text-xs px-2 py-1 rounded-md border border-border bg-background text-foreground"
             >
               <option value="professional">Profissional</option>
@@ -177,10 +183,7 @@ export function OperacaoTab({ filters }: Props) {
             </select>
           }
         >
-          <BarList
-            items={distribution.data?.items ?? []}
-            valueLabel={(v) => fmtNum(v)}
-          />
+          <BarList items={distribution.data?.items ?? []} valueLabel={(v) => fmtNum(v)} />
           {!(distribution.data?.items?.length) && !distribution.isLoading && (
             <p className="text-xs text-muted-foreground italic">Sem dados.</p>
           )}
@@ -220,7 +223,7 @@ export function OperacaoTab({ filters }: Props) {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(v: number, _n, p: any) =>
+                  formatter={(v: number, _n, p: { payload: { pct: number; label: string } }) =>
                     [`${fmtNum(v)} (${fmtPct(p.payload.pct)})`, p.payload.label]
                   }
                 />
@@ -270,18 +273,4 @@ function BarList({
       ))}
     </div>
   );
-}
-
-// helpers para estado local sem importar React extra
-import { useState } from "react";
-function useStateGroupBy() {
-  return useState<"day" | "week" | "month">("day");
-}
-function useStateDimension() {
-  return useState<"unit" | "professional" | "procedure">("professional");
-}
-
-// placeholder para tipagem (não usado em runtime)
-function sourcesUnitFromOverview(_o: unknown) {
-  return null;
 }
