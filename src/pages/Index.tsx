@@ -45,6 +45,7 @@ import {
   Maximize2,
   Minimize2,
   Menu,
+  BarChart3,
 } from "lucide-react";
 
 type View = "table" | "agenda";
@@ -526,6 +527,17 @@ export default function Index() {
                 title={zenMode ? "Voltar ao dashboard" : "Modo paisagem"}
               >
                 {zenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
+            )}
+
+            {canManage && (
+              <button
+                onClick={() => navigate("/reports")}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title="Relatórios"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Relatórios
               </button>
             )}
 
