@@ -67,13 +67,9 @@ export default function PreferencesSyncer() {
         // Background
         const bg = bgFromBackend(prefs.background);
         if (bg) {
-          const normalizedBg = t === "night" && bg.mode === "solid"
-            ? { mode: "solid" as const, variant: 0 }
-            : bg;
-
-          serverBg.current = bgToBackend(normalizedBg.mode, normalizedBg.variant);
-          setBgMode(normalizedBg.mode);
-          setBgVariant(normalizedBg.variant);
+          serverBg.current = bgToBackend(bg.mode, bg.variant);
+          setBgMode(bg.mode);
+          setBgVariant(bg.variant);
         }
 
         // Accent
