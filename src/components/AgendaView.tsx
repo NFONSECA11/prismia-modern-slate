@@ -724,13 +724,13 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
   // Client-side safety filter: only show BRs matching the active unit
   const agendaBookings = useMemo(() => {
     if (!unit) return rawAgendaBookings;
-    const unitName = unit.name.trim().toLowerCase();
+    const activeUnitName = unit.name.trim().toLowerCase();
     return rawAgendaBookings.filter((b: any) => {
       const rawUnit = b.unit ?? b.unit_id ?? b.unitId ?? b.booking_unit ?? b.booking_unit_id;
       const unitId = typeof rawUnit === "object" && rawUnit ? Number(rawUnit.id ?? rawUnit.pk) : Number(rawUnit);
       if (Number.isFinite(unitId)) return unitId === unit.id;
-      const unitName = String(b.unit_name ?? b.unitName ?? (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")).trim().toLowerCase();
-      if (unitName) return unitName === unitName;
+      const bookingUnitName = String(b.unit_name ?? b.unitName ?? (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")).trim().toLowerCase();
+      if (bookingUnitName) return bookingUnitName === activeUnitName;
       return true; // if no unit info, keep it
     });
   }, [rawAgendaBookings, unit]);
