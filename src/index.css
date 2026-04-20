@@ -346,12 +346,8 @@
   [data-theme="frost"] td {
     color: #0f172a !important;
   }
-  /* Frost: navbar + module banner background */
-  [data-theme="frost"] {
-    --topbar-bg: 214 35% 94%;
-  }
+  /* Frost: navbar styling (uses --topbar-bg token) */
   [data-theme="frost"] header.sticky {
-    background: #e8eef5 !important;
     border-bottom: none !important;
     box-shadow: none !important;
   }
