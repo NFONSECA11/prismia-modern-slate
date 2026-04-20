@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const setActiveUnit = (unit: Unit) => {
+  const setActiveUnit = (unit: Unit | null) => {
     setState((s) => ({ ...s, activeUnit: unit }));
   };
 
