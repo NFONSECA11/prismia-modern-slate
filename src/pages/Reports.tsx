@@ -388,20 +388,7 @@ export default function Reports() {
         {activeTab === "operacao" && <OperacaoTab filters={filters} />}
         {activeTab === "resultado" && <ResultadoTab filters={filters} />}
 
-        {activeTab === "performance" && (
-          <div
-            className="rounded-2xl border border-border p-10 text-center"
-            style={{ background: "hsl(var(--surface))" }}
-          >
-            <BarChart3 className="h-10 w-10 text-primary mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-2">
-              {tabs.find((t) => t.id === activeTab)?.label} — em construção
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Esta aba receberá os indicadores de {tabs.find((t) => t.id === activeTab)?.label.toLowerCase()}.
-            </p>
-          </div>
-        )}
+        {activeTab === "performance" && <PerformanceTab filters={filters} />}
       </main>
     </div>
   );
