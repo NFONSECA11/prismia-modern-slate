@@ -16,10 +16,6 @@ type Weekly = Partial<Record<DayKey, Slot[]>>;
 interface PuOption {
   id: number;
   label: string;
-  professional_id: number;
-  professional_name: string;
-  unit_id: number;
-  unit_name: string;
 }
 
 interface Availability {
@@ -50,6 +46,19 @@ const unpack = (data: any): any[] => {
 
 const fmt = (t: string) => (t || "").slice(0, 5);
 
+const parsePuLabel = (label?: string | null) => {
+  const raw = String(label ?? "").trim();
+  if (!raw) return { professionalName: undefined, unitName: undefined };
+
+  const [professionalName, ...unitParts] = raw.split("@");
+  const unitName = unitParts.join("@").trim();
+
+  return {
+    professionalName: professionalName?.trim() || undefined,
+    unitName: unitName || undefined,
+  };
+};
+
 export default function ProfessionalAvailabilitiesLinkSection() {
   const { company, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const qc = useQueryClient();
@@ -61,28 +70,20 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const [newBuffer, setNewBuffer] = useState<number>(0);
   const [newWeekly, setNewWeekly] = useState<Weekly>({});
 
-  // Fonte única: PUs já enriquecidos com nome do profissional e da unidade
   const { data: puOptions = [] } = useQuery<PuOption[]>({
     queryKey: ["professional-units-as-options"],
     queryFn: async () => {
       const { data } = await api.get(`/api/booking/professional-units/as-options/`);
-      const raw = unpack(data);
-      console.info("[pu-as-options] raw response:", raw);
-      const mapped = raw.map((o: any) => ({
-        id: Number(o?.id),
-        label: String(o?.label ?? ""),
-        professional_id: Number(o?.professional_id),
-        professional_name: String(o?.professional_name ?? ""),
-        unit_id: Number(o?.unit_id),
-        unit_name: String(o?.unit_name ?? ""),
-      })).filter((o) => o.id);
-      console.info("[pu-as-options] mapped:", mapped);
-      return mapped;
+      return unpack(data)
+        .map((o: any) => ({
+          id: Number(o?.id),
+          label: String(o?.label ?? "").trim(),
+        }))
+        .filter((o) => o.id && o.label);
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  // Map id -> opção para enriquecer availabilities sem nomes
   const puById = useMemo(() => {
     const map = new Map<number, PuOption>();
     for (const o of puOptions) map.set(o.id, o);
@@ -94,67 +95,77 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const { data: items = [], isLoading } = useQuery<Availability[]>({
     queryKey,
     queryFn: async () => {
-      const { data } = await api.get(`/api/settings/professional-availabilities/`, { params: { page_size: 500 } });
-      return unpack(data).map((item: any): Availability => {
-        const puId = Number(
-          item?.professional_unit_id ??
-          item?.professional_unit ??
-          (typeof item?.professional_unit === "object" ? item?.professional_unit?.id : 0) ??
-          0
-        );
-        return {
-          id: Number(item?.id),
-          company_id: item?.company_id,
-          professional_unit_id: puId,
-          professional_unit: puId,
-          professional_name:
-            item?.professional_unit__professional__name ??
-            item?.professional_name ??
-            item?.professional__name,
-          unit_name:
-            item?.professional_unit__unit__name ??
-            item?.unit_name ??
-            item?.unit__name,
-          slot_minutes: Number(item?.slot_minutes ?? 60),
-          buffer_minutes: Number(item?.buffer_minutes ?? 0),
-          weekly: (item?.weekly && typeof item.weekly === "object") ? item.weekly as Weekly : {},
-          is_active: item?.is_active,
-        };
-      }).filter((it) => it.id);
+      const { data } = await api.get(`/api/booking/professional-availabilities/`, { params: { page_size: 500 } });
+      return unpack(data)
+        .map((item: any): Availability => {
+          const puId = Number(
+            item?.professional_unit_id ??
+              item?.professional_unit ??
+              (typeof item?.professional_unit === "object" ? item?.professional_unit?.id : 0) ??
+              0,
+          );
+
+          return {
+            id: Number(item?.id),
+            company_id: item?.company_id,
+            professional_unit_id: puId,
+            professional_unit: puId,
+            professional_name:
+              item?.professional_unit__professional__name ??
+              item?.professional_name ??
+              item?.professional__name,
+            unit_name:
+              item?.professional_unit__unit__name ??
+              item?.unit_name ??
+              item?.unit__name,
+            slot_minutes: Number(item?.slot_minutes ?? 60),
+            buffer_minutes: Number(item?.buffer_minutes ?? 0),
+            weekly: item?.weekly && typeof item.weekly === "object" ? (item.weekly as Weekly) : {},
+            is_active: item?.is_active,
+          };
+        })
+        .filter((it) => it.id);
     },
     enabled: !isAuthLoading && isAuthenticated,
   });
 
-  // Agrupa por nome de profissional usando puOptions como base
   const professionalGroups = useMemo(() => {
     const byName = new Map<string, { profName: string; list: Availability[] }>();
 
-    // Garante grupos para todos os profissionais com PU
-    for (const o of puOptions) {
-      if (!o.professional_name) continue;
-      if (!byName.has(o.professional_name)) {
-        byName.set(o.professional_name, { profName: o.professional_name, list: [] });
+    for (const option of puOptions) {
+      const { professionalName } = parsePuLabel(option.label);
+      if (!professionalName) continue;
+      if (!byName.has(professionalName)) {
+        byName.set(professionalName, { profName: professionalName, list: [] });
       }
     }
 
-    for (const it of items) {
-      const enriched = puById.get(it.professional_unit_id);
-      const profName = enriched?.professional_name ?? it.professional_name ?? `#${it.professional_unit_id}`;
-      const unitName = enriched?.unit_name ?? it.unit_name;
+    for (const item of items) {
+      const option = puById.get(item.professional_unit_id);
+      const parsed = parsePuLabel(option?.label);
+      const profName = parsed.professionalName ?? item.professional_name ?? `PU #${item.professional_unit_id}`;
+      const unitName = parsed.unitName ?? item.unit_name;
       const group = byName.get(profName) ?? { profName, list: [] };
-      group.list.push({ ...it, professional_name: profName, unit_name: unitName });
+      group.list.push({ ...item, professional_name: profName, unit_name: unitName });
       byName.set(profName, group);
     }
 
     return Array.from(byName.values()).sort((a, b) => a.profName.localeCompare(b.profName));
-  }, [puOptions, puById, items]);
+  }, [items, puById, puOptions]);
 
-  // PUs disponíveis para um profissional específico (apenas unidade, prof já é fixo pelo grupo)
   const puOptionsByProf = useMemo(() => {
     return (profName: string) =>
       puOptions
-        .filter((o) => o.professional_name === profName)
-        .map((o) => ({ id: o.id, unitName: o.unit_name }));
+        .map((option) => {
+          const parsed = parsePuLabel(option.label);
+          return {
+            id: option.id,
+            profName: parsed.professionalName,
+            unitName: parsed.unitName,
+            label: option.label,
+          };
+        })
+        .filter((option) => option.profName === profName);
   }, [puOptions]);
 
   const createAvailability = useMutation({
@@ -165,37 +176,39 @@ export default function ProfessionalAvailabilitiesLinkSection() {
       weekly: Weekly;
     }) => {
       await fetchCsrf();
-      const body: Record<string, any> = {
+      const { data } = await api.post(`/api/booking/professional-availabilities/`, {
         professional_unit: payload.professional_unit,
         slot_minutes: payload.slot_minutes,
         buffer_minutes: payload.buffer_minutes,
         weekly: payload.weekly,
         is_active: true,
-      };
-      console.info("[create-availability] post payload:", body);
-      const { data } = await api.post(`/api/settings/professional-availabilities/`, body);
+      });
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
       setShowNewFor(null);
-      setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({});
+      setNewPuId("");
+      setNewSlot(60);
+      setNewBuffer(0);
+      setNewWeekly({});
       toast.success("Disponibilidade criada");
     },
-    onError: (err: any) => toast.error("Erro ao criar disponibilidade", { description: JSON.stringify(err?.response?.data ?? err?.message ?? "") }),
+    onError: (err: any) =>
+      toast.error("Erro ao criar disponibilidade", {
+        description: JSON.stringify(err?.response?.data ?? err?.message ?? ""),
+      }),
   });
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
-      await api.patch(`/api/settings/professional-availabilities/${id}/`, { is_active });
+      await api.patch(`/api/booking/professional-availabilities/${id}/`, { is_active });
     },
     onMutate: async ({ id, is_active }) => {
       await qc.cancelQueries({ queryKey });
       const prev = qc.getQueryData<Availability[]>(queryKey);
-      qc.setQueryData<Availability[]>(queryKey, (old) =>
-        old?.map((u) => (u.id === id ? { ...u, is_active } : u))
-      );
+      qc.setQueryData<Availability[]>(queryKey, (old) => old?.map((u) => (u.id === id ? { ...u, is_active } : u)));
       return { prev };
     },
     onError: (_e, _v, ctx) => {
@@ -208,24 +221,30 @@ export default function ProfessionalAvailabilitiesLinkSection() {
   const removeAvailability = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/settings/professional-availabilities/${id}/`);
+      await api.delete(`/api/booking/professional-availabilities/${id}/`);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey }); toast.success("Disponibilidade removida"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey });
+      toast.success("Disponibilidade removida");
+    },
     onError: () => toast.error("Erro ao remover disponibilidade"),
   });
 
   const addSlot = (day: DayKey) => {
     setNewWeekly((w) => ({ ...w, [day]: [...(w[day] ?? []), { start: "08:00", end: "12:00" }] }));
   };
+
   const removeSlot = (day: DayKey, idx: number) => {
     setNewWeekly((w) => {
       const arr = [...(w[day] ?? [])];
       arr.splice(idx, 1);
       const next = { ...w };
-      if (arr.length) next[day] = arr; else delete next[day];
+      if (arr.length) next[day] = arr;
+      else delete next[day];
       return next;
     });
   };
+
   const updateSlot = (day: DayKey, idx: number, field: "start" | "end", value: string) => {
     setNewWeekly((w) => {
       const arr = [...(w[day] ?? [])];
@@ -329,7 +348,8 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                                     ) : (
                                       slots.map((s, i) => (
                                         <div key={i} className="text-sm font-mono text-foreground text-center leading-tight">
-                                          {fmt(s.start)}<br />{fmt(s.end)}
+                                          {fmt(s.start)}<br />
+                                          {fmt(s.end)}
                                         </div>
                                       ))
                                     )}
@@ -362,8 +382,10 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                               className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
                             >
                               <option value="">Selecione…</option>
-                              {puOptionsByProf(profName).map((u) => (
-                                <option key={u.id} value={u.id}>{u.unitName}</option>
+                              {puOptionsByProf(profName).map((option) => (
+                                <option key={option.id} value={option.id}>
+                                  {option.unitName ?? option.label}
+                                </option>
                               ))}
                             </select>
                           </div>
@@ -444,7 +466,13 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                             size="sm"
                             variant="ghost"
                             className="h-8 text-xs"
-                            onClick={() => { setShowNewFor(null); setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({}); }}
+                            onClick={() => {
+                              setShowNewFor(null);
+                              setNewPuId("");
+                              setNewSlot(60);
+                              setNewBuffer(0);
+                              setNewWeekly({});
+                            }}
                           >
                             Cancelar
                           </Button>
@@ -469,7 +497,10 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                       <button
                         onClick={() => {
                           setShowNewFor(profName);
-                          setNewPuId(""); setNewSlot(60); setNewBuffer(0); setNewWeekly({});
+                          setNewPuId("");
+                          setNewSlot(60);
+                          setNewBuffer(0);
+                          setNewWeekly({});
                         }}
                         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-2"
                       >
