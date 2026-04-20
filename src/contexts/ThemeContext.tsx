@@ -139,8 +139,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Does not touch --topbar-bg, --surface, --surface-raised, --surface-elevated, etc.
   useEffect(() => {
     const NIGHT_SOLID_BACKGROUNDS = ["216 65% 7%", "240 3% 9%", "200 40% 8%"];
+    const FROST_SOLID_BACKGROUNDS = ["220 30% 98%", "30 17% 95%", "213 33% 95%"];
     if (theme === "night" && bgMode === "solid") {
       const value = NIGHT_SOLID_BACKGROUNDS[bgVariant] ?? NIGHT_SOLID_BACKGROUNDS[0];
+      document.documentElement.style.setProperty("--background", value);
+    } else if (theme === "frost" && bgMode === "solid") {
+      const value = FROST_SOLID_BACKGROUNDS[bgVariant] ?? FROST_SOLID_BACKGROUNDS[0];
       document.documentElement.style.setProperty("--background", value);
     } else {
       document.documentElement.style.removeProperty("--background");
