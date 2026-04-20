@@ -247,7 +247,7 @@ export default function Settings() {
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "night": ["222 45% 9%", "240 3% 11%", "264 71% 14%"],
+    "night": ["222 45% 9%", "240 3% 11%"],
     "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
