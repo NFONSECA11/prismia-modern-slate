@@ -267,15 +267,15 @@
     --holiday-text: 352 70% 45%;
     --holiday-border: 352 50% 75%;
 
-    --border: 220 15% 82%;
-    --border-subtle: 220 12% 88%;
-    --input: 0 0% 100%;
-    --ring: 211 83% 50%;
+    --border: 0 0% 100% / 0.15;
+    --border-subtle: 0 0% 100% / 0.1;
+    --input: 234 26% 56%;
+    --ring: 0 0% 100% / 0.3;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 58% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 58% 15%;
+    --card: 234 26% 56%;
+    --card-foreground: 0 0% 100%;
+    --popover: 234 22% 46%;
+    --popover-foreground: 0 0% 100%;
     --destructive: 351 65% 57%;
     --destructive-foreground: 0 0% 100%;
 
