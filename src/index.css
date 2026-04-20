@@ -318,25 +318,7 @@
     -webkit-text-fill-color: #2563eb !important;
     color: #2563eb !important;
   }
-  /* PrismIA Agenda banner (second bar, also white) */
-  [data-theme="frost"] [data-prism-brand-prism] {
-    color: #475569 !important;
-    -webkit-text-fill-color: #475569 !important;
-    opacity: 1;
-  }
-  [data-theme="frost"] [data-prism-brand-ia],
-  [data-theme="frost"] [data-prism-brand-agenda] {
-    color: #2563eb !important;
-    -webkit-text-fill-color: #2563eb !important;
-  }
-  [data-theme="frost"] [data-prism-icon] rect,
-  [data-theme="frost"] [data-prism-icon] line {
-    stroke: #2563eb !important;
-  }
-  [data-theme="frost"] [data-prism-icon] rect[fill] {
-    fill: #2563eb !important;
-    stroke: none !important;
-  }
+  /* PrismIA Agenda banner: mantém aparência original (fundo escuro) também no Frost */
   /* Frost: reforçar peso e contraste dos textos */
   [data-theme="frost"] header.sticky,
   [data-theme="frost"] header.sticky * {
