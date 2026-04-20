@@ -123,7 +123,10 @@
   }
 
   /* ══════ THEME 2: Prism Deep (dark equilibrado, confortável, daily-use) ══════ */
-  :root,
+  :root {
+    --radius: 0.625rem;
+  }
+
   [data-theme="slate"] {
     --background: 216 40% 18%;
     --surface: 215 35% 26%;
@@ -182,8 +185,6 @@
     --popover-foreground: 218 100% 97%;
     --destructive: 352 82% 65%;
     --destructive-foreground: 218 100% 97%;
-
-    --radius: 0.625rem;
 
     --sidebar-background: 215 47% 14%;
     --sidebar-foreground: 218 100% 97%;
