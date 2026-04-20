@@ -270,15 +270,14 @@ export default function Reports() {
                 <CalendarDays className="h-3.5 w-3.5" />
                 Agenda
               </button>
+              <button
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all bg-primary/10 text-primary border border-primary/20"
+                title="Relatórios"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Relatórios
+              </button>
             </div>
-
-            <button
-              className="flex items-center gap-1.5 text-xs text-primary px-2 py-1.5 rounded-lg bg-primary/10 border border-primary/20"
-              title="Relatórios"
-            >
-              <BarChart3 className="h-3.5 w-3.5" />
-              Relatórios
-            </button>
 
             <button
               onClick={() => navigate("/settings")}
