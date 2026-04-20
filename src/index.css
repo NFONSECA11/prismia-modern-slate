@@ -247,7 +247,7 @@
     --secondary-foreground: 215 58% 15%;
 
     --muted: 212 40% 95%;
-    --muted-foreground: 214 20% 48%;
+    --muted-foreground: 213 39% 17%;
 
     --accent: 186 60% 38%;
     --accent-foreground: 0 0% 100%;
@@ -282,7 +282,7 @@
     --radius: 0.625rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 58% 15%;
+    --sidebar-foreground: 213 39% 17%;
     --sidebar-primary: 211 83% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 212 45% 94%;
