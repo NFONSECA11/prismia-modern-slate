@@ -131,9 +131,9 @@ export default function Settings() {
       { label: "Aço Petróleo", color: "#1a3a4a" },
     ],
     "frost": [
-      { label: "Branco Gelo", color: "212 54% 96%" },
-      { label: "Névoa Neutra", color: "214 20% 94%" },
-      { label: "Azul Névoa", color: "208 35% 95%" },
+      { label: "Branco Neve", color: "220 30% 98%" },
+      { label: "Areia", color: "30 17% 95%" },
+      { label: "Gelo", color: "213 33% 95%" },
     ],
   };
 
