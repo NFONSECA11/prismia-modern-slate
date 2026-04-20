@@ -505,7 +505,12 @@ export default function Settings() {
                         return (
                           <button
                             key={i}
-                            onClick={() => setBgVariant(i)}
+                            onClick={() => {
+                              if (theme === "night") {
+                                didManuallyPickNightSolid.current = true;
+                              }
+                              setBgVariant(i);
+                            }}
                             className={`flex flex-col items-center gap-1.5 transition-all`}
                           >
                             <div
@@ -528,12 +533,7 @@ export default function Settings() {
                         return (
                           <button
                             key={i}
-                            onClick={() => {
-                              if (theme === "night" && bgMode === "solid") {
-                                didManuallyPickNightSolid.current = true;
-                              }
-                              setBgVariant(i);
-                            }}
+                            onClick={() => setBgVariant(i)}
                             className="flex flex-col items-center gap-1.5 transition-all"
                           >
                             <div
