@@ -505,7 +505,7 @@ export default function Settings() {
                           >
                             <div
                               className={`w-14 h-10 rounded-lg relative ${active ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "border border-border hover:border-primary/50"}`}
-                              style={{ background: `hsl(${v.color})` }}
+                              style={{ background: v.color.startsWith("#") ? v.color : `hsl(${v.color})` }}
                             >
                               {active && (
                                 <div className="absolute inset-0 flex items-center justify-center">
