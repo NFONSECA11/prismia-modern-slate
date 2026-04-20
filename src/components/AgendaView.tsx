@@ -891,6 +891,24 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
   const printPeriodLabel = `${format(weekStart, "dd/MM/yyyy", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd/MM/yyyy", { locale: ptBR })}`;
 
+  if (!activeUnit) {
+    return (
+      <div
+        className="rounded-xl border border-border/60 shadow-md flex flex-col items-center justify-center gap-3 p-12 text-center"
+        style={{ background: "hsl(var(--surface))", minHeight: "60vh" }}
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <Building2 className="h-6 w-6 text-primary" />
+        </div>
+        <h2 className="text-base font-semibold text-foreground">Selecione uma unidade</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          A visualização em Agenda exibe horários, profissionais e disponibilidades de uma unidade por vez.
+          Escolha uma unidade no seletor acima para visualizar a agenda.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
