@@ -80,6 +80,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
           Prism
         </span>
         <span
+          data-prism-brand-text
           style={{
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
@@ -91,6 +92,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
           IA
         </span>
         <span
+          data-prism-brand-text
           style={{
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
