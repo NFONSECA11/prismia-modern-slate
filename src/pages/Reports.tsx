@@ -270,15 +270,6 @@ export default function Reports() {
                 <CalendarDays className="h-3.5 w-3.5" />
                 Agenda
               </button>
-              {canManage && (
-                <button
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all bg-surface-raised text-foreground shadow-sm"
-                  title="Relatórios"
-                >
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Relatórios
-                </button>
-              )}
             </div>
 
             <button
