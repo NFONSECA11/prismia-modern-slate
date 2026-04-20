@@ -302,17 +302,33 @@
 
   /* Frost: adapt PrismIA logo square + brand text to light theme */
   [data-theme="frost"] .gradient-primary {
-    background: #d9e2ee !important;
-    border: 1px solid #b3c5dd;
+    background: #b3c5dd !important;
+    border: 1px solid #8fa8c8;
   }
   [data-theme="frost"] .gradient-primary > svg {
     color: #1a2b3c !important;
   }
-  [data-theme="frost"] .gradient-text,
-  [data-theme="frost"] [data-prism-brand-text] {
+  [data-theme="frost"] .gradient-text {
     background: none !important;
     -webkit-text-fill-color: #1a2b3c !important;
     color: #1a2b3c !important;
+  }
+  [data-theme="frost"] [data-prism-brand-prism] {
+    color: #4a6480 !important;
+    -webkit-text-fill-color: #4a6480 !important;
+  }
+  [data-theme="frost"] [data-prism-brand-ia],
+  [data-theme="frost"] [data-prism-brand-agenda] {
+    color: #2563eb !important;
+    -webkit-text-fill-color: #2563eb !important;
+  }
+  [data-theme="frost"] [data-prism-icon] rect,
+  [data-theme="frost"] [data-prism-icon] line {
+    stroke: #2563eb !important;
+  }
+  [data-theme="frost"] [data-prism-icon] rect[fill] {
+    fill: #2563eb !important;
+    stroke: none !important;
   }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
