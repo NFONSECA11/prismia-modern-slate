@@ -25,8 +25,12 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
   const padY = Math.round(20 * s);
   const radius = Math.round(10 * s);
 
+  // When bare (no dark background), inherit color so the icon adapts to the active theme.
+  const iconColor = bare ? "currentColor" : "white";
+
   return (
     <div
+      className={bare ? "text-foreground" : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -45,20 +49,20 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <rect x="3" y="9" width="48" height="42" rx="6" stroke="white" strokeWidth="2.2" />
-        <line x1="3" y1="21" x2="51" y2="21" stroke="white" strokeWidth="2.2" />
-        <line x1="16" y1="3" x2="16" y2="14" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-        <line x1="38" y1="3" x2="38" y2="14" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-        <rect x="9" y="27" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="20" y="27" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="31" y="27" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="42" y="27" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="9" y="36" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="20" y="36" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="31" y="36" width="7" height="5" rx="1.5" fill="white" opacity="0.75" />
-        <rect x="42" y="36" width="7" height="5" rx="1.5" fill="white" opacity="0.5" />
-        <rect x="9" y="45" width="7" height="5" rx="1.5" fill="white" opacity="0.5" />
-        <rect x="20" y="45" width="7" height="5" rx="1.5" fill="white" opacity="0.5" />
+        <rect x="3" y="9" width="48" height="42" rx="6" stroke={iconColor} strokeWidth="2.2" />
+        <line x1="3" y1="21" x2="51" y2="21" stroke={iconColor} strokeWidth="2.2" />
+        <line x1="16" y1="3" x2="16" y2="14" stroke={iconColor} strokeWidth="2.2" strokeLinecap="round" />
+        <line x1="38" y1="3" x2="38" y2="14" stroke={iconColor} strokeWidth="2.2" strokeLinecap="round" />
+        <rect x="9" y="27" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="20" y="27" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="31" y="27" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="42" y="27" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="9" y="36" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="20" y="36" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="31" y="36" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.75" />
+        <rect x="42" y="36" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.5" />
+        <rect x="9" y="45" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.5" />
+        <rect x="20" y="45" width="7" height="5" rx="1.5" fill={iconColor} opacity="0.5" />
       </svg>
 
       {/* Texto */}
@@ -68,7 +72,8 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 700,
-            color: "#9ca3af",
+            color: bare ? "currentColor" : "#9ca3af",
+            opacity: bare ? 0.7 : 1,
             letterSpacing: "-0.5px",
           }}
         >
