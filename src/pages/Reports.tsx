@@ -352,7 +352,8 @@ export default function Reports() {
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center gap-1 text-xs md:text-sm font-semibold tracking-tight w-full">
+        <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight w-full">
+          <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
           <span className="font-light opacity-90" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
           <span className="gradient-text font-bold">IA</span>
           <span className="ml-1.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>

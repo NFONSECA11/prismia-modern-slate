@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme, ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
-import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import UserManagementSection from "@/components/UserManagementSection";
@@ -317,7 +317,8 @@ export default function Settings() {
         className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-b border-border/60"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        <div className="flex items-center gap-1 text-xs md:text-sm font-semibold tracking-tight max-w-3xl mx-auto w-full">
+        <div className="flex items-center gap-1.5 text-xs md:text-sm font-semibold tracking-tight w-full">
+          <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
           <span className="font-light opacity-90" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
           <span className="gradient-text font-bold">IA</span>
           <span className="ml-1.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
