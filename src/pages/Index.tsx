@@ -773,7 +773,7 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl border-2 border-border px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--surface) / 0.80)" : "hsl(var(--surface))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
             {/* Search + result count */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:w-64 sm:flex-none">
