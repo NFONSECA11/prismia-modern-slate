@@ -66,12 +66,14 @@ export interface ConversionFunnel {
 export const fetchConversionFunnel = async (f: ReportFilters): Promise<ConversionFunnel> => {
   const raw = await get<any>("/api/reports/conversion/funnel", f);
   const steps = raw.steps ?? [];
-  const max = steps[0]?.value || 1;
   return {
-    steps: steps.map((s: any) => ({
-      ...s,
-      pct: Math.round((s.value / max) * 100),
-    })),
+    steps: steps.map((s: any, idx: number) => {
+      const prev = idx === 0 ? s.value : steps[idx - 1].value;
+      return {
+        ...s,
+        pct: prev > 0 ? Math.round((s.value / prev) * 100) : 0,
+      };
+    }),
   };
 };
 
