@@ -221,23 +221,23 @@
   }
 
   [data-theme="frost"] {
-    --background: 235 33% 64%;
-    --surface: 234 26% 56%;
-    --surface-raised: 234 29% 60%;
-    --surface-elevated: 234 28% 58%;
-    --row-hover: 234 24% 52%;
-    --appointment-bg: 234 26% 56%;
-    --appointment-text: 0 0% 100%;
-    --appointment-border: 0 0% 100% / 0.15;
+    --background: 214 41% 89%;
+    --surface: 214 41% 84%;
+    --surface-raised: 215 45% 86%;
+    --surface-elevated: 214 42% 85%;
+    --row-hover: 213 41% 80%;
+    --appointment-bg: 214 41% 84%;
+    --appointment-text: 215 38% 19%;
+    --appointment-border: 213 36% 75%;
 
-    --topbar-bg: 234 22% 46%;
-    --table-header-bg: 234 24% 52%;
-    --card-hover: 234 28% 58%;
-    --input-bg: 234 26% 56%;
+    --topbar-bg: 213 41% 78%;
+    --table-header-bg: 213 41% 82%;
+    --card-hover: 214 42% 87%;
+    --input-bg: 0 0% 100%;
 
-    --foreground: 0 0% 100%;
-    --foreground-muted: 0 0% 100% / 0.75;
-    --foreground-subtle: 0 0% 100% / 0.6;
+    --foreground: 215 38% 19%;
+    --foreground-muted: 213 24% 38%;
+    --foreground-subtle: 213 20% 50%;
 
     --primary: 211 83% 50%;
     --primary-foreground: 0 0% 100%;
@@ -267,15 +267,15 @@
     --holiday-text: 352 70% 45%;
     --holiday-border: 352 50% 75%;
 
-    --border: 0 0% 100% / 0.15;
-    --border-subtle: 0 0% 100% / 0.1;
-    --input: 234 26% 56%;
-    --ring: 0 0% 100% / 0.3;
+    --border: 213 36% 75%;
+    --border-subtle: 213 41% 82%;
+    --input: 0 0% 100%;
+    --ring: 211 83% 50%;
 
-    --card: 234 26% 56%;
-    --card-foreground: 0 0% 100%;
-    --popover: 234 22% 46%;
-    --popover-foreground: 0 0% 100%;
+    --card: 214 41% 84%;
+    --card-foreground: 215 38% 19%;
+    --popover: 214 41% 84%;
+    --popover-foreground: 215 38% 19%;
     --destructive: 351 65% 57%;
     --destructive-foreground: 0 0% 100%;
 
