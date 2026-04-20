@@ -337,7 +337,7 @@ export default function Settings() {
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{isAgent ? "Personalização" : "1 · Contexto da conta"}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{isAgent ? "Personalização" : "Conta e Identidade"}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -604,7 +604,7 @@ export default function Settings() {
         {/* ─── 2) Catálogo e oferta da unidade ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">2 · Catálogo e oferta</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Catálogo de Serviços</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -617,7 +617,7 @@ export default function Settings() {
         {/* ─── 3) Equipe e responsabilidades ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">3 · Equipe e responsabilidades</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Equipe Profissional</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -736,7 +736,7 @@ export default function Settings() {
         {/* ─── 5) Modo e validação final ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">4 · Modo e validação</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Operação e Confirmação</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
