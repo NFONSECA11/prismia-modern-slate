@@ -363,7 +363,7 @@
   [data-theme="frost"] .rounded-xl.border,
   [data-theme="frost"] .rounded-lg.border {
     border-width: 3px !important;
-    border-color: hsl(216 20% 78%) !important;
+    border-color: hsl(213 25% 93%) !important;
   }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
