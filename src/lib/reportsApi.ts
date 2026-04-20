@@ -84,3 +84,51 @@ export interface ConversionWaitlist {
 }
 export const fetchConversionWaitlist = (f: ReportFilters) =>
   get<ConversionWaitlist>("/api/reports/conversion/waitlist", f);
+
+// ===== Operação =====
+export interface OperationsOverview {
+  confirmed: number;
+  available_slots: number;
+  filled_slots: number;
+  occupancy_rate: number;
+}
+export const fetchOperationsOverview = (f: ReportFilters) =>
+  get<OperationsOverview>("/api/reports/operations/overview", f);
+
+export interface OperationsBookingsPoint {
+  date: string;
+  confirmed: number;
+}
+export interface OperationsBookings {
+  group_by: "day" | "week" | "month";
+  series: OperationsBookingsPoint[];
+}
+export const fetchOperationsBookings = (f: ReportFilters) =>
+  get<OperationsBookings>("/api/reports/operations/bookings", f);
+
+export interface OperationsDistributionItem {
+  key: string;
+  label: string;
+  count: number;
+  pct: number;
+}
+export interface OperationsDistribution {
+  dimension: "unit" | "professional" | "procedure";
+  items: OperationsDistributionItem[];
+}
+export const fetchOperationsDistribution = (f: ReportFilters) =>
+  get<OperationsDistribution>("/api/reports/operations/distribution", f);
+
+export interface BookingSourceItem {
+  key: string;
+  label: string;
+  count: number;
+  pct: number;
+}
+export interface OperationsBookingSources {
+  total: number;
+  items: BookingSourceItem[];
+}
+export const fetchOperationsBookingSources = (f: ReportFilters) =>
+  get<OperationsBookingSources>("/api/reports/operations/booking-sources", f);
+
