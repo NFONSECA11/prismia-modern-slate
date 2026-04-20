@@ -357,16 +357,26 @@
   [data-theme="frost"] [class*="relative w-full"]:has(.prismia-banner) {
     background: #5571b9 !important;
   }
-  /* Frost: filter bar background */
+  /* Frost: filter bar background - cinza azulado muito suave */
   [data-theme="frost"] main [style*="background: hsl(var(--surface)"],
   [data-theme="frost"] .rounded-xl.border-2.border-border.px-3.py-2 {
-    background: #c6d4e6 !important;
+    background: #f0f4f8 !important;
   }
-  /* Frost: table header background */
+  /* Frost: table header background - azul muito claro */
   [data-theme="frost"] thead,
   [data-theme="frost"] [style*="surface-elevated"]:has(th),
   [data-theme="frost"] th {
-    background: #b3c5dd !important;
+    background: #dce6f0 !important;
+  }
+  /* Frost: table rows background - branco */
+  [data-theme="frost"] tbody tr,
+  [data-theme="frost"] td {
+    background: #ffffff !important;
+  }
+  /* Frost: page background */
+  [data-theme="frost"] body {
+    background: #e8eef5 !important;
+    background-image: none !important;
   }
   [data-theme="frost"] .rounded-2xl.border,
   [data-theme="frost"] .rounded-xl.border,
