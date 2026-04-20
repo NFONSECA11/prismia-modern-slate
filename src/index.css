@@ -221,23 +221,23 @@
   }
 
   [data-theme="frost"] {
-    --background: 220 20% 92%;
-    --surface: 0 0% 100%;
-    --surface-raised: 220 15% 97%;
-    --surface-elevated: 220 18% 95%;
-    --row-hover: 220 22% 90%;
-    --appointment-bg: 220 25% 88%;
-    --appointment-text: 220 40% 15%;
-    --appointment-border: 220 18% 80%;
+    --background: 235 33% 64%;
+    --surface: 234 26% 56%;
+    --surface-raised: 234 29% 60%;
+    --surface-elevated: 234 28% 58%;
+    --row-hover: 234 24% 52%;
+    --appointment-bg: 234 26% 56%;
+    --appointment-text: 0 0% 100%;
+    --appointment-border: 0 0% 100% / 0.15;
 
-    --topbar-bg: 220 35% 25%;
-    --table-header-bg: 220 18% 94%;
-    --card-hover: 220 18% 96%;
-    --input-bg: 0 0% 100%;
+    --topbar-bg: 234 22% 46%;
+    --table-header-bg: 234 24% 52%;
+    --card-hover: 234 28% 58%;
+    --input-bg: 234 26% 56%;
 
-    --foreground: 220 40% 15%;
-    --foreground-muted: 213 25% 35%;
-    --foreground-subtle: 214 18% 55%;
+    --foreground: 0 0% 100%;
+    --foreground-muted: 0 0% 100% / 0.75;
+    --foreground-subtle: 0 0% 100% / 0.6;
 
     --primary: 211 83% 50%;
     --primary-foreground: 0 0% 100%;
