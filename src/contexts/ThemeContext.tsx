@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 export type ThemeId = "night" | "slate" | "frost";
 export type BgMode = "solid" | "gradient" | "landscape";
-export type AccentId = "deep-blue" | "charcoal" | "purple-night";
+export type AccentId = "deep-blue" | "coral" | "teal";
 
 interface ThemeContextType {
   theme: ThemeId;
@@ -49,7 +49,7 @@ function resolveTheme(saved: string | null): ThemeId {
 }
 
 function resolveAccent(saved: string | null): AccentId {
-  if (saved === "deep-blue" || saved === "charcoal" || saved === "purple-night") return saved;
+  if (saved === "deep-blue" || saved === "coral" || saved === "teal") return saved;
   return "deep-blue";
 }
 
