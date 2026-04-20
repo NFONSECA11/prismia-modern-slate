@@ -625,6 +625,19 @@ export default function Index() {
             {/* Unit selector (mobile) */}
             {units.length > 1 && (
               <div className="flex flex-wrap gap-1.5 pb-2 border-b border-border/40">
+                <button
+                  onClick={() => {
+                    setActiveUnit(null);
+                    savePreference({ last_unit_id: null });
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+                    !activeUnit
+                      ? "text-primary font-semibold bg-primary/10 border border-primary/20"
+                      : "text-foreground bg-surface-elevated border border-border"
+                  }`}
+                >
+                  Todas
+                </button>
                 {units.map((u) => (
                   <button
                     key={u.id}
