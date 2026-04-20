@@ -353,7 +353,7 @@ export default function Reports() {
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center w-full -ml-1">
+        <div className="flex items-center w-full" style={{ paddingLeft: 3 }}>
           <PrismIAAgendaLogo size="sm" bare />
         </div>
       </div>
