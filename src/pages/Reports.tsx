@@ -322,13 +322,6 @@ export default function Reports() {
       </div>
 
       <main className="px-6 py-6 max-w-3xl mx-auto space-y-6 relative z-10">
-        <div className="flex items-center gap-2 px-1">
-          <BarChart3 className="h-4 w-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Relatórios
-          </span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
 
         <div className="border-b border-border">
           <div className="flex items-center gap-6">
