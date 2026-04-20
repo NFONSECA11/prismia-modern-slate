@@ -25,8 +25,8 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
   const padY = Math.round(20 * s);
   const radius = Math.round(10 * s);
 
-  // Always use the branded colors (white icon, gray/blue/cyan text), but make the background transparent when bare.
-  const iconColor = "white";
+  // Sem fundo: ícone fica azul; com fundo escuro: ícone branco.
+  const iconColor = bare ? "#60a5fa" : "white";
 
   return (
     <div
