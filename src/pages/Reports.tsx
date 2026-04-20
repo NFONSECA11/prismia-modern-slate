@@ -64,6 +64,14 @@ export default function Reports() {
   const { theme, bgMode, bgVariant } = useTheme();
   const [showUnitMenu, setShowUnitMenu] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<"conversao" | "operacao" | "resultado" | "performance">("conversao");
+
+  const tabs: { id: "conversao" | "operacao" | "resultado" | "performance"; label: string }[] = [
+    { id: "conversao", label: "Conversão" },
+    { id: "operacao", label: "Operação" },
+    { id: "resultado", label: "Resultado" },
+    { id: "performance", label: "Performance" },
+  ];
 
   useEffect(() => {
     if (!isLoading && !canManage) navigate("/", { replace: true });
@@ -322,15 +330,38 @@ export default function Reports() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
+        <div className="border-b border-border">
+          <div className="flex items-center gap-6">
+            {tabs.map((t) => {
+              const isActive = activeTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`relative px-1 pb-3 text-sm font-medium transition-colors ${
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                  {isActive && (
+                    <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div
           className="rounded-2xl border border-border p-10 text-center"
           style={{ background: "hsl(var(--surface))" }}
         >
           <BarChart3 className="h-10 w-10 text-primary mx-auto mb-4" />
-          <h2 className="text-lg font-semibold mb-2">Em construção</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            {tabs.find((t) => t.id === activeTab)?.label} — em construção
+          </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Esta área receberá os relatórios da operação (agendamentos por período,
-            produtividade por profissional, conversão do bot, confirmações etc).
+            Esta aba receberá os indicadores de {tabs.find((t) => t.id === activeTab)?.label.toLowerCase()}.
           </p>
         </div>
       </main>
