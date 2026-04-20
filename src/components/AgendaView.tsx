@@ -730,10 +730,16 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     });
   }, [rawAgendaBookings, activeUnit]);
 
-  // Fetch professionals for active unit
-  const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals-by-unit", activeUnit?.id],
-    queryFn: () => fetchProfessionalsByUnit(activeUnit!.id),
+  // Source of truth for professionals visible in Agenda: active professional-unit links
+  const { data: profUnitLinks = [] } = useQuery({
+    queryKey: ["professional-units-by-unit", activeUnit?.id],
+    queryFn: async () => {
+      const { data } = await api.get("/api/booking/professional-units/", {
+        params: { unit: activeUnit!.id, page_size: 500 },
+      });
+      const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
+      return list as any[];
+    },
     enabled: !!activeUnit,
     staleTime: 60_000,
   });
@@ -741,23 +747,37 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
   const displayProfessionals = useMemo(() => {
     const byId = new Map<number, Professional>();
 
-    for (const p of professionals) {
-      const id = Number((p as any)?.id);
-      if (Number.isFinite(id) && id > 0) byId.set(id, { ...p, id });
-    }
+    for (const link of profUnitLinks) {
+      if (link?.is_active === false) continue;
 
-    for (const b of agendaBookings) {
-      const id = getBookingProfessionalId(b);
-      if (!id || byId.has(id)) continue;
-      byId.set(id, {
-        id,
-        name: getBookingProfessionalName(b),
-        specialty: (b as any)?.professional_specialty || "",
+      const rawProfessional = link?.professional ?? link?.professional_id;
+      const professionalId =
+        typeof rawProfessional === "object"
+          ? Number(rawProfessional?.id ?? rawProfessional?.pk)
+          : Number(rawProfessional);
+
+      if (!Number.isFinite(professionalId) || professionalId <= 0 || byId.has(professionalId)) {
+        continue;
+      }
+
+      const bookingMatch = agendaBookings.find((b) => getBookingProfessionalId(b) === professionalId);
+      const name =
+        link?.professional_name ??
+        link?.professional__name ??
+        (typeof rawProfessional === "object" ? rawProfessional?.name : undefined) ??
+        bookingMatch?.professional_name ??
+        getBookingProfessionalName(bookingMatch as any) ??
+        `Profissional #${professionalId}`;
+
+      byId.set(professionalId, {
+        id: professionalId,
+        name,
+        specialty: "",
       });
     }
 
     return Array.from(byId.values());
-  }, [professionals, agendaBookings]);
+  }, [profUnitLinks, agendaBookings]);
 
   // Single professional for week view with index-based navigation
   const safeWeekProfIdx = Math.min(weekProfIdx, Math.max(displayProfessionals.length - 1, 0));
@@ -787,20 +807,6 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
     });
   };
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Fetch professional-unit links for the active unit (to resolve professional_unit → professional)
-  const { data: profUnitLinks = [] } = useQuery({
-    queryKey: ["professional-units-by-unit", activeUnit?.id],
-    queryFn: async () => {
-      const { data } = await api.get("/api/booking/professional-units/", {
-        params: { unit: activeUnit!.id, page_size: 500 },
-      });
-      const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
-      return list as any[];
-    },
-    enabled: !!activeUnit,
-    staleTime: 60_000,
-  });
 
   // Fetch professional availabilities filtered by active unit
   const { data: rawAvailabilities = [] } = useQuery({
