@@ -318,7 +318,7 @@ export default function Settings() {
         className="print:hidden relative w-full flex items-center pl-6 sm:pl-10 pr-4 sm:pr-6 py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        <div className="flex items-center w-full -ml-[4px]">
+        <div className="flex items-center w-full -ml-[5px]">
           <PrismIAAgendaLogo size="sm" bare />
         </div>
       </div>
