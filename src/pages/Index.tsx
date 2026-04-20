@@ -732,7 +732,8 @@ export default function Index() {
       <div
         className="print:hidden relative w-full flex items-center px-4 md:px-6 py-1 border-b border-border/60"
         style={{
-          background: "hsl(var(--topbar-bg))",
+          background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
+          backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
         <div className="flex items-center gap-1 text-xs md:text-sm font-semibold tracking-tight max-w-[1440px] mx-auto w-full">
