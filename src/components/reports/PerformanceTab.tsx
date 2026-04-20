@@ -160,9 +160,9 @@ export function PerformanceTab({ filters }: Props) {
               <p className="text-xs text-muted-foreground italic">Sem dados.</p>
             )}
           </div>
-          {intents.data?.illustrative && (
+          {intents.data?.total === 0 && (
             <p className="text-[11px] text-muted-foreground italic mt-3">
-              * dados ilustrativos — Lead.intent populado em produção
+              * sem dados de intents no período
             </p>
           )}
         </ReportCard>
