@@ -455,7 +455,6 @@ export default function Settings() {
                   {([
                     { id: "solid" as BgMode, label: "Sólido", icon: Square, desc: "Cor sólida" },
                     { id: "gradient" as BgMode, label: "Gradiente", icon: Layers, desc: "Transição de cores" },
-                    ...(theme !== "night" ? [{ id: "landscape" as BgMode, label: "Paisagem", icon: Image, desc: "Imagem de natureza" }] : []),
                   ]).map((bg) => {
                     const active = bgMode === bg.id;
                     const Icon = bg.icon;
