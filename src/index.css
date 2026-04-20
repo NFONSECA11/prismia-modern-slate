@@ -222,22 +222,22 @@
 
   [data-theme="frost"] {
     --background: 214 41% 89%;
-    --surface: 214 41% 84%;
+    --surface: 0 0% 100%;
     --surface-raised: 215 45% 86%;
     --surface-elevated: 214 42% 85%;
     --row-hover: 213 41% 80%;
-    --appointment-bg: 214 41% 84%;
-    --appointment-text: 215 38% 19%;
-    --appointment-border: 213 36% 75%;
+    --appointment-bg: 0 0% 100%;
+    --appointment-text: 213 39% 17%;
+    --appointment-border: 214 35% 86%;
 
     --topbar-bg: 213 41% 78%;
-    --table-header-bg: 213 41% 82%;
+    --table-header-bg: 214 41% 84%;
     --card-hover: 214 42% 87%;
     --input-bg: 0 0% 100%;
 
-    --foreground: 215 38% 19%;
-    --foreground-muted: 213 24% 38%;
-    --foreground-subtle: 213 20% 50%;
+    --foreground: 213 39% 17%;
+    --foreground-muted: 213 27% 40%;
+    --foreground-subtle: 209 23% 58%;
 
     --primary: 211 83% 50%;
     --primary-foreground: 0 0% 100%;
