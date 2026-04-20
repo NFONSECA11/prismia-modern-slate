@@ -356,7 +356,7 @@ export default function Reports() {
           <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5" style={{ color: "hsl(var(--primary))" }} aria-hidden="true" />
           <span className="font-light opacity-90" style={{ color: "hsl(0 0% 85%)" }}>Prism</span>
           <span className="gradient-text font-bold -ml-1.5">IA</span>
-          <span className="ml-1 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
+          <span className="-ml-0.5 font-semibold tracking-tight" style={{ color: "hsl(var(--primary))" }}>
             Agenda
           </span>
         </div>
