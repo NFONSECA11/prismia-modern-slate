@@ -177,6 +177,18 @@ export default function Settings() {
     ],
   };
 
+  useEffect(() => {
+    if (theme === "night" && bgMode === "solid" && !didNormalizeNightSolid) {
+      setDidNormalizeNightSolid(true);
+      if (bgVariant !== 0) setBgVariant(0);
+      return;
+    }
+
+    if (didNormalizeNightSolid && (theme !== "night" || bgMode !== "solid")) {
+      setDidNormalizeNightSolid(false);
+    }
+  }, [theme, bgMode, bgVariant, didNormalizeNightSolid, setBgVariant]);
+
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
