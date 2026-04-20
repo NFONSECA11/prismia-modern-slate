@@ -48,19 +48,39 @@ const parsePuLabel = (label?: string | null) => {
 };
 
 type Mode = "all_day" | "period";
+type ExceptionMode = "block" | "allow";
+
+const todayISO = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const nowTimeISO = () => {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${min}`;
+};
 
 export default function ProfessionalTimeOffsLinkSection() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, isAuthenticated, company } = useAuth();
   const qc = useQueryClient();
 
   const [openProfName, setOpenProfName] = useState<string | null>(null);
   const [showNewFor, setShowNewFor] = useState<string | null>(null);
   const [formProfUnit, setFormProfUnit] = useState<number | "">("");
+  const [exceptionMode, setExceptionMode] = useState<ExceptionMode>("block");
   const [mode, setMode] = useState<Mode>("all_day");
   const [day, setDay] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-  const [endsAt, setEndsAt] = useState("");
+  const [startsDate, setStartsDate] = useState("");
+  const [startsTime, setStartsTime] = useState("");
+  const [endsDate, setEndsDate] = useState("");
+  const [endsTime, setEndsTime] = useState("");
   const [reason, setReason] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   const { data: puOptions = [] } = useQuery<PuOption[]>({
     queryKey: ["professional-units-as-options"],
@@ -149,11 +169,15 @@ export default function ProfessionalTimeOffsLinkSection() {
   const resetForm = () => {
     setShowNewFor(null);
     setFormProfUnit("");
+    setExceptionMode("block");
     setMode("all_day");
     setDay("");
-    setStartsAt("");
-    setEndsAt("");
+    setStartsDate("");
+    setStartsTime("");
+    setEndsDate("");
+    setEndsTime("");
     setReason("");
+    setIsActive(true);
   };
 
   const createBlock = useMutation({
@@ -203,7 +227,11 @@ export default function ProfessionalTimeOffsLinkSection() {
     }
   };
 
-  const canSave = !!formProfUnit && (mode === "all_day" ? !!day : !!startsAt && !!endsAt);
+  const canSave =
+    !!formProfUnit &&
+    (mode === "all_day"
+      ? !!day
+      : !!startsDate && !!startsTime && !!endsDate && !!endsTime);
 
   return (
     <Collapsible defaultOpen={false} id="section-profissionais-bloqueios">
@@ -296,43 +324,126 @@ export default function ProfessionalTimeOffsLinkSection() {
 
                     {showNewFor === profName ? (
                       <div
-                        className="rounded-md border border-border p-3 mt-2 space-y-2"
-                        style={{ background: "hsl(var(--surface)) " }}
+                        className="rounded-md border border-border p-3 mt-2 space-y-3"
+                        style={{ background: "hsl(var(--surface))" }}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <select
-                            value={formProfUnit}
-                            onChange={(e) => setFormProfUnit(e.target.value ? Number(e.target.value) : "")}
-                            className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
-                          >
-                            <option value="">Unidade</option>
-                            {profPuOptions.map((p) => (
-                              <option key={p.id} value={p.id}>{p.unitName ?? p.label}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={mode}
-                            onChange={(e) => setMode(e.target.value as Mode)}
-                            className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
-                          >
-                            <option value="all_day">Dia inteiro</option>
-                            <option value="period">Período</option>
-                          </select>
-                          {mode === "all_day" ? (
-                            <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="h-8 text-sm w-40" />
-                          ) : (
-                            <>
-                              <Input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="h-8 text-sm w-44" />
-                              <Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="h-8 text-sm w-44" />
-                            </>
-                          )}
+                        {/* Exception mode */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Exception mode</span>
+                            <select
+                              value={exceptionMode}
+                              onChange={(e) => setExceptionMode(e.target.value as ExceptionMode)}
+                              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                            >
+                              <option value="block">Block — Não permite agendar</option>
+                              <option value="allow">Allow — Permite agendar</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tipo</span>
+                            <select
+                              value={mode}
+                              onChange={(e) => setMode(e.target.value as Mode)}
+                              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                            >
+                              <option value="all_day">Dia inteiro</option>
+                              <option value="period">Período</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Day (when all-day) */}
+                        {mode === "all_day" && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Day</span>
+                            <div className="flex items-center gap-2">
+                              <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="h-8 text-sm w-44" />
+                              <button
+                                type="button"
+                                onClick={() => setDay(todayISO())}
+                                className="text-xs text-primary hover:text-primary/80"
+                              >
+                                Hoje
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Company / Professional / Professional unit */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Company</span>
+                            <div className="h-8 px-2 flex items-center text-xs text-foreground rounded-md border border-border bg-background/60 truncate">
+                              {company?.name ?? "—"}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Professional</span>
+                            <div className="h-8 px-2 flex items-center text-xs text-foreground rounded-md border border-border bg-background/60 truncate">
+                              {profName}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Professional unit</span>
+                            <select
+                              value={formProfUnit}
+                              onChange={(e) => setFormProfUnit(e.target.value ? Number(e.target.value) : "")}
+                              className="h-8 text-sm rounded-md border border-border px-2 py-1 bg-background text-foreground"
+                            >
+                              <option value="">Selecione…</option>
+                              {profPuOptions.map((p) => (
+                                <option key={p.id} value={p.id}>{p.unitName ?? p.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Starts at / Ends at (when period) */}
+                        {mode === "period" && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Starts at</span>
+                              <div className="flex items-center gap-2">
+                                <Input type="date" value={startsDate} onChange={(e) => setStartsDate(e.target.value)} className="h-8 text-sm w-36" />
+                                <button type="button" onClick={() => setStartsDate(todayISO())} className="text-xs text-primary hover:text-primary/80">Hoje</button>
+                                <Input type="time" value={startsTime} onChange={(e) => setStartsTime(e.target.value)} className="h-8 text-sm w-28" />
+                                <button type="button" onClick={() => setStartsTime(nowTimeISO())} className="text-xs text-primary hover:text-primary/80">Agora</button>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ends at</span>
+                              <div className="flex items-center gap-2">
+                                <Input type="date" value={endsDate} onChange={(e) => setEndsDate(e.target.value)} className="h-8 text-sm w-36" />
+                                <button type="button" onClick={() => setEndsDate(todayISO())} className="text-xs text-primary hover:text-primary/80">Hoje</button>
+                                <Input type="time" value={endsTime} onChange={(e) => setEndsTime(e.target.value)} className="h-8 text-sm w-28" />
+                                <button type="button" onClick={() => setEndsTime(nowTimeISO())} className="text-xs text-primary hover:text-primary/80">Agora</button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reason */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Reason</span>
                           <Input
                             placeholder="Motivo (opcional)"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="h-8 text-sm flex-1 min-w-[120px]"
+                            className="h-8 text-sm"
                           />
                         </div>
+
+                        {/* Is active */}
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isActive}
+                            onChange={(e) => setIsActive(e.target.checked)}
+                            className="h-4 w-4 rounded border-border accent-primary"
+                          />
+                          <span className="text-xs text-foreground">Is active</span>
+                        </label>
 
                         <div className="flex items-center gap-2">
                           <Button
@@ -342,15 +453,16 @@ export default function ProfessionalTimeOffsLinkSection() {
                             onClick={() => {
                               const payload: any = {
                                 professional_unit: formProfUnit,
-                                exception_mode: "block",
+                                exception_mode: exceptionMode,
                                 is_all_day: mode === "all_day",
+                                is_active: isActive,
                                 ...(reason.trim() ? { reason: reason.trim() } : {}),
                               };
                               if (mode === "all_day") {
                                 payload.day = day;
                               } else {
-                                payload.starts_at = startsAt;
-                                payload.ends_at = endsAt;
+                                payload.starts_at = `${startsDate}T${startsTime}`;
+                                payload.ends_at = `${endsDate}T${endsTime}`;
                               }
                               createBlock.mutate(payload);
                             }}
