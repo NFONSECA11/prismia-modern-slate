@@ -25,8 +25,8 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
   const padY = Math.round(20 * s);
   const radius = Math.round(10 * s);
 
-  // Sem fundo: ícone fica azul; com fundo escuro: ícone branco.
-  const iconColor = bare ? "#60a5fa" : "white";
+  // Ícone usa cor primária do design system
+  const iconColor = "hsl(var(--primary))";
 
   return (
     <div
@@ -73,8 +73,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 700,
-            color: bare ? "currentColor" : "#9ca3af",
-            opacity: bare ? 0.7 : 1,
+            color: "hsl(var(--foreground-subtle))",
             letterSpacing: "-0.5px",
           }}
         >
@@ -86,7 +85,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 800,
-            color: "#1d4ed8",
+            color: "hsl(var(--primary))",
             letterSpacing: "-0.5px",
           }}
         >
@@ -98,7 +97,7 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
             fontFamily: "'Nunito', 'Segoe UI', sans-serif",
             fontSize,
             fontWeight: 700,
-            color: "#0284c7",
+            color: "hsl(var(--accent))",
             letterSpacing: "-0.5px",
             marginLeft: Math.round(6 * s),
           }}
