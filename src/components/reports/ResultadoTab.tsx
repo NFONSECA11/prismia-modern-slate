@@ -87,12 +87,12 @@ export function ResultadoTab({ filters }: Props) {
         <ReportKpi
           label="Receita recuperada — waitlist"
           value={fmtBRL(o?.recovered_revenue_waitlist)}
-          sub={o ? `${fmtPct(o.recovered_revenue_pct)} da receita total` : undefined}
+          sub="no período"
           tone="good"
         />
         <ReportKpi
           label="Agendamentos confirmados"
-          value={fmtNum(o?.confirmed_with_value)}
+          value={fmtNum(o?.confirmed_bookings)}
           sub="com valor associado"
         />
       </div>
@@ -181,20 +181,20 @@ export function ResultadoTab({ filters }: Props) {
           <div className="grid grid-cols-2 gap-2">
             <RecoveredCard
               label="Via waitlist"
-              value={fmtBRL(breakdownPrimary.data?.recovered_waitlist?.revenue ?? o?.recovered_revenue_waitlist)}
+              value={fmtBRL(o?.recovered_revenue_waitlist)}
               desc={
-                breakdownPrimary.data?.recovered_waitlist
-                  ? `${fmtNum(breakdownPrimary.data.recovered_waitlist.bookings)} agendamentos recuperados`
+                o?.recovered_revenue_waitlist
+                  ? "receita recuperada"
                   : undefined
               }
               tone="good"
             />
             <RecoveredCard
               label="Via reagendamento"
-              value={fmtBRL(breakdownPrimary.data?.recovered_reschedule?.revenue ?? 0)}
+              value={fmtBRL(o?.recovered_revenue_reschedule)}
               desc={
-                breakdownPrimary.data?.recovered_reschedule?.bookings
-                  ? `${fmtNum(breakdownPrimary.data.recovered_reschedule.bookings)} agendamentos`
+                o?.recovered_revenue_reschedule
+                  ? "receita recuperada"
                   : "nenhum no período"
               }
             />

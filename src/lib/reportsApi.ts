@@ -25,11 +25,13 @@ async function get<T>(path: string, filters: ReportFilters = {}): Promise<T> {
 
 // ===== Bootstrap =====
 export interface ReportBootstrap {
-  units?: { id: number; name: string }[];
-  professionals?: { id: number; name: string }[];
-  procedures?: { id: number; name: string }[];
-  default_date_from?: string;
-  default_date_to?: string;
+  pages: { key: string; label: string }[];
+  dimensions: {
+    units: { id: number; name: string }[];
+    professionals: { id: number; name: string }[];
+    procedures: { id: number; name: string }[];
+  };
+  allowed_group_by: string[];
 }
 export const fetchReportsBootstrap = () =>
   get<ReportBootstrap>("/api/reports/bootstrap");
@@ -38,13 +40,19 @@ export const fetchReportsBootstrap = () =>
 export interface ConversionOverview {
   conversations_started: number;
   booking_attempts: number;
-  confirmed: number;
+  confirmed_bookings: number;
+  lost_attempts: number;
+  waitlist_entries: number;
+  waitlist_recoveries: number;
   conversation_to_attempt_rate: number;
-  attempt_to_confirmation_rate: number;
-  conversation_to_confirmation_rate: number;
+  attempt_to_confirm_rate: number;
+  conversation_to_confirm_rate: number;
+  waitlist_recovery_rate: number;
 }
-export const fetchConversionOverview = (f: ReportFilters) =>
-  get<ConversionOverview>("/api/reports/conversion/overview", f);
+export const fetchConversionOverview = async (f: ReportFilters): Promise<ConversionOverview> => {
+  const raw = await get<any>("/api/reports/conversion/overview", f);
+  return raw.summary;
+};
 
 export interface ConversionFunnelStep {
   key: string;
@@ -55,8 +63,17 @@ export interface ConversionFunnelStep {
 export interface ConversionFunnel {
   steps: ConversionFunnelStep[];
 }
-export const fetchConversionFunnel = (f: ReportFilters) =>
-  get<ConversionFunnel>("/api/reports/conversion/funnel", f);
+export const fetchConversionFunnel = async (f: ReportFilters): Promise<ConversionFunnel> => {
+  const raw = await get<any>("/api/reports/conversion/funnel", f);
+  const steps = raw.steps ?? [];
+  const max = steps[0]?.value || 1;
+  return {
+    steps: steps.map((s: any) => ({
+      ...s,
+      pct: Math.round((s.value / max) * 100),
+    })),
+  };
+};
 
 export interface ConversionLossItem {
   key: string;
@@ -68,8 +85,18 @@ export interface ConversionLosses {
   total: number;
   items: ConversionLossItem[];
 }
-export const fetchConversionLosses = (f: ReportFilters) =>
-  get<ConversionLosses>("/api/reports/conversion/losses", f);
+export const fetchConversionLosses = async (f: ReportFilters): Promise<ConversionLosses> => {
+  const raw = await get<any>("/api/reports/conversion/losses", f);
+  return {
+    total: raw.summary?.lost_attempts ?? 0,
+    items: (raw.breakdowns?.loss_reason ?? []).map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      count: it.count,
+      pct: it.rate,
+    })),
+  };
+};
 
 export interface WaitlistPoint {
   date: string;
@@ -80,10 +107,19 @@ export interface ConversionWaitlist {
   entries: number;
   recoveries: number;
   recovery_rate: number;
+  avg_days_to_recovery: number;
   series: WaitlistPoint[];
 }
-export const fetchConversionWaitlist = (f: ReportFilters) =>
-  get<ConversionWaitlist>("/api/reports/conversion/waitlist", f);
+export const fetchConversionWaitlist = async (f: ReportFilters): Promise<ConversionWaitlist> => {
+  const raw = await get<any>("/api/reports/conversion/waitlist", f);
+  return {
+    entries: raw.summary?.waitlist_entries ?? 0,
+    recoveries: raw.summary?.waitlist_recoveries ?? 0,
+    recovery_rate: raw.summary?.waitlist_recovery_rate ?? 0,
+    avg_days_to_recovery: raw.summary?.avg_days_to_recovery ?? 0,
+    series: raw.series ?? [],
+  };
+};
 
 // ===== Operação =====
 export interface OperationsOverview {
@@ -92,19 +128,32 @@ export interface OperationsOverview {
   filled_slots: number;
   occupancy_rate: number;
 }
-export const fetchOperationsOverview = (f: ReportFilters) =>
-  get<OperationsOverview>("/api/reports/operations/overview", f);
+export const fetchOperationsOverview = async (f: ReportFilters): Promise<OperationsOverview> => {
+  const raw = await get<any>("/api/reports/operations/overview", f);
+  return {
+    confirmed: raw.summary?.confirmed_bookings ?? 0,
+    available_slots: raw.summary?.available_slots ?? 0,
+    filled_slots: raw.summary?.filled_slots ?? 0,
+    occupancy_rate: raw.summary?.occupancy_rate ?? 0,
+  };
+};
 
 export interface OperationsBookingsPoint {
   date: string;
   confirmed: number;
 }
 export interface OperationsBookings {
-  group_by: "day" | "week" | "month";
   series: OperationsBookingsPoint[];
 }
-export const fetchOperationsBookings = (f: ReportFilters) =>
-  get<OperationsBookings>("/api/reports/operations/bookings", f);
+export const fetchOperationsBookings = async (f: ReportFilters): Promise<OperationsBookings> => {
+  const raw = await get<any>("/api/reports/operations/bookings", f);
+  return {
+    series: (raw.series ?? []).map((s: any) => ({
+      date: s.bucket,
+      confirmed: s.confirmed_bookings,
+    })),
+  };
+};
 
 export interface OperationsDistributionItem {
   key: string;
@@ -113,11 +162,21 @@ export interface OperationsDistributionItem {
   pct: number;
 }
 export interface OperationsDistribution {
-  dimension: "unit" | "professional" | "procedure";
   items: OperationsDistributionItem[];
 }
-export const fetchOperationsDistribution = (f: ReportFilters) =>
-  get<OperationsDistribution>("/api/reports/operations/distribution", f);
+export const fetchOperationsDistribution = async (f: ReportFilters): Promise<OperationsDistribution> => {
+  const raw = await get<any>("/api/reports/operations/distribution", f);
+  const items = raw.breakdowns?.items ?? [];
+  const max = items[0]?.confirmed_bookings || 1;
+  return {
+    items: items.map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      count: it.confirmed_bookings,
+      pct: Math.round((it.confirmed_bookings / max) * 100),
+    })),
+  };
+};
 
 export interface BookingSourceItem {
   key: string;
@@ -129,30 +188,60 @@ export interface OperationsBookingSources {
   total: number;
   items: BookingSourceItem[];
 }
-export const fetchOperationsBookingSources = (f: ReportFilters) =>
-  get<OperationsBookingSources>("/api/reports/operations/booking-sources", f);
+export const fetchOperationsBookingSources = async (f: ReportFilters): Promise<OperationsBookingSources> => {
+  const raw = await get<any>("/api/reports/operations/booking-sources", f);
+  const items = raw.breakdowns?.items ?? [];
+  const total = items.reduce((acc: number, it: any) => acc + it.count, 0);
+  return {
+    total,
+    items: items.map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      count: it.count,
+      pct: it.rate,
+    })),
+  };
+};
 
 // ===== Resultado =====
 export interface ResultsOverview {
   estimated_revenue: number;
   avg_ticket: number;
+  average_ticket: number;
+  confirmed_bookings: number;
   recovered_revenue_waitlist: number;
-  recovered_revenue_pct: number;
-  confirmed_with_value: number;
+  recovered_revenue_reschedule: number;
 }
-export const fetchResultsOverview = (f: ReportFilters) =>
-  get<ResultsOverview>("/api/reports/results/overview", f);
+export const fetchResultsOverview = async (f: ReportFilters): Promise<ResultsOverview> => {
+  const raw = await get<any>("/api/reports/results/overview", f);
+  return {
+    estimated_revenue: raw.summary?.estimated_revenue ?? 0,
+    avg_ticket: raw.summary?.average_ticket ?? 0,
+    average_ticket: raw.summary?.average_ticket ?? 0,
+    confirmed_bookings: raw.summary?.confirmed_bookings ?? 0,
+    recovered_revenue_waitlist: raw.summary?.recovered_revenue_waitlist ?? 0,
+    recovered_revenue_reschedule: raw.summary?.recovered_revenue_reschedule ?? 0,
+  };
+};
 
 export interface ResultsRevenuePoint {
   date: string;
   revenue: number;
 }
 export interface ResultsRevenue {
-  group_by: "day" | "week" | "month";
+  total: number;
   series: ResultsRevenuePoint[];
 }
-export const fetchResultsRevenue = (f: ReportFilters) =>
-  get<ResultsRevenue>("/api/reports/results/revenue", f);
+export const fetchResultsRevenue = async (f: ReportFilters): Promise<ResultsRevenue> => {
+  const raw = await get<any>("/api/reports/results/revenue", f);
+  return {
+    total: raw.summary?.estimated_revenue ?? 0,
+    series: (raw.series ?? []).map((s: any) => ({
+      date: s.bucket,
+      revenue: s.estimated_revenue,
+    })),
+  };
+};
 
 export interface ResultsBreakdownItem {
   key: string;
@@ -161,27 +250,38 @@ export interface ResultsBreakdownItem {
   pct: number;
 }
 export interface ResultsRevenueBreakdown {
-  dimension: "unit" | "professional" | "procedure" | "source";
   total: number;
   items: ResultsBreakdownItem[];
-  recovered_waitlist?: { revenue: number; bookings: number };
-  recovered_reschedule?: { revenue: number; bookings: number };
 }
-export const fetchResultsRevenueBreakdown = (f: ReportFilters) =>
-  get<ResultsRevenueBreakdown>("/api/reports/results/revenue-breakdown", f);
+export const fetchResultsRevenueBreakdown = async (f: ReportFilters): Promise<ResultsRevenueBreakdown> => {
+  const raw = await get<any>("/api/reports/results/revenue-breakdown", f);
+  const items = raw.breakdowns?.items ?? [];
+  const total = items.reduce((acc: number, it: any) => acc + it.estimated_revenue, 0);
+  return {
+    total,
+    items: items.map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      revenue: it.estimated_revenue,
+      pct: total > 0 ? Math.round((it.estimated_revenue / total) * 100) : 0,
+    })),
+  };
+};
 
 // ===== Performance =====
 export interface PerformanceOverview {
   handoff_rate: number;
   handoff_count: number;
-  ai_bookings_pct: number;
-  ai_bookings_count: number;
-  waitlist_bookings_pct: number;
-  waitlist_bookings_count: number;
-  total_confirmed: number;
+  human_confirmation_avg_minutes: number;
 }
-export const fetchPerformanceOverview = (f: ReportFilters) =>
-  get<PerformanceOverview>("/api/reports/performance/overview", f);
+export const fetchPerformanceOverview = async (f: ReportFilters): Promise<PerformanceOverview> => {
+  const raw = await get<any>("/api/reports/performance/overview", f);
+  return {
+    handoff_rate: raw.summary?.handoff_rate ?? 0,
+    handoff_count: raw.summary?.handoff_count ?? 0,
+    human_confirmation_avg_minutes: raw.summary?.human_confirmation_avg_minutes ?? 0,
+  };
+};
 
 export interface AiIntentItem {
   key: string;
@@ -192,10 +292,19 @@ export interface AiIntentItem {
 export interface PerformanceAiIntents {
   total: number;
   items: AiIntentItem[];
-  illustrative?: boolean;
 }
-export const fetchPerformanceAiIntents = (f: ReportFilters) =>
-  get<PerformanceAiIntents>("/api/reports/performance/ai-intents", f);
+export const fetchPerformanceAiIntents = async (f: ReportFilters): Promise<PerformanceAiIntents> => {
+  const raw = await get<any>("/api/reports/performance/ai-intents", f);
+  return {
+    total: raw.summary?.total_leads ?? 0,
+    items: (raw.breakdowns?.items ?? []).map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      count: it.count,
+      pct: it.rate,
+    })),
+  };
+};
 
 export interface AiVsHumanItem {
   key: string;
@@ -207,29 +316,38 @@ export interface PerformanceAiVsHuman {
   total: number;
   items: AiVsHumanItem[];
 }
-export const fetchPerformanceAiVsHuman = (f: ReportFilters) =>
-  get<PerformanceAiVsHuman>("/api/reports/performance/ai-vs-human", f);
+export const fetchPerformanceAiVsHuman = async (f: ReportFilters): Promise<PerformanceAiVsHuman> => {
+  const raw = await get<any>("/api/reports/performance/ai-vs-human", f);
+  const items = raw.breakdowns?.items ?? [];
+  const total = items.reduce((acc: number, it: any) => acc + it.count, 0);
+  return {
+    total,
+    items: items.map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      count: it.count,
+      pct: it.rate,
+    })),
+  };
+};
 
 export interface HumanAgentRow {
-  user_id?: number | string;
-  name: string;
-  handoffs: number;
-  avg_minutes: number;
-}
-export interface HumanUnitRow {
   key: string;
   label: string;
-  count: number;
-  pct: number;
+  handoff_count: number;
+  confirmation_avg_minutes: number;
 }
 export interface PerformanceHumanService {
   agents: HumanAgentRow[];
-  by_unit: HumanUnitRow[];
-  avg_minutes_to_confirmation?: number;
-  illustrative?: boolean;
 }
-export const fetchPerformanceHumanService = (f: ReportFilters) =>
-  get<PerformanceHumanService>("/api/reports/performance/human-service", f);
-
-
-
+export const fetchPerformanceHumanService = async (f: ReportFilters): Promise<PerformanceHumanService> => {
+  const raw = await get<any>("/api/reports/performance/human-service", f);
+  return {
+    agents: (raw.breakdowns?.items ?? []).map((it: any) => ({
+      key: it.key,
+      label: it.label,
+      handoff_count: it.handoff_count,
+      confirmation_avg_minutes: it.confirmation_avg_minutes,
+    })),
+  };
+};

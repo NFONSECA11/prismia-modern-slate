@@ -71,15 +71,15 @@ export function PerformanceTab({ filters }: Props) {
           tone="accent"
         />
         <ReportKpi
-          label="Agendamentos pela IA"
-          value={fmtPct(o?.ai_bookings_pct)}
-          sub={o ? `${fmtNum(o.ai_bookings_count)} de ${fmtNum(o.total_confirmed)} confirmados` : undefined}
+          label="Tempo médio confirmação"
+          value={o?.human_confirmation_avg_minutes != null ? `${o.human_confirmation_avg_minutes} min` : "—"}
+          sub="após handoff"
           tone="good"
         />
         <ReportKpi
-          label="Agendamentos via waitlist"
-          value={fmtPct(o?.waitlist_bookings_pct)}
-          sub={o ? `${fmtNum(o.waitlist_bookings_count)} de ${fmtNum(o.total_confirmed)} confirmados` : undefined}
+          label="Total agendamentos"
+          value={fmtNum(aiVsHuman.data?.total)}
+          sub="IA + Humano"
           tone="good"
         />
       </div>
@@ -160,84 +160,49 @@ export function PerformanceTab({ filters }: Props) {
               <p className="text-xs text-muted-foreground italic">Sem dados.</p>
             )}
           </div>
-          {intents.data?.illustrative && (
+          {intents.data?.total === 0 && (
             <p className="text-[11px] text-muted-foreground italic mt-3">
-              * dados ilustrativos — Lead.intent populado em produção
+              * sem dados de intents no período
             </p>
           )}
         </ReportCard>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        <ReportCard title="Atendimento humano por atendente">
+        <ReportCard title="Atendimento humano por agente">
           <div className="grid grid-cols-[1fr_70px_80px] gap-2 pb-2 border-b border-border text-[11px] font-medium text-muted-foreground">
-            <span>Atendente</span>
+            <span>Agente</span>
             <span className="text-right">Handoffs</span>
             <span className="text-right">Tempo médio</span>
           </div>
           {(human.data?.agents ?? []).map((a, idx) => (
             <div
-              key={a.user_id ?? idx}
+              key={a.key ?? idx}
               className="grid grid-cols-[1fr_70px_80px] gap-2 py-2 border-b border-border text-xs"
             >
-              <span className="text-foreground truncate">{a.name}</span>
-              <span className="text-right text-foreground">{fmtNum(a.handoffs)}</span>
+              <span className="text-foreground truncate">{a.label}</span>
+              <span className="text-right text-foreground">{fmtNum(a.handoff_count)}</span>
               <span className="text-right text-foreground">
-                {a.avg_minutes != null ? `${a.avg_minutes} min` : "—"}
+                {a.confirmation_avg_minutes != null ? `${a.confirmation_avg_minutes} min` : "—"}
               </span>
             </div>
           ))}
           {!(human.data?.agents?.length) && !human.isLoading && (
             <p className="text-xs text-muted-foreground italic mt-3">Sem dados.</p>
           )}
-          {human.data?.illustrative && (
-            <p className="text-[11px] text-muted-foreground italic mt-3">
-              * dados ilustrativos — assigned_user populado em produção
-            </p>
-          )}
         </ReportCard>
 
-        <ReportCard title="Distribuição handoff por unidade">
-          <div className="space-y-2.5">
-            {(human.data?.by_unit ?? []).map((it, idx) => (
-              <div key={it.key} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-28 flex-shrink-0 truncate">
-                  {it.label}
-                </span>
-                <div
-                  className="flex-1 h-5 rounded-md overflow-hidden"
-                  style={{ background: "hsl(var(--surface-elevated))" }}
-                >
-                  <div
-                    className={`h-full flex items-center px-2 rounded-md ${BAR_COLORS[idx % BAR_COLORS.length]}`}
-                    style={{ width: `${Math.max(it.pct, 4)}%` }}
-                  >
-                    <span className="text-[11px] font-medium text-primary-foreground">
-                      {fmtNum(it.count)} handoffs
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground w-10 text-right">
-                  {it.pct.toFixed(0)}%
-                </span>
-              </div>
-            ))}
-            {!(human.data?.by_unit?.length) && !human.isLoading && (
-              <p className="text-xs text-muted-foreground italic">Sem dados.</p>
-            )}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="text-[11px] text-muted-foreground mb-1">
-              Tempo médio até confirmação
+        <ReportCard title="Performance geral">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total de agentes</span>
+              <span className="text-foreground font-medium">{fmtNum(human.data?.agents?.length)}</span>
             </div>
-            <div className="text-2xl font-semibold text-status-confirmed">
-              {human.data?.avg_minutes_to_confirmation != null
-                ? `${human.data.avg_minutes_to_confirmation} min`
-                : "—"}
-            </div>
-            <div className="text-[11px] text-muted-foreground">
-              proxy via updated_at
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tempo médio confirmação</span>
+              <span className="text-foreground font-medium">
+                {fmtNum(human.data?.agents?.[0]?.confirmation_avg_minutes)} min
+              </span>
             </div>
           </div>
         </ReportCard>
