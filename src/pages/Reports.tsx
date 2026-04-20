@@ -383,8 +383,9 @@ export default function Reports() {
         </div>
 
         {activeTab === "conversao" && <ConversaoTab filters={filters} />}
+        {activeTab === "operacao" && <OperacaoTab filters={filters} />}
 
-        {activeTab !== "conversao" && (
+        {(activeTab === "resultado" || activeTab === "performance") && (
           <div
             className="rounded-2xl border border-border p-10 text-center"
             style={{ background: "hsl(var(--surface))" }}
