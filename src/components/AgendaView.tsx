@@ -34,6 +34,11 @@ interface AgendaViewProps {
   onSaveBooking: (data: NewBookingFormData) => Promise<void>;
 }
 
+interface AgendaUnitViewProps extends AgendaViewProps {
+  unit: { id: number; name: string };
+  showUnitHeader?: boolean;
+}
+
 type AgendaMode = "day" | "week";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00–19:00
@@ -657,9 +662,9 @@ function WeekView({
   );
 }
 
-// ── Main AgendaView ─────────────────────────────────────────────────────────
-export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
-  const { activeUnit, company } = useAuth();
+// ── AgendaUnitView (single unit) ────────────────────────────────────────────
+function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }: AgendaUnitViewProps) {
+  const { company } = useAuth();
   const [mode, setMode] = useState<AgendaMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [newSlot, setNewSlot] = useState<NewBookingSlot | null>(null);
@@ -710,37 +715,37 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
   // Fetch agenda bookings with server-side filters
   const { data: rawAgendaBookings = [], isLoading: loadingBookings } = useQuery({
-    queryKey: ["agenda-bookings", activeUnit?.id, dateRange.from, dateRange.to],
-    queryFn: () => fetchAgendaBookings(activeUnit!.id, dateRange.from, dateRange.to),
-    enabled: !!activeUnit,
+    queryKey: ["agenda-bookings", unit?.id, dateRange.from, dateRange.to],
+    queryFn: () => fetchAgendaBookings(unit!.id, dateRange.from, dateRange.to),
+    enabled: !!unit,
     staleTime: 30_000,
   });
 
   // Client-side safety filter: only show BRs matching the active unit
   const agendaBookings = useMemo(() => {
-    if (!activeUnit) return rawAgendaBookings;
-    const activeUnitName = activeUnit.name.trim().toLowerCase();
+    if (!unit) return rawAgendaBookings;
+    const activeUnitName = unit.name.trim().toLowerCase();
     return rawAgendaBookings.filter((b: any) => {
       const rawUnit = b.unit ?? b.unit_id ?? b.unitId ?? b.booking_unit ?? b.booking_unit_id;
       const unitId = typeof rawUnit === "object" && rawUnit ? Number(rawUnit.id ?? rawUnit.pk) : Number(rawUnit);
-      if (Number.isFinite(unitId)) return unitId === activeUnit.id;
-      const unitName = String(b.unit_name ?? b.unitName ?? (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")).trim().toLowerCase();
-      if (unitName) return unitName === activeUnitName;
+      if (Number.isFinite(unitId)) return unitId === unit.id;
+      const bookingUnitName = String(b.unit_name ?? b.unitName ?? (typeof rawUnit === "object" && rawUnit ? rawUnit.name ?? "" : "")).trim().toLowerCase();
+      if (bookingUnitName) return bookingUnitName === activeUnitName;
       return true; // if no unit info, keep it
     });
-  }, [rawAgendaBookings, activeUnit]);
+  }, [rawAgendaBookings, unit]);
 
   // Source of truth for professionals visible in Agenda: active professional-unit links
   const { data: profUnitLinks = [] } = useQuery({
-    queryKey: ["professional-units-by-unit", activeUnit?.id],
+    queryKey: ["professional-units-by-unit", unit?.id],
     queryFn: async () => {
       const { data } = await api.get("/api/booking/professional-units/", {
-        params: { unit: activeUnit!.id, page_size: 500 },
+        params: { unit: unit!.id, page_size: 500 },
       });
       const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
       return list as any[];
     },
-    enabled: !!activeUnit,
+    enabled: !!unit,
     staleTime: 60_000,
   });
 
@@ -810,7 +815,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
   // Fetch professional availabilities filtered by active unit
   const { data: rawAvailabilities = [] } = useQuery({
-    queryKey: ["professional-availabilities", activeUnit?.id],
+    queryKey: ["professional-availabilities", unit?.id],
     queryFn: async () => {
       // Try filtering server-side by unit; fallback to global list and filter client-side
       const tryFetch = async (params: Record<string, any>) => {
@@ -818,7 +823,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         return Array.isArray(data) ? data : (data?.results ?? data?.data ?? []);
       };
       try {
-        const list = await tryFetch({ unit: activeUnit!.id, page_size: 500 });
+        const list = await tryFetch({ unit: unit!.id, page_size: 500 });
         if (Array.isArray(list) && list.length >= 0) return list;
       } catch (e) {
         console.warn("[availabilities] unit-filtered fetch failed, falling back", e);
@@ -830,7 +835,7 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         return Array.isArray(data) ? data : (data?.results ?? []);
       }
     },
-    enabled: !!activeUnit,
+    enabled: !!unit,
     staleTime: 60_000,
   });
 
@@ -843,12 +848,12 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
       const profId = typeof profVal === "object" ? Number(profVal?.id) : Number(profVal);
       const unitVal = link?.unit ?? link?.unit_id;
       const unitId = typeof unitVal === "object" ? Number(unitVal?.id) : Number(unitVal);
-      if (linkId && profId && (!activeUnit || unitId === activeUnit.id)) {
+      if (linkId && profId && (!unit || unitId === unit.id)) {
         m.set(linkId, profId);
       }
     }
     return m;
-  }, [profUnitLinks, activeUnit]);
+  }, [profUnitLinks, unit]);
 
   const availMap = useMemo(() => {
     const map: Record<number, ProfAvailability> = {};
@@ -891,35 +896,25 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
 
   const printPeriodLabel = `${format(weekStart, "dd/MM/yyyy", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd/MM/yyyy", { locale: ptBR })}`;
 
-  if (!activeUnit) {
-    return (
-      <div
-        className="rounded-xl border border-border/60 shadow-md flex flex-col items-center justify-center gap-3 p-12 text-center"
-        style={{ background: "hsl(var(--surface))", minHeight: "60vh" }}
-      >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <Building2 className="h-6 w-6 text-primary" />
-        </div>
-        <h2 className="text-base font-semibold text-foreground">Selecione uma unidade</h2>
-        <p className="text-sm text-muted-foreground max-w-md">
-          A visualização em Agenda exibe horários, profissionais e disponibilidades de uma unidade por vez.
-          Escolha uma unidade no seletor acima para visualizar a agenda.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
+      {showUnitHeader && (
+        <div className="flex items-center gap-2 px-1 pb-1.5 print:hidden">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
+            <Building2 className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">{unit.name}</h2>
+        </div>
+      )}
       <div
-        id="agenda-print-area"
+        id={showUnitHeader ? undefined : "agenda-print-area"}
         className="rounded-xl border border-border/60 shadow-md flex flex-col overflow-hidden w-full"
-        style={{ maxHeight: "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
+        style={{ maxHeight: showUnitHeader ? undefined : "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
       >
         {/* Print-only header */}
         <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
           <h1 className="text-base font-bold">{company?.name || "PrismIA"}</h1>
-          <p className="text-xs text-muted-foreground">{activeUnit?.name || "Unidade"}</p>
+          <p className="text-xs text-muted-foreground">{unit?.name || "Unidade"}</p>
           <p className="text-sm font-semibold mt-1">
             Agenda Semanal — {printPeriodLabel}
             {mode === "week" && weekProfessional && ` — ${weekProfessional.name}`}
@@ -1039,5 +1034,53 @@ export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) 
         onSave={handleSaveBooking}
       />
     </>
+  );
+}
+
+// ── Main AgendaView ─────────────────────────────────────────────────────────
+// Renders one AgendaUnitView per unit when "Todas as unidades" is selected,
+// or a single AgendaUnitView for the active unit.
+export function AgendaView({ onSelectBooking, onSaveBooking }: AgendaViewProps) {
+  const { activeUnit, units } = useAuth();
+
+  if (activeUnit) {
+    return (
+      <AgendaUnitView
+        unit={activeUnit}
+        onSelectBooking={onSelectBooking}
+        onSaveBooking={onSaveBooking}
+      />
+    );
+  }
+
+  if (!units.length) {
+    return (
+      <div
+        className="rounded-xl border border-border/60 shadow-md flex flex-col items-center justify-center gap-3 p-12 text-center"
+        style={{ background: "hsl(var(--surface))", minHeight: "60vh" }}
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <Building2 className="h-6 w-6 text-primary" />
+        </div>
+        <h2 className="text-base font-semibold text-foreground">Nenhuma unidade disponível</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Você não possui unidades acessíveis para visualizar a agenda.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {units.map((u) => (
+        <AgendaUnitView
+          key={u.id}
+          unit={u}
+          showUnitHeader
+          onSelectBooking={onSelectBooking}
+          onSaveBooking={onSaveBooking}
+        />
+      ))}
+    </div>
   );
 }
