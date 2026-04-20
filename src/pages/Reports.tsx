@@ -354,7 +354,7 @@ export default function Reports() {
         }}
       >
         <div className="flex items-center w-full">
-          <PrismIAAgendaLogo size="sm" bare />
+          <PrismIAAgendaLogo size="sm" />
         </div>
       </div>
 
