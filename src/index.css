@@ -94,6 +94,11 @@
     border-bottom: 1px solid hsl(0 0% 100% / 0.1) !important;
   }
 
+  /* Linha divisória sutil entre linhas da tabela no tema Frost (mesmo tom da borda) */
+  [data-theme="frost"] tbody tr {
+    border-bottom: 1px solid hsl(var(--border)) !important;
+  }
+
   /* ══════ SÓLIDO: Night (Azul Profundo) — sobrescreve apenas --background ══════ */
   [data-theme="night"][data-background="solid-night"] {
     --background: 216 65% 7%;
