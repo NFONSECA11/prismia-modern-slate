@@ -21,6 +21,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { savePreference } from "@/lib/preferencesApi";
 import api from "@/lib/api";
+import { fetchReportsBootstrap, type ReportFilters } from "@/lib/reportsApi";
+import { ReportsFilters } from "@/components/reports/ReportsFilters";
+import { ConversaoTab } from "@/components/reports/ConversaoTab";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";
@@ -72,6 +75,31 @@ export default function Reports() {
     { id: "resultado", label: "Resultado" },
     { id: "performance", label: "Performance" },
   ];
+
+  // Default: últimos 30 dias
+  const today = new Date();
+  const thirtyAgo = new Date();
+  thirtyAgo.setDate(today.getDate() - 30);
+  const toIso = (d: Date) => d.toISOString().slice(0, 10);
+  const [filters, setFilters] = useState<ReportFilters>({
+    date_from: toIso(thirtyAgo),
+    date_to: toIso(today),
+  });
+
+  // Aplica unidade ativa nos filtros (se houver)
+  useEffect(() => {
+    if (activeUnit && !filters.unit_id) {
+      setFilters((f) => ({ ...f, unit_id: activeUnit.id }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeUnit?.id]);
+
+  const { data: bootstrap } = useQuery({
+    queryKey: ["reports", "bootstrap"],
+    queryFn: fetchReportsBootstrap,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!canManage,
+  });
 
   useEffect(() => {
     if (!isLoading && !canManage) navigate("/", { replace: true });
@@ -321,7 +349,15 @@ export default function Reports() {
         </div>
       </div>
 
-      <main className="px-6 py-6 max-w-3xl mx-auto space-y-6 relative z-10">
+      <main className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-4 relative z-10">
+
+        <ReportsFilters
+          value={filters}
+          onChange={setFilters}
+          units={bootstrap?.units ?? units.map((u) => ({ id: u.id, name: u.name }))}
+          professionals={bootstrap?.professionals ?? []}
+          procedures={bootstrap?.procedures ?? []}
+        />
 
         <div className="border-b border-border">
           <div className="flex items-center gap-6">
@@ -345,18 +381,22 @@ export default function Reports() {
           </div>
         </div>
 
-        <div
-          className="rounded-2xl border border-border p-10 text-center"
-          style={{ background: "hsl(var(--surface))" }}
-        >
-          <BarChart3 className="h-10 w-10 text-primary mx-auto mb-4" />
-          <h2 className="text-lg font-semibold mb-2">
-            {tabs.find((t) => t.id === activeTab)?.label} — em construção
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Esta aba receberá os indicadores de {tabs.find((t) => t.id === activeTab)?.label.toLowerCase()}.
-          </p>
-        </div>
+        {activeTab === "conversao" && <ConversaoTab filters={filters} />}
+
+        {activeTab !== "conversao" && (
+          <div
+            className="rounded-2xl border border-border p-10 text-center"
+            style={{ background: "hsl(var(--surface))" }}
+          >
+            <BarChart3 className="h-10 w-10 text-primary mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-2">
+              {tabs.find((t) => t.id === activeTab)?.label} — em construção
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Esta aba receberá os indicadores de {tabs.find((t) => t.id === activeTab)?.label.toLowerCase()}.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
