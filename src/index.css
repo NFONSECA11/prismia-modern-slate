@@ -89,6 +89,11 @@
     --shadow-glow: 0 0 24px hsl(205 100% 59% / 0.22);
   }
 
+  /* Linha divisória sutil entre linhas da tabela no tema Night */
+  [data-theme="night"] tbody tr {
+    border-bottom: 1px solid hsl(var(--border-subtle));
+  }
+
   /* ══════ SÓLIDO: Night (Azul Profundo) — sobrescreve apenas --background ══════ */
   [data-theme="night"][data-background="solid-night"] {
     --background: 216 65% 7%;
