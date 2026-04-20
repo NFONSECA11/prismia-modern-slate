@@ -7,8 +7,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @layer base {
-  /* ══════ THEME 1: Prism Night (mais escuro, premium, sofisticado) ══════ */
-  [data-theme="night"] {
+  /* ══════ THEME 1: Prism Night — SÓLIDO PADRÃO (night) ══════ */
+  [data-theme="night"],
+  [data-theme="night"][data-background="solid-night"] {
     --background: 216 65% 7%;
     --surface: 216 56% 10%;
     --surface-raised: 215 50% 13%;
@@ -81,11 +82,133 @@
     --gradient-primary: linear-gradient(135deg, hsl(205 100% 59%), hsl(186 72% 48%));
     --gradient-surface: linear-gradient(180deg, hsl(215 50% 14%), hsl(215 50% 11%));
     --gradient-glow: radial-gradient(ellipse at top, hsl(205 100% 59% / 0.12), transparent 60%);
+    --gradient-bg: none;
 
     --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.50);
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.55);
     --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.45);
     --shadow-glow: 0 0 24px hsl(205 100% 59% / 0.22);
+  }
+
+  /* ══════ SÓLIDO: Abissal (mais escuro, quase preto) ══════ */
+  [data-theme="night"][data-background="solid-abissal"] {
+    --background: 216 80% 4%;
+    --surface: 216 72% 6%;
+    --surface-raised: 215 65% 8%;
+    --surface-elevated: 215 58% 11%;
+    --row-hover: 214 55% 14%;
+    --appointment-bg: 213 50% 17%;
+    --appointment-text: 219 100% 97%;
+    --appointment-border: 214 48% 13%;
+
+    --topbar-bg: 216 78% 5%;
+    --table-header-bg: 215 60% 9%;
+    --card-hover: 214 58% 12%;
+    --input-bg: 215 68% 7%;
+
+    --foreground-muted: 216 45% 82%;
+    --foreground-subtle: 214 28% 50%;
+
+    --primary-foreground: 216 80% 4%;
+
+    --border: 215 30% 12%;
+    --border-subtle: 215 25% 9%;
+    --input: 215 68% 7%;
+
+    --card: 216 72% 6%;
+    --popover: 216 72% 6%;
+
+    --sidebar-background: 216 80% 4%;
+    --sidebar-border: 215 30% 10%;
+
+    --gradient-surface: linear-gradient(180deg, hsl(215 65% 7%), hsl(215 65% 5%));
+    --gradient-bg: none;
+
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.70);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.75);
+    --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.65);
+  }
+
+  /* ══════ SÓLIDO: Steel (azul aço, mais claro) ══════ */
+  [data-theme="night"][data-background="solid-steel"] {
+    --background: 214 42% 17%;
+    --surface: 213 40% 20%;
+    --surface-raised: 213 38% 23%;
+    --surface-elevated: 212 36% 27%;
+    --row-hover: 212 35% 30%;
+    --appointment-bg: 211 34% 33%;
+    --appointment-text: 218 100% 97%;
+    --appointment-border: 213 36% 26%;
+
+    --topbar-bg: 214 44% 15%;
+    --table-header-bg: 212 37% 26%;
+    --card-hover: 212 36% 25%;
+    --input-bg: 213 40% 19%;
+
+    --foreground-muted: 214 40% 88%;
+    --foreground-subtle: 214 25% 62%;
+
+    --primary: 199 100% 60%;
+    --primary-foreground: 214 42% 17%;
+    --primary-glow: 199 100% 68%;
+
+    --border: 213 28% 28%;
+    --border-subtle: 213 24% 23%;
+    --input: 213 40% 19%;
+    --ring: 199 100% 60%;
+
+    --card: 213 40% 20%;
+    --popover: 213 40% 20%;
+
+    --sidebar-background: 214 44% 15%;
+    --sidebar-border: 213 28% 24%;
+
+    --gradient-surface: linear-gradient(180deg, hsl(213 38% 22%), hsl(213 38% 18%));
+    --gradient-bg: none;
+
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.38);
+    --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.30);
+  }
+
+  /* ══════ GRADIENTE: Fumaça (grafite → night) ══════ */
+  [data-theme="night"][data-background="gradient-fumaca"] {
+    --background: 216 65% 7%;
+    --surface: 216 56% 10%;
+    --surface-raised: 215 50% 13%;
+    --surface-elevated: 215 46% 16%;
+    --topbar-bg: 220 8% 12%;
+    --input-bg: 214 48% 12%;
+    --border: 215 18% 16%;
+    --border-subtle: 215 14% 12%;
+    --gradient-bg: linear-gradient(135deg, hsl(220 8% 12%) 0%, hsl(216 65% 7%) 100%);
+    --gradient-surface: linear-gradient(160deg, hsl(220 6% 14%) 0%, hsl(215 50% 12%) 100%);
+  }
+
+  /* ══════ GRADIENTE: Aurora (preto → azul marinho) ══════ */
+  [data-theme="night"][data-background="gradient-aurora"] {
+    --background: 216 65% 7%;
+    --surface: 216 56% 10%;
+    --surface-raised: 215 50% 13%;
+    --topbar-bg: 222 12% 10%;
+    --input-bg: 214 48% 12%;
+    --border: 215 20% 15%;
+    --border-subtle: 215 16% 11%;
+    --gradient-bg: linear-gradient(135deg, hsl(222 15% 8%) 0%, hsl(216 60% 10%) 50%, hsl(213 55% 13%) 100%);
+    --gradient-surface: linear-gradient(160deg, hsl(220 10% 11%) 0%, hsl(215 52% 14%) 100%);
+  }
+
+  /* ══════ GRADIENTE: Névoa (grafite → azul aço) ══════ */
+  [data-theme="night"][data-background="gradient-nevoa"] {
+    --background: 216 65% 7%;
+    --surface: 215 45% 12%;
+    --surface-raised: 214 42% 16%;
+    --topbar-bg: 218 10% 14%;
+    --input-bg: 214 44% 14%;
+    --border: 215 22% 18%;
+    --border-subtle: 215 18% 14%;
+    --gradient-bg: linear-gradient(135deg, hsl(218 12% 14%) 0%, hsl(214 42% 20%) 100%);
+    --gradient-surface: linear-gradient(160deg, hsl(216 10% 16%) 0%, hsl(213 40% 22%) 100%);
   }
 
   /* ══════ THEME 2: Prism Deep (dark equilibrado, confortável, daily-use) ══════ */
