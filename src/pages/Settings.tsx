@@ -23,7 +23,7 @@ import bgLightClean4 from "@/assets/bg-light-clean-4.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -58,6 +58,7 @@ export default function Settings() {
   const [newProfName, setNewProfName] = useState("");
   const [newProfCode, setNewProfCode] = useState("");
   const [newProfUnitId, setNewProfUnitId] = useState<number | "">(activeUnit?.id ?? "");
+  const didManuallyPickNightSolid = useRef(false);
 
   const { data: bookingSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["booking-settings", activeUnit?.id],
@@ -176,8 +177,16 @@ export default function Settings() {
     ],
   };
 
+  useEffect(() => {
+    if (theme === "night" && bgMode === "solid") {
+      if (!didManuallyPickNightSolid.current && bgVariant !== 0) {
+        setBgVariant(0);
+      }
+      return;
+    }
 
-  const createProfessional = useMutation({
+    didManuallyPickNightSolid.current = false;
+  }, [theme, bgMode, bgVariant, setBgVariant]);
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/booking/professionals/", {
@@ -517,7 +526,12 @@ export default function Settings() {
                         return (
                           <button
                             key={i}
-                            onClick={() => setBgVariant(i)}
+                            onClick={() => {
+                              if (theme === "night" && bgMode === "solid") {
+                                didManuallyPickNightSolid.current = true;
+                              }
+                              setBgVariant(i);
+                            }}
                             className="flex flex-col items-center gap-1.5 transition-all"
                           >
                             <div
