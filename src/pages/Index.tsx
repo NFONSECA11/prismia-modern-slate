@@ -11,6 +11,7 @@ import { BookingDrawer } from "@/components/BookingDrawer";
 import { AgendaView } from "@/components/AgendaView";
 
 import { useAuth } from "@/contexts/AuthContext";
+import PrismIAAgendaLogo from "@/components/PrismIAAgendaLogo";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 

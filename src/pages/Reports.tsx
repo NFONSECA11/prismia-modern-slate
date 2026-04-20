@@ -27,6 +27,7 @@ import { ConversaoTab } from "@/components/reports/ConversaoTab";
 import { OperacaoTab } from "@/components/reports/OperacaoTab";
 import { ResultadoTab } from "@/components/reports/ResultadoTab";
 import { PerformanceTab } from "@/components/reports/PerformanceTab";
+import PrismIAAgendaLogo from "@/components/PrismIAAgendaLogo";
 
 import bgDarkNavy from "@/assets/bg-dark-navy.jpg";
 import bgDarkNavy2 from "@/assets/bg-dark-navy-2.jpg";

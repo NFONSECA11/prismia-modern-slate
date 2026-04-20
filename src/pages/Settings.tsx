@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import PrismIAAgendaLogo from "@/components/PrismIAAgendaLogo";
 import { useTheme, ThemeId, BgMode, AccentId } from "@/contexts/ThemeContext";
 import { ArrowLeft, ChevronDown, Plus, Trash2, Palette, Image, Square, Check, Building2, MapPin, Users, Settings2, Activity, Layers, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
