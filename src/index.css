@@ -236,8 +236,8 @@
     --input-bg: 0 0% 100%;
 
     --foreground: 213 39% 17%;
-    --foreground-muted: 213 27% 40%;
-    --foreground-subtle: 209 23% 58%;
+    --foreground-muted: 213 27% 25%;
+    --foreground-subtle: 213 27% 40%;
 
     --primary: 211 83% 50%;
     --primary-foreground: 0 0% 100%;
@@ -247,7 +247,7 @@
     --secondary-foreground: 215 58% 15%;
 
     --muted: 212 40% 95%;
-    --muted-foreground: 214 20% 48%;
+    --muted-foreground: 213 39% 17%;
 
     --accent: 186 60% 38%;
     --accent-foreground: 0 0% 100%;
@@ -282,7 +282,7 @@
     --radius: 0.625rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 58% 15%;
+    --sidebar-foreground: 213 39% 17%;
     --sidebar-primary: 211 83% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 212 45% 94%;
@@ -300,6 +300,20 @@
     --shadow-glow: 0 0 24px hsl(211 83% 50% / 0.08);
   }
 
+  /* Frost: adapt PrismIA logo square + brand text to light theme */
+  [data-theme="frost"] .gradient-primary {
+    background: #d9e2ee !important;
+    border: 1px solid #b3c5dd;
+  }
+  [data-theme="frost"] .gradient-primary > svg {
+    color: #1a2b3c !important;
+  }
+  [data-theme="frost"] .gradient-text,
+  [data-theme="frost"] [data-prism-brand-text] {
+    background: none !important;
+    -webkit-text-fill-color: #1a2b3c !important;
+    color: #1a2b3c !important;
+  }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
   [data-accent="charcoal"] {
     --primary: 220 10% 45%;
