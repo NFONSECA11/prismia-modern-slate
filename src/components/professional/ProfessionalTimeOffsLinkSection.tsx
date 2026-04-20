@@ -169,11 +169,15 @@ export default function ProfessionalTimeOffsLinkSection() {
   const resetForm = () => {
     setShowNewFor(null);
     setFormProfUnit("");
+    setExceptionMode("block");
     setMode("all_day");
     setDay("");
-    setStartsAt("");
-    setEndsAt("");
+    setStartsDate("");
+    setStartsTime("");
+    setEndsDate("");
+    setEndsTime("");
     setReason("");
+    setIsActive(true);
   };
 
   const createBlock = useMutation({
@@ -223,7 +227,11 @@ export default function ProfessionalTimeOffsLinkSection() {
     }
   };
 
-  const canSave = !!formProfUnit && (mode === "all_day" ? !!day : !!startsAt && !!endsAt);
+  const canSave =
+    !!formProfUnit &&
+    (mode === "all_day"
+      ? !!day
+      : !!startsDate && !!startsTime && !!endsDate && !!endsTime);
 
   return (
     <Collapsible defaultOpen={false} id="section-profissionais-bloqueios">
