@@ -738,7 +738,7 @@ export default function Index() {
         }}
       >
         <div className="flex items-center w-full">
-          <PrismIAAgendaLogo size="sm" />
+          <PrismIAAgendaLogo size="sm" bare />
         </div>
       </div>
 

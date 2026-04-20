@@ -25,12 +25,11 @@ export default function PrismIAAgendaLogo({ size = "md", bare = false }: PrismIA
   const padY = Math.round(20 * s);
   const radius = Math.round(10 * s);
 
-  // When bare (no dark background), inherit color so the icon adapts to the active theme.
-  const iconColor = bare ? "currentColor" : "white";
+  // Sem fundo: ícone fica azul; com fundo escuro: ícone branco.
+  const iconColor = bare ? "#60a5fa" : "white";
 
   return (
     <div
-      className={bare ? "text-foreground" : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
