@@ -223,16 +223,16 @@
   [data-theme="frost"] {
     --background: 220 16% 97%;
     --surface: 0 0% 100%;
-    --surface-raised: 0 0% 100%;
+    --surface-raised: 213 30% 97%;
     --surface-elevated: 220 14% 98%;
     --row-hover: 220 20% 96%;
     --appointment-bg: 0 0% 100%;
     --appointment-text: 222 47% 11%;
     --appointment-border: 220 13% 91%;
 
-    --topbar-bg: 0 0% 100%;
+    --topbar-bg: 213 45% 88%;
     --topbar-foreground: 222 47% 11%;
-    --table-header-bg: 220 16% 97%;
+    --table-header-bg: 213 25% 93%;
     --card-hover: 220 20% 96%;
     --input-bg: 0 0% 100%;
 
