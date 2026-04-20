@@ -249,7 +249,7 @@ export default function Settings() {
   };
   const solidColors: Record<string, string[]> = {
     "night": ["216 65% 7%", "240 3% 9%", "200 40% 8%"],
-    "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
+    "slate": ["#1e3a5f", "#2a3f5f", "#1a3a4a"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
   const gradientMap: Record<string, string[]> = {
