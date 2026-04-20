@@ -301,45 +301,39 @@
     --shadow-glow: 0 0 24px hsl(211 83% 50% / 0.08);
   }
 
-  /* Frost: dark navbar with white text on top of light content area */
-  [data-theme="frost"] header.sticky,
-  [data-theme="frost"] header.sticky * {
-    color: #ffffff !important;
+  /* Frost Light Clean: white navbar with subtle shadow, blue accents */
+  [data-theme="frost"] header.sticky {
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
   }
-  [data-theme="frost"] header.sticky svg {
-    color: #ffffff !important;
-  }
-  /* Logo square in navbar */
   [data-theme="frost"] header.sticky .gradient-primary {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: #eff6ff !important;
+    border: 1px solid #dbeafe;
   }
   [data-theme="frost"] header.sticky .gradient-primary > svg {
-    color: #ffffff !important;
+    color: #2563eb !important;
   }
-  [data-theme="frost"] header.sticky .gradient-text {
+  [data-theme="frost"] .gradient-text {
     background: none !important;
-    -webkit-text-fill-color: #ffffff !important;
-    color: #ffffff !important;
+    -webkit-text-fill-color: #2563eb !important;
+    color: #2563eb !important;
   }
-
-  /* PrismIA Agenda banner (second bar, also uses --topbar-bg) */
+  /* PrismIA Agenda banner (second bar, also white) */
   [data-theme="frost"] [data-prism-brand-prism] {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    opacity: 0.85;
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+    opacity: 1;
   }
   [data-theme="frost"] [data-prism-brand-ia],
   [data-theme="frost"] [data-prism-brand-agenda] {
-    color: #60a5fa !important;
-    -webkit-text-fill-color: #60a5fa !important;
+    color: #2563eb !important;
+    -webkit-text-fill-color: #2563eb !important;
   }
   [data-theme="frost"] [data-prism-icon] rect,
   [data-theme="frost"] [data-prism-icon] line {
-    stroke: #ffffff !important;
+    stroke: #2563eb !important;
   }
   [data-theme="frost"] [data-prism-icon] rect[fill] {
-    fill: #ffffff !important;
+    fill: #2563eb !important;
     stroke: none !important;
   }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
