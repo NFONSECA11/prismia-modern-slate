@@ -617,7 +617,7 @@ export default function Settings() {
         {/* ─── 3) Equipe e responsabilidades ─── */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">3 · Equipe e responsabilidades</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Equipe Profissional</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
