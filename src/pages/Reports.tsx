@@ -88,14 +88,18 @@ export default function Reports() {
     date_from: toIso(thirtyAgo),
     date_to: toIso(today),
   });
+  const [unitDefaultApplied, setUnitDefaultApplied] = useState(false);
 
-  // Aplica unidade ativa nos filtros (se houver)
+  // Default da unidade conforme acesso do usuário:
+  // - acesso a múltiplas unidades → "Todas as unidades" (undefined)
+  // - acesso a apenas 1 unidade → aquela unidade
   useEffect(() => {
-    if (activeUnit && !filters.unit_id) {
-      setFilters((f) => ({ ...f, unit_id: activeUnit.id }));
+    if (unitDefaultApplied) return;
+    if (units.length === 1) {
+      setFilters((f) => ({ ...f, unit_id: units[0].id }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeUnit?.id]);
+    setUnitDefaultApplied(true);
+  }, [units, unitDefaultApplied]);
 
   const { data: bootstrap } = useQuery({
     queryKey: ["reports", "bootstrap"],
