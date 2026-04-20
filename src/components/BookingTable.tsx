@@ -474,7 +474,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
                       onClick={() => onSelectBooking(booking)}
-                      className="border-b border-border/30 cursor-pointer transition-colors group relative"
+                      className="border-b border-white/10 cursor-pointer transition-colors group relative"
                       style={{ backgroundColor: undefined }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--row-hover) / 0.6)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
