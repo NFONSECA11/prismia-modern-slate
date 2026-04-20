@@ -205,7 +205,21 @@
     --shadow-glow: 0 0 24px hsl(208 100% 59% / 0.15);
   }
 
-  /* ══════ THEME 3: Prism Light (claro, clean, corporativo, frio) ══════ */
+  /* ══════ SÓLIDO: Deep Blue (Azul Ardósia Escuro) ══════ */
+  [data-theme="slate"][data-background="solid-deep-blue"] {
+    --background: 216 45% 18%;
+  }
+
+  /* ══════ SÓLIDO: Grafite Frio (Cinza Neutro) ══════ */
+  [data-theme="slate"][data-background="solid-grafite"] {
+    --background: 220 8% 26%;
+  }
+
+  /* ══════ SÓLIDO: Aço Petróleo (Verde Petróleo Escuro) ══════ */
+  [data-theme="slate"][data-background="solid-petroleo"] {
+    --background: 192 35% 16%;
+  }
+
   [data-theme="frost"] {
     --background: 212 54% 95%;
     --surface: 0 0% 100%;
