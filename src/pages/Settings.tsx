@@ -176,12 +176,7 @@ export default function Settings() {
     ],
   };
 
-  useEffect(() => {
-    if (theme === "night" && bgMode === "solid" && bgVariant !== 0) {
-      setBgVariant(0);
-    }
-  }, [theme, bgMode, bgVariant, setBgVariant]);
-
+  const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
       const { data } = await api.post("/api/booking/professionals/", {
