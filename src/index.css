@@ -230,7 +230,8 @@
     --appointment-text: 213 39% 17%;
     --appointment-border: 214 35% 86%;
 
-    --topbar-bg: 213 41% 78%;
+    --topbar-bg: 237 41% 31%;
+    --topbar-foreground: 0 0% 100%;
     --table-header-bg: 214 41% 84%;
     --card-hover: 214 42% 87%;
     --input-bg: 0 0% 100%;
@@ -300,34 +301,45 @@
     --shadow-glow: 0 0 24px hsl(211 83% 50% / 0.08);
   }
 
-  /* Frost: adapt PrismIA logo square + brand text to light theme */
-  [data-theme="frost"] .gradient-primary {
-    background: #b3c5dd !important;
-    border: 1px solid #8fa8c8;
+  /* Frost: dark navbar with white text on top of light content area */
+  [data-theme="frost"] header.sticky,
+  [data-theme="frost"] header.sticky * {
+    color: #ffffff !important;
   }
-  [data-theme="frost"] .gradient-primary > svg {
-    color: #1a2b3c !important;
+  [data-theme="frost"] header.sticky svg {
+    color: #ffffff !important;
   }
-  [data-theme="frost"] .gradient-text {
+  /* Logo square in navbar */
+  [data-theme="frost"] header.sticky .gradient-primary {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  [data-theme="frost"] header.sticky .gradient-primary > svg {
+    color: #ffffff !important;
+  }
+  [data-theme="frost"] header.sticky .gradient-text {
     background: none !important;
-    -webkit-text-fill-color: #1a2b3c !important;
-    color: #1a2b3c !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
   }
+
+  /* PrismIA Agenda banner (second bar, also uses --topbar-bg) */
   [data-theme="frost"] [data-prism-brand-prism] {
-    color: #4a6480 !important;
-    -webkit-text-fill-color: #4a6480 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 0.85;
   }
   [data-theme="frost"] [data-prism-brand-ia],
   [data-theme="frost"] [data-prism-brand-agenda] {
-    color: #2563eb !important;
-    -webkit-text-fill-color: #2563eb !important;
+    color: #60a5fa !important;
+    -webkit-text-fill-color: #60a5fa !important;
   }
   [data-theme="frost"] [data-prism-icon] rect,
   [data-theme="frost"] [data-prism-icon] line {
-    stroke: #2563eb !important;
+    stroke: #ffffff !important;
   }
   [data-theme="frost"] [data-prism-icon] rect[fill] {
-    fill: #2563eb !important;
+    fill: #ffffff !important;
     stroke: none !important;
   }
   /* ══════ ACCENT LAYER: Charcoal ══════ */
