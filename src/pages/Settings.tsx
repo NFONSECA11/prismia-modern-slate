@@ -121,8 +121,9 @@ export default function Settings() {
 
   const solidVariants: Record<ThemeId, { label: string; color: string }[]> = {
     "night": [
-      { label: "Azul Profundo", color: "222 45% 9%" },
-      { label: "Carvão Azulado", color: "240 3% 11%" },
+      { label: "Azul Profundo", color: "216 65% 7%" },
+      { label: "Carvão Azulado", color: "240 3% 9%" },
+      { label: "Meia-Noite", color: "200 40% 8%" },
     ],
     "slate": [
       { label: "Deep Blue", color: "216 50% 12%" },
@@ -247,7 +248,7 @@ export default function Settings() {
     "frost": [bgLightClean, bgLightClean2, bgLightClean3, bgLightClean4],
   };
   const solidColors: Record<string, string[]> = {
-    "night": ["222 45% 9%", "240 3% 11%"],
+    "night": ["216 65% 7%", "240 3% 9%", "200 40% 8%"],
     "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
