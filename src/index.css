@@ -377,56 +377,34 @@
     border-width: 3px !important;
     border-color: hsl(216 20% 78%) !important;
   }
-  /* ══════ ACCENT LAYER: Charcoal ══════ */
-  [data-accent="charcoal"] {
-    --primary: 220 10% 45%;
+  /* ══════ ACCENT LAYER: Coral ══════ */
+  [data-accent="coral"] {
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 220 12% 55%;
-    --accent: 200 8% 50%;
+    --primary-glow: 25 95% 63%;
+    --accent: 25 90% 65%;
     --accent-foreground: 0 0% 100%;
-    --ring: 220 10% 45%;
-    --sidebar-primary: 220 10% 45%;
+    --ring: 25 95% 53%;
+    --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 220 10% 45%;
-    --gradient-primary: linear-gradient(135deg, hsl(220 10% 45%), hsl(200 8% 50%));
-  }
-  [data-theme="frost"][data-accent="charcoal"] {
-    --primary: 220 12% 38%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 220 14% 30%;
-    --accent: 200 10% 42%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 220 12% 38%;
-    --sidebar-primary: 220 12% 38%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 220 12% 38%;
-    --gradient-primary: linear-gradient(135deg, hsl(220 12% 38%), hsl(200 10% 42%));
+    --sidebar-ring: 25 95% 53%;
+    --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%), hsl(35 95% 58%));
+    --shadow-glow: 0 0 24px hsl(25 95% 53% / 0.25);
   }
 
-  /* ══════ ACCENT LAYER: Purple Night ══════ */
-  [data-accent="purple-night"] {
-    --primary: 262 60% 60%;
+  /* ══════ ACCENT LAYER: Teal ══════ */
+  [data-accent="teal"] {
+    --primary: 187 85% 43%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 65% 70%;
-    --accent: 280 50% 55%;
+    --primary-glow: 187 85% 53%;
+    --accent: 187 80% 55%;
     --accent-foreground: 0 0% 100%;
-    --ring: 262 60% 60%;
-    --sidebar-primary: 262 60% 60%;
+    --ring: 187 85% 43%;
+    --sidebar-primary: 187 85% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 262 60% 60%;
-    --gradient-primary: linear-gradient(135deg, hsl(262 60% 60%), hsl(280 50% 55%));
-  }
-  [data-theme="frost"][data-accent="purple-night"] {
-    --primary: 262 55% 50%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 60% 42%;
-    --accent: 280 45% 45%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 262 55% 50%;
-    --sidebar-primary: 262 55% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 262 55% 50%;
-    --gradient-primary: linear-gradient(135deg, hsl(262 55% 50%), hsl(280 45% 45%));
+    --sidebar-ring: 187 85% 43%;
+    --gradient-primary: linear-gradient(135deg, hsl(187 85% 43%), hsl(196 85% 48%));
+    --shadow-glow: 0 0 24px hsl(187 85% 43% / 0.25);
   }
 
   /* ══════ ACCENT: Deep Blue (exclusivo night) ══════ */
@@ -442,36 +420,6 @@
     --sidebar-ring: 205 100% 59%;
     --gradient-primary: linear-gradient(135deg, hsl(205 100% 59%), hsl(186 72% 48%));
     --shadow-glow: 0 0 24px hsl(205 100% 59% / 0.22);
-  }
-
-  /* ══════ ACCENT: Charcoal refinado para night ══════ */
-  [data-theme="night"][data-accent="charcoal"] {
-    --primary: 218 12% 52%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 218 14% 62%;
-    --accent: 215 8% 46%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 218 12% 52%;
-    --sidebar-primary: 218 12% 52%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 218 12% 52%;
-    --gradient-primary: linear-gradient(135deg, hsl(218 12% 52%), hsl(215 8% 46%));
-    --shadow-glow: 0 0 24px hsl(218 12% 52% / 0.18);
-  }
-
-  /* ══════ ACCENT: Purple Night refinado para night ══════ */
-  [data-theme="night"][data-accent="purple-night"] {
-    --primary: 262 62% 62%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 68% 72%;
-    --accent: 280 52% 56%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 262 62% 62%;
-    --sidebar-primary: 262 62% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 262 62% 62%;
-    --gradient-primary: linear-gradient(135deg, hsl(262 62% 62%), hsl(280 52% 56%));
-    --shadow-glow: 0 0 24px hsl(262 62% 62% / 0.22);
   }
 }
 
