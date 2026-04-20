@@ -563,9 +563,12 @@ export default function Settings() {
 
               {/* Accent / color variation */}
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
-                  Variação de cor
-                </p>
+                <div className="px-1 space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Cor de Destaque
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70">Cor de botões, ícones e elementos ativos</p>
+                </div>
                 <div className="flex items-center gap-3 px-1">
                   {([
                     { id: "deep-blue" as AccentId, label: "Deep Blue", colors: ["205 100% 59%", "186 72% 48%"] },
