@@ -529,6 +529,17 @@ export default function Index() {
               </button>
             )}
 
+            {canManage && (
+              <button
+                onClick={() => navigate("/reports")}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+                title="Relatórios"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Relatórios
+              </button>
+            )}
+
             {(
               <button
                 onClick={() => navigate("/settings")}
