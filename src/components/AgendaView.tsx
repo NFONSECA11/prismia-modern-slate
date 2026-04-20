@@ -34,6 +34,11 @@ interface AgendaViewProps {
   onSaveBooking: (data: NewBookingFormData) => Promise<void>;
 }
 
+interface AgendaUnitViewProps extends AgendaViewProps {
+  unit: { id: number; name: string };
+  showUnitHeader?: boolean;
+}
+
 type AgendaMode = "day" | "week";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00–19:00
