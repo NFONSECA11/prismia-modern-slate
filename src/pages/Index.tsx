@@ -332,7 +332,7 @@ export default function Index() {
   };
   const solidColors: Record<string, string[]> = {
     "night": ["216 65% 7%", "218 28% 9%", "258 32% 8%"],
-    "slate": ["216 50% 12%", "215 22% 15%", "200 30% 14%"],
+    "slate": ["#1e3a5f", "#2d3748", "#0d3331"],
     "frost": ["212 54% 96%", "214 20% 94%", "208 35% 95%"],
   };
   const gradientMap: Record<string, string[]> = {
