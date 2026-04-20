@@ -23,7 +23,7 @@ import bgLightClean4 from "@/assets/bg-light-clean-4.jpg";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
