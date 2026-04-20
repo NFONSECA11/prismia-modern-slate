@@ -125,17 +125,17 @@
   /* ══════ THEME 2: Prism Deep (dark equilibrado, confortável, daily-use) ══════ */
   :root,
   [data-theme="slate"] {
-    --background: 216 50% 12%;
-    --surface: 214 46% 16%;
-    --surface-raised: 214 43% 19%;
-    --surface-elevated: 213 41% 23%;
+    --background: 216 45% 14%;
+    --surface: 215 40% 20%;
+    --surface-raised: 214 38% 23%;
+    --surface-elevated: 214 36% 27%;
     --row-hover: 212 40% 26%;
     --appointment-bg: 212 38% 28%;
     --appointment-text: 218 100% 97%;
     --appointment-border: 214 38% 22%;
 
-    --topbar-bg: 215 48% 14%;
-    --table-header-bg: 212 42% 25%;
+    --topbar-bg: 216 42% 17%;
+    --table-header-bg: 213 38% 24%;
     --card-hover: 213 40% 23%;
     --input-bg: 214 44% 17%;
 
