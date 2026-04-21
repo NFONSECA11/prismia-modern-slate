@@ -575,7 +575,7 @@ export default function Settings() {
                 </div>
                 <div className="flex items-center gap-3 px-1">
                   {([
-                    { id: "deep-blue" as AccentId, label: "Deep Blue", colors: ["205 100% 59%", "186 72% 48%"] },
+                    { id: "deep-blue" as AccentId, label: "Deep Blue", colors: ["213 95% 55%", "186 72% 48%"] },
                     { id: "coral" as AccentId, label: "Coral", colors: ["25 95% 63%", "35 95% 70%"] },
                     { id: "teal" as AccentId, label: "Teal", colors: ["186 85% 39%", "195 85% 49%"] },
                   ]).map((a) => {
