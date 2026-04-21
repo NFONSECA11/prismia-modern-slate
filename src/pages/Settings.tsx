@@ -264,9 +264,9 @@ export default function Settings() {
       "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))",
     ],
     "frost": [
-      "linear-gradient(135deg, #f8f9fc 0%, #dce8f5 100%)",
-      "linear-gradient(135deg, #f5f3f0 0%, #dde8f0 100%)",
-      "linear-gradient(135deg, #eef2f7 0%, #c8d8ee 100%)",
+      "linear-gradient(135deg, #ffffff 0%, #a8c8e8 100%)",
+      "linear-gradient(135deg, #f5f0eb 0%, #b8c8e0 100%)",
+      "linear-gradient(135deg, #e8f0fa 0%, #6b9fd4 100%)",
     ],
   };
   const isLandscape = bgMode === "landscape";
