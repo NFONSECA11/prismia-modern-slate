@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { MeResponse, UserRole, Unit, Company, fetchMe, logout as apiLogout, login as apiLogin } from "@/lib/authApi";
 import { setAuthToken } from "@/lib/api";
+import { fetchDashboardBootstrap } from "@/lib/dashboardApi";
 
 interface AuthState {
   user: MeResponse["user"] | null;
@@ -10,6 +11,7 @@ interface AuthState {
   activeUnit: Unit | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  aiEnabled: boolean;
 }
 
 interface AuthContextType extends AuthState {
