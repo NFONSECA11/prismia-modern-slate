@@ -1025,43 +1025,6 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
           )}
       </div>
 
-      {/* Print-only: one page per professional (week view, multiple pros) */}
-      {mode === "week" && displayProfessionals.length > 1 && (
-        <div className="hidden print:block">
-          {displayProfessionals.map((prof) => (
-            <div
-              key={`print-${prof.id}`}
-              className="agenda-print-area rounded-xl border border-border/60 flex flex-col overflow-hidden w-full"
-              style={{ background: "hsl(var(--surface))" }}
-            >
-              <div className="px-4 pt-4 pb-2 border-b border-border">
-                <h1 className="text-base font-bold">{company?.name || "PrismIA"}</h1>
-                <p className="text-xs text-muted-foreground">{unit?.name || "Unidade"}</p>
-                <p className="text-sm font-semibold mt-1">
-                  Agenda Semanal — {printPeriodLabel} — {prof.name}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Impresso em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </p>
-              </div>
-              <div className="flex-1 overflow-auto">
-                <WeekView
-                  weekStart={weekStart}
-                  professionals={[prof]}
-                  bookings={agendaBookings}
-                  availMap={availMap}
-                  holidayMap={holidayMap}
-                  onSelectBooking={handleAppointmentClick}
-                  onCellClick={setNewSlot}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      </div>
-
       {/* New Booking Modal — keyed to force re-mount on each new slot */}
       <NewBookingModal
         key={newSlot ? `${newSlot.professional.id}_${newSlot.date.toISOString()}_${newSlot.hour}` : "closed"}
