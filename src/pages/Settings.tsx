@@ -181,7 +181,7 @@ export default function Settings() {
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
-      const { data } = await api.post("/api/booking/professionals/", {
+      const { data } = await api.post("/api/settings/professionals/", {
         ...payload,
         unit: payload.unit ?? activeUnit!.id,
       });
