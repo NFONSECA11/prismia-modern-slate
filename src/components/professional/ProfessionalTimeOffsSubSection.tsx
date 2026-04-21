@@ -98,7 +98,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
   const createBlock = useMutation({
     mutationFn: async (payload: any) => {
       await fetchCsrf();
-      const { data } = await api.post(`/api/booking/professional-timeoffs/`, payload);
+      const { data } = await api.post(`/api/booking/professional-time-offs/`, payload);
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey }); resetForm(); toast.success("Bloqueio criado"); },
