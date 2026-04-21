@@ -166,9 +166,9 @@ export default function Settings() {
       { label: "Midnight Plum", gradient: "linear-gradient(140deg, hsl(215 50% 7%), hsl(248 28% 12%), hsl(260 22% 16%))" },
     ],
     "slate": [
-      { label: "Deep Blue", gradient: "linear-gradient(145deg, hsl(216 48% 11%), hsl(212 42% 17%), hsl(208 38% 23%))" },
-      { label: "Steel Graphite", gradient: "linear-gradient(150deg, hsl(215 22% 12%), hsl(214 18% 18%), hsl(212 15% 24%))" },
-      { label: "Petroleum Mist", gradient: "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))" },
+      { label: "Deep Blue", gradient: "linear-gradient(135deg, #1e3a5f 0%, #0a1929 100%)" },
+      { label: "Steel Graphite", gradient: "linear-gradient(135deg, #2d3748 0%, #111827 100%)" },
+      { label: "Petroleum Mist", gradient: "linear-gradient(135deg, #1a3a4a 0%, #0d2030 100%)" },
     ],
     "frost": [
       { label: "Ice White", gradient: "linear-gradient(135deg, #ffffff 0%, #a8c8e8 100%)" },
