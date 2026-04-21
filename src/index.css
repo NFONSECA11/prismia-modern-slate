@@ -379,17 +379,17 @@
   }
   /* ══════ ACCENT LAYER: Coral ══════ */
   [data-accent="coral"] {
-    --primary: 25 95% 53%;
+    --primary: 25 95% 63%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 25 95% 63%;
-    --accent: 25 90% 65%;
+    --primary-glow: 25 95% 73%;
+    --accent: 25 90% 72%;
     --accent-foreground: 0 0% 100%;
-    --ring: 25 95% 53%;
-    --sidebar-primary: 25 95% 53%;
+    --ring: 25 95% 63%;
+    --sidebar-primary: 25 95% 63%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 25 95% 53%;
-    --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%), hsl(35 95% 58%));
-    --shadow-glow: 0 0 24px hsl(25 95% 53% / 0.25);
+    --sidebar-ring: 25 95% 63%;
+    --gradient-primary: linear-gradient(135deg, hsl(25 95% 63%), hsl(35 95% 70%));
+    --shadow-glow: 0 0 24px hsl(25 95% 63% / 0.25);
   }
 
   /* ══════ ACCENT LAYER: Teal ══════ */
