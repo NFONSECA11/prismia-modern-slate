@@ -39,6 +39,7 @@ export default function PreferencesSyncer() {
       serverTheme.current = null;
       serverBg.current = null;
       serverAccent.current = null;
+      serverUnitId.current = undefined;
       sessionStorage.removeItem("prefs:last_view");
       sessionStorage.removeItem("prefs:last_date");
     }
@@ -81,6 +82,7 @@ export default function PreferencesSyncer() {
         }
 
         // Unit — null/undefined explícito = "Todas as unidades"
+        serverUnitId.current = prefs.last_unit_id ?? null;
         if (prefs.last_unit_id === null) {
           console.log("[Prefs] restoring: Todas as unidades");
           setActiveUnit(null);
@@ -140,6 +142,17 @@ export default function PreferencesSyncer() {
       savePreference({ accent });
     }
   }, [accent]);
+
+  // ── Watch active unit changes (auto-save fallback) ──────────────────────
+  useEffect(() => {
+    if (!loaded.current) return;
+    const newId = activeUnit?.id ?? null;
+    if (newId !== serverUnitId.current) {
+      console.log("[Prefs] unit changed:", serverUnitId.current, "→", newId);
+      serverUnitId.current = newId;
+      savePreference({ last_unit_id: newId });
+    }
+  }, [activeUnit]);
 
   return null;
 }
