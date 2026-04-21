@@ -39,6 +39,7 @@ const AUTH_FALLBACK: AuthContextType = {
   activeUnit: null,
   isLoading: false,
   isAuthenticated: false,
+  aiEnabled: false,
   login: async () => {
     throw new Error("AuthProvider indisponível");
   },
