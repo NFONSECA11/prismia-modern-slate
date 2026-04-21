@@ -518,15 +518,15 @@
   /* Hide all children of root */
   #root > * { display: none !important; }
 
-  /* Walk DOM to show only the agenda */
-  #root *:has(#agenda-print-area) {
+  /* Walk DOM to show ancestors of any agenda print area (single or multi-unit) */
+  #root *:has(.agenda-print-area) {
     display: block !important;
     background: white !important;
     padding: 0 !important;
     margin: 0 !important;
   }
 
-  #agenda-print-area {
+  .agenda-print-area {
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
@@ -538,7 +538,14 @@
     width: 100% !important;
   }
 
-  #agenda-print-area * {
+  /* Page break between unit agendas when printing "Todas as unidades" */
+  .agenda-print-area + .agenda-print-area {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 0 !important;
+  }
+
+  .agenda-print-area * {
     overflow: visible !important;
   }
 
