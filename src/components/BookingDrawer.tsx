@@ -1241,13 +1241,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             {((bookingDetailForBot as any)?.notes || (booking as any)?.notes) && (
               <DetailRow
                 icon={MessageSquare}
-                label="Notas"
+                label="Histórico de notas"
                 tone="handoff"
                 className="col-span-2"
                 value={
-                  <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-                    {(bookingDetailForBot as any)?.notes || (booking as any)?.notes}
-                  </pre>
+                  <NotesLog notes={(bookingDetailForBot as any)?.notes || (booking as any)?.notes} />
                 }
               />
             )}
