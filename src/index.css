@@ -394,17 +394,17 @@
 
   /* ══════ ACCENT LAYER: Teal ══════ */
   [data-accent="teal"] {
-    --primary: 187 85% 43%;
+    --primary: 186 85% 39%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 187 85% 53%;
-    --accent: 187 80% 55%;
+    --primary-glow: 186 85% 54%;
+    --accent: 186 80% 58%;
     --accent-foreground: 0 0% 100%;
-    --ring: 187 85% 43%;
-    --sidebar-primary: 187 85% 43%;
+    --ring: 186 85% 39%;
+    --sidebar-primary: 186 85% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-ring: 187 85% 43%;
-    --gradient-primary: linear-gradient(135deg, hsl(187 85% 43%), hsl(196 85% 48%));
-    --shadow-glow: 0 0 24px hsl(187 85% 43% / 0.25);
+    --sidebar-ring: 186 85% 39%;
+    --gradient-primary: linear-gradient(135deg, hsl(186 85% 39%), hsl(195 85% 49%));
+    --shadow-glow: 0 0 24px hsl(186 85% 39% / 0.25);
   }
 
   /* ══════ ACCENT: Deep Blue (exclusivo night) ══════ */
