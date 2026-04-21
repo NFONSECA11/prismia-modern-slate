@@ -86,7 +86,7 @@ export default function ProfessionalAvailabilitySection() {
       const results: any[] = [];
       const seen = new Set<number>();
       for (const unit of units) {
-        const { data } = await api.get(`/api/booking/professionals/`, { params: { unit: unit.id } });
+        const { data } = await api.get(`/api/settings/professionals/`, { params: { unit: unit.id } });
         const list = Array.isArray(data) ? data : (data?.results ?? []);
         for (const p of list) {
           if (!seen.has(p.id)) { seen.add(p.id); results.push(p); }
