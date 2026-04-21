@@ -220,6 +220,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
+    if (!aiEnabled) return;
     const missing = bookings.filter(
       (b) => !b.contact_phone && !b.phone && !phoneMap[b.id]
     );
@@ -241,10 +242,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
     })();
 
     return () => { cancelled = true; };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN + real procedure name
   useEffect(() => {
+    if (!aiEnabled) return;
     const confirmed = bookings.filter(
       (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
     );
@@ -285,10 +287,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
     })();
 
     return () => { cancelled = true; };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
+    if (!aiEnabled) return;
     if (bookings.length === 0) return;
 
     const visibleIds = new Set(bookings.map((b) => b.id));
@@ -357,7 +360,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
     return () => {
       cancelled = true;
     };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
