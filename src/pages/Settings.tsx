@@ -204,7 +204,7 @@ export default function Settings() {
     mutationFn: async ({ id, is_active }: { id: number; is_active: boolean }) => {
       await fetchCsrf();
       // Try both field names the API might expect
-      await api.patch(`/api/booking/professionals/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
+      await api.patch(`/api/settings/professionals/${id}/`, { is_active, status: is_active ? "active" : "inactive" });
     },
     onMutate: async ({ id, is_active }) => {
       await queryClient.cancelQueries({ queryKey: ["professionals", activeUnit?.id] });
