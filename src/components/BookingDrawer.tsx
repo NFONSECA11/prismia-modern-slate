@@ -168,31 +168,31 @@ interface NoteEntry {
 
 const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon: React.ElementType; title: string }> = {
   ai_schedule: {
-    card: "bg-primary/10 border-primary/30",
-    chip: "bg-primary/20 text-primary",
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-confirmed/20 text-status-confirmed",
     icon: Sparkles,
     title: "IA · Agendamento direto",
   },
   ai_reschedule: {
-    card: "bg-primary/10 border-primary/30",
-    chip: "bg-primary/20 text-primary",
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-pending/20 text-status-pending",
     icon: Sparkles,
     title: "IA · Reagendamento direto",
   },
   ai_cancel: {
-    card: "bg-primary/10 border-primary/30",
-    chip: "bg-primary/20 text-primary",
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-canceled/20 text-status-canceled",
     icon: Sparkles,
     title: "IA · Cancelamento direto",
   },
   reschedule: {
-    card: "bg-status-handoff-bg/30 border-status-handoff/25",
-    chip: "bg-status-handoff/20 text-status-handoff",
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-pending/20 text-status-pending",
     icon: RotateCcw,
     title: "Reagendamento",
   },
   cancel: {
-    card: "bg-status-canceled-bg/30 border-status-canceled/25",
+    card: "bg-surface-elevated/40 border-border/40",
     chip: "bg-status-canceled/20 text-status-canceled",
     icon: XCircle,
     title: "Cancelamento",
