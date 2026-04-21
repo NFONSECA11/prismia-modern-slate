@@ -890,6 +890,23 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
       ? format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })
       : `${format(weekStart, "dd MMM", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd MMM yyyy", { locale: ptBR })}`;
 
+  const printAreaRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    document.querySelectorAll(".agenda-print-area[data-print-active]").forEach((el) => {
+      el.removeAttribute("data-print-active");
+    });
+    printAreaRef.current?.setAttribute("data-print-active", "true");
+
+    const cleanup = () => {
+      printAreaRef.current?.removeAttribute("data-print-active");
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup, { once: true });
+    window.print();
+  };
+
   const handleSaveBooking = async (data: NewBookingFormData) => {
     await onSaveBooking(data);
   };
