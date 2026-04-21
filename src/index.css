@@ -518,8 +518,8 @@
   /* Hide all children of root */
   #root > * { display: none !important; }
 
-  /* Walk DOM to show ancestors of any agenda print area (single or multi-unit) */
-  #root *:has(.agenda-print-area) {
+  /* Show only the agenda explicitly selected for printing */
+  #root *:has(.agenda-print-area[data-print-active="true"]) {
     display: block !important;
     background: white !important;
     padding: 0 !important;
@@ -527,6 +527,10 @@
   }
 
   .agenda-print-area {
+    display: none !important;
+  }
+
+  .agenda-print-area[data-print-active="true"] {
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
