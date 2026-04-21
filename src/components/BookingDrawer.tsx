@@ -1404,7 +1404,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               <DetailRow
                 icon={MessageSquare}
                 label="Histórico de notas"
-                tone="handoff"
+                tone="primary"
                 className="col-span-2"
                 value={
                   <NotesLog notes={(bookingDetailForBot as any)?.notes || (booking as any)?.notes} />
