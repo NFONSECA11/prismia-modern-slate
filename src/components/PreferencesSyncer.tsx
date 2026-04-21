@@ -21,7 +21,7 @@ import {
  * UI state diverges from that snapshot.
  */
 export default function PreferencesSyncer() {
-  const { isAuthenticated, isLoading, units, setActiveUnit } = useAuth();
+  const { isAuthenticated, isLoading, units, activeUnit, setActiveUnit } = useAuth();
   const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
 
   const loaded = useRef(false);
@@ -30,6 +30,7 @@ export default function PreferencesSyncer() {
   const serverTheme = useRef<string | null>(null);
   const serverBg = useRef<string | null>(null);
   const serverAccent = useRef<string | null>(null);
+  const serverUnitId = useRef<number | null | undefined>(undefined); // undefined = not loaded yet
 
   // ── Reset when user logs out ────────────────────────────────────────────
   useEffect(() => {
