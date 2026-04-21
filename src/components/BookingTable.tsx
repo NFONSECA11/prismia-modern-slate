@@ -208,6 +208,7 @@ function QuickActionButton({
 }
 
 export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }: BookingTableProps) {
+  console.log("[BookingTable] aiEnabled:", aiEnabled);
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
