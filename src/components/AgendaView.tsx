@@ -890,6 +890,23 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
       ? format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })
       : `${format(weekStart, "dd MMM", { locale: ptBR })} – ${format(addDays(weekStart, 6), "dd MMM yyyy", { locale: ptBR })}`;
 
+  const printAreaRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    document.querySelectorAll(".agenda-print-area[data-print-active]").forEach((el) => {
+      el.removeAttribute("data-print-active");
+    });
+    printAreaRef.current?.setAttribute("data-print-active", "true");
+
+    const cleanup = () => {
+      printAreaRef.current?.removeAttribute("data-print-active");
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup, { once: true });
+    window.print();
+  };
+
   const handleSaveBooking = async (data: NewBookingFormData) => {
     await onSaveBooking(data);
   };
@@ -907,6 +924,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
         </div>
       )}
       <div
+        ref={printAreaRef}
         id={showUnitHeader ? undefined : "agenda-print-area"}
         className="agenda-print-area rounded-xl border border-border/60 shadow-md flex flex-col overflow-hidden w-full"
         style={{ maxHeight: showUnitHeader ? undefined : "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
@@ -989,7 +1007,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
           )}
 
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border"
             title="Imprimir agenda"
           >
