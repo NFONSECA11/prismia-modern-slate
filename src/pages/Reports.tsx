@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { savePreference } from "@/lib/preferencesApi";
 import api from "@/lib/api";
-import { fetchReportsBootstrap, type ReportFilters } from "@/lib/reportsApi";
+import { type ReportFilters } from "@/lib/reportsApi";
 import { ReportsFilters } from "@/components/reports/ReportsFilters";
 import { ConversaoTab } from "@/components/reports/ConversaoTab";
 import { OperacaoTab } from "@/components/reports/OperacaoTab";
@@ -102,9 +102,34 @@ export default function Reports() {
     setUnitDefaultApplied(true);
   }, [units, unitDefaultApplied]);
 
-  const { data: bootstrap } = useQuery({
-    queryKey: ["reports", "bootstrap"],
-    queryFn: fetchReportsBootstrap,
+  const activeUnitId = filters.unit_id ?? activeUnit?.id;
+
+  const { data: professionalsList = [] } = useQuery({
+    queryKey: ["reports", "professionals", activeUnitId ?? "all"],
+    queryFn: async () => {
+      const params: Record<string, string | number> = { limit: 100 };
+      if (activeUnitId) params.unit = activeUnitId;
+      const { data } = await api.get("/api/settings/professionals/", { params });
+      const list = data?.results ?? data?.result ?? data ?? [];
+      return Array.isArray(list)
+        ? list.map((p: any) => ({ id: Number(p.id), name: String(p.name ?? p.full_name ?? "") }))
+        : [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!canManage,
+  });
+
+  const { data: proceduresList = [] } = useQuery({
+    queryKey: ["reports", "procedures", activeUnitId ?? "all"],
+    queryFn: async () => {
+      const params: Record<string, string | number> = { limit: 100 };
+      if (activeUnitId) params.unit = activeUnitId;
+      const { data } = await api.get("/api/settings/procedures/", { params });
+      const list = data?.results ?? data?.result ?? data ?? [];
+      return Array.isArray(list)
+        ? list.map((p: any) => ({ id: Number(p.id), name: String(p.name ?? "") }))
+        : [];
+    },
     staleTime: 5 * 60 * 1000,
     enabled: !!canManage,
   });
@@ -363,9 +388,9 @@ export default function Reports() {
         <ReportsFilters
           value={filters}
           onChange={setFilters}
-          units={bootstrap?.dimensions?.units ?? units.map((u) => ({ id: u.id, name: u.name }))}
-          professionals={bootstrap?.dimensions?.professionals ?? []}
-          procedures={bootstrap?.dimensions?.procedures ?? []}
+          units={units.map((u) => ({ id: u.id, name: u.name }))}
+          professionals={professionalsList}
+          procedures={proceduresList}
         />
 
         <div className="border-b border-border">
