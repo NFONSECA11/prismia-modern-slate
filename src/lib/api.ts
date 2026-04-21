@@ -96,7 +96,11 @@ const envApiBaseUrl = rawEnvApiBaseUrl && !isTryCloudflareUrl(rawEnvApiBaseUrl) 
 function resolveApiBaseUrl(): string {
   const persistedApiBaseUrl = readPersistedApiBaseUrl();
 
-  if (persistedApiBaseUrl && !isTryCloudflareUrl(persistedApiBaseUrl)) {
+  // Se há uma URL trycloudflare persistida (de sessão antiga), descartar imediatamente.
+  // O túnel muda com frequência — sempre confiar no DEFAULT do código.
+  if (persistedApiBaseUrl && isTryCloudflareUrl(persistedApiBaseUrl)) {
+    localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
+  } else if (persistedApiBaseUrl) {
     return persistedApiBaseUrl;
   }
 
@@ -104,14 +108,7 @@ function resolveApiBaseUrl(): string {
     return envApiBaseUrl;
   }
 
-  if (isTryCloudflareUrl(DEFAULT_API_BASE_URL)) {
-    if (persistedApiBaseUrl && persistedApiBaseUrl !== DEFAULT_API_BASE_URL) {
-      localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
-    }
-    return DEFAULT_API_BASE_URL;
-  }
-
-  return persistedApiBaseUrl ?? rawEnvApiBaseUrl ?? DEFAULT_API_BASE_URL;
+  return DEFAULT_API_BASE_URL;
 }
 
 function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
