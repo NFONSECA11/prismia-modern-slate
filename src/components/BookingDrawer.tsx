@@ -77,24 +77,74 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
+type DetailTone =
+  | "default"
+  | "primary"
+  | "confirmed"
+  | "pending"
+  | "handoff"
+  | "assisted"
+  | "canceled";
+
+const DETAIL_TONE_STYLES: Record<DetailTone, { card: string; chip: string; label: string }> = {
+  default: {
+    card: "bg-surface-elevated/50 border-border/40",
+    chip: "bg-surface text-muted-foreground",
+    label: "text-muted-foreground",
+  },
+  primary: {
+    card: "bg-primary/5 border-primary/20",
+    chip: "bg-primary/15 text-primary",
+    label: "text-primary/80",
+  },
+  confirmed: {
+    card: "bg-status-confirmed-bg/40 border-status-confirmed/20",
+    chip: "bg-status-confirmed/15 text-status-confirmed",
+    label: "text-status-confirmed/80",
+  },
+  pending: {
+    card: "bg-status-pending-bg/40 border-status-pending/20",
+    chip: "bg-status-pending/15 text-status-pending",
+    label: "text-status-pending/80",
+  },
+  handoff: {
+    card: "bg-status-handoff-bg/40 border-status-handoff/20",
+    chip: "bg-status-handoff/15 text-status-handoff",
+    label: "text-status-handoff/80",
+  },
+  assisted: {
+    card: "bg-status-assisted-bg/40 border-status-assisted/20",
+    chip: "bg-status-assisted/15 text-status-assisted",
+    label: "text-status-assisted/80",
+  },
+  canceled: {
+    card: "bg-status-canceled-bg/40 border-status-canceled/20",
+    chip: "bg-status-canceled/15 text-status-canceled",
+    label: "text-status-canceled/80",
+  },
+};
+
 function DetailRow({
   icon: Icon,
   label,
   value,
   className,
+  tone = "default",
 }: {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
   className?: string;
+  tone?: DetailTone;
 }) {
+  const t = DETAIL_TONE_STYLES[tone];
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-lg bg-surface-elevated/50 ${className ?? ""}`}>
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface text-muted-foreground flex-shrink-0 mt-0.5">
+    <div className={`flex items-start gap-3 p-3 rounded-lg border ${t.card} ${className ?? ""}`}>
+      <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 mt-0.5 ${t.chip}`}>
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+        <span className={`text-[10px] font-medium uppercase tracking-wider ${t.label}`}>
           {label}
         </span>
         <span className="text-sm text-foreground leading-snug">{value}</span>
@@ -902,7 +952,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
                 : (procFromNotes ?? overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
-              return <DetailRow icon={Hash} label="Procedimento" value={
+              return <DetailRow icon={Hash} label="Procedimento" tone="primary" value={
                 isRescheduleCode ? (
                   <span className="flex items-center gap-1.5">
                     <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
@@ -911,10 +961,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 ) : displayValue
               } />;
             })()}
-            <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
+            <DetailRow icon={Building2} label="Unidade" tone="assisted" value={booking.unit_name} />
             <DetailRow
               icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
               label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
+              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "handoff"}
               className="col-span-2"
               value={
                 hasProfessional && !isRescheduleCode ? (
@@ -1176,6 +1227,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             <DetailRow
               icon={Calendar}
               label="Janela Preferida"
+              tone="confirmed"
               className="col-span-2"
               value={
                 <span>
@@ -1184,10 +1236,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 </span>
               }
             />
-            <DetailRow icon={Clock} label="Criado em" value={formattedCreated} />
+            <DetailRow icon={Clock} label="Criado em" tone="default" value={formattedCreated} />
             <DetailRow
               icon={Clock}
               label="Atualizado em"
+              tone="default"
               value={(() => {
                 try {
                   return format(new Date(booking.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
@@ -1201,6 +1254,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               <DetailRow
                 icon={MessageSquare}
                 label="Notas"
+                tone="handoff"
                 className="col-span-2"
                 value={
                   <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
