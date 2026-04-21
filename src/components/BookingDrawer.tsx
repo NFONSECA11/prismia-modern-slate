@@ -225,11 +225,18 @@ function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: 
 
 function detectNoteKind(body: string): NoteEntryKind {
   const lower = body.toLowerCase();
-  if (/automatico pela ia.*agendamento/.test(lower) || /policy:\s*direct_schedule/i.test(body)) return "ai_schedule";
-  if (/automatico pela ia.*reagendamento/.test(lower) || /policy:\s*direct_reschedule/i.test(body)) return "ai_reschedule";
-  if (/automatico pela ia.*cancel/.test(lower) || /policy:\s*direct_cancel/i.test(body)) return "ai_cancel";
-  if (/reagendamento/i.test(body)) return "reschedule";
-  if (/cancelamento/i.test(body)) return "cancel";
+  const isAi = /automatico pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_DIRECT/i.test(body);
+  // Ordem importa: testar reagendamento e cancelamento ANTES de agendamento
+  // (porque "reagendamento" contém "agendamento").
+  if (/reagendamento/i.test(body) || /reschedule/i.test(lower)) {
+    return isAi ? "ai_reschedule" : "reschedule";
+  }
+  if (/cancelamento|cancel/i.test(lower)) {
+    return isAi ? "ai_cancel" : "cancel";
+  }
+  if (/agendamento|schedule/i.test(lower)) {
+    return isAi ? "ai_schedule" : "generic";
+  }
   return "generic";
 }
 
