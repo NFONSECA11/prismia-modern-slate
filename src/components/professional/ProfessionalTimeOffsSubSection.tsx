@@ -70,7 +70,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
       const all: TimeOff[] = [];
       const seen = new Set<number>();
       const reqs = profUnitIds.map((puId) =>
-        api.get(`/api/booking/professional-timeoffs/`, { params: { professional_unit: puId } })
+        api.get(`/api/booking/professional-time-offs/`, { params: { professional_unit: puId } })
           .then((r) => unpack(r.data))
           .catch(() => [])
       );
