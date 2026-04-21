@@ -1127,7 +1127,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             <DetailRow
               icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
               label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
-              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "handoff"}
+              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary"}
               className="col-span-2"
               value={
                 hasProfessional && !isRescheduleCode ? (
@@ -1404,7 +1404,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               <DetailRow
                 icon={MessageSquare}
                 label="Histórico de notas"
-                tone="handoff"
+                tone="primary"
                 className="col-span-2"
                 value={
                   <NotesLog notes={(bookingDetailForBot as any)?.notes || (booking as any)?.notes} />
