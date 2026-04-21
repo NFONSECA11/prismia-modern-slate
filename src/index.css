@@ -538,7 +538,13 @@
     width: 100% !important;
   }
 
-  /* Page break between unit agendas when printing "Todas as unidades" */
+  /* print:hidden must override .agenda-print-area display:flex */
+  .agenda-print-area.print\:hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Page break between agenda print areas (units OR professionals) */
   .agenda-print-area + .agenda-print-area {
     page-break-before: always;
     break-before: page;
