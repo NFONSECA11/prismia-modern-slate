@@ -1227,6 +1227,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             <DetailRow
               icon={Calendar}
               label="Janela Preferida"
+              tone="confirmed"
               className="col-span-2"
               value={
                 <span>
@@ -1235,10 +1236,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 </span>
               }
             />
-            <DetailRow icon={Clock} label="Criado em" value={formattedCreated} />
+            <DetailRow icon={Clock} label="Criado em" tone="default" value={formattedCreated} />
             <DetailRow
               icon={Clock}
               label="Atualizado em"
+              tone="default"
               value={(() => {
                 try {
                   return format(new Date(booking.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
@@ -1252,6 +1254,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               <DetailRow
                 icon={MessageSquare}
                 label="Notas"
+                tone="handoff"
                 className="col-span-2"
                 value={
                   <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">
