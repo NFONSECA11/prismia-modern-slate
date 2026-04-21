@@ -46,6 +46,7 @@ interface BookingTableProps {
   bookings: BookingRequest[];
   isLoading: boolean;
   onSelectBooking: (booking: BookingRequest) => void;
+  aiEnabled: boolean;
 }
 
 const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];
@@ -206,7 +207,7 @@ function QuickActionButton({
   );
 }
 
-export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTableProps) {
+export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }: BookingTableProps) {
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
@@ -219,6 +220,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
+    if (!aiEnabled) return;
     const missing = bookings.filter(
       (b) => !b.contact_phone && !b.phone && !phoneMap[b.id]
     );
@@ -240,10 +242,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     })();
 
     return () => { cancelled = true; };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   // Fetch notes for confirmed bookings to detect reschedule via BR_TAG_IN + real procedure name
   useEffect(() => {
+    if (!aiEnabled) return;
     const confirmed = bookings.filter(
       (b) => b.status === "confirmed" && !rescheduleSet.has(b.id)
     );
@@ -284,10 +287,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     })();
 
     return () => { cancelled = true; };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   // Fetch notes for all bookings to detect AI tags
   useEffect(() => {
+    if (!aiEnabled) return;
     if (bookings.length === 0) return;
 
     const visibleIds = new Set(bookings.map((b) => b.id));
@@ -356,7 +360,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
     return () => {
       cancelled = true;
     };
-  }, [bookings]);
+  }, [bookings, aiEnabled]);
 
   const executeAction = async (booking: BookingRequest, key: string) => {
     setBusyBookingId(booking.id);
@@ -483,22 +487,28 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
-                            <BookingModeIcon mode={booking.booking_mode} />
+                            {aiEnabled && <BookingModeIcon mode={booking.booking_mode} />}
                             <span className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                               #{booking.id}
                             </span>
-                            {isConversationRequest ? (
+                            {aiEnabled ? (
+                              isConversationRequest ? (
                                 <span className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight">
                                   <MessageCircle className="h-4 w-4 text-primary" />
                                   Conversa
                                 </span>
                               ) : (
                                 <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
-                              )}
+                              )
+                            ) : (
+                              <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                            )}
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="h-3 w-3" />
-                            {(() => { const p = booking.contact_phone || booking.phone || phoneMap[booking.id]; return p ? formatPhone(p) : "Sem telefone"; })()}
+                            {aiEnabled
+                              ? (() => { const p = booking.contact_phone || booking.phone || phoneMap[booking.id]; return p ? formatPhone(p) : "Sem telefone"; })()
+                              : (() => { const p = booking.contact_phone || booking.phone; return p ? formatPhone(p) : "Sem telefone"; })()}
                           </span>
                         </div>
                       </td>
@@ -506,27 +516,34 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Procedimento */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          {(() => {
-                            const idFromNotes = extractCancelledIdFromNotes(booking.notes);
-                            const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
-                            const effectiveId = idFromNotes || cachedId;
-                            const isReschedule = normalizedProcedureCode === "reschedule" || rescheduleSet.has(booking.id);
-                            return (
-                              <>
-                                <span className="text-foreground leading-tight flex items-center gap-1.5">
-                                  {isReschedule && (
-                                    <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
-                                  )}
-                                  {effectiveId && !isReschedule
-                                    ? `Cancelar agendamento #${effectiveId}`
-                                    : isReschedule && rescheduleProcNameMap[booking.id]
-                                      ? rescheduleProcNameMap[booking.id]
-                                      : booking.procedure_name}
-                                </span>
-                                <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
-                              </>
-                            );
-                          })()}
+                          {aiEnabled ? (
+                            (() => {
+                              const idFromNotes = extractCancelledIdFromNotes(booking.notes);
+                              const cachedId = cancelledBookingCache.get(booking.id)?.cancelledId;
+                              const effectiveId = idFromNotes || cachedId;
+                              const isReschedule = normalizedProcedureCode === "reschedule" || rescheduleSet.has(booking.id);
+                              return (
+                                <>
+                                  <span className="text-foreground leading-tight flex items-center gap-1.5">
+                                    {isReschedule && (
+                                      <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
+                                    )}
+                                    {effectiveId && !isReschedule
+                                      ? `Cancelar agendamento #${effectiveId}`
+                                      : isReschedule && rescheduleProcNameMap[booking.id]
+                                        ? rescheduleProcNameMap[booking.id]
+                                        : booking.procedure_name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
+                                </>
+                              );
+                            })()
+                          ) : (
+                            <>
+                              <span className="text-foreground leading-tight">{booking.procedure_name}</span>
+                              <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
+                            </>
+                          )}
                         </div>
                       </td>
 
@@ -558,8 +575,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTa
                       {/* Status */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1 items-start">
-                          <StatusBadge status={booking.status} hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null} />
-                          {booking.confirmation && (
+                          <StatusBadge
+                            status={booking.status}
+                            hasSchedule={!!booking.scheduled_at}
+                            procedureName={booking.procedure_name}
+                            aiTag={aiEnabled ? (aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null) : null}
+                          />
+                          {aiEnabled && booking.confirmation && (
                             <div className="pl-[0.35rem]">
                               <ConfirmationIndicator confirmation={booking.confirmation} />
                             </div>

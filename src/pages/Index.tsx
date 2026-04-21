@@ -60,7 +60,7 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 ];
 
 export default function Index() {
-  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent } = useAuth();
+  const { user, company, role, units, activeUnit, setActiveUnit, logout, canManage, isAgent, aiEnabled } = useAuth();
   const { data: branding } = useQuery({
     queryKey: ["company-branding"],
     queryFn: async () => {
@@ -851,6 +851,7 @@ export default function Index() {
               bookings={filteredBookings}
               isLoading={isLoading}
               onSelectBooking={setSelectedBooking}
+              aiEnabled={aiEnabled}
             />
           ) : (
             <AgendaView
