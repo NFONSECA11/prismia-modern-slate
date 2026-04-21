@@ -145,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       activeUnit: null,
       isLoading: false,
       isAuthenticated: false,
+      aiEnabled: false,
     });
   };
 
