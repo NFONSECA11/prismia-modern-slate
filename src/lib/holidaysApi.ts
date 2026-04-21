@@ -163,7 +163,7 @@ function buildBrazilFallbackHolidays(year: number): PublicHoliday[] {
 
 async function fetchHolidayRecords(params: Record<string, string | number>): Promise<Record<string, unknown>[] | null> {
   try {
-    const { data } = await api.get("/api/holidays/", { params });
+    const { data } = await api.get("/api/settings/public-holidays/", { params });
     return collectHolidayRecords(data);
   } catch {
     return null;
