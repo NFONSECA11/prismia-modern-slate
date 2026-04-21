@@ -70,7 +70,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
       const all: TimeOff[] = [];
       const seen = new Set<number>();
       const reqs = profUnitIds.map((puId) =>
-        api.get(`/api/booking/professional-time-offs/`, { params: { professional_unit: puId } })
+        api.get(`/api/settings/professional-time-offs/`, { params: { professional_unit: puId } })
           .then((r) => unpack(r.data))
           .catch(() => [])
       );
@@ -98,7 +98,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
   const createBlock = useMutation({
     mutationFn: async (payload: any) => {
       await fetchCsrf();
-      const { data } = await api.post(`/api/booking/professional-time-offs/`, payload);
+      const { data } = await api.post(`/api/settings/professional-time-offs/`, payload);
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey }); resetForm(); toast.success("Bloqueio criado"); },
@@ -108,7 +108,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
   const removeBlock = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professional-time-offs/${id}/`);
+      await api.delete(`/api/settings/professional-time-offs/${id}/`);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey }); toast.success("Bloqueio removido"); },
     onError: () => toast.error("Erro ao remover bloqueio"),
