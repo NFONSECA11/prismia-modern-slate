@@ -97,8 +97,13 @@ export function savePreference(fields: Record<string, unknown>) {
     _timer = null;
     try {
       console.log("[Prefs] saving:", JSON.stringify(payload));
-      await patchPreferences(payload as any);
-      console.log("[Prefs] saved OK");
+      const result = await patchPreferences(payload as any);
+      console.log("[Prefs] saved OK — server returned:", JSON.stringify({
+        last_unit_id: (result as any)?.last_unit_id,
+        theme: (result as any)?.theme,
+        background: (result as any)?.background,
+        accent: (result as any)?.accent,
+      }));
     } catch (err: any) {
       const resp = err?.response?.data;
       console.warn("[Prefs] failed to save:", JSON.stringify(resp ?? err?.message));
