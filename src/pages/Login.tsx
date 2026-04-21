@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import prismiaAgendaLogo from "@/assets/prismia-agenda-logo.png";
 
 export default function Login() {
   const { login } = useAuth();
@@ -41,11 +42,11 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <h1 className="text-2xl font-light tracking-wide">
-            <span style={{ color: "hsl(0 0% 85%)", opacity: 0.9 }}>Prism</span>
-            <span className="gradient-text font-semibold">IA</span>
-            <span className="text-primary ml-2 font-light">Agenda</span>
-          </h1>
+          <img
+            src={prismiaAgendaLogo}
+            alt="PrismIA Agenda"
+            className="h-10 w-auto"
+          />
           <p className="text-xs text-muted-foreground">Login</p>
         </div>
 
