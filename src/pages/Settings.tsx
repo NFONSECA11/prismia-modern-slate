@@ -104,7 +104,7 @@ export default function Settings() {
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
     queryKey: ["professionals", activeUnit?.id],
     queryFn: async () => {
-      const { data } = await api.get(`/api/booking/professionals/`, {
+      const { data } = await api.get(`/api/settings/professionals/`, {
         params: { unit: activeUnit!.id },
       });
       return Array.isArray(data) ? data : (data?.results ?? []);
