@@ -1224,18 +1224,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 )
               }
             />
-            <DetailRow
-              icon={Calendar}
-              label="Janela Preferida"
-              tone="confirmed"
-              className="col-span-2"
-              value={
-                <span>
-                  {booking.preferred_window}
-                  <span className="ml-2 text-muted-foreground">— {booking.preferred_period}</span>
-                </span>
-              }
-            />
             <DetailRow icon={Clock} label="Criado em" tone="default" value={formattedCreated} />
             <DetailRow
               icon={Clock}
