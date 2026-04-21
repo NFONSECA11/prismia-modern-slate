@@ -87,7 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("[Auth] bootstrap fetchMe:", JSON.stringify(me));
       const units = me.units ?? [];
       const role = resolveRole(me);
-      setState({
+      setState((prev) => ({
+        ...prev,
         user: me.user,
         company: me.company ?? null,
         role,
@@ -95,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         activeUnit: units[0] ?? null,
         isLoading: false,
         isAuthenticated: true,
-      });
+      }));
     } catch {
       setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
     }
