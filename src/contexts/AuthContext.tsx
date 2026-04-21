@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { MeResponse, UserRole, Unit, Company, fetchMe, logout as apiLogout, login as apiLogin } from "@/lib/authApi";
 import { setAuthToken } from "@/lib/api";
+import { fetchDashboardBootstrap } from "@/lib/dashboardApi";
 
 interface AuthState {
   user: MeResponse["user"] | null;
@@ -10,6 +11,7 @@ interface AuthState {
   activeUnit: Unit | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  aiEnabled: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -37,6 +39,7 @@ const AUTH_FALLBACK: AuthContextType = {
   activeUnit: null,
   isLoading: false,
   isAuthenticated: false,
+  aiEnabled: false,
   login: async () => {
     throw new Error("AuthProvider indisponível");
   },
@@ -67,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activeUnit: null,
     isLoading: true,
     isAuthenticated: false,
+    aiEnabled: false,
   });
 
   const resolveRole = (me: MeResponse): UserRole | null => {
@@ -83,7 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("[Auth] bootstrap fetchMe:", JSON.stringify(me));
       const units = me.units ?? [];
       const role = resolveRole(me);
-      setState({
+      setState((prev) => ({
+        ...prev,
         user: me.user,
         company: me.company ?? null,
         role,
@@ -91,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         activeUnit: units[0] ?? null,
         isLoading: false,
         isAuthenticated: true,
-      });
+      }));
     } catch {
       setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
     }
@@ -101,6 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrap();
   }, [bootstrap]);
 
+  // Sincroniza aiEnabled (e demais settings de IA) quando autenticado
+  // ou quando a unidade ativa mudar.
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchDashboardBootstrap(state.activeUnit?.id);
+        if (cancelled) return;
+        const enabled = !!data?.ai_settings?.ai_enabled;
+        setState((prev) => (prev.aiEnabled === enabled ? prev : { ...prev, aiEnabled: enabled }));
+      } catch (err) {
+        console.warn("[Auth] dashboard bootstrap failed:", err);
+        if (!cancelled) {
+          setState((prev) => (prev.aiEnabled === false ? prev : { ...prev, aiEnabled: false }));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.isAuthenticated, state.activeUnit?.id]);
+
   const login = async (username: string, password: string) => {
     await apiLogin(username, password);
     try {
@@ -108,7 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("[Auth] fetchMe response:", JSON.stringify(me));
       const units = me.units ?? [];
       const role = resolveRole(me);
-      setState({
+      setState((prev) => ({
+        ...prev,
         user: me.user,
         company: me.company ?? null,
         role,
@@ -116,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         activeUnit: units[0] ?? null,
         isLoading: false,
         isAuthenticated: true,
-      });
+      }));
     } catch (err) {
       console.error("[Auth] bootstrap after login failed:", err);
       setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
@@ -139,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       activeUnit: null,
       isLoading: false,
       isAuthenticated: false,
+      aiEnabled: false,
     });
   };
 
