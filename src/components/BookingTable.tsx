@@ -46,6 +46,7 @@ interface BookingTableProps {
   bookings: BookingRequest[];
   isLoading: boolean;
   onSelectBooking: (booking: BookingRequest) => void;
+  aiEnabled: boolean;
 }
 
 const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];
@@ -206,7 +207,7 @@ function QuickActionButton({
   );
 }
 
-export function BookingTable({ bookings, isLoading, onSelectBooking }: BookingTableProps) {
+export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }: BookingTableProps) {
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
