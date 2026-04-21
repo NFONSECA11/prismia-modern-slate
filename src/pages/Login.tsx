@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, AlertCircle, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import PrismIAAgendaLogo from "@/components/PrismIAAgendaLogo";
 
 export default function Login() {
   const { login } = useAuth();
@@ -41,14 +42,7 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2.5">
-            <CalendarDays className="h-7 w-7 text-primary" strokeWidth={2.25} />
-            <h1 className="text-2xl tracking-wide leading-none font-semibold">
-              <span className="text-foreground/90">Prism</span>
-              <span className="text-primary">IA</span>
-              <span className="text-primary ml-1.5">Agenda</span>
-            </h1>
-          </div>
+          <PrismIAAgendaLogo size="sm" bare />
           <p className="text-xs text-muted-foreground">Login</p>
         </div>
 
