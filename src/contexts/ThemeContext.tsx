@@ -145,6 +145,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       "linear-gradient(135deg, #f5f0eb 0%, #b8c8e0 100%)",
       "linear-gradient(135deg, #e8f0fa 0%, #6b9fd4 100%)",
     ];
+    const SLATE_GRADIENTS = [
+      "linear-gradient(135deg, #1e3a5f 0%, #0a1929 100%)",
+      "linear-gradient(135deg, #2d3748 0%, #111827 100%)",
+      "linear-gradient(135deg, #1a3a4a 0%, #0d2030 100%)",
+    ];
     if (theme === "night" && bgMode === "solid") {
       const value = NIGHT_SOLID_BACKGROUNDS[bgVariant] ?? NIGHT_SOLID_BACKGROUNDS[0];
       document.documentElement.style.setProperty("--background", value);
@@ -155,9 +160,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       document.documentElement.style.removeProperty("--background");
     }
 
-    // Frost gradients: apply via --gradient-bg (body uses background-image: var(--gradient-bg))
+    // Gradients: apply via --gradient-bg (body uses background-image: var(--gradient-bg))
     if (theme === "frost" && bgMode === "gradient") {
       const value = FROST_GRADIENTS[bgVariant] ?? FROST_GRADIENTS[0];
+      document.documentElement.style.setProperty("--gradient-bg", value);
+    } else if (theme === "slate" && bgMode === "gradient") {
+      const value = SLATE_GRADIENTS[bgVariant] ?? SLATE_GRADIENTS[0];
       document.documentElement.style.setProperty("--gradient-bg", value);
     } else if (theme !== "night") {
       // Night uses CSS-defined --gradient-bg via [data-background]; only clear inline for non-night
