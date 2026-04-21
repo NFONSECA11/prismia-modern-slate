@@ -140,6 +140,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const NIGHT_SOLID_BACKGROUNDS = ["216 65% 7%", "240 3% 9%", "200 40% 8%"];
     const FROST_SOLID_BACKGROUNDS = ["220 30% 98%", "30 17% 95%", "213 33% 95%"];
+    const FROST_GRADIENTS = [
+      "linear-gradient(135deg, #f8f9fc 0%, #dce8f5 100%)",
+      "linear-gradient(135deg, #f5f3f0 0%, #dde8f0 100%)",
+      "linear-gradient(135deg, #eef2f7 0%, #c8d8ee 100%)",
+    ];
     if (theme === "night" && bgMode === "solid") {
       const value = NIGHT_SOLID_BACKGROUNDS[bgVariant] ?? NIGHT_SOLID_BACKGROUNDS[0];
       document.documentElement.style.setProperty("--background", value);
@@ -148,6 +153,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       document.documentElement.style.setProperty("--background", value);
     } else {
       document.documentElement.style.removeProperty("--background");
+    }
+
+    // Frost gradients: apply via --gradient-bg (body uses background-image: var(--gradient-bg))
+    if (theme === "frost" && bgMode === "gradient") {
+      const value = FROST_GRADIENTS[bgVariant] ?? FROST_GRADIENTS[0];
+      document.documentElement.style.setProperty("--gradient-bg", value);
+    } else if (theme !== "night") {
+      // Night uses CSS-defined --gradient-bg via [data-background]; only clear inline for non-night
+      document.documentElement.style.removeProperty("--gradient-bg");
+    } else {
+      document.documentElement.style.removeProperty("--gradient-bg");
     }
   }, [theme, bgMode, bgVariant]);
 

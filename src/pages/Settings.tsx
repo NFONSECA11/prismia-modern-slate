@@ -171,9 +171,9 @@ export default function Settings() {
       { label: "Petroleum Mist", gradient: "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))" },
     ],
     "frost": [
-      { label: "Ice White", gradient: "linear-gradient(145deg, hsl(210 40% 97%), hsl(208 35% 94%), hsl(205 45% 90%))" },
-      { label: "Soft Mist", gradient: "linear-gradient(150deg, hsl(214 18% 96%), hsl(212 15% 93%), hsl(210 20% 90%))" },
-      { label: "Blue Haze", gradient: "linear-gradient(140deg, hsl(208 30% 96%), hsl(206 35% 92%), hsl(210 25% 95%))" },
+      { label: "Ice White", gradient: "linear-gradient(135deg, #f8f9fc 0%, #dce8f5 100%)" },
+      { label: "Soft Mist", gradient: "linear-gradient(135deg, #f5f3f0 0%, #dde8f0 100%)" },
+      { label: "Blue Haze", gradient: "linear-gradient(135deg, #eef2f7 0%, #c8d8ee 100%)" },
     ],
   };
 
@@ -264,9 +264,9 @@ export default function Settings() {
       "linear-gradient(140deg, hsl(200 32% 12%), hsl(198 28% 18%), hsl(205 24% 24%))",
     ],
     "frost": [
-      "linear-gradient(145deg, hsl(210 40% 97%), hsl(208 35% 94%), hsl(205 45% 90%))",
-      "linear-gradient(150deg, hsl(214 18% 96%), hsl(212 15% 93%), hsl(210 20% 90%))",
-      "linear-gradient(140deg, hsl(208 30% 96%), hsl(206 35% 92%), hsl(210 25% 95%))",
+      "linear-gradient(135deg, #f8f9fc 0%, #dce8f5 100%)",
+      "linear-gradient(135deg, #f5f3f0 0%, #dde8f0 100%)",
+      "linear-gradient(135deg, #eef2f7 0%, #c8d8ee 100%)",
     ],
   };
   const isLandscape = bgMode === "landscape";
