@@ -77,7 +77,14 @@ function isTrustedApiBaseUrl(url: string): boolean {
 }
 
 function persistApiBaseUrl(url: string) {
-  localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalizeApiBaseUrl(url));
+  const normalized = normalizeApiBaseUrl(url);
+  // Não persistir URLs de trycloudflare — elas mudam frequentemente.
+  // Manter apenas o DEFAULT do código como fonte da verdade.
+  if (isTryCloudflareUrl(normalized)) {
+    localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalized);
 }
 
 const rawEnvApiBaseUrl = import.meta.env.VITE_API_BASE_URL
