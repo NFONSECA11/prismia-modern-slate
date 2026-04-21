@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activeUnit: null,
     isLoading: true,
     isAuthenticated: false,
+    aiEnabled: false,
   });
 
   const resolveRole = (me: MeResponse): UserRole | null => {
