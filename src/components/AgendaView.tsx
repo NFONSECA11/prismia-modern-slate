@@ -1023,6 +1023,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
               onCellClick={setNewSlot}
             />
           )}
+        </div>
       </div>
 
       {/* New Booking Modal — keyed to force re-mount on each new slot */}
