@@ -952,7 +952,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               const displayValue = isCancelCode && effectiveCancelId
                 ? `Cancelar agendamento #${effectiveCancelId}`
                 : (procFromNotes ?? overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
-              return <DetailRow icon={Hash} label="Procedimento" value={
+              return <DetailRow icon={Hash} label="Procedimento" tone="primary" value={
                 isRescheduleCode ? (
                   <span className="flex items-center gap-1.5">
                     <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
@@ -961,10 +961,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 ) : displayValue
               } />;
             })()}
-            <DetailRow icon={Building2} label="Unidade" value={booking.unit_name} />
+            <DetailRow icon={Building2} label="Unidade" tone="assisted" value={booking.unit_name} />
             <DetailRow
               icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
               label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
+              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "handoff"}
               className="col-span-2"
               value={
                 hasProfessional && !isRescheduleCode ? (
