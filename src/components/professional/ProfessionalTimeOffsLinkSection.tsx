@@ -183,7 +183,7 @@ export default function ProfessionalTimeOffsLinkSection() {
   const createBlock = useMutation({
     mutationFn: async (payload: any) => {
       await fetchCsrf();
-      const { data } = await api.post(`/api/booking/professional-time-offs/`, payload);
+      const { data } = await api.post(`/api/settings/professional-time-offs/`, payload);
       return data;
     },
     onSuccess: () => {
