@@ -8,6 +8,7 @@ import {
   themeToBackend,
   bgFromBackend,
   bgToBackend,
+  touchLastAccess,
 } from "@/lib/preferencesApi";
 
 /**
@@ -78,14 +79,20 @@ export default function PreferencesSyncer() {
           setAccent(prefs.accent as any);
         }
 
-        // Unit
-        if (prefs.last_unit_id && units.length > 0) {
+        // Unit — null/undefined explícito = "Todas as unidades"
+        if (prefs.last_unit_id === null) {
+          console.log("[Prefs] restoring: Todas as unidades");
+          setActiveUnit(null);
+        } else if (prefs.last_unit_id && units.length > 0) {
           const unit = units.find((u) => u.id === prefs.last_unit_id);
           if (unit) {
             console.log("[Prefs] restoring unit:", unit.id, unit.name);
             setActiveUnit(unit);
           }
         }
+
+        // Registra o último acesso do usuário (não bloqueante)
+        touchLastAccess();
 
         // Store last_view and last_date for Index to pick up
         if (prefs.last_view) {
