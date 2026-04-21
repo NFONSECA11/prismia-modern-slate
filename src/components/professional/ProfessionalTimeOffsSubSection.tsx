@@ -108,7 +108,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
   const removeBlock = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professional-timeoffs/${id}/`);
+      await api.delete(`/api/booking/professional-time-offs/${id}/`);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey }); toast.success("Bloqueio removido"); },
     onError: () => toast.error("Erro ao remover bloqueio"),
