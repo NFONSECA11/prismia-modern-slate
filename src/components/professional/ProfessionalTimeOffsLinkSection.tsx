@@ -107,7 +107,7 @@ export default function ProfessionalTimeOffsLinkSection() {
       if (puOptions.length === 0) return [];
       const reqs = puOptions.map((o) =>
         api
-          .get(`/api/booking/professional-timeoffs/`, { params: { professional_unit: o.id } })
+          .get(`/api/booking/professional-time-offs/`, { params: { professional_unit: o.id } })
           .then((r) => unpack(r.data))
           .catch(() => []),
       );
@@ -183,7 +183,7 @@ export default function ProfessionalTimeOffsLinkSection() {
   const createBlock = useMutation({
     mutationFn: async (payload: any) => {
       await fetchCsrf();
-      const { data } = await api.post(`/api/booking/professional-timeoffs/`, payload);
+      const { data } = await api.post(`/api/booking/professional-time-offs/`, payload);
       return data;
     },
     onSuccess: () => {
@@ -200,7 +200,7 @@ export default function ProfessionalTimeOffsLinkSection() {
   const removeBlock = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professional-timeoffs/${id}/`);
+      await api.delete(`/api/booking/professional-time-offs/${id}/`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
