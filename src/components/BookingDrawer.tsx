@@ -153,6 +153,168 @@ function DetailRow({
   );
 }
 
+// ── Notes Log Parser ─────────────────────────────────────────────────────────
+// Converte o texto bruto de notes em entradas estruturadas e legíveis.
+
+type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "reschedule" | "cancel" | "generic";
+
+interface NoteEntry {
+  kind: NoteEntryKind;
+  timestamp?: string;
+  title: string;
+  body: string;
+  meta: Array<{ label: string; value: string }>;
+}
+
+const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon: React.ElementType; title: string }> = {
+  ai_schedule: {
+    card: "bg-status-confirmed-bg/30 border-status-confirmed/25",
+    chip: "bg-status-confirmed/20 text-status-confirmed",
+    icon: Sparkles,
+    title: "IA · Agendamento direto",
+  },
+  ai_reschedule: {
+    card: "bg-status-pending-bg/30 border-status-pending/25",
+    chip: "bg-status-pending/20 text-status-pending",
+    icon: Sparkles,
+    title: "IA · Reagendamento direto",
+  },
+  ai_cancel: {
+    card: "bg-status-canceled-bg/30 border-status-canceled/25",
+    chip: "bg-status-canceled/20 text-status-canceled",
+    icon: Sparkles,
+    title: "IA · Cancelamento direto",
+  },
+  reschedule: {
+    card: "bg-status-handoff-bg/30 border-status-handoff/25",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: RotateCcw,
+    title: "Reagendamento",
+  },
+  cancel: {
+    card: "bg-status-canceled-bg/30 border-status-canceled/25",
+    chip: "bg-status-canceled/20 text-status-canceled",
+    icon: XCircle,
+    title: "Cancelamento",
+  },
+  generic: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-surface-elevated text-muted-foreground",
+    icon: MessageSquare,
+    title: "Nota",
+  },
+};
+
+function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: string; value: string }> } {
+  const meta: Array<{ label: string; value: string }> = [];
+  const parts = body.split("|").map((p) => p.trim()).filter(Boolean);
+  const remaining: string[] = [];
+  for (const part of parts) {
+    const m = part.match(/^([^:]+):\s*(.+)$/);
+    if (m) {
+      const label = m[1].trim();
+      const value = m[2].trim();
+      if (/^policy$/i.test(label)) continue;
+      meta.push({ label, value });
+    } else {
+      remaining.push(part);
+    }
+  }
+  return { cleanBody: remaining.join(" · "), meta };
+}
+
+function detectNoteKind(body: string): NoteEntryKind {
+  const lower = body.toLowerCase();
+  if (/automatico pela ia.*agendamento/.test(lower) || /policy:\s*direct_schedule/i.test(body)) return "ai_schedule";
+  if (/automatico pela ia.*reagendamento/.test(lower) || /policy:\s*direct_reschedule/i.test(body)) return "ai_reschedule";
+  if (/automatico pela ia.*cancel/.test(lower) || /policy:\s*direct_cancel/i.test(body)) return "ai_cancel";
+  if (/reagendamento/i.test(body)) return "reschedule";
+  if (/cancelamento/i.test(body)) return "cancel";
+  return "generic";
+}
+
+function parseNotes(notes: string): NoteEntry[] {
+  // Remove linhas que são apenas tags técnicas (BR_TAG_AI_DIRECT_X = 1234)
+  const cleaned = notes
+    .split("\n")
+    .filter((ln) => !/^\s*BR_TAG_[A-Z_]+\s*=\s*\d+\s*$/i.test(ln))
+    .join("\n");
+
+  const entryRegex = /\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*([\s\S]*?)(?=\n\[\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\]|$)/g;
+  const entries: NoteEntry[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = entryRegex.exec(cleaned)) !== null) {
+    const timestamp = match[1];
+    const raw = match[2].trim();
+    if (!raw) continue;
+    const kind = detectNoteKind(raw);
+    const { cleanBody, meta } = parseNoteMeta(raw);
+    entries.push({
+      kind,
+      timestamp,
+      title: NOTE_KIND_STYLES[kind].title,
+      body: cleanBody || raw,
+      meta,
+    });
+  }
+
+  if (entries.length === 0 && cleaned.trim()) {
+    entries.push({ kind: "generic", title: "Nota", body: cleaned.trim(), meta: [] });
+  }
+
+  return entries;
+}
+
+function NotesLog({ notes }: { notes: string }) {
+  const entries = parseNotes(notes);
+  if (entries.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2 mt-1">
+      {entries.map((entry, i) => {
+        const style = NOTE_KIND_STYLES[entry.kind];
+        const Icon = style.icon;
+        return (
+          <div key={i} className={`rounded-lg border p-2.5 ${style.card}`}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`flex h-5 w-5 items-center justify-center rounded ${style.chip}`}>
+                <Icon className="h-3 w-3" />
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
+                {entry.title}
+              </span>
+              {entry.timestamp && (
+                <span className="ml-auto text-[10px] font-mono text-muted-foreground">
+                  {entry.timestamp}
+                </span>
+              )}
+            </div>
+            {entry.meta.length > 0 ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {entry.meta.map((m, j) => (
+                  <div key={j} className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground/80">
+                      {m.label}
+                    </span>
+                    <span className="text-xs text-foreground break-words" title={m.value}>
+                      {m.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              entry.body && (
+                <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                  {entry.body}
+                </p>
+              )
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TerminalBadge() {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-surface-elevated text-muted-foreground border border-border">
