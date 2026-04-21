@@ -200,7 +200,7 @@ export default function ProfessionalTimeOffsLinkSection() {
   const removeBlock = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professional-time-offs/${id}/`);
+      await api.delete(`/api/settings/professional-time-offs/${id}/`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
