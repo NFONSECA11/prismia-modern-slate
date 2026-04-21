@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, AlertCircle, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import PrismIAAgendaLogo from "@/components/PrismIAAgendaLogo";
 
 export default function Login() {
   const { login } = useAuth();
