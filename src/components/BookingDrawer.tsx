@@ -77,24 +77,74 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
+type DetailTone =
+  | "default"
+  | "primary"
+  | "confirmed"
+  | "pending"
+  | "handoff"
+  | "assisted"
+  | "canceled";
+
+const DETAIL_TONE_STYLES: Record<DetailTone, { card: string; chip: string; label: string }> = {
+  default: {
+    card: "bg-surface-elevated/50 border-border/40",
+    chip: "bg-surface text-muted-foreground",
+    label: "text-muted-foreground",
+  },
+  primary: {
+    card: "bg-primary/5 border-primary/20",
+    chip: "bg-primary/15 text-primary",
+    label: "text-primary/80",
+  },
+  confirmed: {
+    card: "bg-status-confirmed-bg/40 border-status-confirmed/20",
+    chip: "bg-status-confirmed/15 text-status-confirmed",
+    label: "text-status-confirmed/80",
+  },
+  pending: {
+    card: "bg-status-pending-bg/40 border-status-pending/20",
+    chip: "bg-status-pending/15 text-status-pending",
+    label: "text-status-pending/80",
+  },
+  handoff: {
+    card: "bg-status-handoff-bg/40 border-status-handoff/20",
+    chip: "bg-status-handoff/15 text-status-handoff",
+    label: "text-status-handoff/80",
+  },
+  assisted: {
+    card: "bg-status-assisted-bg/40 border-status-assisted/20",
+    chip: "bg-status-assisted/15 text-status-assisted",
+    label: "text-status-assisted/80",
+  },
+  canceled: {
+    card: "bg-status-canceled-bg/40 border-status-canceled/20",
+    chip: "bg-status-canceled/15 text-status-canceled",
+    label: "text-status-canceled/80",
+  },
+};
+
 function DetailRow({
   icon: Icon,
   label,
   value,
   className,
+  tone = "default",
 }: {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
   className?: string;
+  tone?: DetailTone;
 }) {
+  const t = DETAIL_TONE_STYLES[tone];
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-lg bg-surface-elevated/50 ${className ?? ""}`}>
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface text-muted-foreground flex-shrink-0 mt-0.5">
+    <div className={`flex items-start gap-3 p-3 rounded-lg border ${t.card} ${className ?? ""}`}>
+      <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 mt-0.5 ${t.chip}`}>
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+        <span className={`text-[10px] font-medium uppercase tracking-wider ${t.label}`}>
           {label}
         </span>
         <span className="text-sm text-foreground leading-snug">{value}</span>
