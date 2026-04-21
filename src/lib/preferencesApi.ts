@@ -67,6 +67,21 @@ export async function patchPreferences(
   return (data?.result ?? data) as UserPreferences;
 }
 
+/**
+ * Registra o último acesso do usuário no backend.
+ * Endpoint dedicado: POST /api/user-preferences/touch/
+ * Falhas são silenciosas — não bloqueia a inicialização.
+ */
+export async function touchLastAccess(): Promise<void> {
+  try {
+    await fetchCsrf();
+    await api.post("/api/user-preferences/touch/");
+    console.log("[Prefs] last access registered");
+  } catch (err: any) {
+    console.warn("[Prefs] failed to register last access:", err?.response?.status ?? err?.message);
+  }
+}
+
 // ── Debounced saver (merges fields, single timer) ────────────────────────────
 
 let _pending: Record<string, unknown> = {};
