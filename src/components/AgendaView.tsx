@@ -1007,7 +1007,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
           )}
 
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors border border-border"
             title="Imprimir agenda"
           >
