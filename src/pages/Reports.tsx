@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { savePreference } from "@/lib/preferencesApi";
 import api from "@/lib/api";
-import { fetchReportsBootstrap, type ReportFilters } from "@/lib/reportsApi";
+import { type ReportFilters } from "@/lib/reportsApi";
 import { ReportsFilters } from "@/components/reports/ReportsFilters";
 import { ConversaoTab } from "@/components/reports/ConversaoTab";
 import { OperacaoTab } from "@/components/reports/OperacaoTab";
