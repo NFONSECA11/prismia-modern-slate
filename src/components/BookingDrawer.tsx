@@ -225,18 +225,23 @@ function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: 
 
 function detectNoteKind(body: string): NoteEntryKind {
   const lower = body.toLowerCase();
-  const isAi = /automatico pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_DIRECT/i.test(body);
-  // Ordem importa: testar reagendamento e cancelamento ANTES de agendamento
-  // (porque "reagendamento" contém "agendamento").
-  if (/reagendamento/i.test(body) || /reschedule/i.test(lower)) {
-    return isAi ? "ai_reschedule" : "reschedule";
+  const isAi = /autom[áa]tic[oa] pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_DIRECT/i.test(body);
+
+  // Para notas de IA, classificar pelo TIPO DE AÇÃO declarado no início
+  // ("CANCELAMENTO/REAGENDAMENTO/AGENDAMENTO AUTOMATICO PELA IA"),
+  // não por ocorrências da palavra no motivo.
+  if (isAi) {
+    const actionMatch = lower.match(/(cancelamento|reagendamento|agendamento)\s+autom[áa]tic[oa]\s+pela\s+ia/);
+    const action = actionMatch?.[1];
+    if (action === "cancelamento" || /policy\s*[:=]\s*\w*cancel/i.test(body) || /BR_TAG_AI_DIRECT_CANCEL/i.test(body)) return "ai_cancel";
+    if (action === "reagendamento" || /policy\s*[:=]\s*\w*reschedule/i.test(body) || /BR_TAG_AI_DIRECT_RESCHEDULE/i.test(body)) return "ai_reschedule";
+    if (action === "agendamento" || /policy\s*[:=]\s*\w*(schedule|book_new)/i.test(body) || /BR_TAG_AI_DIRECT_(SCHEDULE|BOOK)/i.test(body)) return "ai_schedule";
+    return "ai_schedule";
   }
-  if (/cancelamento|cancel/i.test(lower)) {
-    return isAi ? "ai_cancel" : "cancel";
-  }
-  if (/agendamento|schedule/i.test(lower)) {
-    return isAi ? "ai_schedule" : "generic";
-  }
+
+  // Notas manuais: ordem importa (reagendamento contém "agendamento")
+  if (/cancelamento/i.test(body)) return "cancel";
+  if (/reagendamento/i.test(body)) return "reschedule";
   return "generic";
 }
 
