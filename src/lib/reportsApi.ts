@@ -23,19 +23,6 @@ async function get<T>(path: string, filters: ReportFilters = {}): Promise<T> {
   return data;
 }
 
-// ===== Bootstrap =====
-export interface ReportBootstrap {
-  pages: { key: string; label: string }[];
-  dimensions: {
-    units: { id: number; name: string }[];
-    professionals: { id: number; name: string }[];
-    procedures: { id: number; name: string }[];
-  };
-  allowed_group_by: string[];
-}
-export const fetchReportsBootstrap = () =>
-  get<ReportBootstrap>("/api/reports/bootstrap");
-
 // ===== Conversão =====
 export interface ConversionOverview {
   conversations_started: number;
