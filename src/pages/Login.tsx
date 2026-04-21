@@ -43,10 +43,10 @@ export default function Login() {
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2.5">
             <CalendarDays className="h-7 w-7 text-primary" strokeWidth={2.25} />
-            <h1 className="text-2xl font-light tracking-wide leading-none">
-              <span className="text-foreground/90 font-semibold">Prism</span>
-              <span className="text-primary font-semibold">IA</span>
-              <span className="text-primary ml-1.5 font-light">Agenda</span>
+            <h1 className="text-2xl tracking-wide leading-none font-semibold">
+              <span className="text-foreground/90">Prism</span>
+              <span className="text-primary">IA</span>
+              <span className="text-primary ml-1.5">Agenda</span>
             </h1>
           </div>
           <p className="text-xs text-muted-foreground">Login</p>
