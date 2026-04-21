@@ -93,7 +93,7 @@ const DETAIL_TONE_STYLES: Record<DetailTone, { card: string; chip: string; label
     label: "text-muted-foreground",
   },
   primary: {
-    card: "bg-primary/5 border-primary/20",
+    card: "bg-surface-elevated/50 border-border/40",
     chip: "bg-primary/15 text-primary",
     label: "text-primary/80",
   },
