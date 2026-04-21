@@ -106,6 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrap();
   }, [bootstrap]);
 
+  // Sincroniza aiEnabled (e demais settings de IA) quando autenticado
+  // ou quando a unidade ativa mudar.
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchDashboardBootstrap(state.activeUnit?.id);
+        if (cancelled) return;
+        const enabled = !!data?.ai_settings?.ai_enabled;
+        setState((prev) => (prev.aiEnabled === enabled ? prev : { ...prev, aiEnabled: enabled }));
+      } catch (err) {
+        console.warn("[Auth] dashboard bootstrap failed:", err);
+        if (!cancelled) {
+          setState((prev) => (prev.aiEnabled === false ? prev : { ...prev, aiEnabled: false }));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.isAuthenticated, state.activeUnit?.id]);
+
   const login = async (username: string, password: string) => {
     await apiLogin(username, password);
     try {
