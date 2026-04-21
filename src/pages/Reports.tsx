@@ -388,9 +388,9 @@ export default function Reports() {
         <ReportsFilters
           value={filters}
           onChange={setFilters}
-          units={bootstrap?.dimensions?.units ?? units.map((u) => ({ id: u.id, name: u.name }))}
-          professionals={bootstrap?.dimensions?.professionals ?? []}
-          procedures={bootstrap?.dimensions?.procedures ?? []}
+          units={units.map((u) => ({ id: u.id, name: u.name }))}
+          professionals={professionalsList}
+          procedures={proceduresList}
         />
 
         <div className="border-b border-border">
