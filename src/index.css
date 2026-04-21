@@ -518,15 +518,15 @@
   /* Hide all children of root */
   #root > * { display: none !important; }
 
-  /* Walk DOM to show only the agenda */
-  #root *:has(#agenda-print-area) {
+  /* Walk DOM to show ancestors of any agenda print area (single or multi-unit) */
+  #root *:has(.agenda-print-area) {
     display: block !important;
     background: white !important;
     padding: 0 !important;
     margin: 0 !important;
   }
 
-  #agenda-print-area {
+  .agenda-print-area {
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
@@ -538,7 +538,14 @@
     width: 100% !important;
   }
 
-  #agenda-print-area * {
+  /* Page break between unit agendas when printing "Todas as unidades" */
+  .agenda-print-area + .agenda-print-area {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 0 !important;
+  }
+
+  .agenda-print-area * {
     overflow: visible !important;
   }
 
@@ -553,36 +560,36 @@
   .print\:hidden { display: none !important; }
 
   /* Appointment cards — light blue bg with green left border */
-  #agenda-print-area button[style*="appointment"] {
+  .agenda-print-area button[style*="appointment"] {
     background: #e8f0fe !important;
     border-left: 3px solid #2e7d32 !important;
     opacity: 1 !important;
   }
 
   /* Table header row */
-  #agenda-print-area [style*="surface-elevated"] {
+  .agenda-print-area [style*="surface-elevated"] {
     background: #f0f0f0 !important;
   }
 
   /* Grid borders */
-  #agenda-print-area .border-border,
-  #agenda-print-area [style*="border"] {
+  .agenda-print-area .border-border,
+  .agenda-print-area [style*="border"] {
     border-color: #d0d0d0 !important;
   }
 
   /* Unavailable cells */
-  #agenda-print-area [style*="rgba(0,0,0"] {
+  .agenda-print-area [style*="rgba(0,0,0"] {
     background: #fafafa !important;
   }
 
   /* Hide current-time indicator */
-  #agenda-print-area .bg-primary\/70,
-  #agenda-print-area .bg-primary {
+  .agenda-print-area .bg-primary\/70,
+  .agenda-print-area .bg-primary {
     display: none !important;
   }
 
   /* No pointer events */
-  #agenda-print-area button {
+  .agenda-print-area button {
     pointer-events: none !important;
   }
 
