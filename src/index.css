@@ -27,9 +27,9 @@
     --foreground-muted: 216 45% 85%;
     --foreground-subtle: 214 30% 55%;
 
-    --primary: 205 100% 59%;
-    --primary-foreground: 216 65% 7%;
-    --primary-glow: 204 100% 67%;
+    --primary: 213 95% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 95% 70%;
 
     --secondary: 215 50% 13%;
     --secondary-foreground: 219 100% 97%;
@@ -409,17 +409,17 @@
 
   /* ══════ ACCENT: Deep Blue (exclusivo night) ══════ */
   [data-theme="night"][data-accent="deep-blue"] {
-    --primary: 205 100% 59%;
-    --primary-foreground: 216 65% 7%;
-    --primary-glow: 204 100% 67%;
+    --primary: 213 95% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 95% 70%;
     --accent: 186 72% 48%;
     --accent-foreground: 216 65% 7%;
-    --ring: 205 100% 59%;
-    --sidebar-primary: 205 100% 59%;
+    --ring: 213 95% 55%;
+    --sidebar-primary: 213 95% 55%;
     --sidebar-primary-foreground: 216 65% 7%;
-    --sidebar-ring: 205 100% 59%;
-    --gradient-primary: linear-gradient(135deg, hsl(205 100% 59%), hsl(186 72% 48%));
-    --shadow-glow: 0 0 24px hsl(205 100% 59% / 0.22);
+    --sidebar-ring: 213 95% 55%;
+    --gradient-primary: linear-gradient(135deg, hsl(213 95% 55%), hsl(186 72% 48%));
+    --shadow-glow: 0 0 24px hsl(213 95% 55% / 0.22);
   }
 }
 
