@@ -141,9 +141,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const NIGHT_SOLID_BACKGROUNDS = ["216 65% 7%", "240 3% 9%", "200 40% 8%"];
     const FROST_SOLID_BACKGROUNDS = ["220 30% 98%", "30 17% 95%", "213 33% 95%"];
     const FROST_GRADIENTS = [
-      "linear-gradient(135deg, #f8f9fc 0%, #dce8f5 100%)",
-      "linear-gradient(135deg, #f5f3f0 0%, #dde8f0 100%)",
-      "linear-gradient(135deg, #eef2f7 0%, #c8d8ee 100%)",
+      "linear-gradient(135deg, #ffffff 0%, #a8c8e8 100%)",
+      "linear-gradient(135deg, #f5f0eb 0%, #b8c8e0 100%)",
+      "linear-gradient(135deg, #e8f0fa 0%, #6b9fd4 100%)",
     ];
     if (theme === "night" && bgMode === "solid") {
       const value = NIGHT_SOLID_BACKGROUNDS[bgVariant] ?? NIGHT_SOLID_BACKGROUNDS[0];
