@@ -107,7 +107,7 @@ export default function ProfessionalTimeOffsLinkSection() {
       if (puOptions.length === 0) return [];
       const reqs = puOptions.map((o) =>
         api
-          .get(`/api/booking/professional-timeoffs/`, { params: { professional_unit: o.id } })
+          .get(`/api/booking/professional-time-offs/`, { params: { professional_unit: o.id } })
           .then((r) => unpack(r.data))
           .catch(() => []),
       );
