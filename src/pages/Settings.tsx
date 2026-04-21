@@ -226,7 +226,7 @@ export default function Settings() {
   const deleteProfessional = useMutation({
     mutationFn: async (id: number) => {
       await fetchCsrf();
-      await api.delete(`/api/booking/professionals/${id}/`);
+      await api.delete(`/api/settings/professionals/${id}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
