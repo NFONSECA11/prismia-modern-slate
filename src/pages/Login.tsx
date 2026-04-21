@@ -45,7 +45,7 @@ export default function Login() {
             <CalendarDays className="h-7 w-7 text-primary" strokeWidth={2.25} />
             <h1 className="text-2xl font-light tracking-wide leading-none">
               <span className="text-foreground/90 font-semibold">Prism</span>
-              <span className="gradient-text font-semibold">IA</span>
+              <span className="text-primary font-semibold">IA</span>
               <span className="text-primary ml-1.5 font-light">Agenda</span>
             </h1>
           </div>
