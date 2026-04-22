@@ -594,6 +594,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       )
     : [];
 
+  // Derived: procedures available for the current booking's unit (fallback to all procedures)
+  const proceduresForUnit = (() => {
+    const unitName = (booking?.unit_name ?? "").trim().toLowerCase();
+    if (!unitName) return allProcedures;
+    const unitProcedureIds = new Set(
+      unitProcLinks
+        .filter((up) => (up.unit_name ?? "").trim().toLowerCase() === unitName)
+        .map((up) => up.procedure)
+        .filter((id): id is number => typeof id === "number")
+    );
+    if (unitProcedureIds.size === 0) return allProcedures;
+    return allProcedures.filter((p) => unitProcedureIds.has(p.id));
+  })();
+
   // Auto-resolve specialty when procedure changes
   const autoSpecialtyId = selectedProcedureId
     ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
