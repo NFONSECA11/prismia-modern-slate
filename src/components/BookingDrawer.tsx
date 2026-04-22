@@ -9,6 +9,7 @@ import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import { markConversationRead } from "@/lib/conversationReadState";
 
+import { useAuth } from "@/contexts/AuthContext";
 import {
   confirmBooking,
   cancelBooking,
