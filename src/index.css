@@ -12,6 +12,7 @@
     --background: 216 65% 5%;
     --surface: 216 48% 16%;
     --surface-raised: 215 44% 19%;
+    --filter-bar-bg: 216 48% 16%;
     --surface-elevated: 215 40% 22%;
     --row-hover: 213 44% 22%;
     --appointment-bg: 212 47% 23%;
@@ -138,6 +139,7 @@
   }
 
   [data-theme="slate"] {
+    --filter-bar-bg: 215 35% 26%;
     --background: 216 40% 18%;
     --surface: 215 35% 26%;
     --surface-raised: 214 33% 30%;
