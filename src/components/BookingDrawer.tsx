@@ -160,7 +160,7 @@ function DetailRow({
 // ── Notes Log Parser ─────────────────────────────────────────────────────────
 // Converte o texto bruto de notes em entradas estruturadas e legíveis.
 
-type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "reschedule" | "cancel" | "generic";
+type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "manual_schedule" | "reschedule" | "cancel" | "generic";
 
 interface NoteEntry {
   kind: NoteEntryKind;
@@ -188,6 +188,12 @@ const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon
     chip: "bg-status-canceled/20 text-status-canceled",
     icon: Sparkles,
     title: "IA · Cancelamento direto",
+  },
+  manual_schedule: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-confirmed/20 text-status-confirmed",
+    icon: Calendar,
+    title: "Agendamento manual",
   },
   reschedule: {
     card: "bg-surface-elevated/40 border-border/40",
@@ -244,13 +250,14 @@ function detectNoteKind(body: string): NoteEntryKind {
   }
 
   // Notas manuais: ordem importa (reagendamento contém "agendamento")
+  if (/BR_TAG_MANUAL_SCHEDULE/i.test(body) || /agendamento\s+manual/i.test(body)) return "manual_schedule";
   if (/cancelamento/i.test(body)) return "cancel";
   if (/reagendamento/i.test(body)) return "reschedule";
   return "generic";
 }
 
 function parseNotes(notes: string): NoteEntry[] {
-  // Remove linhas que são apenas tags técnicas (BR_TAG_AI_DIRECT_X = 1234)
+  // Remove linhas que são apenas tags técnicas (BR_TAG_X = 1234)
   const cleaned = notes
     .split("\n")
     .filter((ln) => !/^\s*BR_TAG_[A-Z_]+\s*=\s*\d+\s*$/i.test(ln))
@@ -1005,11 +1012,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
       // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
+      // Adiciona/garante a tag BR_TAG_MANUAL_SCHEDULE no notes
+      const existingNotesRaw = ((booking as any)?.notes ?? "") as string;
+      const hasManualTag = /BR_TAG_MANUAL_SCHEDULE/i.test(existingNotesRaw);
+      const now = new Date();
+      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const manualLog = `[${ts}] Agendamento manual via Dashboard por ${assignLeadName.trim() || "atendente"} | BR_TAG_MANUAL_SCHEDULE = ${booking.id}`;
+      const updatedNotes = hasManualTag
+        ? existingNotesRaw
+        : (existingNotesRaw ? `${existingNotesRaw}\n${manualLog}` : manualLog);
+
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
         booking_mode: "assisted_slots_dashboard",
         vars_snapshot: existingVars,
+        notes: updatedNotes,
       };
       if (selectedProfessionalId) patch1.professional = selectedProfessionalId;
       if (resolvedUnitProcId) patch1.procedure_code = resolvedUnitProcId;
