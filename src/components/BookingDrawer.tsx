@@ -983,6 +983,108 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     )
   );
 
+  // ── IA Enabled • Fluxo Agendar ────────────────────────────────────────────
+  // Estados locais para o sub-fluxo de agendamento manual quando IA está ativa.
+  type ScheduleStep = "form" | "choosing-slot";
+  const [scheduleStep, setScheduleStep] = useState<ScheduleStep>("form");
+  const [scheduleSlots, setScheduleSlots] = useState<Array<{ start_at: string; label: string }>>([]);
+  const [pickingSlotIdx, setPickingSlotIdx] = useState<number | null>(null);
+
+  // Reset schedule sub-flow when booking changes or tab changes
+  useEffect(() => {
+    setScheduleStep("form");
+    setScheduleSlots([]);
+    setPickingSlotIdx(null);
+  }, [booking?.id, iaOpType]);
+
+  const scheduleSuggestMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
+
+      // 1) PATCH na BR atual com profissional/procedimento/lead_name
+      const payload: Record<string, unknown> = {
+        lead_name: assignLeadName.trim(),
+        professional: selectedProfessionalId,
+        procedure: selectedProcedureId,
+        booking_mode: "assisted_slots_dashboard",
+      };
+      if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+      if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
+      console.log("[scheduleSuggestMut] PATCH payload:", JSON.stringify(payload));
+      await patchBooking(booking.id, payload);
+
+      // 2) Solicita slots ao backend
+      const suggestResponse = await suggestSlots(booking.id);
+      console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
+
+      // 3) Refetch detalhes — backend popula offer_slots
+      const detail = await fetchBookingRequestById(booking.id);
+      const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+
+      // Fallback: alguns backends devolvem os slots já no payload de suggest_slots
+      const slotsFromResponse =
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.slots) ? (suggestResponse as any).slots : null) ??
+        (Array.isArray((suggestResponse as any)?.result?.offer_slots) ? (suggestResponse as any).result.offer_slots : null);
+
+      const finalSlots = slotsFromDetail.length > 0 ? slotsFromDetail : (slotsFromResponse ?? []);
+      return finalSlots as Array<{ start_at: string; label: string }>;
+    },
+    onSuccess: (slots) => {
+      if (!slots || slots.length === 0) {
+        toast.error("Nenhum horário disponível para essa combinação. Tente outro profissional ou procedimento.");
+        return;
+      }
+      setScheduleSlots(slots);
+      setScheduleStep("choosing-slot");
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+    },
+    onError: (err: any) => {
+      console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
+      const data = err?.response?.data;
+      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
+      toast.error(typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários."));
+    },
+  });
+
+  const scheduleConfirmMut = useMutation({
+    mutationFn: async (slot: { start_at: string; label: string }) => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      // 1) Grava o slot escolhido em vars_snapshot.chosen_slot
+      const existingVars = (booking as any)?.vars_snapshot ?? {};
+      await patchBooking(booking.id, {
+        vars_snapshot: { ...existingVars, chosen_slot: slot },
+      });
+      // 2) Confirma usando o slot escolhido
+      await confirmBooking(booking.id, {
+        use_chosen_slot: true,
+        notes: "Confirmado via Dashboard PrismIA (IA Enabled)",
+      });
+    },
+    onSuccess: async () => {
+      setActionDone("Agendamento confirmado!");
+      toast.success("Agendamento confirmado!");
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1500);
+    },
+    onError: (err: any) => {
+      console.error("[scheduleConfirmMut] error:", err?.response?.status, err?.response?.data);
+      setPickingSlotIdx(null);
+      const data = err?.response?.data;
+      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
+      toast.error(typeof detail === "string" ? detail : "Não foi possível confirmar o horário.");
+    },
+  });
+
   if (!booking) return null;
 
   const hasChosenSlot = !!(booking.vars_snapshot?.chosen_slot || booking.chosen_slot);
@@ -1272,7 +1374,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                     </div>
 
                     {/* Painéis por tipo (sem ações conectadas) */}
-                    {iaOpType === "schedule" && (
+                    {iaOpType === "schedule" && scheduleStep === "form" && (
                       <div className="flex flex-col gap-2">
                         <div>
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
@@ -1306,7 +1408,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         </div>
                         <div>
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
+                            Profissional <span className="text-status-cancelled">*</span>
                           </label>
                           <select
                             value={selectedProfessionalId ?? ""}
@@ -1316,26 +1418,79 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             }}
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                           >
-                            <option value="">Sem preferência</option>
+                            <option value="">Selecionar...</option>
                             {professionalsForUnit.map((p) => (
                               <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                           </select>
-                          <p className="text-[10px] text-muted-foreground/80 mt-1 italic">
-                            Se o cliente não indicou profissional, deixe em branco.
-                          </p>
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             type="button"
-                            disabled
-                            title="Ação ainda não implementada"
+                            onClick={() => scheduleSuggestMut.mutate()}
+                            disabled={
+                              scheduleSuggestMut.isPending ||
+                              !assignLeadName.trim() ||
+                              !selectedProcedureId ||
+                              !selectedProfessionalId
+                            }
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
                             <Calendar className="h-3.5 w-3.5" />
-                            Agendar
+                            {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
                           </button>
-                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {iaOpType === "schedule" && scheduleStep === "choosing-slot" && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            Escolha um horário
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setScheduleStep("form");
+                              setScheduleSlots([]);
+                              setPickingSlotIdx(null);
+                            }}
+                            disabled={scheduleConfirmMut.isPending}
+                            className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline disabled:opacity-40"
+                          >
+                            ← voltar
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto pr-1">
+                          {scheduleSlots.map((slot, idx) => {
+                            const isPicking = pickingSlotIdx === idx && scheduleConfirmMut.isPending;
+                            const disabled = scheduleConfirmMut.isPending;
+                            return (
+                              <button
+                                key={`${slot.start_at}-${idx}`}
+                                type="button"
+                                onClick={() => {
+                                  setPickingSlotIdx(idx);
+                                  scheduleConfirmMut.mutate(slot);
+                                }}
+                                disabled={disabled}
+                                className={`text-left text-sm px-3 py-2 rounded-lg border transition-all inline-flex items-center justify-between gap-2 ${
+                                  isPicking
+                                    ? "border-primary bg-primary/10 text-foreground"
+                                    : "border-border bg-surface text-foreground hover:border-primary/60 hover:bg-surface-elevated"
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                <span className="inline-flex items-center gap-2">
+                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {slot.label || slot.start_at}
+                                </span>
+                                {isPicking && (
+                                  <span className="text-[10px] text-muted-foreground italic">confirmando…</span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
