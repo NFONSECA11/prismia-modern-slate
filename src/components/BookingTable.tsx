@@ -637,7 +637,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                           {/* Quick actions - visible on hover */}
                           {(actions.length > 0 || isBotOff) && (
                             <div className="hidden group-hover:flex items-center gap-1 animate-fade-in">
-                              {isBotOff && (
+                              {isBotOff && booking.status !== "handoff" && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
