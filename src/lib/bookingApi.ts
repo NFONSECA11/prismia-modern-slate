@@ -332,8 +332,12 @@ export async function patchBooking(
   payload: Record<string, unknown>
 ): Promise<BookingRequest> {
   await fetchCsrf();
-  const { data } = await api.patch<BookingRequest>(`/api/booking/requests/${id}/`, payload);
-  return data as BookingRequest;
+  const { data } = await api.patch<{ ok?: boolean; result?: BookingRequest; updated?: string[] } | BookingRequest>(
+    `/api/booking/requests/${id}/`,
+    payload
+  );
+  const result = (data as any)?.result ?? data;
+  return result as BookingRequest;
 }
 
 export async function assignBookingProfessional(
