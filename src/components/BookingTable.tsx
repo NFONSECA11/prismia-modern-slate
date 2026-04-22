@@ -578,7 +578,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
 
                           {/* Conversa (popout) — somente status handoff */}
                           {booking.status === "handoff" && (() => {
-                            const unread = isConversationUnread(booking.id, booking.updated_at);
+                            const lastInTs = lastInMsgMap[booking.id] ?? 0;
+                            const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+                            const refTs = lastInTs || fallbackTs;
+                            const unread = refTs > 0 && isConversationUnread(booking.id, new Date(refTs).toISOString());
                             return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
