@@ -1398,7 +1398,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                             >
                               <option value="">Selecionar...</option>
-                              {professionals.map((p) => (
+                              {professionalsForUnit.map((p) => (
                                 <option key={p.id} value={p.id}>
                                   {p.name}
                                 </option>
