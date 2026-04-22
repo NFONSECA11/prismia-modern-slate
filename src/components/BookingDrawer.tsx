@@ -1003,11 +1003,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
-      // 1) PATCH na BR atual com lead/procedimento (+ profissional se informado)
+      // 1) PATCH na BR atual em modo automático (bot vai assumir)
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
-        booking_mode: "assisted_slots_dashboard",
+        booking_mode: "auto_slots_bot",
+        conversation_bot_mode: "on",
       };
       if (selectedProfessionalId) payload.professional = selectedProfessionalId;
       if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
@@ -1020,11 +1021,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const suggestResponse = await suggestSlots(booking.id);
       console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
 
-      // 3) Refetch detalhes — backend popula offer_slots
+      // 3) Devolve o controle para o bot (handoff OFF = bot ON)
+      try {
+        await handoffOff(booking.id);
+      } catch (err) {
+        console.warn("[scheduleSuggestMut] handoffOff falhou (bot pode já estar ligado):", err);
+      }
+
+      // 4) Refetch detalhes — para confirmar offer_slots/status
       const detail = await fetchBookingRequestById(booking.id);
       const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
 
-      // Fallback: alguns backends devolvem os slots já no payload de suggest_slots
       const slotsFromResponse =
         (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
         (Array.isArray((suggestResponse as any)?.slots) ? (suggestResponse as any).slots : null) ??
@@ -1033,14 +1040,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const finalSlots = slotsFromDetail.length > 0 ? slotsFromDetail : (slotsFromResponse ?? []);
       return finalSlots as Array<{ start_at: string; label: string }>;
     },
-    onSuccess: (slots) => {
+    onSuccess: async (slots) => {
       if (!slots || slots.length === 0) {
-        toast.error("Nenhum horário disponível para essa combinação. Tente outro profissional ou procedimento.");
-        return;
+        // PATCH e suggest funcionaram, mas backend não devolveu slots —
+        // ainda assim o bot vai conduzir. Avisa e fecha.
+        toast.warning("Nenhum horário retornado, mas o bot foi acionado para conversar com o cliente.");
+      } else {
+        toast.success(`Bot acionado — ${slots.length} horário(s) serão oferecidos ao cliente.`);
       }
-      setScheduleSlots(slots);
-      setScheduleStep("choosing-slot");
+      setActionDone("Bot assumiu a conversa!");
+      await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1500);
     },
     onError: (err: any) => {
       console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
