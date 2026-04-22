@@ -22,6 +22,7 @@ import {
   sendBookingMessage,
   patchBooking,
 } from "@/lib/bookingApi";
+import { rememberBookingProcedureNameOverride } from "@/lib/bookingProcedureNameOverrides";
 import type { BookingMessage } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import {
