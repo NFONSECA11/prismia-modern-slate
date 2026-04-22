@@ -1032,21 +1032,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
 
-      // PATCH 1: precisa enviar a FK `procedure` para o backend gerar slots
-      // corretamente em `suggest_slots`. O `procedure_name` aqui pode ser
-      // sobrescrito pelo backend — o PATCH 2 (após suggest) reforça o nome.
+      // PATCH 1: envia apenas nomes/códigos manuais para evitar que o backend
+      // sobrescreva `procedure_name`/`professional_name` a partir das FKs.
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
-        procedure: selectedProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
         vars_snapshot: existingVars,
         notes: updatedNotes,
       };
-      if (selectedProfessionalId) {
-        patch1.professional = selectedProfessionalId;
-        if (profName) patch1.professional_name = profName;
+      if (profName) {
+        patch1.professional_name = profName;
       }
       if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
