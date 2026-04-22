@@ -1550,6 +1550,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               )}
             </button>
             {!conversationCollapsed && (
+            <>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface" style={{ minHeight: "150px" }}>
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-6">
