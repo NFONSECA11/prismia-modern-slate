@@ -1706,6 +1706,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 )}
               </button>
             </div>
+            )}
           </div>
         </div>
 
