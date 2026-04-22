@@ -983,6 +983,108 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     )
   );
 
+  // ── IA Enabled • Fluxo Agendar ────────────────────────────────────────────
+  // Estados locais para o sub-fluxo de agendamento manual quando IA está ativa.
+  type ScheduleStep = "form" | "choosing-slot";
+  const [scheduleStep, setScheduleStep] = useState<ScheduleStep>("form");
+  const [scheduleSlots, setScheduleSlots] = useState<Array<{ start_at: string; label: string }>>([]);
+  const [pickingSlotIdx, setPickingSlotIdx] = useState<number | null>(null);
+
+  // Reset schedule sub-flow when booking changes or tab changes
+  useEffect(() => {
+    setScheduleStep("form");
+    setScheduleSlots([]);
+    setPickingSlotIdx(null);
+  }, [booking?.id, iaOpType]);
+
+  const scheduleSuggestMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
+
+      // 1) PATCH na BR atual com profissional/procedimento/lead_name
+      const payload: Record<string, unknown> = {
+        lead_name: assignLeadName.trim(),
+        professional: selectedProfessionalId,
+        procedure: selectedProcedureId,
+        booking_mode: "assisted_slots_dashboard",
+      };
+      if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+      if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
+      console.log("[scheduleSuggestMut] PATCH payload:", JSON.stringify(payload));
+      await patchBooking(booking.id, payload);
+
+      // 2) Solicita slots ao backend
+      const suggestResponse = await suggestSlots(booking.id);
+      console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
+
+      // 3) Refetch detalhes — backend popula offer_slots
+      const detail = await fetchBookingRequestById(booking.id);
+      const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+
+      // Fallback: alguns backends devolvem os slots já no payload de suggest_slots
+      const slotsFromResponse =
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.slots) ? (suggestResponse as any).slots : null) ??
+        (Array.isArray((suggestResponse as any)?.result?.offer_slots) ? (suggestResponse as any).result.offer_slots : null);
+
+      const finalSlots = slotsFromDetail.length > 0 ? slotsFromDetail : (slotsFromResponse ?? []);
+      return finalSlots as Array<{ start_at: string; label: string }>;
+    },
+    onSuccess: (slots) => {
+      if (!slots || slots.length === 0) {
+        toast.error("Nenhum horário disponível para essa combinação. Tente outro profissional ou procedimento.");
+        return;
+      }
+      setScheduleSlots(slots);
+      setScheduleStep("choosing-slot");
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+    },
+    onError: (err: any) => {
+      console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
+      const data = err?.response?.data;
+      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
+      toast.error(typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários."));
+    },
+  });
+
+  const scheduleConfirmMut = useMutation({
+    mutationFn: async (slot: { start_at: string; label: string }) => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      // 1) Grava o slot escolhido em vars_snapshot.chosen_slot
+      const existingVars = (booking as any)?.vars_snapshot ?? {};
+      await patchBooking(booking.id, {
+        vars_snapshot: { ...existingVars, chosen_slot: slot },
+      });
+      // 2) Confirma usando o slot escolhido
+      await confirmBooking(booking.id, {
+        use_chosen_slot: true,
+        notes: "Confirmado via Dashboard PrismIA (IA Enabled)",
+      });
+    },
+    onSuccess: async () => {
+      setActionDone("Agendamento confirmado!");
+      toast.success("Agendamento confirmado!");
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1500);
+    },
+    onError: (err: any) => {
+      console.error("[scheduleConfirmMut] error:", err?.response?.status, err?.response?.data);
+      setPickingSlotIdx(null);
+      const data = err?.response?.data;
+      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
+      toast.error(typeof detail === "string" ? detail : "Não foi possível confirmar o horário.");
+    },
+  });
+
   if (!booking) return null;
 
   const hasChosenSlot = !!(booking.vars_snapshot?.chosen_slot || booking.chosen_slot);
