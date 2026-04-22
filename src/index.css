@@ -10,7 +10,7 @@
   /* ══════ THEME 1: Prism Night — base (todas as variáveis fixas) ══════ */
   [data-theme="night"] {
     --background: 216 65% 5%;
-    --surface: 211 43% 20%;
+    --surface: 216 48% 16%;
     --surface-raised: 215 44% 19%;
     --filter-bar-bg: 216 48% 16%;
     --surface-elevated: 215 40% 22%;
@@ -434,11 +434,11 @@
      ════════════════════════════════════════════════════════════════════ */
 
   /* ── GRUPO 1: Moldura (topbar + filtros + cabeçalho) ── */
-  /* Default no tema Night: unifica os 3 elementos em #0e1c2e (HSL 216 50% 11%) */
+  /* Default no tema Night: unifica os 3 elementos em #1d3148 (HSL 211 43% 20%) */
   [data-theme="night"] {
-    --topbar-bg: 216 50% 11%;
-    --table-header-bg: 216 50% 11%;
-    --filter-bar-bg: 216 50% 11%;
+    --topbar-bg: 211 43% 20%;
+    --table-header-bg: 211 43% 20%;
+    --filter-bar-bg: 211 43% 20%;
   }
   [data-group1="dark"] {
     --topbar-bg: 216 50% 10%;
