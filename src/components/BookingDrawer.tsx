@@ -1026,6 +1026,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
       const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
+      const procedureSlug = selectedProc?.slug ?? "";
       const unitName = booking.unit_name ?? "";
       const profName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
@@ -1044,7 +1045,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         patch1.professional = selectedProfessionalId;
         if (profName) patch1.professional_name = profName;
       }
-      if (resolvedUnitProcId) patch1.procedure_code = resolvedUnitProcId;
+      // procedure_code é SLUG (string), não ID
+      if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
@@ -1053,7 +1055,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       // 2) Solicita slots ao backend com procedimento e unidade
       const suggestPayload: Record<string, unknown> = {};
       if (selectedProcedureId) suggestPayload.procedure = selectedProcedureId;
-      if (resolvedUnitProcId) suggestPayload.procedure_code = resolvedUnitProcId;
+      if (procedureSlug) suggestPayload.procedure_code = procedureSlug;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       const suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
@@ -1067,7 +1069,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         procedure_name: procedureName,
         unit_name: unitName,
       };
-      if (resolvedUnitProcId) patch2.procedure_code = resolvedUnitProcId;
+      if (procedureSlug) patch2.procedure_code = procedureSlug;
       if (selectedProfessionalId) patch2.professional = selectedProfessionalId;
       if (profName) patch2.professional_name = profName;
       if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
@@ -1082,7 +1084,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           procedure: selectedProcedureId,
           procedure_name: procedureName,
         };
-        if (resolvedUnitProcId) patch3.procedure_code = resolvedUnitProcId;
+        if (procedureSlug) patch3.procedure_code = procedureSlug;
         console.warn("[scheduleSuggestMut] PATCH 3 correcting procedure_name:", JSON.stringify({
           expected: procedureName,
           actual: detail?.procedure_name,
