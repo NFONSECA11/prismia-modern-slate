@@ -1060,8 +1060,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (procedureSlug) suggestPayload.procedure_code = procedureSlug;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
-      const suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
-      console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
+      let suggestResponse: any;
+      try {
+        suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
+        console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const data = err?.response?.data;
+        const detail =
+          (typeof data === "string" ? data : null) ??
+          data?.detail ??
+          data?.error ??
+          data?.message ??
+          JSON.stringify(data ?? {});
+        console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
+        throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
+      }
 
       // 3) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
       const patch2: Record<string, unknown> = {
