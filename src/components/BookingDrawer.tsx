@@ -1004,11 +1004,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
       // 1) PATCH na BR atual em modo automático (bot vai assumir)
+      // Garante preferências mínimas para o suggest_slots não falhar com missing_slots.
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const existingWindow = (booking as any)?.preferred_window?.trim?.() || (booking as any)?.vars_snapshot?.preferred_window?.trim?.() || "";
+      const existingPeriod = (booking as any)?.preferred_period?.trim?.() || "";
+      const preferredWindow = existingWindow || todayStr;
+      const preferredPeriod = existingPeriod || "any";
+
+      const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
+        preferred_window: preferredWindow,
+        preferred_period: preferredPeriod,
+        vars_snapshot: { ...existingVars, preferred_window: preferredWindow },
       };
       if (selectedProfessionalId) payload.professional = selectedProfessionalId;
       if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
