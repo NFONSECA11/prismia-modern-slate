@@ -1030,7 +1030,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       await patchBooking(booking.id, payload);
 
       // 2) Solicita slots ao backend
-      const suggestResponse = await suggestSlots(booking.id);
+      const suggestResponse = await suggestSlots(booking.id, {
+        preferred_window: preferredWindow,
+        preferred_period: preferredPeriod,
+      });
       console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
 
       // 3) Devolve o controle para o bot (handoff OFF = bot ON)

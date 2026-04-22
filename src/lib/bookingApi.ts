@@ -284,9 +284,14 @@ export async function handoffOff(id: number): Promise<void> {
 }
 
 // ── Sugerir horários ─────────────────────────────────────────────────────────
-export async function suggestSlots(id: number): Promise<any> {
+export interface SuggestSlotsPayload {
+  preferred_window?: string;
+  preferred_period?: string;
+}
+
+export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}): Promise<any> {
   await fetchCsrf();
-  const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, {});
+  const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload);
   return data;
 }
 
