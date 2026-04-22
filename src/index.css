@@ -434,11 +434,11 @@
      ════════════════════════════════════════════════════════════════════ */
 
   /* ── GRUPO 1: Moldura (topbar + filtros + cabeçalho) ── */
-  /* Default no tema Night: unifica os 3 elementos em #1d3148 (HSL 211 43% 20%) */
+  /* Default no tema Night: unifica os 3 elementos em #0e1c2e (HSL 216 50% 11%) */
   [data-theme="night"] {
-    --topbar-bg: 211 43% 20%;
-    --table-header-bg: 211 43% 20%;
-    --filter-bar-bg: 211 43% 20%;
+    --topbar-bg: 216 50% 11%;
+    --table-header-bg: 216 50% 11%;
+    --filter-bar-bg: 216 50% 11%;
   }
   [data-group1="dark"] {
     --topbar-bg: 216 50% 10%;
