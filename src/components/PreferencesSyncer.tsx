@@ -22,7 +22,15 @@ import {
  */
 export default function PreferencesSyncer() {
   const { isAuthenticated, isLoading, units, activeUnit, setActiveUnit } = useAuth();
-  const { theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent } = useTheme();
+  const {
+    theme, setTheme,
+    bgMode, setBgMode,
+    bgVariant, setBgVariant,
+    accent, setAccent,
+    group1, setGroup1,
+    group2, setGroup2,
+    group3, setGroup3,
+  } = useTheme();
 
   const loaded = useRef(false);
 
@@ -31,6 +39,9 @@ export default function PreferencesSyncer() {
   const serverBg = useRef<string | null>(null);
   const serverAccent = useRef<string | null>(null);
   const serverUnitId = useRef<number | null | undefined>(undefined); // undefined = not loaded yet
+  const serverGroup1 = useRef<string | null>(null);
+  const serverGroup2 = useRef<string | null>(null);
+  const serverGroup3 = useRef<string | null>(null);
 
   // ── Reset when user logs out ────────────────────────────────────────────
   useEffect(() => {
@@ -40,6 +51,9 @@ export default function PreferencesSyncer() {
       serverBg.current = null;
       serverAccent.current = null;
       serverUnitId.current = undefined;
+      serverGroup1.current = null;
+      serverGroup2.current = null;
+      serverGroup3.current = null;
       sessionStorage.removeItem("prefs:last_view");
       sessionStorage.removeItem("prefs:last_date");
     }
@@ -80,6 +94,14 @@ export default function PreferencesSyncer() {
           serverAccent.current = prefs.accent;
           setAccent(prefs.accent as any);
         }
+
+        // Color groups (campos opcionais — backend pode não retornar ainda)
+        const g1 = (prefs as any).color_group1;
+        if (g1) { serverGroup1.current = g1; setGroup1(g1); }
+        const g2 = (prefs as any).color_group2;
+        if (g2) { serverGroup2.current = g2; setGroup2(g2); }
+        const g3 = (prefs as any).color_group3;
+        if (g3) { serverGroup3.current = g3; setGroup3(g3); }
 
         // Unit — null/undefined explícito = "Todas as unidades"
         serverUnitId.current = prefs.last_unit_id ?? null;
@@ -153,6 +175,34 @@ export default function PreferencesSyncer() {
       savePreference({ last_unit_id: newId });
     }
   }, [activeUnit]);
+
+  // ── Watch color group changes ───────────────────────────────────────────
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group1 !== serverGroup1.current) {
+      console.log("[Prefs] group1 changed:", serverGroup1.current, "→", group1);
+      serverGroup1.current = group1;
+      savePreference({ color_group1: group1 });
+    }
+  }, [group1]);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group2 !== serverGroup2.current) {
+      console.log("[Prefs] group2 changed:", serverGroup2.current, "→", group2);
+      serverGroup2.current = group2;
+      savePreference({ color_group2: group2 });
+    }
+  }, [group2]);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group3 !== serverGroup3.current) {
+      console.log("[Prefs] group3 changed:", serverGroup3.current, "→", group3);
+      serverGroup3.current = group3;
+      savePreference({ color_group3: group3 });
+    }
+  }, [group3]);
 
   return null;
 }
