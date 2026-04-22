@@ -3,6 +3,7 @@ import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
+import { isConversationUnread, markConversationRead, subscribeReadChanges } from "@/lib/conversationReadState";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -216,6 +217,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
   const { open: openConversationPopout } = useConversationPopout();
   const isMobile = useIsMobile();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
+
+  // Re-render when any conversation read-state changes
+  const [, setReadTick] = useState(0);
+  useEffect(() => subscribeReadChanges(() => setReadTick((t) => t + 1)), []);
+
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
@@ -519,29 +525,37 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                           </div>
 
                           {/* Conversa (popout) — somente status handoff */}
-                          {booking.status === "handoff" && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isMobile) {
-                                      onSelectBooking(booking);
-                                    } else {
-                                      openConversationPopout(booking);
-                                    }
-                                  }}
-                                  aria-label="Abrir conversa"
-                                  className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30"
-                                >
-                                  <MessageCircle className="h-3.5 w-3.5" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                Abrir conversa
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
+                          {booking.status === "handoff" && (() => {
+                            const unread = isConversationUnread(booking.id, booking.updated_at);
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markConversationRead(booking.id);
+                                      if (isMobile) {
+                                        onSelectBooking(booking);
+                                      } else {
+                                        openConversationPopout(booking);
+                                      }
+                                    }}
+                                    aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                                    className={`flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border ${
+                                      unread
+                                        ? "text-white bg-[hsl(14_90%_60%)] hover:bg-[hsl(14_90%_55%)] border-[hsl(14_90%_60%)] animate-pulse shadow-[0_0_12px_hsl(14_90%_60%/0.6)]"
+                                        : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                    }`}
+                                  >
+                                    <MessageCircle className="h-3.5 w-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  {unread ? "Mensagem não lida" : "Abrir conversa"}
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })()}
                         </div>
                       </td>
 

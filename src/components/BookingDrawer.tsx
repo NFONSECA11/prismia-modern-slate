@@ -7,6 +7,7 @@ import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/type
 import { StatusBadge, detectAiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
+import { markConversationRead } from "@/lib/conversationReadState";
 
 import {
   confirmBooking,
@@ -449,6 +450,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     handoffOnMut.reset();
     handoffOffMut.reset();
     suggestMut.reset();
+  }, [booking?.id]);
+
+  // Mark conversation as read whenever drawer opens for a booking
+  useEffect(() => {
+    if (booking?.id != null) markConversationRead(booking.id);
   }, [booking?.id]);
 
   const saveQuickReplies = (replies: string[]) => {

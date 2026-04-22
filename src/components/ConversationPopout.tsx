@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { markConversationRead } from "@/lib/conversationReadState";
 
 const DEFAULT_QUICK_REPLIES = [
   "Olá! Como posso te ajudar?",
@@ -78,11 +79,12 @@ export function ConversationPopout() {
     setInitialized(true);
   }, [booking, initialized]);
 
-  // Reset state when booking changes
+  // Reset state when booking changes + mark conversation as read
   useEffect(() => {
     setMessageText("");
     setShowQuickReplies(false);
     setEditingQuickReplies(false);
+    if (booking?.id != null) markConversationRead(booking.id);
   }, [booking?.id]);
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
