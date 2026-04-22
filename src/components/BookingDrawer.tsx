@@ -1032,33 +1032,39 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
 
-      // PATCH 1: envia apenas nomes/códigos manuais para evitar que o backend
-      // sobrescreva `procedure_name`/`professional_name` a partir das FKs.
+      // PATCH 1a: envia a FK `procedure` (necessária para o backend gerar slots
+      // em suggest_slots). O backend sobrescreve `procedure_name` baseado em
+      // outras regras, então corrigimos logo em seguida no PATCH 1b.
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
-        procedure_name: procedureName,
+        procedure: selectedProcedureId,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
         vars_snapshot: existingVars,
         notes: updatedNotes,
       };
-      if (profName) {
-        patch1.professional_name = profName;
+      if (selectedProfessionalId) {
+        patch1.professional = selectedProfessionalId;
       }
       if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
-      console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
-      console.log("[scheduleSuggestMut] PATCH 1 enviado");
-      const patch1Result = await patchBooking(booking.id, patch1);
-      console.log("[scheduleSuggestMut] PATCH 1 concluído - resposta:", {
-        isPromiseResolved: true,
-        returnedProcedureName: (patch1Result as any)?.procedure_name,
-        returnedLeadName: (patch1Result as any)?.lead_name,
+      console.log("[scheduleSuggestMut] PATCH 1a (FK) payload:", JSON.stringify(patch1));
+      await patchBooking(booking.id, patch1);
+
+      // PATCH 1b: força os nomes manuais SEM enviar as FKs, evitando que o
+      // backend volte a sobrescrever procedure_name/professional_name.
+      const patch1b: Record<string, unknown> = {
+        procedure_name: procedureName,
+      };
+      if (procedureSlug) patch1b.procedure_code = procedureSlug;
+      if (profName) patch1b.professional_name = profName;
+      console.log("[scheduleSuggestMut] PATCH 1b (nomes) payload:", JSON.stringify(patch1b));
+      const patch1bResult = await patchBooking(booking.id, patch1b);
+      console.log("[scheduleSuggestMut] PATCH 1b concluído - resposta:", {
+        returnedProcedureName: (patch1bResult as any)?.procedure_name,
+        returnedLeadName: (patch1bResult as any)?.lead_name,
       });
-      console.log("[scheduleSuggestMut] aguardando 500ms antes do suggest_slots...");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("[scheduleSuggestMut] continuando para suggest_slots");
 
       // 2) Solicita slots ao backend com procedimento e unidade
       const suggestPayload: Record<string, unknown> = {};
