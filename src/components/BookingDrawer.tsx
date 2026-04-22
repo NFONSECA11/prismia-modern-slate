@@ -1003,47 +1003,38 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
-      // 1) PATCH na BR atual em modo automático (bot vai assumir)
-      // Garante preferências mínimas para o suggest_slots não falhar com missing_slots.
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      const existingWindow = (booking as any)?.preferred_window?.trim?.() || (booking as any)?.vars_snapshot?.preferred_window?.trim?.() || "";
-      const existingPeriod = (booking as any)?.preferred_period?.trim?.() || "";
-      const preferredWindow = existingWindow || todayStr;
-      const preferredPeriod = existingPeriod || "any";
-
+      // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
-      const payload: Record<string, unknown> = {
+      const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
-        booking_mode: "auto_slots_bot",
-        conversation_bot_mode: "on",
-        preferred_window: preferredWindow,
-        preferred_period: preferredPeriod,
-        vars_snapshot: { ...existingVars, preferred_window: preferredWindow },
+        booking_mode: "assisted_slots_dashboard",
+        vars_snapshot: existingVars,
       };
-      if (selectedProfessionalId) payload.professional = selectedProfessionalId;
-      if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
+      if (selectedProfessionalId) patch1.professional = selectedProfessionalId;
+      if (resolvedUnitProcId) patch1.procedure_code = resolvedUnitProcId;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
-      if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
-      console.log("[scheduleSuggestMut] PATCH payload:", JSON.stringify(payload));
-      await patchBooking(booking.id, payload);
+      if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
+      console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
+      await patchBooking(booking.id, patch1);
 
-      // 2) Solicita slots ao backend
-      const suggestResponse = await suggestSlots(booking.id, {
-        preferred_window: preferredWindow,
-        preferred_period: preferredPeriod,
-      });
+      // 2) Solicita slots ao backend (apenas unidade + procedimento via procedure_code)
+      const suggestPayload: Record<string, unknown> = {};
+      if (resolvedUnitProcId) suggestPayload.procedure_code = resolvedUnitProcId;
+      if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+      console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
+      const suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
       console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
 
-      // 3) Devolve o controle para o bot (handoff OFF = bot ON)
-      try {
-        await handoffOff(booking.id);
-      } catch (err) {
-        console.warn("[scheduleSuggestMut] handoffOff falhou (bot pode já estar ligado):", err);
-      }
+      // 3) PATCH na BR — coloca em automático (bot assume)
+      const patch2: Record<string, unknown> = {
+        booking_mode: "auto_slots_bot",
+        conversation_bot_mode: "on",
+      };
+      console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
+      await patchBooking(booking.id, patch2);
 
-      // 4) Refetch detalhes — para confirmar offer_slots/status
+      // 4) Refetch detalhes — para mostrar offer_slots/status atualizados
       const detail = await fetchBookingRequestById(booking.id);
       const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
 
