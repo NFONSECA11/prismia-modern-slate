@@ -480,7 +480,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     effectiveProfessionalName.trim() !== "None"
   );
 
-  // Always fetch professionals when drawer opens with a booking missing a professional
   const earlyProcCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
@@ -491,6 +490,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   // Estrutura visual apenas — ações ainda não conectadas.
   type IaOpType = "schedule" | "reschedule" | "cancel";
   const [iaOpType, setIaOpType] = useState<IaOpType>("schedule");
+  // Always fetch scheduling lookups when the manual IA flow is active, even if the
+  // booking already has a professional assigned. Otherwise the procedure select can
+  // stay empty and the action never reaches the PATCH.
+  const needsSchedulingLookups = !!booking && aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule");
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
@@ -507,7 +510,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const result = Array.isArray(data) ? data : (data?.results ?? []);
       return result as { id: number; name: string; code?: string }[];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Safety net: also fetch professional-units links for the booking unit and filter client-side,
@@ -521,7 +524,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? (arr as { professional?: number | { id: number }; unit?: number | { id: number }; is_active?: boolean }[]) : [];
     },
-    enabled: needsProfessional && !!bookingUnitId,
+    enabled: (needsProfessional || needsSchedulingLookups) && !!bookingUnitId,
   });
 
   const allowedProfIds = (() => {
@@ -550,7 +553,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? arr as { id: number; professional?: number; procedure?: number; procedure_name?: string }[] : [];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Fetch all procedures
@@ -561,7 +564,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? arr as { id: number; name?: string; slug?: string }[] : [];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Fetch all specialties
@@ -572,7 +575,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? arr as { id: number; name?: string }[] : [];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Fetch procedure-specialties links (to auto-resolve specialty)
@@ -583,7 +586,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? arr as { id: number; procedure?: number; specialty?: number }[] : [];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Fetch unit-procedures links (to resolve procedure_code = unit-procedure ID)
@@ -594,7 +597,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
       return Array.isArray(arr) ? arr as { id: number; procedure?: number; unit?: number; unit_name?: string }[] : [];
     },
-    enabled: needsProfessional,
+    enabled: needsProfessional || needsSchedulingLookups,
   });
 
   // Derived: procedures available for selected professional
