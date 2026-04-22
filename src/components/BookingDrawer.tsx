@@ -1147,6 +1147,31 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       }
 
       // 3) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
+      // Tenta inferir profissional/professional_unit a partir dos slots devolvidos pelo backend.
+      const offerSlotsRaw =
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.result?.offer_slots) ? (suggestResponse as any).result.offer_slots : null) ??
+        [];
+      const slotProfIds = Array.from(
+        new Set(
+          offerSlotsRaw
+            .map((s: any) => Number(s?.professional_id))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        )
+      );
+      const slotProfUnitIds = Array.from(
+        new Set(
+          offerSlotsRaw
+            .map((s: any) => Number(s?.professional_unit_id))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        )
+      );
+      const inferredProfessionalId =
+        selectedProfessionalId ??
+        (slotProfIds.length === 1 ? (slotProfIds[0] as number) : null);
+      const inferredProfessionalUnitId =
+        slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
+
       const patch2: Record<string, unknown> = {
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
@@ -1156,7 +1181,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (procedureCode) patch2.procedure_code = procedureCode;
       if (profName) patch2.professional_name = profName;
       if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
-      console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
+      if (inferredProfessionalId) patch2.professional = inferredProfessionalId;
+      if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
+      console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2), {
+        slotProfIds,
+        slotProfUnitIds,
+        inferredProfessionalId,
+        inferredProfessionalUnitId,
+      });
       await patchBooking(booking.id, patch2);
 
       // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
@@ -1212,13 +1244,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   });
 
   const scheduleConfirmMut = useMutation({
-    mutationFn: async (slot: { start_at: string; label: string }) => {
+    mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
       // 1) Grava o slot escolhido em vars_snapshot.chosen_slot
       const existingVars = (booking as any)?.vars_snapshot ?? {};
-      await patchBooking(booking.id, {
+      const chosenPatch: Record<string, unknown> = {
         vars_snapshot: { ...existingVars, chosen_slot: slot },
-      });
+      };
+      // Se o slot trouxer profissional/profissional_unit, reforça nos campos top-level
+      const slotProfId = Number((slot as any)?.professional_id);
+      const slotProfUnitId = Number((slot as any)?.professional_unit_id);
+      if (Number.isFinite(slotProfId) && slotProfId > 0) chosenPatch.professional = slotProfId;
+      if (Number.isFinite(slotProfUnitId) && slotProfUnitId > 0) chosenPatch.professional_unit = slotProfUnitId;
+      console.log("[scheduleConfirmMut] chosen slot patch:", chosenPatch);
+      await patchBooking(booking.id, chosenPatch);
       // 2) Confirma usando o slot escolhido
       await confirmBooking(booking.id, {
         use_chosen_slot: true,
