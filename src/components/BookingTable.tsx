@@ -217,6 +217,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
   const { open: openConversationPopout } = useConversationPopout();
   const isMobile = useIsMobile();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
+
+  // Re-render when any conversation read-state changes
+  const [, setReadTick] = useState(0);
+  useEffect(() => subscribeReadChanges(() => setReadTick((t) => t + 1)), []);
+
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [busyActionKey, setBusyActionKey] = useState<string | null>(null);
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
