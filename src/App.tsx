@@ -8,6 +8,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import PreferencesSyncer from "@/components/PreferencesSyncer";
+import { ConversationPopoutProvider } from "@/contexts/ConversationPopoutContext";
+import { ConversationPopout } from "@/components/ConversationPopout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -24,8 +26,10 @@ const App = () => (
     <AuthProvider>
       <PreferencesSyncer />
       <TooltipProvider>
+        <ConversationPopoutProvider>
         <Toaster />
         <Sonner />
+        <ConversationPopout />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -58,6 +62,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ConversationPopoutProvider>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
