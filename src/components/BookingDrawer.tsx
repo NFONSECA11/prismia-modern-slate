@@ -9,6 +9,7 @@ import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import { markConversationRead } from "@/lib/conversationReadState";
 
+import { useAuth } from "@/contexts/AuthContext";
 import {
   confirmBooking,
   cancelBooking,
@@ -468,15 +469,58 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const earlyProcCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
+  // Resolve booking's unit id from auth units (booking has unit_name only)
+  const { units: authUnits } = useAuth();
+  const bookingUnitId = (() => {
+    const name = (booking?.unit_name ?? "").trim().toLowerCase();
+    if (!name) return null;
+    const match = authUnits.find((u) => (u.name ?? "").trim().toLowerCase() === name);
+    return match?.id ?? null;
+  })();
+
   const { data: professionals = [] } = useQuery({
-    queryKey: ["professionals-unit-drawer"],
+    queryKey: ["professionals-unit-drawer", bookingUnitId ?? "all"],
     queryFn: async () => {
-      const { data } = await api.get("/api/booking/professionals/");
+      const { data } = await api.get("/api/booking/professionals/", {
+        params: bookingUnitId ? { unit: bookingUnitId } : undefined,
+      });
       const result = Array.isArray(data) ? data : (data?.results ?? []);
       return result as { id: number; name: string; code?: string }[];
     },
     enabled: needsProfessional,
   });
+
+  // Safety net: also fetch professional-units links for the booking unit and filter client-side,
+  // in case the /professionals/?unit= endpoint ignores the param.
+  const { data: profUnitLinks = [] } = useQuery({
+    queryKey: ["professional-units-drawer", bookingUnitId],
+    queryFn: async () => {
+      const { data } = await api.get("/api/booking/professional-units/", {
+        params: { unit: bookingUnitId, page_size: 500 },
+      });
+      const arr = Array.isArray(data) ? data : (data?.results ?? data?.result?.results ?? data?.result ?? []);
+      return Array.isArray(arr) ? (arr as { professional?: number | { id: number }; unit?: number | { id: number }; is_active?: boolean }[]) : [];
+    },
+    enabled: needsProfessional && !!bookingUnitId,
+  });
+
+  const allowedProfIds = (() => {
+    if (!bookingUnitId) return null; // no filter when unit cannot be resolved
+    const ids = new Set<number>();
+    for (const link of profUnitLinks) {
+      if (link.is_active === false) continue;
+      const profVal = link.professional as any;
+      const unitVal = link.unit as any;
+      const profId = typeof profVal === "object" ? Number(profVal?.id ?? 0) : Number(profVal ?? 0);
+      const unitId = typeof unitVal === "object" ? Number(unitVal?.id ?? 0) : Number(unitVal ?? 0);
+      if (profId && (!unitId || unitId === bookingUnitId)) ids.add(profId);
+    }
+    return ids;
+  })();
+
+  const professionalsForUnit = allowedProfIds
+    ? professionals.filter((p) => allowedProfIds.has(p.id))
+    : professionals;
 
   // Fetch professional-procedures links (to filter procedures by selected professional)
   const { data: profProcLinks = [] } = useQuery({
@@ -1262,7 +1306,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                                   className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                                 >
                                   <option value="">Selecionar...</option>
-                                  {professionals.map((p) => (
+                                  {professionalsForUnit.map((p) => (
                                     <option key={p.id} value={p.id}>
                                       {p.name}
                                     </option>
@@ -1354,7 +1398,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                             >
                               <option value="">Selecionar...</option>
-                              {professionals.map((p) => (
+                              {professionalsForUnit.map((p) => (
                                 <option key={p.id} value={p.id}>
                                   {p.name}
                                 </option>
