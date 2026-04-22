@@ -1052,8 +1052,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
       await patchBooking(booking.id, patch1);
 
-      // 2) Solicita slots ao backend (apenas unidade + procedimento via procedure_code SLUG)
+      // 2) Solicita slots ao backend com procedimento e unidade
       const suggestPayload: Record<string, unknown> = {};
+      if (selectedProcedureId) suggestPayload.procedure = selectedProcedureId;
       if (procedureSlug) suggestPayload.procedure_code = procedureSlug;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
