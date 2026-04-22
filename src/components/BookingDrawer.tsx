@@ -1002,15 +1002,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!booking) throw new Error("Sem agendamento aberto");
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
-      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
 
-      // 1) PATCH na BR atual com profissional/procedimento/lead_name
+      // 1) PATCH na BR atual com lead/procedimento (+ profissional se informado)
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
-        professional: selectedProfessionalId,
         procedure: selectedProcedureId,
         booking_mode: "assisted_slots_dashboard",
       };
+      if (selectedProfessionalId) payload.professional = selectedProfessionalId;
       if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
@@ -1408,7 +1407,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         </div>
                         <div>
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Profissional <span className="text-status-cancelled">*</span>
+                            Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
                           </label>
                           <select
                             value={selectedProfessionalId ?? ""}
@@ -1418,11 +1417,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             }}
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                           >
-                            <option value="">Selecionar...</option>
+                            <option value="">Sem preferência</option>
                             {professionalsForUnit.map((p) => (
                               <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                           </select>
+                          <p className="text-[10px] text-muted-foreground/80 mt-1 italic">
+                            Se o cliente não indicou profissional, deixe em branco.
+                          </p>
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           <button
@@ -1431,8 +1433,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             disabled={
                               scheduleSuggestMut.isPending ||
                               !assignLeadName.trim() ||
-                              !selectedProcedureId ||
-                              !selectedProfessionalId
+                              !selectedProcedureId
                             }
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
