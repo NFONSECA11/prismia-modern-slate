@@ -3,6 +3,7 @@ import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
+import { isConversationUnread, markConversationRead, subscribeReadChanges } from "@/lib/conversationReadState";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
