@@ -389,7 +389,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
+  const [conversationCollapsed, setConversationCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("conversation_collapsed");
+      return saved === null ? true : saved === "true";
+    } catch {
+      return true;
+    }
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleConversationCollapsed = () => {
+    setConversationCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("conversation_collapsed", String(next)); } catch {}
+      return next;
+    });
+  };
 
   const DEFAULT_QUICK_REPLIES = [
     "Olá! Como posso te ajudar?",
