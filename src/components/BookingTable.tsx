@@ -582,7 +582,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = refTs > 0 && isConversationUnread(booking.id, new Date(refTs).toISOString());
-                            console.log("[BookingTable] handoff icon", { id: booking.id, lastInTs, fallbackTs, unread });
                             return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
