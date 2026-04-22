@@ -79,11 +79,12 @@ export function ConversationPopout() {
     setInitialized(true);
   }, [booking, initialized]);
 
-  // Reset state when booking changes
+  // Reset state when booking changes + mark conversation as read
   useEffect(() => {
     setMessageText("");
     setShowQuickReplies(false);
     setEditingQuickReplies(false);
+    if (booking?.id != null) markConversationRead(booking.id);
   }, [booking?.id]);
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
