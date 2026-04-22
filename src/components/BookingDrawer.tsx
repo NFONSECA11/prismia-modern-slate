@@ -470,7 +470,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   // Resolve booking's unit id from auth units (booking has unit_name only)
-  const { units: authUnits } = useAuth();
+  const { units: authUnits, aiEnabled } = useAuth();
+
+  // IA Enabled: tipo de operação manual selecionada no Drawer (Agendamento / Reagendamento / Cancelamento).
+  // Estrutura visual apenas — ações ainda não conectadas.
+  type IaOpType = "schedule" | "reschedule" | "cancel";
+  const [iaOpType, setIaOpType] = useState<IaOpType>("schedule");
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
