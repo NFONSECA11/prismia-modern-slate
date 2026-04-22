@@ -1024,11 +1024,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? existingNotesRaw
         : (existingNotesRaw ? `${existingNotesRaw}\n${manualLog}` : manualLog);
 
-      const procedureName =
-        (selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId)?.name : undefined) ??
-        booking.procedure_name ??
-        "";
+      const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
+      const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
+      const procedureSlug = selectedProc?.slug ?? "";
       const unitName = booking.unit_name ?? "";
+      const profName = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+        : "";
 
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
@@ -1041,28 +1043,31 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       };
       if (selectedProfessionalId) {
         patch1.professional = selectedProfessionalId;
-        const profName = professionals.find((p) => p.id === selectedProfessionalId)?.name;
         if (profName) patch1.professional_name = profName;
       }
-      if (resolvedUnitProcId) patch1.procedure_code = resolvedUnitProcId;
+      // procedure_code é SLUG (string), não ID
+      if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
       await patchBooking(booking.id, patch1);
 
-      // 2) Solicita slots ao backend (apenas unidade + procedimento via procedure_code)
+      // 2) Solicita slots ao backend (apenas unidade + procedimento via procedure_code SLUG)
       const suggestPayload: Record<string, unknown> = {};
-      if (resolvedUnitProcId) suggestPayload.procedure_code = resolvedUnitProcId;
+      if (procedureSlug) suggestPayload.procedure_code = procedureSlug;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       const suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
       console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
 
-      // 3) PATCH na BR — coloca em automático (bot assume)
+      // 3) PATCH na BR — coloca em automático (bot assume) E reforça nomes que o backend pode ter sobrescrito
       const patch2: Record<string, unknown> = {
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
+        procedure_name: procedureName,
+        unit_name: unitName,
       };
+      if (profName) patch2.professional_name = profName;
       console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
       await patchBooking(booking.id, patch2);
 
