@@ -1027,6 +1027,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
+      console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
+        selectedProcedureId,
+        nameFromAPI: selectedProc?.name,
+        slugFromAPI: selectedProc?.slug,
+        fullProcedureObject: selectedProc,
+        bookingCurrentName: booking.procedure_name,
+        finalNameToSend: procedureName,
+      });
       const unitName = booking.unit_name ?? "";
       const profName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
