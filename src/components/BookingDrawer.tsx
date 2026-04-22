@@ -457,6 +457,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     if (booking?.id != null) markConversationRead(booking.id);
   }, [booking?.id]);
 
+  const saveQuickReplies = (replies: string[]) => {
     setQuickReplies(replies);
     localStorage.setItem("quick_replies", JSON.stringify(replies));
   };
