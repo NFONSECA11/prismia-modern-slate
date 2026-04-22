@@ -452,7 +452,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     suggestMut.reset();
   }, [booking?.id]);
 
-  const saveQuickReplies = (replies: string[]) => {
+  // Mark conversation as read whenever drawer opens for a booking
+  useEffect(() => {
+    if (booking?.id != null) markConversationRead(booking.id);
+  }, [booking?.id]);
+
     setQuickReplies(replies);
     localStorage.setItem("quick_replies", JSON.stringify(replies));
   };
