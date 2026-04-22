@@ -1,10 +1,22 @@
 /**
  * Tracks last-read timestamps for booking conversations in localStorage.
- * A conversation is "unread" when booking.updated_at > stored last-read timestamp.
+ * A conversation is "unread" when the latest relevant server timestamp
+ * (usually the latest incoming client message) is newer than the stored last-read timestamp.
  */
 
 const KEY_PREFIX = "booking_last_read_";
 const EVENT = "conversation-read-changed";
+
+function toTimestamp(value?: number | string | Date | null): number {
+  if (value == null) return 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isFinite(ms) ? ms : 0;
+  }
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
 
 export function getLastRead(bookingId: number | string): number {
   try {
@@ -17,20 +29,20 @@ export function getLastRead(bookingId: number | string): number {
   }
 }
 
-export function markConversationRead(bookingId: number | string, ts: number = Date.now()): void {
+export function markConversationRead(bookingId: number | string, ts?: number | string | Date | null): void {
   try {
-    localStorage.setItem(KEY_PREFIX + bookingId, String(ts));
-    window.dispatchEvent(new CustomEvent(EVENT, { detail: { bookingId, ts } }));
+    const nextTs = toTimestamp(ts) || Date.now();
+    localStorage.setItem(KEY_PREFIX + bookingId, String(nextTs));
+    window.dispatchEvent(new CustomEvent(EVENT, { detail: { bookingId, ts: nextTs } }));
   } catch {
     // ignore
   }
 }
 
-export function isConversationUnread(bookingId: number | string, updatedAt?: string | null): boolean {
-  if (!updatedAt) return false;
-  const updatedMs = new Date(updatedAt).getTime();
-  if (!Number.isFinite(updatedMs)) return false;
-  return updatedMs > getLastRead(bookingId);
+export function isConversationUnread(bookingId: number | string, reference?: number | string | Date | null): boolean {
+  const referenceMs = toTimestamp(reference);
+  if (!referenceMs) return false;
+  return referenceMs > getLastRead(bookingId);
 }
 
 export function subscribeReadChanges(cb: () => void): () => void {
@@ -42,3 +54,4 @@ export function subscribeReadChanges(cb: () => void): () => void {
     window.removeEventListener("storage", handler);
   };
 }
+

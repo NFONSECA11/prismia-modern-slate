@@ -581,14 +581,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                             const lastInTs = lastInMsgMap[booking.id] ?? 0;
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
-                            const unread = refTs > 0 && isConversationUnread(booking.id, new Date(refTs).toISOString());
+                            const unread = refTs > 0 && isConversationUnread(booking.id, refTs);
                             return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      markConversationRead(booking.id);
+                                      markConversationRead(booking.id, refTs || undefined);
                                       if (isMobile) {
                                         onSelectBooking(booking);
                                       } else {
