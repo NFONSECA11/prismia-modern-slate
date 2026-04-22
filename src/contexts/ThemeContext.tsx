@@ -4,6 +4,12 @@ export type ThemeId = "night" | "slate" | "frost";
 export type BgMode = "solid" | "gradient" | "landscape";
 export type AccentId = "deep-blue" | "coral" | "teal";
 
+// Color groups — 3 áreas independentes do tema base.
+// "default" = herda do tema atual (sem override).
+export type Group1Id = "default" | "dark" | "light" | "blue";
+export type Group2Id = "default" | "dark" | "light" | "soft";
+export type Group3Id = "default" | "dark" | "light" | "midnight";
+
 interface ThemeContextType {
   theme: ThemeId;
   setTheme: (t: ThemeId) => void;
@@ -13,6 +19,12 @@ interface ThemeContextType {
   setBgVariant: (v: number) => void;
   accent: AccentId;
   setAccent: (a: AccentId) => void;
+  group1: Group1Id;
+  setGroup1: (g: Group1Id) => void;
+  group2: Group2Id;
+  setGroup2: (g: Group2Id) => void;
+  group3: Group3Id;
+  setGroup3: (g: Group3Id) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -24,6 +36,12 @@ const ThemeContext = createContext<ThemeContextType>({
   setBgVariant: () => {},
   accent: "deep-blue",
   setAccent: () => {},
+  group1: "default",
+  setGroup1: () => {},
+  group2: "default",
+  setGroup2: () => {},
+  group3: "default",
+  setGroup3: () => {},
 });
 
 export function useTheme() {
@@ -34,6 +52,9 @@ const THEME_KEY = "prismia-theme";
 const BG_KEY = "prismia-bg-mode";
 const BG_VARIANT_KEY = "prismia-bg-variant";
 const ACCENT_KEY = "prismia-accent";
+const G1_KEY = "prismia-group1";
+const G2_KEY = "prismia-group2";
+const G3_KEY = "prismia-group3";
 
 const THEME_MIGRATION: Record<string, ThemeId> = {
   "dark-navy": "night",
@@ -51,6 +72,19 @@ function resolveTheme(saved: string | null): ThemeId {
 function resolveAccent(saved: string | null): AccentId {
   if (saved === "deep-blue" || saved === "coral" || saved === "teal") return saved;
   return "deep-blue";
+}
+
+function resolveGroup1(saved: string | null): Group1Id {
+  if (saved === "dark" || saved === "light" || saved === "blue" || saved === "default") return saved;
+  return "default";
+}
+function resolveGroup2(saved: string | null): Group2Id {
+  if (saved === "dark" || saved === "light" || saved === "soft" || saved === "default") return saved;
+  return "default";
+}
+function resolveGroup3(saved: string | null): Group3Id {
+  if (saved === "dark" || saved === "light" || saved === "midnight" || saved === "default") return saved;
+  return "default";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -76,6 +110,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [accent, setAccentState] = useState<AccentId>(() => {
     try { return resolveAccent(localStorage.getItem(ACCENT_KEY)); } catch {} return "deep-blue";
+  });
+
+  const [group1, setGroup1State] = useState<Group1Id>(() => {
+    try { return resolveGroup1(localStorage.getItem(G1_KEY)); } catch {} return "default";
+  });
+  const [group2, setGroup2State] = useState<Group2Id>(() => {
+    try { return resolveGroup2(localStorage.getItem(G2_KEY)); } catch {} return "default";
+  });
+  const [group3, setGroup3State] = useState<Group3Id>(() => {
+    try { return resolveGroup3(localStorage.getItem(G3_KEY)); } catch {} return "default";
   });
 
   const setTheme = (t: ThemeId) => {
@@ -106,6 +150,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(ACCENT_KEY, a); } catch {}
   };
 
+  const setGroup1 = (g: Group1Id) => {
+    setGroup1State(g);
+    try { localStorage.setItem(G1_KEY, g); } catch {}
+  };
+  const setGroup2 = (g: Group2Id) => {
+    setGroup2State(g);
+    try { localStorage.setItem(G2_KEY, g); } catch {}
+  };
+  const setGroup3 = (g: Group3Id) => {
+    setGroup3State(g);
+    try { localStorage.setItem(G3_KEY, g); } catch {}
+  };
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
@@ -113,6 +170,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-accent", accent);
   }, [accent]);
+
+  // ── Apply color groups to <html> as data-attributes ───────────────────
+  useEffect(() => {
+    const root = document.documentElement;
+    if (group1 === "default") root.removeAttribute("data-group1");
+    else root.setAttribute("data-group1", group1);
+  }, [group1]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (group2 === "default") root.removeAttribute("data-group2");
+    else root.setAttribute("data-group2", group2);
+  }, [group2]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (group3 === "default") root.removeAttribute("data-group3");
+    else root.setAttribute("data-group3", group3);
+  }, [group3]);
 
   useEffect(() => {
     // Map (theme, bgMode, bgVariant) → data-background tokens defined in index.css
@@ -176,7 +252,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme, bgMode, bgVariant]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, bgMode, setBgMode, bgVariant, setBgVariant, accent, setAccent }}>
+    <ThemeContext.Provider value={{
+      theme, setTheme,
+      bgMode, setBgMode,
+      bgVariant, setBgVariant,
+      accent, setAccent,
+      group1, setGroup1,
+      group2, setGroup2,
+      group3, setGroup3,
+    }}>
       {children}
     </ThemeContext.Provider>
   );

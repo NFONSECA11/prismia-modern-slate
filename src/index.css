@@ -421,6 +421,65 @@
     --gradient-primary: linear-gradient(135deg, hsl(210 90% 40%), hsl(186 72% 48%));
     --shadow-glow: 0 0 24px hsl(210 90% 40% / 0.22);
   }
+
+  /* ════════════════════════════════════════════════════════════════════
+     COLOR GROUPS — overrides independentes por área
+     Grupo 1 (Moldura): Topbar + Barra de Filtros + Cabeçalho Exibição
+     Grupo 2 (Conteúdo): Área de Exibição
+     Grupo 3 (Ambiente): Fundo
+     Cada grupo tem 3 presets: default (herda do tema), dark, light.
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* ── GRUPO 1: Moldura (topbar + filtros + cabeçalho) ── */
+  [data-group1="dark"] {
+    --topbar-bg: 216 50% 10%;
+    --table-header-bg: 216 45% 14%;
+    --surface-raised: 216 45% 14%;
+  }
+  [data-group1="light"] {
+    --topbar-bg: 213 25% 93%;
+    --topbar-foreground: 222 47% 11%;
+    --table-header-bg: 213 25% 93%;
+    --surface-raised: 213 25% 93%;
+  }
+  [data-group1="blue"] {
+    --topbar-bg: 215 70% 22%;
+    --table-header-bg: 215 60% 26%;
+    --surface-raised: 215 60% 26%;
+  }
+
+  /* ── GRUPO 2: Conteúdo (área de exibição: linhas/cards) ── */
+  [data-group2="dark"] {
+    --surface: 216 45% 12%;
+    --card: 216 45% 12%;
+    --appointment-bg: 212 40% 18%;
+  }
+  [data-group2="light"] {
+    --surface: 0 0% 100%;
+    --card: 0 0% 100%;
+    --appointment-bg: 0 0% 100%;
+    --appointment-text: 222 47% 11%;
+  }
+  [data-group2="soft"] {
+    --surface: 220 16% 95%;
+    --card: 220 16% 95%;
+    --appointment-bg: 220 16% 95%;
+    --appointment-text: 222 47% 11%;
+  }
+
+  /* ── GRUPO 3: Fundo ── */
+  [data-group3="dark"] {
+    --background: 216 65% 5%;
+    --gradient-bg: none;
+  }
+  [data-group3="light"] {
+    --background: 220 16% 97%;
+    --gradient-bg: none;
+  }
+  [data-group3="midnight"] {
+    --background: 240 30% 8%;
+    --gradient-bg: none;
+  }
 }
 
 @layer base {
