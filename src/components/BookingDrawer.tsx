@@ -1032,20 +1032,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
 
+      // ⚠️ Não enviar a FK `procedure` — o backend usa a FK para re-derivar
+      // `procedure_name` a partir do banco, sobrescrevendo o nome enviado.
+      // Enviar apenas `procedure_name` (+ `procedure_code` slug) preserva o nome.
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
-        procedure: selectedProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
         vars_snapshot: existingVars,
         notes: updatedNotes,
       };
-      if (selectedProfessionalId) {
-        patch1.professional = selectedProfessionalId;
-        if (profName) patch1.professional_name = profName;
+      if (selectedProfessionalId && profName) {
+        // Mesma lógica: enviar só o nome, não a FK `professional`
+        patch1.professional_name = profName;
       }
-      // procedure_code é SLUG (string), não ID
       if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
@@ -1065,12 +1066,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const patch2: Record<string, unknown> = {
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
-        procedure: selectedProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
       };
       if (procedureSlug) patch2.procedure_code = procedureSlug;
-      if (selectedProfessionalId) patch2.professional = selectedProfessionalId;
       if (profName) patch2.professional_name = profName;
       if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
@@ -1081,7 +1080,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       let detail = await fetchBookingRequestById(booking.id);
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
         const patch3: Record<string, unknown> = {
-          procedure: selectedProcedureId,
           procedure_name: procedureName,
         };
         if (procedureSlug) patch3.procedure_code = procedureSlug;
