@@ -1060,19 +1060,38 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
       console.log("[scheduleSuggestMut] suggest_slots response:", suggestResponse);
 
-      // 3) PATCH na BR — coloca em automático (bot assume) E reforça nomes que o backend pode ter sobrescrito
+      // 3) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
       const patch2: Record<string, unknown> = {
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
+        procedure: selectedProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
       };
+      if (procedureSlug) patch2.procedure_code = procedureSlug;
+      if (selectedProfessionalId) patch2.professional = selectedProfessionalId;
       if (profName) patch2.professional_name = profName;
+      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
       await patchBooking(booking.id, patch2);
 
-      // 4) Refetch detalhes — para mostrar offer_slots/status atualizados
-      const detail = await fetchBookingRequestById(booking.id);
+      // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
+      // faz um PATCH corretivo final com o procedimento real selecionado.
+      let detail = await fetchBookingRequestById(booking.id);
+      if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
+        const patch3: Record<string, unknown> = {
+          procedure: selectedProcedureId,
+          procedure_name: procedureName,
+        };
+        if (procedureSlug) patch3.procedure_code = procedureSlug;
+        console.warn("[scheduleSuggestMut] PATCH 3 correcting procedure_name:", JSON.stringify({
+          expected: procedureName,
+          actual: detail?.procedure_name,
+          payload: patch3,
+        }));
+        await patchBooking(booking.id, patch3);
+        detail = await fetchBookingRequestById(booking.id);
+      }
       const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
 
       const slotsFromResponse =
