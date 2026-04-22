@@ -443,6 +443,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setMockAssignedProfessional(null);
     setMessageText("");
     setActionDone(null);
+    // IA mode: pré-seleciona a aba conforme procedure_code
+    const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
+    if (code === "cancel") setIaOpType("cancel");
+    else if (code === "reschedule") setIaOpType("reschedule");
+    else setIaOpType("schedule");
     // Reset stale mutation errors
     confirmMut.reset();
     cancelMut.reset();
