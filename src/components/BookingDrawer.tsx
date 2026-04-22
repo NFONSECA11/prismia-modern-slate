@@ -7,6 +7,7 @@ import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/type
 import { StatusBadge, detectAiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
+import { markConversationRead } from "@/lib/conversationReadState";
 
 import {
   confirmBooking,
