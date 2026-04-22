@@ -1002,15 +1002,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!booking) throw new Error("Sem agendamento aberto");
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
-      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
 
-      // 1) PATCH na BR atual com profissional/procedimento/lead_name
+      // 1) PATCH na BR atual com lead/procedimento (+ profissional se informado)
       const payload: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
-        professional: selectedProfessionalId,
         procedure: selectedProcedureId,
         booking_mode: "assisted_slots_dashboard",
       };
+      if (selectedProfessionalId) payload.professional = selectedProfessionalId;
       if (resolvedUnitProcId) payload.procedure_code = resolvedUnitProcId;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) payload.specialty = resolvedSpecialty;
