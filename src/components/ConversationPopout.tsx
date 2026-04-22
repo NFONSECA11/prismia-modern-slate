@@ -92,6 +92,19 @@ export function ConversationPopout() {
     refetchInterval: 30_000,
   });
 
+  // Mark as read using the latest incoming message timestamp while open
+  useEffect(() => {
+    if (!booking?.id) return;
+    const latestIncomingTs = messages.reduce((latest, msg) => {
+      const role = (msg.role ?? "").toLowerCase();
+      const isUser = role.includes("user") || role.includes("lead") || role.includes("client") || role === "in" || role === "inbound";
+      if (!isUser || !msg.created_at) return latest;
+      const ts = new Date(msg.created_at).getTime();
+      return Number.isFinite(ts) && ts > latest ? ts : latest;
+    }, 0);
+    markConversationRead(booking.id, latestIncomingTs || booking.updated_at || undefined);
+  }, [booking?.id, booking?.updated_at, messages]);
+
   const sendMsgMutation = useMutation({
     mutationFn: (text: string) => sendBookingMessage(booking!.id, text),
     onSuccess: () => {
