@@ -865,7 +865,10 @@ export default function Index() {
       <BookingDrawer
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
-        onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["booking-requests"] })}
+        onConfirmed={() => {
+          queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+          queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+        }}
         logoUrl={branding?.logo_url}
         logoAlt={branding?.logo_alt}
       />

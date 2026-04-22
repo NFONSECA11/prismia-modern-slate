@@ -1127,6 +1127,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       setActionDone("Bot assumiu a conversa!");
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
       setTimeout(() => {
         onConfirmed();
         onClose();
