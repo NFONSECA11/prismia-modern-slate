@@ -1024,14 +1024,26 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? existingNotesRaw
         : (existingNotesRaw ? `${existingNotesRaw}\n${manualLog}` : manualLog);
 
+      const procedureName =
+        (selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId)?.name : undefined) ??
+        booking.procedure_name ??
+        "";
+      const unitName = booking.unit_name ?? "";
+
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
+        procedure_name: procedureName,
+        unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
         vars_snapshot: existingVars,
         notes: updatedNotes,
       };
-      if (selectedProfessionalId) patch1.professional = selectedProfessionalId;
+      if (selectedProfessionalId) {
+        patch1.professional = selectedProfessionalId;
+        const profName = professionals.find((p) => p.id === selectedProfessionalId)?.name;
+        if (profName) patch1.professional_name = profName;
+      }
       if (resolvedUnitProcId) patch1.procedure_code = resolvedUnitProcId;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
