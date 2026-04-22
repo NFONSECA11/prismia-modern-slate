@@ -148,43 +148,6 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
     }
   }
 
-                          {/* Conversa (popout) — somente status handoff */}
-                          {booking.status === "handoff" && (() => {
-                            const lastInTs = lastInMsgMap[booking.id] ?? 0;
-                            const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
-                            const refTs = lastInTs || fallbackTs;
-                            const unread = refTs > 0 && isConversationUnread(booking.id, refTs);
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      markConversationRead(booking.id, refTs || undefined);
-                                      if (isMobile) {
-                                        onSelectBooking(booking);
-                                      } else {
-                                        openConversationPopout(booking);
-                                      }
-                                    }}
-                                    aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
-                                    className={`flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border ${
-                                      unread
-                                        ? "text-white bg-[hsl(14_90%_60%)] hover:bg-[hsl(14_90%_55%)] border-[hsl(14_90%_60%)] animate-pulse shadow-[0_0_12px_hsl(14_90%_60%/0.6)]"
-                                        : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
-                                    }`}
-                                  >
-                                    <MessageCircle className="h-3.5 w-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs">
-                                  {unread ? "Mensagem não lida" : "Abrir conversa"}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
-
-
   // Reopen for terminal
   if (terminal) {
     actions.push({ key: "reopen", icon: RotateCcw, label: "Reabrir", variant: "default" });
