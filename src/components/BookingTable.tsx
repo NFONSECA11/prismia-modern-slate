@@ -671,7 +671,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                             const lastInTs = lastInMsgMap[booking.id] ?? 0;
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
-                            const unread = refTs > 0 && isConversationUnread(booking.id, refTs);
+                            const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
                             return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
