@@ -1052,7 +1052,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 1 (assisted) payload:", JSON.stringify(patch1));
-      await patchBooking(booking.id, patch1);
+      console.log("[scheduleSuggestMut] PATCH 1 enviado");
+      const patch1Result = await patchBooking(booking.id, patch1);
+      console.log("[scheduleSuggestMut] PATCH 1 concluído - resposta:", {
+        isPromiseResolved: true,
+        returnedProcedureName: (patch1Result as any)?.procedure_name,
+        returnedLeadName: (patch1Result as any)?.lead_name,
+      });
+      console.log("[scheduleSuggestMut] aguardando 500ms antes do suggest_slots...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("[scheduleSuggestMut] continuando para suggest_slots");
 
       // 2) Solicita slots ao backend com procedimento e unidade
       const suggestPayload: Record<string, unknown> = {};
