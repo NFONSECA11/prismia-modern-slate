@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
