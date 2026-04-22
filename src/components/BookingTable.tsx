@@ -608,7 +608,32 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatCreatedAgo(booking.created_at)}
                           </span>
-                          
+
+                          {/* Conversa (popout) — somente status handoff */}
+                          {booking.status === "handoff" && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isMobile) {
+                                      onSelectBooking(booking);
+                                    } else {
+                                      openConversationPopout(booking);
+                                    }
+                                  }}
+                                  aria-label="Abrir conversa"
+                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30"
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                Abrir conversa
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+
                           {/* Quick actions - visible on hover */}
                           {(actions.length > 0 || isBotOff) && (
                             <div className="hidden group-hover:flex items-center gap-1 animate-fade-in">
