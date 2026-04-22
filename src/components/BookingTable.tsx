@@ -688,7 +688,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                                     aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                     className={`flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border ${
                                       unread
-                                        ? "text-white bg-[hsl(14_90%_60%)] hover:bg-[hsl(14_90%_55%)] border-[hsl(14_90%_60%)] animate-pulse shadow-[0_0_12px_hsl(14_90%_60%/0.6)]"
+                                        ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
                                         : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                     }`}
                                   >
