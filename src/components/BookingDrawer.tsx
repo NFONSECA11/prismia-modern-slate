@@ -1222,11 +1222,218 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             })()}
             <DetailRow icon={Building2} label="Unidade" tone="assisted" value={booking.unit_name} />
             <DetailRow
-              icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
-              label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
-              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary"}
+              icon={aiEnabled ? Sparkles : (isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User)}
+              label={aiEnabled ? "Ação manual (IA ativa)" : (isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional")}
+              tone={aiEnabled ? "primary" : (isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary")}
               className="col-span-2"
               value={
+                aiEnabled ? (
+                  <div className="flex flex-col gap-3 w-full">
+                    {/* Seletor de tipo de operação */}
+                    <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-surface border border-border w-fit">
+                      {([
+                        { key: "schedule" as const, label: "Agendamento", Icon: Calendar },
+                        { key: "reschedule" as const, label: "Reagendamento", Icon: RotateCcw },
+                        { key: "cancel" as const, label: "Cancelamento", Icon: XCircle },
+                      ]).map(({ key, label, Icon }) => {
+                        const active = iaOpType === key;
+                        const activeTone =
+                          key === "schedule" ? "bg-status-confirmed/15 text-status-confirmed"
+                          : key === "reschedule" ? "bg-status-pending/15 text-status-pending"
+                          : "bg-status-canceled/15 text-status-canceled";
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setIaOpType(key)}
+                            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md transition-all ${
+                              active ? activeTone : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated"
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Painéis por tipo (sem ações conectadas) */}
+                    {iaOpType === "schedule" && (
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente</label>
+                          <input
+                            type="text"
+                            value={assignLeadName}
+                            onChange={(e) => setAssignLeadName(e.target.value)}
+                            placeholder="Nome do cliente..."
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Profissional</label>
+                            <select
+                              value={selectedProfessionalId ?? ""}
+                              onChange={(e) => {
+                                const id = Number(e.target.value) || null;
+                                setSelectedProfessionalId(id);
+                                setSelectedProcedureId(null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                            >
+                              <option value="">Selecionar...</option>
+                              {professionalsForUnit.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento</label>
+                            <select
+                              value={selectedProcedureId ?? ""}
+                              onChange={(e) => {
+                                setSelectedProcedureId(Number(e.target.value) || null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              disabled={!selectedProfessionalId}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <option value="">{selectedProfessionalId ? "Selecionar..." : "—"}</option>
+                              {proceduresForProfessional.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled
+                            title="Ação ainda não implementada"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                            Agendar
+                          </button>
+                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {iaOpType === "reschedule" && (
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente</label>
+                          <input
+                            type="text"
+                            value={assignLeadName}
+                            onChange={(e) => setAssignLeadName(e.target.value)}
+                            placeholder="Nome do cliente..."
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID do Agendamento a Reagendar</label>
+                          <input
+                            type="text"
+                            value={cancelBookingIdField}
+                            onChange={(e) => setCancelBookingIdField(e.target.value)}
+                            placeholder="Ex: 483"
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Profissional</label>
+                            <select
+                              value={selectedProfessionalId ?? ""}
+                              onChange={(e) => {
+                                const id = Number(e.target.value) || null;
+                                setSelectedProfessionalId(id);
+                                setSelectedProcedureId(null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                            >
+                              <option value="">Selecionar...</option>
+                              {professionalsForUnit.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento</label>
+                            <select
+                              value={selectedProcedureId ?? ""}
+                              onChange={(e) => {
+                                setSelectedProcedureId(Number(e.target.value) || null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              disabled={!selectedProfessionalId}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <option value="">{selectedProfessionalId ? "Selecionar..." : "—"}</option>
+                              {proceduresForProfessional.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled
+                            title="Ação ainda não implementada"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Reagendar
+                          </button>
+                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {iaOpType === "cancel" && (
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Requisitante</label>
+                          <input
+                            type="text"
+                            value={assignLeadName}
+                            onChange={(e) => setAssignLeadName(e.target.value)}
+                            placeholder="Nome do cliente..."
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID do Agendamento a Cancelar</label>
+                          <input
+                            type="text"
+                            value={cancelBookingIdField}
+                            onChange={(e) => setCancelBookingIdField(e.target.value)}
+                            placeholder="Ex: 483"
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled
+                            title="Ação ainda não implementada"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-status-canceled/15 text-status-canceled border border-status-canceled/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Cancelar Agenda
+                          </button>
+                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 hasProfessional && !isRescheduleCode ? (
                   effectiveProfessionalName
                 ) : (
