@@ -490,7 +490,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60" style={{ background: "hsl(var(--table-header-bg))" }}>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider w-[220px]">
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap">
                   Contato
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
@@ -559,10 +559,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                                   Conversa
                                 </span>
                               ) : (
-                                <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                                <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                               )
                             ) : (
-                              <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                              <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                             )}
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
