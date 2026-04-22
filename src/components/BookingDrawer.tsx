@@ -1043,12 +1043,29 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       // PATCH 1a: envia a FK `procedure` (necessária para o backend gerar slots
       // em suggest_slots). O backend sobrescreve `procedure_name` baseado em
       // outras regras, então corrigimos logo em seguida no PATCH 1b.
+      // Limpa flags de handoff/intent do vars_snapshot que fazem o backend
+      // sobrescrever procedure_name para "Falar com atendente"
+      const cleanedVars = { ...existingVars };
+      delete (cleanedVars as any).intent;
+      delete (cleanedVars as any).decision;
+      delete (cleanedVars as any).reason_code;
+      delete (cleanedVars as any).suggested_next_action;
+      delete (cleanedVars as any).booking_target_resolved;
+      delete (cleanedVars as any).context_resolution_mode;
+      delete (cleanedVars as any).target_br_id;
+      delete (cleanedVars as any).target_br_display_label;
+      delete (cleanedVars as any).has_open_br;
+      delete (cleanedVars as any).incoming_text;
+      delete (cleanedVars as any).no_progress_attempts;
+      delete (cleanedVars as any).confidence;
+
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         procedure: selectedProcedureId,
+        procedure_name: procedureName,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
-        vars_snapshot: existingVars,
+        vars_snapshot: cleanedVars,
         notes: updatedNotes,
       };
       if (selectedProfessionalId) {
@@ -1057,7 +1074,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (procedureSlug) patch1.procedure_code = procedureSlug;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
-      console.log("[scheduleSuggestMut] PATCH 1a (FK) payload:", JSON.stringify(patch1));
+      console.log("[scheduleSuggestMut] PATCH 1a (FK + nomes + vars limpos) payload:", JSON.stringify(patch1));
       await patchBooking(booking.id, patch1);
 
       // PATCH 1b: força os nomes manuais SEM enviar as FKs, evitando que o
