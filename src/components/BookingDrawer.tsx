@@ -54,6 +54,8 @@ import {
   ClipboardList,
   Check,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -389,7 +391,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
+  const [conversationCollapsed, setConversationCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("conversation_collapsed");
+      return saved === null ? true : saved === "true";
+    } catch {
+      return true;
+    }
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleConversationCollapsed = () => {
+    setConversationCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("conversation_collapsed", String(next)); } catch {}
+      return next;
+    });
+  };
 
   const DEFAULT_QUICK_REPLIES = [
     "Olá! Como posso te ajudar?",
@@ -1511,12 +1529,28 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           )}
 
           {/* Mensagens */}
-          <div className="rounded-xl overflow-hidden border border-border flex flex-col" style={{ maxHeight: showQuickReplies ? "420px" : "320px" }}>
-            <div className="surface-elevated px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border flex items-center gap-2">
+          <div
+            className="rounded-xl overflow-hidden border border-border flex flex-col"
+            style={{ maxHeight: conversationCollapsed ? undefined : (showQuickReplies ? "420px" : "320px") }}
+          >
+            <button
+              type="button"
+              onClick={toggleConversationCollapsed}
+              className="surface-elevated px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border flex items-center gap-2 hover:text-foreground transition-colors w-full text-left"
+              aria-expanded={!conversationCollapsed}
+              aria-label={conversationCollapsed ? "Expandir conversa" : "Recolher conversa"}
+            >
               <MessageSquare className="h-3.5 w-3.5" />
               Conversa
               <span className="ml-auto text-[10px] font-mono opacity-60">{messages.length} msgs</span>
-            </div>
+              {conversationCollapsed ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronUp className="h-3.5 w-3.5" />
+              )}
+            </button>
+            {!conversationCollapsed && (
+            <>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface" style={{ minHeight: "150px" }}>
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-6">
@@ -1673,6 +1707,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                 )}
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
 
