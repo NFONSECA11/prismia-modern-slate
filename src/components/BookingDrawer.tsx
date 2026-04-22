@@ -1374,7 +1374,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                     </div>
 
                     {/* Painéis por tipo (sem ações conectadas) */}
-                    {iaOpType === "schedule" && (
+                    {iaOpType === "schedule" && scheduleStep === "form" && (
                       <div className="flex flex-col gap-2">
                         <div>
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
@@ -1408,7 +1408,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         </div>
                         <div>
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
+                            Profissional <span className="text-status-cancelled">*</span>
                           </label>
                           <select
                             value={selectedProfessionalId ?? ""}
@@ -1418,26 +1418,79 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             }}
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                           >
-                            <option value="">Sem preferência</option>
+                            <option value="">Selecionar...</option>
                             {professionalsForUnit.map((p) => (
                               <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                           </select>
-                          <p className="text-[10px] text-muted-foreground/80 mt-1 italic">
-                            Se o cliente não indicou profissional, deixe em branco.
-                          </p>
                         </div>
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             type="button"
-                            disabled
-                            title="Ação ainda não implementada"
+                            onClick={() => scheduleSuggestMut.mutate()}
+                            disabled={
+                              scheduleSuggestMut.isPending ||
+                              !assignLeadName.trim() ||
+                              !selectedProcedureId ||
+                              !selectedProfessionalId
+                            }
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
                             <Calendar className="h-3.5 w-3.5" />
-                            Agendar
+                            {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
                           </button>
-                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {iaOpType === "schedule" && scheduleStep === "choosing-slot" && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            Escolha um horário
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setScheduleStep("form");
+                              setScheduleSlots([]);
+                              setPickingSlotIdx(null);
+                            }}
+                            disabled={scheduleConfirmMut.isPending}
+                            className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline disabled:opacity-40"
+                          >
+                            ← voltar
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto pr-1">
+                          {scheduleSlots.map((slot, idx) => {
+                            const isPicking = pickingSlotIdx === idx && scheduleConfirmMut.isPending;
+                            const disabled = scheduleConfirmMut.isPending;
+                            return (
+                              <button
+                                key={`${slot.start_at}-${idx}`}
+                                type="button"
+                                onClick={() => {
+                                  setPickingSlotIdx(idx);
+                                  scheduleConfirmMut.mutate(slot);
+                                }}
+                                disabled={disabled}
+                                className={`text-left text-sm px-3 py-2 rounded-lg border transition-all inline-flex items-center justify-between gap-2 ${
+                                  isPicking
+                                    ? "border-primary bg-primary/10 text-foreground"
+                                    : "border-border bg-surface text-foreground hover:border-primary/60 hover:bg-surface-elevated"
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                <span className="inline-flex items-center gap-2">
+                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {slot.label || slot.start_at}
+                                </span>
+                                {isPicking && (
+                                  <span className="text-[10px] text-muted-foreground italic">confirmando…</span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
