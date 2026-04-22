@@ -480,11 +480,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     effectiveProfessionalName.trim() !== "None"
   );
 
-  // Always fetch scheduling lookups when the manual IA flow is active, even if the
-  // booking already has a professional assigned. Otherwise the procedure select can
-  // stay empty and the action never reaches the PATCH.
   const earlyProcCode = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
-  const needsSchedulingLookups = !!booking && aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule");
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   // Resolve booking's unit id from auth units (booking has unit_name only)
@@ -494,6 +490,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   // Estrutura visual apenas — ações ainda não conectadas.
   type IaOpType = "schedule" | "reschedule" | "cancel";
   const [iaOpType, setIaOpType] = useState<IaOpType>("schedule");
+  // Always fetch scheduling lookups when the manual IA flow is active, even if the
+  // booking already has a professional assigned. Otherwise the procedure select can
+  // stay empty and the action never reaches the PATCH.
+  const needsSchedulingLookups = !!booking && aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule");
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
