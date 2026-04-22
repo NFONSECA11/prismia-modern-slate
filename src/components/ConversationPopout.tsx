@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { markConversationRead } from "@/lib/conversationReadState";
 
 const DEFAULT_QUICK_REPLIES = [
   "Olá! Como posso te ajudar?",
