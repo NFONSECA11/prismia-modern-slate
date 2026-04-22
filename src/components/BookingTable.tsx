@@ -21,6 +21,7 @@ import {
   suggestSlots,
   fetchBookingPhoneById,
   fetchBookingRequestById,
+  fetchBookingMessages,
 } from "@/lib/bookingApi";
 import {
   Phone,
@@ -228,6 +229,57 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
   const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
+  // Last incoming-message timestamp (ms) per handoff booking, for unread detection
+  const [lastInMsgMap, setLastInMsgMap] = useState<Record<number, number>>({});
+
+  // Poll latest IN message timestamp for each handoff booking visible in the list.
+  // This detects new client messages even when booking.updated_at doesn't change.
+  useEffect(() => {
+    const handoffIds = bookings
+      .filter((b) => b.status === "handoff")
+      .map((b) => b.id);
+    if (handoffIds.length === 0) return;
+
+    let cancelled = false;
+    const fetchAll = async () => {
+      const results: Record<number, number> = {};
+      await Promise.all(
+        handoffIds.map(async (id) => {
+          try {
+            const msgs = await fetchBookingMessages(id, 5);
+            // Find latest message that is from the lead (user/in/inbound)
+            let latest = 0;
+            for (const m of msgs) {
+              const role = (m.role ?? "").toLowerCase();
+              const isUser =
+                role.includes("user") ||
+                role.includes("lead") ||
+                role.includes("client") ||
+                role === "in" ||
+                role === "inbound";
+              if (!isUser || !m.created_at) continue;
+              const t = new Date(m.created_at).getTime();
+              if (Number.isFinite(t) && t > latest) latest = t;
+            }
+            if (latest > 0) results[id] = latest;
+          } catch {
+            // ignore individual failures
+          }
+        })
+      );
+      if (!cancelled && Object.keys(results).length > 0) {
+        setLastInMsgMap((prev) => ({ ...prev, ...results }));
+      }
+    };
+
+    fetchAll();
+    const interval = setInterval(fetchAll, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [bookings.map((b) => (b.status === "handoff" ? b.id : "")).join(",")]);
+
 
   // Fetch phones for bookings that don't have one (API listing omits phone)
   useEffect(() => {
@@ -526,7 +578,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
 
                           {/* Conversa (popout) — somente status handoff */}
                           {booking.status === "handoff" && (() => {
-                            const unread = isConversationUnread(booking.id, booking.updated_at);
+                            const lastInTs = lastInMsgMap[booking.id] ?? 0;
+                            const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+                            const refTs = lastInTs || fallbackTs;
+                            const unread = refTs > 0 && isConversationUnread(booking.id, new Date(refTs).toISOString());
                             return (
                               <Tooltip>
                                 <TooltipTrigger asChild>
