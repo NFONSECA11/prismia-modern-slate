@@ -220,6 +220,8 @@ function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: 
   const parts = body.split("|").map((p) => p.trim()).filter(Boolean);
   const remaining: string[] = [];
   for (const part of parts) {
+    // Esconde marcadores técnicos BR_TAG_* da exibição (continuam no notes para detecção)
+    if (/^BR_TAG_[A-Z_]+\s*=\s*\d+\s*$/i.test(part)) continue;
     const m = part.match(/^([^:]+):\s*(.+)$/);
     if (m) {
       const label = m[1].trim();
