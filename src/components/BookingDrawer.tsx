@@ -22,6 +22,7 @@ import {
   sendBookingMessage,
   patchBooking,
 } from "@/lib/bookingApi";
+import { rememberBookingProcedureNameOverride } from "@/lib/bookingProcedureNameOverrides";
 import type { BookingMessage } from "@/lib/bookingApi";
 import api from "@/lib/api";
 import {
@@ -1042,6 +1043,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const profName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
+      if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
       // PATCH 1a: envia a FK `procedure` + `procedure_code` resolvido pela relação
       // unidade↔procedimento para o backend manter o contexto correto.

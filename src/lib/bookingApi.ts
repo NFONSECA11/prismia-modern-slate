@@ -1,5 +1,9 @@
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
+import {
+  applyBookingProcedureNameOverride,
+  applyBookingProcedureNameOverrides,
+} from "@/lib/bookingProcedureNameOverrides";
 import { BookingListResponse, BookingRequest, Professional } from "@/types/booking";
 
 // ── Listagem ─────────────────────────────────────────────────────────────────
@@ -202,11 +206,13 @@ export async function fetchFilteredBookings(
 
   // Don't follow extra pages — keep memory footprint minimal
 
-  const results = Array.from(deduped.values()).map((booking) => {
-    const cachedPhone = bookingPhoneCache.get(booking.id);
-    if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
-    return { ...booking, contact_phone: cachedPhone } as BookingRequest;
-  });
+  const results = applyBookingProcedureNameOverrides(
+    Array.from(deduped.values()).map((booking) => {
+      const cachedPhone = bookingPhoneCache.get(booking.id);
+      if (!cachedPhone || booking.contact_phone || booking.phone) return booking;
+      return { ...booking, contact_phone: cachedPhone } as BookingRequest;
+    })
+  );
 
   console.log(`[bookingApi] Filtered fetch: ${results.length} results (params=${JSON.stringify(params)})`);
 
@@ -241,7 +247,7 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
 
 export async function fetchBookingRequestById(id: number): Promise<BookingRequest> {
   const { data } = await api.get(`/api/booking/requests/${id}/`);
-  return (data?.result ?? data) as BookingRequest;
+  return applyBookingProcedureNameOverride((data?.result ?? data) as BookingRequest);
 }
 
 // ── Confirmar agendamento ────────────────────────────────────────────────────
@@ -337,7 +343,7 @@ export async function patchBooking(
     payload
   );
   const result = (data as any)?.result ?? data;
-  return result as BookingRequest;
+  return applyBookingProcedureNameOverride(result as BookingRequest);
 }
 
 export async function assignBookingProfessional(
