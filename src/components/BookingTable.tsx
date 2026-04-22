@@ -21,6 +21,7 @@ import {
   suggestSlots,
   fetchBookingPhoneById,
   fetchBookingRequestById,
+  fetchBookingMessages,
 } from "@/lib/bookingApi";
 import {
   Phone,
