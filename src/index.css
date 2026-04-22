@@ -236,6 +236,7 @@
     --background: 220 16% 97%;
     --surface: 0 0% 100%;
     --surface-raised: 213 30% 97%;
+    --filter-bar-bg: 0 0% 100%;
     --surface-elevated: 220 14% 98%;
     --row-hover: 220 20% 96%;
     --appointment-bg: 0 0% 100%;
@@ -437,23 +438,23 @@
   [data-theme="night"] {
     --topbar-bg: 211 43% 20%;
     --table-header-bg: 211 43% 20%;
-    --surface-raised: 211 43% 20%;
+    --filter-bar-bg: 211 43% 20%;
   }
   [data-group1="dark"] {
     --topbar-bg: 216 50% 10%;
     --table-header-bg: 216 45% 14%;
-    --surface-raised: 216 45% 14%;
+    --filter-bar-bg: 216 45% 14%;
   }
   [data-group1="light"] {
     --topbar-bg: 213 25% 93%;
     --topbar-foreground: 222 47% 11%;
     --table-header-bg: 213 25% 93%;
-    --surface-raised: 213 25% 93%;
+    --filter-bar-bg: 213 25% 93%;
   }
   [data-group1="blue"] {
     --topbar-bg: 215 70% 22%;
     --table-header-bg: 215 60% 26%;
-    --surface-raised: 215 60% 26%;
+    --filter-bar-bg: 215 60% 26%;
   }
 
   /* ── GRUPO 2: Conteúdo (área de exibição: linhas/cards) ── */
