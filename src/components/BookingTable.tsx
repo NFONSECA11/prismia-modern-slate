@@ -559,10 +559,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                                   Conversa
                                 </span>
                               ) : (
-                                <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                                <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                               )
                             ) : (
-                              <span className="font-medium text-foreground leading-tight">{booking.lead_name}</span>
+                              <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                             )}
                           </div>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
