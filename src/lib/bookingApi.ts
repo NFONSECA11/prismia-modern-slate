@@ -337,13 +337,39 @@ export async function patchBooking(
   id: number,
   payload: Record<string, unknown>
 ): Promise<BookingRequest> {
-  await fetchCsrf();
-  const { data } = await api.patch<{ ok?: boolean; result?: BookingRequest; updated?: string[] } | BookingRequest>(
-    `/api/booking/requests/${id}/`,
-    payload
-  );
-  const result = (data as any)?.result ?? data;
-  return applyBookingProcedureNameOverride(result as BookingRequest);
+  console.log(`[patchBooking] iniciando para id=${id}`, payload);
+  try {
+    const csrfToken = await fetchCsrf();
+    console.log(`[patchBooking] CSRF obtido (len=${csrfToken?.length ?? 0})`);
+  } catch (csrfErr: any) {
+    console.error("[patchBooking] fetchCsrf FALHOU:", {
+      message: csrfErr?.message,
+      status: csrfErr?.response?.status,
+      data: csrfErr?.response?.data,
+    });
+    throw csrfErr;
+  }
+
+  try {
+    console.log(`[patchBooking] disparando PATCH HTTP /api/booking/requests/${id}/`);
+    const { data, status } = await api.patch<{ ok?: boolean; result?: BookingRequest; updated?: string[] } | BookingRequest>(
+      `/api/booking/requests/${id}/`,
+      payload
+    );
+    console.log(`[patchBooking] PATCH HTTP completo status=${status}`, data);
+    const result = (data as any)?.result ?? data;
+    return applyBookingProcedureNameOverride(result as BookingRequest);
+  } catch (httpErr: any) {
+    console.error("[patchBooking] PATCH HTTP FALHOU:", {
+      message: httpErr?.message,
+      status: httpErr?.response?.status,
+      statusText: httpErr?.response?.statusText,
+      data: httpErr?.response?.data,
+      url: httpErr?.config?.url,
+      method: httpErr?.config?.method,
+    });
+    throw httpErr;
+  }
 }
 
 export async function assignBookingProfessional(

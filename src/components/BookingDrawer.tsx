@@ -1077,8 +1077,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (procedureCode) patch1.procedure_code = procedureCode;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
-      console.log("[scheduleSuggestMut] PATCH 1a (FK + nomes + vars limpos) payload:", JSON.stringify(patch1));
-      await patchBooking(booking.id, patch1);
+      console.log("[scheduleSuggestMut] disparando PATCH 1a... payload:", JSON.stringify(patch1));
+      try {
+        const patch1aResult = await patchBooking(booking.id, patch1);
+        console.log("[scheduleSuggestMut] PATCH 1a OK - resposta:", {
+          returnedProcedureName: (patch1aResult as any)?.procedure_name,
+          returnedProcedureFK: (patch1aResult as any)?.procedure,
+          returnedLeadName: (patch1aResult as any)?.lead_name,
+          fullResult: patch1aResult,
+        });
+      } catch (err: any) {
+        console.error("[scheduleSuggestMut] PATCH 1a FALHOU:", {
+          message: err?.message,
+          status: err?.response?.status,
+          data: err?.response?.data,
+          headers: err?.response?.headers,
+          stack: err?.stack,
+        });
+        throw err;
+      }
 
       // PATCH 1b: força os nomes manuais sem reenviar FKs.
       const patch1b: Record<string, unknown> = {
@@ -1086,12 +1103,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       };
       if (procedureCode) patch1b.procedure_code = procedureCode;
       if (profName) patch1b.professional_name = profName;
-      console.log("[scheduleSuggestMut] PATCH 1b (nomes) payload:", JSON.stringify(patch1b));
-      const patch1bResult = await patchBooking(booking.id, patch1b);
-      console.log("[scheduleSuggestMut] PATCH 1b concluído - resposta:", {
-        returnedProcedureName: (patch1bResult as any)?.procedure_name,
-        returnedLeadName: (patch1bResult as any)?.lead_name,
-      });
+      console.log("[scheduleSuggestMut] disparando PATCH 1b... payload:", JSON.stringify(patch1b));
+      try {
+        const patch1bResult = await patchBooking(booking.id, patch1b);
+        console.log("[scheduleSuggestMut] PATCH 1b OK - resposta:", {
+          returnedProcedureName: (patch1bResult as any)?.procedure_name,
+          returnedLeadName: (patch1bResult as any)?.lead_name,
+          fullResult: patch1bResult,
+        });
+      } catch (err: any) {
+        console.error("[scheduleSuggestMut] PATCH 1b FALHOU:", {
+          message: err?.message,
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+        throw err;
+      }
 
       // 2) Solicita slots ao backend com procedimento + procedure_code + unidade
       const suggestPayload: Record<string, unknown> = {};
