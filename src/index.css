@@ -139,7 +139,9 @@
   }
 
   [data-theme="slate"] {
-    --filter-bar-bg: 215 35% 26%;
+    --topbar-bg: 216 38% 22%;
+    --table-header-bg: 216 38% 22%;
+    --filter-bar-bg: 216 38% 22%;
     --background: 216 40% 18%;
     --surface: 215 35% 26%;
     --surface-raised: 214 33% 30%;
