@@ -451,20 +451,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     handoffOffMut.reset();
     suggestMut.reset();
   }, [booking?.id]);
-
-  // Mark conversation as read using the latest incoming message timestamp while drawer is open
-  useEffect(() => {
-    if (!booking?.id) return;
-    const latestIncomingTs = messages.reduce((latest, msg) => {
-      const role = (msg.role ?? "").toLowerCase();
-      const isUser = role.includes("user") || role.includes("lead") || role.includes("client") || role === "in" || role === "inbound";
-      if (!isUser || !msg.created_at) return latest;
-      const ts = new Date(msg.created_at).getTime();
-      return Number.isFinite(ts) && ts > latest ? ts : latest;
-    }, 0);
-    markConversationRead(booking.id, latestIncomingTs || booking.updated_at || undefined);
-  }, [booking?.id, booking?.updated_at, messages]);
-
   const saveQuickReplies = (replies: string[]) => {
     setQuickReplies(replies);
     localStorage.setItem("quick_replies", JSON.stringify(replies));
