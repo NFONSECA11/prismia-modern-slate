@@ -176,5 +176,33 @@ export default function PreferencesSyncer() {
     }
   }, [activeUnit]);
 
+  // ── Watch color group changes ───────────────────────────────────────────
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group1 !== serverGroup1.current) {
+      console.log("[Prefs] group1 changed:", serverGroup1.current, "→", group1);
+      serverGroup1.current = group1;
+      savePreference({ color_group1: group1 });
+    }
+  }, [group1]);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group2 !== serverGroup2.current) {
+      console.log("[Prefs] group2 changed:", serverGroup2.current, "→", group2);
+      serverGroup2.current = group2;
+      savePreference({ color_group2: group2 });
+    }
+  }, [group2]);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (group3 !== serverGroup3.current) {
+      console.log("[Prefs] group3 changed:", serverGroup3.current, "→", group3);
+      serverGroup3.current = group3;
+      savePreference({ color_group3: group3 });
+    }
+  }, [group3]);
+
   return null;
 }
