@@ -1027,10 +1027,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
+      const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
         selectedProcedureId,
         nameFromAPI: selectedProc?.name,
         slugFromAPI: selectedProc?.slug,
+        resolvedUnitProcId,
+        effectiveProcedureCode: procedureCode,
         fullProcedureObject: selectedProc,
         bookingCurrentName: booking.procedure_name,
         finalNameToSend: procedureName,
@@ -1040,11 +1043,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
 
-      // PATCH 1a: envia a FK `procedure` (necessária para o backend gerar slots
-      // em suggest_slots). O backend sobrescreve `procedure_name` baseado em
-      // outras regras, então corrigimos logo em seguida no PATCH 1b.
-      // Limpa flags de handoff/intent do vars_snapshot que fazem o backend
-      // sobrescrever procedure_name para "Falar com atendente"
+      // PATCH 1a: envia a FK `procedure` + `procedure_code` resolvido pela relação
+      // unidade↔procedimento para o backend manter o contexto correto.
+      // Também limpa flags de handoff/intent que forçam "Falar com atendente".
       const cleanedVars = { ...existingVars };
       delete (cleanedVars as any).intent;
       delete (cleanedVars as any).decision;
@@ -1071,18 +1072,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (selectedProfessionalId) {
         patch1.professional = selectedProfessionalId;
       }
-      if (procedureSlug) patch1.procedure_code = procedureSlug;
+      if (procedureCode) patch1.procedure_code = procedureCode;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 1a (FK + nomes + vars limpos) payload:", JSON.stringify(patch1));
       await patchBooking(booking.id, patch1);
 
-      // PATCH 1b: força os nomes manuais SEM enviar as FKs, evitando que o
-      // backend volte a sobrescrever procedure_name/professional_name.
+      // PATCH 1b: força os nomes manuais sem reenviar FKs.
       const patch1b: Record<string, unknown> = {
         procedure_name: procedureName,
       };
-      if (procedureSlug) patch1b.procedure_code = procedureSlug;
+      if (procedureCode) patch1b.procedure_code = procedureCode;
       if (profName) patch1b.professional_name = profName;
       console.log("[scheduleSuggestMut] PATCH 1b (nomes) payload:", JSON.stringify(patch1b));
       const patch1bResult = await patchBooking(booking.id, patch1b);
@@ -1091,10 +1091,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         returnedLeadName: (patch1bResult as any)?.lead_name,
       });
 
-      // 2) Solicita slots ao backend com procedimento e unidade
+      // 2) Solicita slots ao backend com procedimento + procedure_code + unidade
       const suggestPayload: Record<string, unknown> = {};
       if (selectedProcedureId) suggestPayload.procedure = selectedProcedureId;
-      if (procedureSlug) suggestPayload.procedure_code = procedureSlug;
+      if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
@@ -1121,7 +1121,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         procedure_name: procedureName,
         unit_name: unitName,
       };
-      if (procedureSlug) patch2.procedure_code = procedureSlug;
+      if (procedureCode) patch2.procedure_code = procedureCode;
       if (profName) patch2.professional_name = profName;
       if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
       console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2));
@@ -1134,7 +1134,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         const patch3: Record<string, unknown> = {
           procedure_name: procedureName,
         };
-        if (procedureSlug) patch3.procedure_code = procedureSlug;
+        if (procedureCode) patch3.procedure_code = procedureCode;
         console.warn("[scheduleSuggestMut] PATCH 3 correcting procedure_name:", JSON.stringify({
           expected: procedureName,
           actual: detail?.procedure_name,
