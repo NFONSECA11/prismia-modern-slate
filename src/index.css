@@ -435,6 +435,7 @@
   [data-theme="night"] {
     --topbar-bg: 211 43% 20%;
     --table-header-bg: 211 43% 20%;
+    --surface: 211 43% 20%;
     --surface-raised: 211 43% 20%;
   }
   [data-group1="dark"] {
