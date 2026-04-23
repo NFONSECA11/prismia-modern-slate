@@ -2206,7 +2206,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setIaOpType(key)}
+                    onClick={() => {
+                      if (iaOpType !== key) {
+                        setAssignLeadName("");
+                        setScheduleReason("");
+                        setCancelBookingIdField("");
+                        setSelectedProfessionalId(null);
+                        setSelectedProcedureId(null);
+                        setSelectedSpecialtyId(null);
+                        setRescheduleSearchResults(null);
+                        setRescheduleSearchError(null);
+                        setSelectedClientBooking(null);
+                        setScheduleLog([]);
+                        setRescheduleLog([]);
+                      }
+                      setIaOpType(key);
+                    }}
                     className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-2 rounded-md transition-all ${active ? activeTone : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated"}`}
                   >
                     <Icon className="h-3.5 w-3.5" />
