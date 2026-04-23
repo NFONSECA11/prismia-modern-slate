@@ -801,32 +801,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           conversation_bot_mode: "off",
           booking_mode: "handoff_manual",
           status: "failed",
+          allow_terminal_status_via_patch: true,
         });
         console.log("[BookingDrawer] Cancel flow — PATCH result status =", (patchResult as any)?.status);
-
-        // Fallback: if backend ignored status field, try dedicated endpoints / alternative payloads
-        if ((patchResult as any)?.status !== "failed") {
-          console.warn("[BookingDrawer] Status not changed to 'failed' — trying fallbacks");
-          const statusAttempts: Array<{ label: string; run: () => Promise<any> }> = [
-            { label: "POST /set_status/ {status:failed}", run: () => api.post(`/api/booking/requests/${booking!.id}/set_status/`, { status: "failed" }) },
-            { label: "POST /mark_failed/", run: () => api.post(`/api/booking/requests/${booking!.id}/mark_failed/`) },
-            { label: "POST /fail/", run: () => api.post(`/api/booking/requests/${booking!.id}/fail/`) },
-            { label: "PATCH {state:failed}", run: () => patchBooking(booking!.id, { state: "failed" }) },
-            { label: "PATCH {status_code:failed}", run: () => patchBooking(booking!.id, { status_code: "failed" }) },
-          ];
-          for (const attempt of statusAttempts) {
-            try {
-              const r = await attempt.run();
-              console.log(`[BookingDrawer] ${attempt.label} OK`, r);
-              const refetched = await fetchBookingRequestById(booking!.id);
-              console.log("[BookingDrawer] After fallback, status =", refetched.status);
-              if (refetched.status === "failed") return refetched;
-            } catch (e: any) {
-              console.warn(`[BookingDrawer] ${attempt.label} failed:`, e?.response?.status, e?.response?.data ?? e?.message);
-            }
-          }
-          console.error("[BookingDrawer] Could not transition BR to 'failed' — backend rejected all attempts");
-        }
         return patchResult;
       }
 
