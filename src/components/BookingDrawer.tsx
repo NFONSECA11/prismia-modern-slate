@@ -1198,6 +1198,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           data?.message ??
           JSON.stringify(data ?? {});
         console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
+        pushScheduleLog({
+          label: "suggest_slots — buscar horários",
+          status: "error",
+          detail: `${status ?? "?"}: ${String(detail).slice(0, 160)}`,
+        });
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
 
@@ -1208,6 +1213,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         status: detailAfterSuggest?.status,
         booking_mode: detailAfterSuggest?.booking_mode,
         offer_slots_count: Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0,
+      });
+      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      pushScheduleLog({
+        label: "suggest_slots — buscar horários",
+        status: offerCount > 0 ? "success" : "warning",
+        detail: offerCount > 0
+          ? `${offerCount} horário(s) retornado(s)`
+          : "Nenhum horário disponível — bot conduzirá a conversa",
       });
 
       // 4) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
