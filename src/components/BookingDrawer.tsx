@@ -1472,6 +1472,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
         return [...prev, { ts, label: "Sem disponibilidade no momento", status: "warning", detail: "Não encontramos horários para esse procedimento." }];
       });
+    },
   });
 
   // ── Reagendamento manual: buscar BRs ativos do cliente pelo telefone ────────
