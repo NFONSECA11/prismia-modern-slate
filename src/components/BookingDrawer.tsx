@@ -1284,9 +1284,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       }
       if (detail?.booking_mode !== "auto_slots_bot") {
         pushScheduleLog({
-          label: "Validação final",
+          label: "Não foi possível ativar o bot",
           status: "error",
-          detail: "BR continuou em 'Slots disparados pelo dashboard'",
+          detail: "Os horários foram enviados, mas o bot não assumiu a conversa.",
         });
         throw new Error("Os slots foram enviados, mas o BR continuou em 'Slots disparados pelo dashboard'.");
       }
