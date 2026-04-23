@@ -1130,6 +1130,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           returnedLeadName: (patch1aResult as any)?.lead_name,
           fullResult: patch1aResult,
         });
+        pushScheduleLog({
+          label: "PATCH 1 — preparar BR",
+          status: "success",
+          detail: `Modo: assisted_slots_dashboard${selectedProfessionalId ? " · com profissional" : ""}`,
+        });
       } catch (err: any) {
         console.error("[scheduleSuggestMut] PATCH 1a FALHOU:", {
           message: err?.message,
@@ -1137,6 +1142,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           data: err?.response?.data,
           headers: err?.response?.headers,
           stack: err?.stack,
+        });
+        pushScheduleLog({
+          label: "PATCH 1 — preparar BR",
+          status: "error",
+          detail: `${err?.response?.status ?? "?"}: ${err?.message ?? "falhou"}`,
         });
         throw err;
       }
