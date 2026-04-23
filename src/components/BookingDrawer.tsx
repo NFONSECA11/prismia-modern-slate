@@ -2527,9 +2527,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         )}
 
                         {(() => {
-                          const selectedBr = rescheduleSearchResults?.find(
-                            (b) => String(b.id) === cancelBookingIdField.trim(),
-                          );
+                          const selectedBr =
+                            (selectedClientBooking && String(selectedClientBooking.id) === cancelBookingIdField.trim()
+                              ? selectedClientBooking
+                              : null) ??
+                            rescheduleSearchResults?.find(
+                              (b) => String(b.id) === cancelBookingIdField.trim(),
+                            );
                           if (!selectedBr) return null;
                           const whenLabel = selectedBr.scheduled_at
                             ? format(new Date(selectedBr.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
