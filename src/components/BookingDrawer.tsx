@@ -2504,7 +2504,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                       </>
                     )}
                   </div>
-                ))
+                )
               }
             />
             <DetailRow icon={Clock} label="Criado em" tone="default" value={formattedCreated} />
