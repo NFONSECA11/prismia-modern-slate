@@ -2034,6 +2034,30 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       });
       cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: true });
       setActionDone(`Agenda #${cancelledId} cancelada!`);
+      queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
+        if (!old?.results) return old;
+        return {
+          ...old,
+          results: old.results.map((b: any) =>
+            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+          ),
+        };
+      });
+      queryClient.setQueriesData<any>({ queryKey: ["booking-requests-updated"] }, (old: any) => {
+        if (!old?.results) return old;
+        return {
+          ...old,
+          results: old.results.map((b: any) =>
+            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+          ),
+        };
+      });
+      queryClient.setQueryData(["booking-request-detail-bot", booking!.id], (old: any) => ({
+        ...(old ?? booking),
+        status: "failed",
+        booking_mode: "handoff_manual",
+        conversation_bot_mode: "off",
+      }));
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
