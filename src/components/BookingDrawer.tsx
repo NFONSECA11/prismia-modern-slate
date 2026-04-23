@@ -2249,17 +2249,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider block">
                       {iaOpType === "cancel" ? "ID Agendamento *" : "ID Agendamento a Cancelar *"}
                     </label>
-                    {iaOpType === "reschedule" && (
-                      <button
-                        type="button"
-                        onClick={handleSearchClientBookings}
-                        disabled={rescheduleSearchLoading}
-                        className="text-[10px] font-medium px-2.5 py-1 rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-all inline-flex items-center gap-1"
-                      >
-                        <Search className="h-3 w-3" />
-                        {rescheduleSearchLoading ? "Buscando..." : "Buscar BRs"}
-                      </button>
-                    )}
                   </div>
                   <input
                     type="text"
@@ -2379,6 +2368,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
               {iaOpType === "reschedule" && (
                 <>
+                  <button
+                    type="button"
+                    onClick={handleSearchClientBookings}
+                    disabled={rescheduleSearchLoading}
+                    className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    {rescheduleSearchLoading ? "Buscando..." : "Buscar BRs"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => rescheduleSuggestMut.mutate()}
