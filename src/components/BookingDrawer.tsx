@@ -1337,8 +1337,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         // PATCH e suggest funcionaram, mas backend não devolveu slots —
         // ainda assim o bot vai conduzir. Avisa e fecha.
         toast.warning("Nenhum horário retornado, mas o bot foi acionado para conversar com o cliente.");
+        pushScheduleLog({
+          label: "Concluído",
+          status: "warning",
+          detail: "Bot acionado sem slots — vai conduzir a conversa",
+        });
       } else {
         toast.success(`Bot acionado — ${slots.length} horário(s) serão oferecidos ao cliente.`);
+        pushScheduleLog({
+          label: "Concluído",
+          status: "success",
+          detail: `${slots.length} horário(s) serão oferecidos ao cliente`,
+        });
       }
       setActionDone("Bot assumiu a conversa!");
       await refetchBookingDetailForBot();
@@ -1354,7 +1364,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
       const data = err?.response?.data;
       const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
-      toast.error(typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários."));
+      const msg = typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários.");
+      toast.error(msg);
+      // Só adiciona se a última entrada não for já um erro (evita duplicar logs já capturados nos passos)
+      setScheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no fluxo", status: "error", detail: String(msg).slice(0, 200) }];
+      });
     },
   });
 
