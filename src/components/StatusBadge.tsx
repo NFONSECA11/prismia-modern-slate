@@ -44,9 +44,9 @@ const STATUS_MAP: Record<string, StatusConfig> = {
     dot: "bg-status-canceled",
   },
   failed: {
-    label: "Falhou",
-    className: "bg-status-canceled-bg text-status-canceled border border-status-canceled/25",
-    dot: "bg-status-canceled",
+    label: "Concluído",
+    className: "bg-accent/15 text-accent border border-accent/30",
+    dot: "bg-accent",
   },
   awaiting_choice: {
     label: "Aguardando Escolha",
