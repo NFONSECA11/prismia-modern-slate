@@ -2246,12 +2246,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
             })()}
             <DetailRow icon={Building2} label="Unidade" tone="assisted" value={booking.unit_name} />
             <DetailRow
-              icon={aiEnabled ? Sparkles : (isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User)}
-              label={aiEnabled ? "Ação manual (IA ativa)" : (isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional")}
-              tone={aiEnabled ? "primary" : (isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary")}
+              icon={isCancelCode ? ClipboardList : isRescheduleCode ? CalendarClock : User}
+              label={isCancelCode ? "Ações" : isRescheduleCode ? "Reagendamento" : isConvo ? "Atendimento" : "Profissional"}
+              tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary"}
               className="col-span-2"
               value={
-                aiEnabled ? (
+                (
                   <div className="flex flex-col gap-3 w-full">
                     {/* Seletor de tipo de operação */}
                     <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-surface border border-border w-fit">
