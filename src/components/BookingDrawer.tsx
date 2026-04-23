@@ -405,6 +405,18 @@ import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNot
 export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
+  type ScheduleLogEntry = {
+    ts: string;
+    label: string;
+    status: "info" | "success" | "warning" | "error";
+    detail?: string;
+  };
+  const [scheduleLog, setScheduleLog] = useState<ScheduleLogEntry[]>([]);
+  const pushScheduleLog = (entry: Omit<ScheduleLogEntry, "ts">) => {
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setScheduleLog((prev) => [...prev, { ...entry, ts }]);
+  };
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
   const [selectedProcedureId, setSelectedProcedureId] = useState<number | null>(null);
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
@@ -467,6 +479,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setMockAssignedProfessional(null);
     setMessageText("");
     setActionDone(null);
+    setScheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
     if (code === "cancel") setIaOpType("cancel");
@@ -1030,6 +1043,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
+      setScheduleLog([]);
+      const profNameForLog = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
+        : null;
+      pushScheduleLog({
+        label: "Iniciando agendamento",
+        status: "info",
+        detail: profNameForLog
+          ? `Procedimento + Profissional (${profNameForLog})`
+          : "Procedimento (sem preferência de profissional)",
+      });
+
       // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       // Adiciona/garante a tag BR_TAG_MANUAL_SCHEDULE no notes
@@ -1106,6 +1131,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           returnedLeadName: (patch1aResult as any)?.lead_name,
           fullResult: patch1aResult,
         });
+        pushScheduleLog({
+          label: "PATCH 1 — preparar BR",
+          status: "success",
+          detail: `Modo: assisted_slots_dashboard${selectedProfessionalId ? " · com profissional" : ""}`,
+        });
       } catch (err: any) {
         console.error("[scheduleSuggestMut] PATCH 1a FALHOU:", {
           message: err?.message,
@@ -1113,6 +1143,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           data: err?.response?.data,
           headers: err?.response?.headers,
           stack: err?.stack,
+        });
+        pushScheduleLog({
+          label: "PATCH 1 — preparar BR",
+          status: "error",
+          detail: `${err?.response?.status ?? "?"}: ${err?.message ?? "falhou"}`,
         });
         throw err;
       }
@@ -1128,8 +1163,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         procedure_name: detailAfterPatch1?.procedure_name,
       });
       if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
+        pushScheduleLog({
+          label: "GET — confirmar modo da BR",
+          status: "error",
+          detail: `Modo atual: ${detailAfterPatch1?.booking_mode ?? "desconhecido"}`,
+        });
         throw new Error("O BR não entrou em 'Slots disparados pelo dashboard' antes do suggest_slots.");
       }
+      pushScheduleLog({
+        label: "GET — confirmar modo da BR",
+        status: "success",
+        detail: "BR pronta para suggest_slots",
+      });
 
       // 2) Solicita slots ao backend.
       // Se há profissional escolhido → envia procedure + unit + professional.
@@ -1154,6 +1199,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           data?.message ??
           JSON.stringify(data ?? {});
         console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
+        pushScheduleLog({
+          label: "suggest_slots — buscar horários",
+          status: "error",
+          detail: `${status ?? "?"}: ${String(detail).slice(0, 160)}`,
+        });
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
 
@@ -1164,6 +1214,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         status: detailAfterSuggest?.status,
         booking_mode: detailAfterSuggest?.booking_mode,
         offer_slots_count: Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0,
+      });
+      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      pushScheduleLog({
+        label: "suggest_slots — buscar horários",
+        status: offerCount > 0 ? "success" : "warning",
+        detail: offerCount > 0
+          ? `${offerCount} horário(s) retornado(s)`
+          : "Nenhum horário disponível — bot conduzirá a conversa",
       });
 
       // 4) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
@@ -1217,6 +1275,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         inferredProfessionalUnitId,
       });
       await patchBooking(booking.id, patch2);
+      pushScheduleLog({
+        label: "PATCH 2 — ativar bot",
+        status: "success",
+        detail: "Modo: auto_slots_bot",
+      });
 
       // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
@@ -1233,8 +1296,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         }));
         await patchBooking(booking.id, patch2Retry);
         detail = await fetchBookingRequestById(booking.id);
+        pushScheduleLog({
+          label: "PATCH 2 (retry) — reforçar modo bot",
+          status: detail?.booking_mode === "auto_slots_bot" ? "success" : "warning",
+          detail: `Modo após retry: ${detail?.booking_mode ?? "desconhecido"}`,
+        });
       }
       if (detail?.booking_mode !== "auto_slots_bot") {
+        pushScheduleLog({
+          label: "Validação final",
+          status: "error",
+          detail: "BR continuou em 'Slots disparados pelo dashboard'",
+        });
         throw new Error("Os slots foram enviados, mas o BR continuou em 'Slots disparados pelo dashboard'.");
       }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
@@ -1265,8 +1338,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         // PATCH e suggest funcionaram, mas backend não devolveu slots —
         // ainda assim o bot vai conduzir. Avisa e fecha.
         toast.warning("Nenhum horário retornado, mas o bot foi acionado para conversar com o cliente.");
+        pushScheduleLog({
+          label: "Concluído",
+          status: "warning",
+          detail: "Bot acionado sem slots — vai conduzir a conversa",
+        });
       } else {
         toast.success(`Bot acionado — ${slots.length} horário(s) serão oferecidos ao cliente.`);
+        pushScheduleLog({
+          label: "Concluído",
+          status: "success",
+          detail: `${slots.length} horário(s) serão oferecidos ao cliente`,
+        });
       }
       setActionDone("Bot assumiu a conversa!");
       await refetchBookingDetailForBot();
@@ -1282,7 +1365,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
       const data = err?.response?.data;
       const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
-      toast.error(typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários."));
+      const msg = typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários.");
+      toast.error(msg);
+      // Só adiciona se a última entrada não for já um erro (evita duplicar logs já capturados nos passos)
+      setScheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no fluxo", status: "error", detail: String(msg).slice(0, 200) }];
+      });
     },
   });
 
@@ -1685,6 +1777,54 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
                           </button>
                         </div>
+                        {scheduleLog.length > 0 && (
+                          <div className="mt-1 rounded-lg border border-border bg-surface/60 p-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                Log da execução
+                              </span>
+                              {!scheduleSuggestMut.isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => setScheduleLog([])}
+                                  className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                                >
+                                  limpar
+                                </button>
+                              )}
+                            </div>
+                            <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+                              {scheduleLog.map((entry, idx) => {
+                                const dot =
+                                  entry.status === "success"
+                                    ? "bg-primary"
+                                    : entry.status === "error"
+                                    ? "bg-destructive"
+                                    : entry.status === "warning"
+                                    ? "bg-accent"
+                                    : "bg-muted-foreground";
+                                const textColor =
+                                  entry.status === "error"
+                                    ? "text-destructive"
+                                    : entry.status === "warning"
+                                    ? "text-accent-foreground"
+                                    : "text-foreground";
+                                return (
+                                  <li key={idx} className="flex items-start gap-2 text-[11px] leading-tight">
+                                    <span className={`mt-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
+                                    <span className="font-mono text-muted-foreground/80 shrink-0">{entry.ts}</span>
+                                    <span className="flex-1 min-w-0">
+                                      <span className={`font-medium ${textColor}`}>{entry.label}</span>
+                                      {entry.detail && (
+                                        <span className="text-muted-foreground"> — {entry.detail}</span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
 
