@@ -1265,11 +1265,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         inferredProfessionalUnitId,
       });
       await patchBooking(booking.id, patch2);
-      pushScheduleLog({
-        label: "PATCH 2 — ativar bot",
-        status: "success",
-        detail: "Modo: auto_slots_bot",
-      });
 
       // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
