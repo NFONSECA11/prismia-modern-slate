@@ -53,6 +53,7 @@ export interface NewBookingFormData {
   time_end: string;
   notes: string;
   period: string;
+  motivo: string;
 }
 
 const PROCEDURES = [
@@ -205,12 +206,13 @@ function ModalBody({
     time_end: defaultTimeEnd,
     notes: slot.prefill?.notes ?? "",
     period: PERIODS[0],
+    motivo: "",
   });
 
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const isValid = !!form.lead_name.trim() && !!form.procedure_name;
+  const isValid = !!form.lead_name.trim() && !!form.procedure_name && !!form.motivo.trim();
 
   const handleSave = async () => {
     if (!isValid || readOnly) return;
@@ -396,6 +398,23 @@ function ModalBody({
                 onChange={(e) => set("notes")(e.target.value)}
                 placeholder="Informações adicionais, preferências do cliente..."
                 rows={3}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
+              />
+            </div>
+          )}
+
+          {/* Motivo — obrigatório */}
+          {!readOnly && (
+            <div>
+              <FieldLabel>
+                <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Motivo *</span>
+              </FieldLabel>
+              <textarea
+                value={form.motivo}
+                onChange={(e) => set("motivo")(e.target.value)}
+                placeholder="Ex.: cliente solicitou novo agendamento"
+                rows={2}
+                maxLength={300}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
               />
             </div>

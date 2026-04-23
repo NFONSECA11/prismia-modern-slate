@@ -303,7 +303,38 @@ export default function Index() {
   }, [bookings, activeUnit, debouncedSearch, searchId, hideCancelled]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
-    await createBooking(formData);
+    const created = await createBooking(formData);
+
+    // Build a detailed manual-schedule note: header + structured details
+    const operatorName =
+      (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+      user?.name ||
+      user?.username ||
+      "Operador";
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const ts1 = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const ts2Date = new Date(now.getTime() + 60_000);
+    const ts2 = `${pad(ts2Date.getDate())}/${pad(ts2Date.getMonth() + 1)}/${ts2Date.getFullYear()} ${pad(ts2Date.getHours())}:${pad(ts2Date.getMinutes())}`;
+
+    const [y, m, d] = formData.date.split("-");
+    const dateBR = `${d}/${m}/${y}`;
+    const profName = created?.professional_name || `#${formData.professional_id}`;
+
+    const headerLine = `[${ts1}] Agendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_SCHEDULE`;
+    const detailLine = `[${ts2}]  agendamento #${created?.id ?? "?"} | Procedimento: ${formData.procedure_name} | Profissional: ${profName} | Data/Hora: ${dateBR} ${formData.time} | Motivo: ${formData.motivo.trim()}`;
+
+    const existingNotes = (created?.notes ?? formData.notes ?? "").trim();
+    const composedNotes = [existingNotes, headerLine, detailLine].filter(Boolean).join("\n");
+
+    if (created?.id) {
+      try {
+        await patchBooking(created.id, { notes: composedNotes });
+      } catch (err) {
+        console.error("[handleSaveBooking] PATCH notes falhou:", err);
+      }
+    }
+
     queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
     queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
   };
