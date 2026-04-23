@@ -1744,23 +1744,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         <p className="text-[10px] text-muted-foreground/80 -mt-1 italic">
                           Se o cliente não indicou profissional, deixe em branco.
                         </p>
-                        <div className="flex items-center gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => scheduleSuggestMut.mutate()}
-                            disabled={
-                              scheduleSuggestMut.isPending ||
-                              !assignLeadName.trim() ||
-                              !selectedProcedureId
-                            }
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
-                          >
-                            <Calendar className="h-3.5 w-3.5" />
-                            {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
-                          </button>
-                        </div>
                         {scheduleLog.length > 0 && (
-                          <div className="mt-1 rounded-lg border border-border bg-surface/60 p-2">
+                          <div className="mt-2 rounded-lg border border-border bg-surface/60 p-2">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                                 Log da execução
@@ -1807,6 +1792,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             </ul>
                           </div>
                         )}
+                        <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
+                          <button
+                            type="button"
+                            onClick={() => scheduleSuggestMut.mutate()}
+                            disabled={
+                              scheduleSuggestMut.isPending ||
+                              !assignLeadName.trim() ||
+                              !selectedProcedureId
+                            }
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                            {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
+                          </button>
+                        </div>
                       </div>
                     )}
 
