@@ -51,6 +51,7 @@ interface BookingTableProps {
   bookings: BookingRequest[];
   isLoading: boolean;
   onSelectBooking: (booking: BookingRequest) => void;
+  onManageBooking: (booking: BookingRequest) => void;
   aiEnabled: boolean;
 }
 
@@ -187,7 +188,7 @@ function QuickActionButton({
   );
 }
 
-export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }: BookingTableProps) {
+export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBooking, aiEnabled }: BookingTableProps) {
   console.log("[BookingTable] aiEnabled:", aiEnabled);
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
@@ -685,7 +686,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onSelectBooking(booking);
+                                    onManageBooking(booking);
                                   }}
                                   aria-label="Gerenciar agenda"
                                   className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
