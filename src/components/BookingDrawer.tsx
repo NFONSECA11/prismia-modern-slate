@@ -1530,6 +1530,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
   const selectClientBookingForReschedule = (br: BookingRequest) => {
     setCancelBookingIdField(String(br.id));
+    setSelectedClientBooking(br);
 
     const normalize = (value: string) =>
       (value ?? "")
