@@ -1160,9 +1160,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
 
-      // 3) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
+      // 3) Rebusca a BR após o envio dos slots
+      const detailAfterSuggest = await fetchBookingRequestById(booking.id);
+      console.log("[scheduleSuggestMut] BR after suggest:", {
+        id: detailAfterSuggest?.id,
+        status: detailAfterSuggest?.status,
+        booking_mode: detailAfterSuggest?.booking_mode,
+        offer_slots_count: Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0,
+      });
+
+      // 4) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
       // Tenta inferir profissional/professional_unit a partir dos slots devolvidos pelo backend.
       const offerSlotsRaw =
+        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
         (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
         (Array.isArray((suggestResponse as any)?.result?.offer_slots) ? (suggestResponse as any).result.offer_slots : null) ??
         [];
@@ -1205,7 +1215,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       await patchBooking(booking.id, patch2);
 
-      // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
+      // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
       let detail = await fetchBookingRequestById(booking.id);
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
