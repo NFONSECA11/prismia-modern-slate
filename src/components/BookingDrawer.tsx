@@ -1206,6 +1206,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       await patchBooking(booking.id, patch2);
 
+      try {
+        console.log("[scheduleSuggestMut] calling handoffOff to switch bot ON / auto mode");
+        await handoffOff(booking.id);
+      } catch (err: any) {
+        console.error("[scheduleSuggestMut] handoffOff FAILED", {
+          message: err?.message,
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+        throw new Error("Os slots foram enviados, mas o backend não conseguiu ligar o bot automaticamente.");
+      }
+
       // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
       let detail = await fetchBookingRequestById(booking.id);
@@ -1222,6 +1234,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         }));
         await patchBooking(booking.id, patch3Mode);
         detail = await fetchBookingRequestById(booking.id);
+      }
+      if (detail?.booking_mode !== "auto_slots_bot") {
+        throw new Error(`Os slots foram enviados, mas a BR continuou em ${detail?.booking_mode ?? "modo desconhecido"}.`);
       }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
         const patch4: Record<string, unknown> = {
