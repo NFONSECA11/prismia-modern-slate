@@ -1088,6 +1088,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         vars_snapshot: cleanedVars,
         notes: updatedNotes,
       };
+      // Profissional é opcional: só envia se o usuário escolheu um.
+      // Sem profissional → suggest_slots roda só com unidade + procedimento
+      // e o cliente decide depois (slot carrega o profissional correspondente).
       if (selectedProfessionalId) {
         patch1.professional = selectedProfessionalId;
       }
@@ -1137,11 +1140,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         throw err;
       }
 
-      // 2) Solicita slots ao backend com procedimento + procedure_code + unidade
+      // 2) Solicita slots ao backend.
+      // Se há profissional escolhido → envia procedure + unit + professional.
+      // Sem profissional → envia só procedure + unit (backend retorna slots de vários profissionais).
       const suggestPayload: Record<string, unknown> = {};
       if (selectedProcedureId) suggestPayload.procedure = selectedProcedureId;
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+      if (selectedProfessionalId) suggestPayload.professional = selectedProfessionalId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
       try {
