@@ -1472,10 +1472,264 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
         return [...prev, { ts, label: "Sem disponibilidade no momento", status: "warning", detail: "Não encontramos horários para esse procedimento." }];
       });
+  });
+
+  // ── Reagendamento manual: buscar BRs ativos do cliente pelo telefone ────────
+  const handleSearchClientBookings = async () => {
+    if (!booking) return;
+    const phone = (booking.contact_phone ?? booking.phone ?? "").trim();
+    if (!phone) {
+      setRescheduleSearchError("Telefone do cliente indisponível neste BR.");
+      setRescheduleSearchResults([]);
+      return;
+    }
+    setRescheduleSearchLoading(true);
+    setRescheduleSearchError(null);
+    try {
+      const results = await fetchBookingsByPhone(phone, {
+        excludeId: booking.id,
+        statuses: ["confirmed"],
+      });
+      setRescheduleSearchResults(results);
+      if (results.length === 0) {
+        setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente.");
+      }
+    } catch (err: any) {
+      console.error("[handleSearchClientBookings] error:", err);
+      setRescheduleSearchError("Falha ao buscar agendamentos. Tente novamente.");
+      setRescheduleSearchResults([]);
+    } finally {
+      setRescheduleSearchLoading(false);
+    }
+  };
+
+  const selectClientBookingForReschedule = (br: BookingRequest) => {
+    setCancelBookingIdField(String(br.id));
+    // Autopreenche profissional/procedimento do BR antigo (atendente pode ajustar)
+    if (br.professional_id) setSelectedProfessionalId(br.professional_id);
+    const matchedProc = allProcedures.find(
+      (p) => (p.name ?? "").trim().toLowerCase() === (br.procedure_name ?? "").trim().toLowerCase()
+    );
+    if (matchedProc) setSelectedProcedureId(matchedProc.id);
+    if (br.lead_name && !assignLeadName.trim()) setAssignLeadName(br.lead_name);
+    setRescheduleSearchResults(null); // colapsa lista após seleção
+  };
+
+  // ── Reagendamento manual: cancela BR antigo + PATCH atual + suggest_slots + bot ON ──
+  const rescheduleSuggestMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      const targetIdRaw = cancelBookingIdField.trim();
+      const targetId = Number(targetIdRaw);
+      if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a reagendar");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+
+      setRescheduleLog([]);
+      const profName = professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`;
+      const selectedProc = allProcedures.find((p) => p.id === selectedProcedureId);
+      const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
+      const procedureSlug = selectedProc?.slug ?? "";
+      const procedureCode = procedureSlug || resolvedUnitProcId || "";
+
+      // 1) Cancela o BR antigo
+      pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
+      try {
+        await cancelBooking(targetId);
+        pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
+      } catch (err: any) {
+        const status = err?.response?.status;
+        // 404 → já cancelado; segue
+        if (status === 404) {
+          pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
+        } else {
+          pushRescheduleLog({
+            label: "Não foi possível cancelar o agendamento antigo",
+            status: "error",
+            detail: `Status ${status ?? "?"}`,
+          });
+          throw err;
+        }
+      }
+
+      // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
+      const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
+      const cleanedVars = { ...existingVars };
+      delete (cleanedVars as any).intent;
+      delete (cleanedVars as any).decision;
+      delete (cleanedVars as any).reason_code;
+      delete (cleanedVars as any).suggested_next_action;
+      delete (cleanedVars as any).booking_target_resolved;
+      delete (cleanedVars as any).context_resolution_mode;
+      delete (cleanedVars as any).target_br_id;
+      delete (cleanedVars as any).target_br_display_label;
+      delete (cleanedVars as any).has_open_br;
+      delete (cleanedVars as any).incoming_text;
+      delete (cleanedVars as any).no_progress_attempts;
+      delete (cleanedVars as any).confidence;
+
+      const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
+      const now = new Date();
+      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      const reschedHeader = `[${ts}] Reagendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_RESCHEDULE`;
+      const reschedDetail = `[${ts}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
+      const updatedNotes = [existingNotesRaw, reschedHeader, reschedDetail].filter(Boolean).join("\n");
+
+      if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
+
+      const patch1: Record<string, unknown> = {
+        lead_name: assignLeadName.trim(),
+        professional: selectedProfessionalId,
+        procedure: selectedProcedureId,
+        procedure_name: procedureName,
+        unit_name: booking.unit_name ?? "",
+        booking_mode: "assisted_slots_dashboard",
+        vars_snapshot: cleanedVars,
+        notes: updatedNotes,
+      };
+      if (procedureCode) patch1.procedure_code = procedureCode;
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+      if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
+
+      pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
+      try {
+        await patchBooking(booking.id, patch1);
+      } catch (err: any) {
+        pushRescheduleLog({ label: "Falha ao preparar o reagendamento", status: "error" });
+        throw err;
+      }
+
+      const detailAfterPatch1 = await fetchBookingRequestById(booking.id);
+      if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
+        pushRescheduleLog({ label: "Não foi possível preparar o reagendamento", status: "error" });
+        throw new Error("BR não entrou em assisted_slots_dashboard");
+      }
+
+      // 3) suggest_slots
+      pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
+      const suggestPayload: Record<string, unknown> = {
+        procedure: selectedProcedureId,
+        professional: selectedProfessionalId,
+      };
+      if (procedureCode) suggestPayload.procedure_code = procedureCode;
+      if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+
+      let suggestResponse: any;
+      try {
+        suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        pushRescheduleLog({
+          label: "Sem disponibilidade de horários",
+          status: "warning",
+          detail: "Tente outro profissional ou procedimento.",
+        });
+        throw new Error(`suggest_slots ${status ?? "?"}`);
+      }
+
+      const detailAfterSuggest = await fetchBookingRequestById(booking.id);
+      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      pushRescheduleLog({
+        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
+        status: offerCount > 0 ? "success" : "warning",
+        detail: offerCount > 0
+          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
+          : "O bot vai conversar com o cliente para entender melhor",
+      });
+
+      // 4) PATCH 2 → volta para auto_slots_bot (IA assume)
+      const offerSlotsRaw =
+        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        [];
+      const slotProfUnitIds = Array.from(
+        new Set(
+          offerSlotsRaw
+            .map((s: any) => Number(s?.professional_unit_id))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        )
+      );
+      const inferredProfessionalUnitId = slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
+
+      const patch2: Record<string, unknown> = {
+        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        booking_mode: "auto_slots_bot",
+        conversation_bot_mode: "on",
+        procedure: selectedProcedureId,
+        procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
+        unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
+        professional: selectedProfessionalId,
+        professional_name: profName,
+        vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
+      };
+      if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
+      if (procedureCode) patch2.procedure_code = procedureCode;
+      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
+      if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
+
+      try {
+        await patchBooking(booking.id, patch2);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] PATCH 2 (auto) falhou, tentando handoffOff:", err);
+      }
+
+      // 5) Garante bot ON via handoffOff
+      try {
+        await handoffOff(booking.id);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
+      }
+
+      const detailFinal = await fetchBookingRequestById(booking.id);
+      const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+      return { slots: finalSlots, cancelledId: targetId };
+    },
+    onSuccess: async ({ slots, cancelledId }) => {
+      const count = slots?.length ?? 0;
+      if (count === 0) {
+        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        pushRescheduleLog({
+          label: "Bot assumiu a conversa",
+          status: "warning",
+          detail: "Sem horários — o bot vai conduzir o cliente.",
+        });
+      } else {
+        toast.success(`Reagendamento iniciado — ${count} horário(s) serão oferecidos ao cliente.`);
+        pushRescheduleLog({
+          label: "Pronto! Bot assumiu o reagendamento",
+          status: "success",
+          detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
+        });
+      }
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
+      setActionDone(`Agenda #${cancelledId} cancelada e bot reagendando!`);
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      console.error("[rescheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
+      setRescheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no reagendamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+      });
     },
   });
 
-  const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
       // 1) Grava o slot escolhido em vars_snapshot.chosen_slot
