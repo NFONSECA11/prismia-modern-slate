@@ -2261,24 +2261,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 </div>
               )}
 
-              {iaOpType === "reschedule" && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
-                <div className="rounded-lg border border-border bg-background p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {rescheduleSearchResults.map((br) => (
-                    <button
-                      key={br.id}
-                      type="button"
-                      onClick={() => selectClientBookingForReschedule(br)}
-                      className="w-full text-left rounded-md px-2.5 py-2 hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-foreground font-medium">#{br.id}</span>
-                        <span className="text-[10px] text-muted-foreground">{br.status}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{br.procedure_name} · {br.professional_name || "Sem profissional"}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
+
 
               {(iaOpType === "schedule" || iaOpType === "reschedule") && (
                 <>
@@ -2410,6 +2393,42 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 </button>
               )}
             </div>
+
+            {iaOpType === "reschedule" && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+              <div className="rounded-xl border border-border bg-surface-elevated p-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Resultados da busca ({rescheduleSearchResults.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRescheduleSearchResults(null);
+                      setRescheduleSearchError(null);
+                    }}
+                    className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Limpar
+                  </button>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2 space-y-1 max-h-40 overflow-y-auto">
+                  {rescheduleSearchResults.map((br) => (
+                    <button
+                      key={br.id}
+                      type="button"
+                      onClick={() => selectClientBookingForReschedule(br)}
+                      className="w-full text-left rounded-md px-2.5 py-2 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-foreground font-medium">#{br.id}</span>
+                        <span className="text-[10px] text-muted-foreground">{br.status}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{br.procedure_name} · {br.professional_name || "Sem profissional"}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {activeManageLog.length > 0 && (
               <div className="rounded-xl border border-border bg-surface-elevated p-4">
