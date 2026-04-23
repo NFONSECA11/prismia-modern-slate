@@ -2523,6 +2523,27 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                           </div>
                         )}
 
+                        {(() => {
+                          const selectedBr = rescheduleSearchResults?.find(
+                            (b) => String(b.id) === cancelBookingIdField.trim(),
+                          );
+                          if (!selectedBr) return null;
+                          const whenLabel = selectedBr.scheduled_at
+                            ? format(new Date(selectedBr.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                            : selectedBr.preferred_window || "Sem horário definido";
+                          return (
+                            <div className="mt-2 rounded-lg border border-border bg-surface/60 px-3 py-2 flex items-center gap-2">
+                              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                  Agendamento atual
+                                </span>
+                                <span className="text-xs text-foreground font-medium">{whenLabel}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
                           <button
                             type="button"
