@@ -1479,19 +1479,39 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   // ── Reagendamento manual: buscar BRs ativos do cliente pelo telefone ────────
   const handleSearchClientBookings = async () => {
     if (!booking) return;
-    const phone = (booking.contact_phone ?? booking.phone ?? "").trim();
-    if (!phone) {
-      setRescheduleSearchError("Telefone do cliente indisponível neste BR.");
-      setRescheduleSearchResults([]);
-      return;
-    }
     setRescheduleSearchLoading(true);
     setRescheduleSearchError(null);
     try {
+      // 1) Tenta telefone do booking (listagem) ou do detalhe (mais completo)
+      const detail = bookingDetailForBot as any;
+      let phone = (
+        detail?.contact_phone ??
+        detail?.phone ??
+        (booking as any).contact_phone ??
+        (booking as any).phone ??
+        ""
+      ).toString().trim();
+
+      // 2) Fallback: busca explicitamente o telefone via endpoint de detalhe
+      if (!phone) {
+        console.log("[handleSearchClientBookings] phone vazio no booking, buscando via fetchBookingPhoneById…");
+        const fetched = await fetchBookingPhoneById(booking.id);
+        phone = (fetched ?? "").toString().trim();
+      }
+
+      console.log("[handleSearchClientBookings] phone resolvido:", phone || "(vazio)");
+
+      if (!phone) {
+        setRescheduleSearchError("Telefone do cliente indisponível neste BR.");
+        setRescheduleSearchResults([]);
+        return;
+      }
+
       const results = await fetchBookingsByPhone(phone, {
         excludeId: booking.id,
         statuses: ["confirmed"],
       });
+      console.log("[handleSearchClientBookings] resultados:", results.length, results.map((r) => r.id));
       setRescheduleSearchResults(results);
       if (results.length === 0) {
         setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente.");
