@@ -304,8 +304,22 @@ export default function Index() {
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
     const created = await createBooking(formData);
+    const newId = created?.id;
 
-    // Build a detailed manual-schedule note: header + structured details
+    // Re-fetch the freshly created booking so we have the up-to-date `notes`
+    // (the POST response sometimes omits the auto-generated creation tag).
+    let currentNotes = "";
+    if (newId) {
+      try {
+        const fresh = await fetchBookingRequestById(newId);
+        currentNotes = (fresh?.notes ?? "").trim();
+      } catch (err) {
+        console.warn("[handleSaveBooking] fetchBookingRequestById falhou, usando notes do POST:", err);
+        currentNotes = (created?.notes ?? "").trim();
+      }
+    }
+
+    // Build the two new lines to APPEND (do not remove anything existing).
     const operatorName =
       (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
       user?.name ||
@@ -322,14 +336,15 @@ export default function Index() {
     const profName = created?.professional_name || `#${formData.professional_id}`;
 
     const headerLine = `[${ts1}] Agendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_SCHEDULE`;
-    const detailLine = `[${ts2}]  agendamento #${created?.id ?? "?"} | Procedimento: ${formData.procedure_name} | Profissional: ${profName} | Data/Hora: ${dateBR} ${formData.time} | Motivo: ${formData.motivo.trim()}`;
+    const detailLine = `[${ts2}]  agendamento #${newId ?? "?"} | Procedimento: ${formData.procedure_name} | Profissional: ${profName} | Data/Hora: ${dateBR} ${formData.time} | Motivo: ${formData.motivo.trim()}`;
 
-    const existingNotes = (created?.notes ?? formData.notes ?? "").trim();
-    const composedNotes = [existingNotes, headerLine, detailLine].filter(Boolean).join("\n");
+    // Append new lines to existing notes — preserve everything already there.
+    const composedNotes = [currentNotes, headerLine, detailLine].filter(Boolean).join("\n");
 
-    if (created?.id) {
+    if (newId) {
       try {
-        await patchBooking(created.id, { notes: composedNotes });
+        console.log("[handleSaveBooking] PATCH notes →", { id: newId, before: currentNotes, after: composedNotes });
+        await patchBooking(newId, { notes: composedNotes });
       } catch (err) {
         console.error("[handleSaveBooking] PATCH notes falhou:", err);
       }
