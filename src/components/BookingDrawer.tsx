@@ -1140,9 +1140,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           stack: err?.stack,
         });
         pushScheduleLog({
-          label: "PATCH 1 — preparar BR",
+          label: "Não foi possível preparar o agendamento",
           status: "error",
-          detail: `${err?.response?.status ?? "?"}: ${err?.message ?? "falhou"}`,
+          detail: "Tente novamente em instantes.",
         });
         throw err;
       }
