@@ -1187,7 +1187,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
-        status: "awaiting_choice",
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
         procedure_name: procedureName,
@@ -1206,49 +1205,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       await patchBooking(booking.id, patch2);
 
-      try {
-        console.log("[scheduleSuggestMut] calling handoffOff to switch bot ON / auto mode");
-        await handoffOff(booking.id);
-      } catch (err: any) {
-        console.error("[scheduleSuggestMut] handoffOff FAILED", {
-          message: err?.message,
-          status: err?.response?.status,
-          data: err?.response?.data,
-        });
-        throw new Error("Os slots foram enviados, mas o backend não conseguiu ligar o bot automaticamente.");
-      }
-
       // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
       let detail = await fetchBookingRequestById(booking.id);
-      if (detail?.status !== "awaiting_choice" || detail?.booking_mode !== "auto_slots_bot") {
-        const patch3Mode: Record<string, unknown> = {
-          status: "awaiting_choice",
-          booking_mode: "auto_slots_bot",
-          conversation_bot_mode: "on",
-        };
-        console.warn("[scheduleSuggestMut] PATCH 3b correcting auto state:", JSON.stringify({
-          actualStatus: detail?.status,
-          actualMode: detail?.booking_mode,
-          payload: patch3Mode,
-        }));
-        await patchBooking(booking.id, patch3Mode);
-        detail = await fetchBookingRequestById(booking.id);
-      }
-      if (detail?.booking_mode !== "auto_slots_bot") {
-        throw new Error(`Os slots foram enviados, mas a BR continuou em ${detail?.booking_mode ?? "modo desconhecido"}.`);
-      }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
-        const patch4: Record<string, unknown> = {
+        const patch3: Record<string, unknown> = {
           procedure_name: procedureName,
         };
-        if (procedureCode) patch4.procedure_code = procedureCode;
-        console.warn("[scheduleSuggestMut] PATCH 4 correcting procedure_name:", JSON.stringify({
+        if (procedureCode) patch3.procedure_code = procedureCode;
+        console.warn("[scheduleSuggestMut] PATCH 3 correcting procedure_name:", JSON.stringify({
           expected: procedureName,
           actual: detail?.procedure_name,
-          payload: patch4,
+          payload: patch3,
         }));
-        await patchBooking(booking.id, patch4);
+        await patchBooking(booking.id, patch3);
         detail = await fetchBookingRequestById(booking.id);
       }
       const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
@@ -1393,7 +1363,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     } else if (mode === "assisted_slots_dashboard") {
       if (booking.status === "handoff" && !hasChosenSlot) {
         if (!isConvo) actions.push(
-          <ActionButton key="suggest" onClick={() => scheduleSuggestMut.mutate()} disabled={busy} loading={scheduleSuggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
+          <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
         );
         actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
@@ -1426,7 +1396,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!terminal) {
         if (!isConvo) {
           actions.push(
-            <ActionButton key="suggest" onClick={() => scheduleSuggestMut.mutate()} disabled={busy} loading={scheduleSuggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
+            <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
             <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
           );
         }
