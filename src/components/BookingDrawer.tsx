@@ -2494,38 +2494,45 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                     {iaOpType === "reschedule" && (
                       <div className="flex flex-col gap-2">
                         <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Nome do Cliente <span className="text-status-cancelled">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={assignLeadName}
-                            onChange={(e) => setAssignLeadName(e.target.value)}
-                            placeholder="Nome do cliente..."
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                          />
-                        </div>
-
-                        {/* Buscar BRs do cliente */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={handleSearchClientBookings}
-                            disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
-                          >
-                            {rescheduleSearchLoading ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Search className="h-3.5 w-3.5" />
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                              Nome do Cliente <span className="text-status-cancelled">*</span>
+                            </label>
+                            {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {rescheduleSearchResults.length} encontrado(s)
+                              </span>
                             )}
-                            {rescheduleSearchLoading ? "Buscando…" : "Buscar agendamentos do cliente"}
-                          </button>
-                          {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {rescheduleSearchResults.length} encontrado(s)
-                            </span>
-                          )}
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={assignLeadName}
+                              onChange={(e) => setAssignLeadName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleSearchClientBookings();
+                                }
+                              }}
+                              placeholder="Nome do cliente..."
+                              className="text-sm bg-surface border border-border rounded-lg pl-2 pr-9 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSearchClientBookings}
+                              disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
+                              title="Buscar agendamentos do cliente"
+                              aria-label="Buscar agendamentos do cliente"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-elevated disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                              {rescheduleSearchLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Search className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Lista de BRs encontrados */}
