@@ -2752,6 +2752,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             )}
                             {rescheduleSearchLoading ? "Buscando…" : "Buscar BRs"}
                           </button>
+                        </div>
+                      </div>
+                    )}
 
 
                     {iaOpType === "cancel" && (
