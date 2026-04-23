@@ -2149,25 +2149,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       <>
         <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
         <aside
-          className="fixed right-0 top-0 z-50 h-full w-full max-w-[480px] shadow-lg animate-slide-in-right flex flex-col"
+          className="fixed right-6 z-50 w-full max-w-[480px] rounded-xl shadow-2xl animate-fade-in flex flex-col overflow-hidden"
           style={{
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: 540,
             background: "hsl(var(--surface-raised))",
-            borderLeft: "1px solid hsl(var(--border))",
+            border: "1px solid hsl(var(--border))",
           }}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
-            <div className="flex items-center gap-3">
-              {logoUrl ? (
-                <img src={logoUrl} alt={logoAlt || "Logo"} className="h-8 w-8 rounded-lg object-contain" />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
-                  <Calendar className="h-4 w-4 text-primary-foreground" />
-                </div>
-              )}
-              <div>
-                <h2 className="text-sm font-semibold text-foreground leading-tight">Gerenciar agenda</h2>
-                <p className="text-xs text-muted-foreground font-mono">#{booking.id}</p>
-              </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground leading-tight">Gerenciar agenda</h2>
+              <p className="text-xs text-muted-foreground font-mono">#{booking.id}</p>
             </div>
             <button
               onClick={onClose}
