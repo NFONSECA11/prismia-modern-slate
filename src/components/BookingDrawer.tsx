@@ -1731,6 +1731,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
+  const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
       // 1) Grava o slot escolhido em vars_snapshot.chosen_slot
