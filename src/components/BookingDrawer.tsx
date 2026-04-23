@@ -1745,22 +1745,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                           Se o cliente não indicou profissional, deixe em branco.
                         </p>
                         {scheduleLog.length > 0 && (
-                          <div className="mt-2 rounded-lg border border-border bg-surface/60 p-2">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                Log da execução
+                          <div className="mt-2 rounded-lg border border-border bg-surface/60 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-foreground font-medium">
+                                Status do agendamento
                               </span>
                               {!scheduleSuggestMut.isPending && (
                                 <button
                                   type="button"
                                   onClick={() => setScheduleLog([])}
-                                  className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                                  aria-label="Limpar status"
+                                  className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                                 >
-                                  limpar
+                                  Limpar
                                 </button>
                               )}
                             </div>
-                            <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+                            <ul className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
                               {scheduleLog.map((entry, idx) => {
                                 const dot =
                                   entry.status === "success"
@@ -1776,14 +1777,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                                     : entry.status === "warning"
                                     ? "text-accent-foreground"
                                     : "text-foreground";
+                                const isLast = idx === scheduleLog.length - 1;
+                                const showSpinner = scheduleSuggestMut.isPending && isLast && entry.status === "info";
                                 return (
-                                  <li key={idx} className="flex items-start gap-2 text-[11px] leading-tight">
-                                    <span className={`mt-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
-                                    <span className="font-mono text-muted-foreground/80 shrink-0">{entry.ts}</span>
+                                  <li key={idx} className="flex items-start gap-2 text-xs leading-snug">
+                                    {showSpinner ? (
+                                      <span className="mt-0.5 inline-block h-2 w-2 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+                                    ) : (
+                                      <span className={`mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
+                                    )}
                                     <span className="flex-1 min-w-0">
                                       <span className={`font-medium ${textColor}`}>{entry.label}</span>
                                       {entry.detail && (
-                                        <span className="text-muted-foreground"> — {entry.detail}</span>
+                                        <span className="block text-muted-foreground mt-0.5">{entry.detail}</span>
                                       )}
                                     </span>
                                   </li>
