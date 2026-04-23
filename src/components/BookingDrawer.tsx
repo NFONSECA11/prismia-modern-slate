@@ -479,6 +479,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setMockAssignedProfessional(null);
     setMessageText("");
     setActionDone(null);
+    setScheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
     if (code === "cancel") setIaOpType("cancel");
