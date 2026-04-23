@@ -561,8 +561,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // Busca dados de agenda também no modo dedicado de gerenciamento aberto pelo ícone.
   const needsSchedulingLookups =
     !!booking &&
-    ((drawerMode === "manage" && (iaOpType === "schedule" || iaOpType === "reschedule")) ||
-      (aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule")));
+    ((drawerMode === "manage" && (iaOpType === "schedule" || iaOpType === "reschedule" || iaOpType === "cancel")) ||
+      (aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule" || iaOpType === "cancel")));
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
@@ -2263,12 +2263,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
 
 
-              {(iaOpType === "schedule" || iaOpType === "reschedule") && (
+              {(iaOpType === "schedule" || iaOpType === "reschedule" || iaOpType === "cancel") && (
                 <>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                        Profissional {iaOpType === "reschedule" ? "*" : ""}
+                        Profissional {iaOpType === "reschedule" || iaOpType === "cancel" ? "*" : ""}
                       </label>
                       <select
                         value={selectedProfessionalId ?? ""}
@@ -2295,10 +2295,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                           setSelectedProcedureId(Number(e.target.value) || null);
                           setSelectedSpecialtyId(null);
                         }}
-                        disabled={iaOpType === "reschedule" && !selectedProfessionalId}
+                        disabled={(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId}
                         className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <option value="">{iaOpType === "reschedule" && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
+                        <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
                         {manageProcedureOptions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
                         ))}
