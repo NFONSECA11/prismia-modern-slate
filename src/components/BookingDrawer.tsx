@@ -2153,7 +2153,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           style={{
             top: "50%",
             transform: "translateY(-50%)",
-            height: "min(720px, calc(100vh - 48px))",
+            height: "min(735px, calc(100vh - 32px))",
             background: "hsl(var(--surface-raised))",
             border: "1px solid hsl(var(--border))",
           }}
