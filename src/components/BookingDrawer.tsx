@@ -1124,7 +1124,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       console.log("[scheduleSuggestMut] BR after PATCH 1:", {
         id: detailAfterPatch1?.id,
         booking_mode: detailAfterPatch1?.booking_mode,
-        procedure: detailAfterPatch1?.procedure,
+        procedure: (detailAfterPatch1 as any)?.procedure,
         procedure_name: detailAfterPatch1?.procedure_name,
       });
       if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
