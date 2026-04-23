@@ -108,6 +108,8 @@ export interface AiEvent {
   policy_value?: string;
   reason?: string;
   unit?: string;
+  old_dt?: string;
+  new_dt?: string;
 }
 
 /**

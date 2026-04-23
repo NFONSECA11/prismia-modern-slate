@@ -313,6 +313,11 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
   const scheduled = formatEventTimestamp(event.scheduled_at);
   if (scheduled) meta.push({ label: "Agendado para", value: scheduled });
 
+  const oldDt = formatEventTimestamp(event.old_dt);
+  if (oldDt) meta.push({ label: "De", value: oldDt });
+  const newDt = formatEventTimestamp(event.new_dt);
+  if (newDt) meta.push({ label: "Para", value: newDt });
+
   // Policy: aceita tanto `policy` (string) quanto `policy_key`/`policy_value`
   let policyValue: string | undefined;
   if (event.policy_key && event.policy_value) {
