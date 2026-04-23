@@ -1207,11 +1207,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
       pushScheduleLog({
-        label: "suggest_slots — buscar horários",
+        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
         status: offerCount > 0 ? "success" : "warning",
         detail: offerCount > 0
-          ? `${offerCount} horário(s) retornado(s)`
-          : "Nenhum horário disponível — bot conduzirá a conversa",
+          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
+          : "O bot vai conversar com o cliente para entender melhor",
       });
 
       // 4) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
