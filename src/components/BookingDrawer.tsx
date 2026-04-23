@@ -1117,27 +1117,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         throw err;
       }
 
-      // PATCH 1b: força os nomes manuais sem reenviar FKs.
-      const patch1b: Record<string, unknown> = {
-        procedure_name: procedureName,
-      };
-      if (procedureCode) patch1b.procedure_code = procedureCode;
-      if (profName) patch1b.professional_name = profName;
-      console.log("[scheduleSuggestMut] disparando PATCH 1b... payload:", JSON.stringify(patch1b));
-      try {
-        const patch1bResult = await patchBooking(booking.id, patch1b);
-        console.log("[scheduleSuggestMut] PATCH 1b OK - resposta:", {
-          returnedProcedureName: (patch1bResult as any)?.procedure_name,
-          returnedLeadName: (patch1bResult as any)?.lead_name,
-          fullResult: patch1bResult,
-        });
-      } catch (err: any) {
-        console.error("[scheduleSuggestMut] PATCH 1b FALHOU:", {
-          message: err?.message,
-          status: err?.response?.status,
-          data: err?.response?.data,
-        });
-        throw err;
+      // Confirma a persistência do PATCH 1 antes de disparar o suggest_slots.
+      // Isso evita seguir o fluxo enquanto o backend ainda não refletiu o modo
+      // "assisted_slots_dashboard" na BR.
+      const detailAfterPatch1 = await fetchBookingRequestById(booking.id);
+      console.log("[scheduleSuggestMut] BR after PATCH 1:", {
+        id: detailAfterPatch1?.id,
+        booking_mode: detailAfterPatch1?.booking_mode,
+        procedure: detailAfterPatch1?.procedure,
+        procedure_name: detailAfterPatch1?.procedure_name,
+      });
+      if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
+        throw new Error("O BR não entrou em 'Slots disparados pelo dashboard' antes do suggest_slots.");
       }
 
       // 2) Solicita slots ao backend.
