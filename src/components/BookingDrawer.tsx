@@ -21,6 +21,7 @@ import {
   fetchBookingMessages,
   sendBookingMessage,
   patchBooking,
+  fetchBookingsByPhone,
 } from "@/lib/bookingApi";
 import { rememberBookingProcedureNameOverride } from "@/lib/bookingProcedureNameOverrides";
 import type { BookingMessage } from "@/lib/bookingApi";
@@ -59,6 +60,7 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Search,
 } from "lucide-react";
 
 interface BookingDrawerProps {
@@ -445,6 +447,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
   const lastCancelledIdRef = useRef<string | null>(null);
+  // Reagendamento manual: busca de BRs do cliente pelo telefone do BR atual
+  const [rescheduleSearchResults, setRescheduleSearchResults] = useState<BookingRequest[] | null>(null);
+  const [rescheduleSearchLoading, setRescheduleSearchLoading] = useState(false);
+  const [rescheduleSearchError, setRescheduleSearchError] = useState<string | null>(null);
+  type RescheduleLogEntry = { ts: string; label: string; status: "info" | "success" | "warning" | "error"; detail?: string };
+  const [rescheduleLog, setRescheduleLog] = useState<RescheduleLogEntry[]>([]);
+  const pushRescheduleLog = (entry: Omit<RescheduleLogEntry, "ts">) => {
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setRescheduleLog((prev) => [...prev, { ...entry, ts }]);
+  };
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
@@ -500,6 +513,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setMessageText("");
     setActionDone(null);
     setScheduleLog([]);
+    setRescheduleSearchResults(null);
+    setRescheduleSearchLoading(false);
+    setRescheduleSearchError(null);
+    setRescheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
     if (code === "cancel") setIaOpType("cancel");
@@ -1458,6 +1475,262 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
+  // ── Reagendamento manual: buscar BRs ativos do cliente pelo telefone ────────
+  const handleSearchClientBookings = async () => {
+    if (!booking) return;
+    const phone = (booking.contact_phone ?? booking.phone ?? "").trim();
+    if (!phone) {
+      setRescheduleSearchError("Telefone do cliente indisponível neste BR.");
+      setRescheduleSearchResults([]);
+      return;
+    }
+    setRescheduleSearchLoading(true);
+    setRescheduleSearchError(null);
+    try {
+      const results = await fetchBookingsByPhone(phone, {
+        excludeId: booking.id,
+        statuses: ["confirmed"],
+      });
+      setRescheduleSearchResults(results);
+      if (results.length === 0) {
+        setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente.");
+      }
+    } catch (err: any) {
+      console.error("[handleSearchClientBookings] error:", err);
+      setRescheduleSearchError("Falha ao buscar agendamentos. Tente novamente.");
+      setRescheduleSearchResults([]);
+    } finally {
+      setRescheduleSearchLoading(false);
+    }
+  };
+
+  const selectClientBookingForReschedule = (br: BookingRequest) => {
+    setCancelBookingIdField(String(br.id));
+    // Autopreenche profissional/procedimento do BR antigo (atendente pode ajustar)
+    if (br.professional_id) setSelectedProfessionalId(br.professional_id);
+    const matchedProc = allProcedures.find(
+      (p) => (p.name ?? "").trim().toLowerCase() === (br.procedure_name ?? "").trim().toLowerCase()
+    );
+    if (matchedProc) setSelectedProcedureId(matchedProc.id);
+    if (br.lead_name && !assignLeadName.trim()) setAssignLeadName(br.lead_name);
+    setRescheduleSearchResults(null); // colapsa lista após seleção
+  };
+
+  // ── Reagendamento manual: cancela BR antigo + PATCH atual + suggest_slots + bot ON ──
+  const rescheduleSuggestMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      const targetIdRaw = cancelBookingIdField.trim();
+      const targetId = Number(targetIdRaw);
+      if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a reagendar");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+
+      setRescheduleLog([]);
+      const profName = professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`;
+      const selectedProc = allProcedures.find((p) => p.id === selectedProcedureId);
+      const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
+      const procedureSlug = selectedProc?.slug ?? "";
+      const procedureCode = procedureSlug || resolvedUnitProcId || "";
+
+      // 1) Cancela o BR antigo
+      pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
+      try {
+        await cancelBooking(targetId);
+        pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
+      } catch (err: any) {
+        const status = err?.response?.status;
+        // 404 → já cancelado; segue
+        if (status === 404) {
+          pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
+        } else {
+          pushRescheduleLog({
+            label: "Não foi possível cancelar o agendamento antigo",
+            status: "error",
+            detail: `Status ${status ?? "?"}`,
+          });
+          throw err;
+        }
+      }
+
+      // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
+      const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
+      const cleanedVars = { ...existingVars };
+      delete (cleanedVars as any).intent;
+      delete (cleanedVars as any).decision;
+      delete (cleanedVars as any).reason_code;
+      delete (cleanedVars as any).suggested_next_action;
+      delete (cleanedVars as any).booking_target_resolved;
+      delete (cleanedVars as any).context_resolution_mode;
+      delete (cleanedVars as any).target_br_id;
+      delete (cleanedVars as any).target_br_display_label;
+      delete (cleanedVars as any).has_open_br;
+      delete (cleanedVars as any).incoming_text;
+      delete (cleanedVars as any).no_progress_attempts;
+      delete (cleanedVars as any).confidence;
+
+      const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
+      const now = new Date();
+      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      const reschedHeader = `[${ts}] Reagendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_RESCHEDULE`;
+      const reschedDetail = `[${ts}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
+      const updatedNotes = [existingNotesRaw, reschedHeader, reschedDetail].filter(Boolean).join("\n");
+
+      if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
+
+      const patch1: Record<string, unknown> = {
+        lead_name: assignLeadName.trim(),
+        professional: selectedProfessionalId,
+        procedure: selectedProcedureId,
+        procedure_name: procedureName,
+        unit_name: booking.unit_name ?? "",
+        booking_mode: "assisted_slots_dashboard",
+        vars_snapshot: cleanedVars,
+        notes: updatedNotes,
+      };
+      if (procedureCode) patch1.procedure_code = procedureCode;
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+      if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
+
+      pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
+      try {
+        await patchBooking(booking.id, patch1);
+      } catch (err: any) {
+        pushRescheduleLog({ label: "Falha ao preparar o reagendamento", status: "error" });
+        throw err;
+      }
+
+      const detailAfterPatch1 = await fetchBookingRequestById(booking.id);
+      if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
+        pushRescheduleLog({ label: "Não foi possível preparar o reagendamento", status: "error" });
+        throw new Error("BR não entrou em assisted_slots_dashboard");
+      }
+
+      // 3) suggest_slots
+      pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
+      const suggestPayload: Record<string, unknown> = {
+        procedure: selectedProcedureId,
+        professional: selectedProfessionalId,
+      };
+      if (procedureCode) suggestPayload.procedure_code = procedureCode;
+      if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+
+      let suggestResponse: any;
+      try {
+        suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        pushRescheduleLog({
+          label: "Sem disponibilidade de horários",
+          status: "warning",
+          detail: "Tente outro profissional ou procedimento.",
+        });
+        throw new Error(`suggest_slots ${status ?? "?"}`);
+      }
+
+      const detailAfterSuggest = await fetchBookingRequestById(booking.id);
+      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      pushRescheduleLog({
+        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
+        status: offerCount > 0 ? "success" : "warning",
+        detail: offerCount > 0
+          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
+          : "O bot vai conversar com o cliente para entender melhor",
+      });
+
+      // 4) PATCH 2 → volta para auto_slots_bot (IA assume)
+      const offerSlotsRaw =
+        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        [];
+      const slotProfUnitIds = Array.from(
+        new Set(
+          offerSlotsRaw
+            .map((s: any) => Number(s?.professional_unit_id))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        )
+      );
+      const inferredProfessionalUnitId = slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
+
+      const patch2: Record<string, unknown> = {
+        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        booking_mode: "auto_slots_bot",
+        conversation_bot_mode: "on",
+        procedure: selectedProcedureId,
+        procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
+        unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
+        professional: selectedProfessionalId,
+        professional_name: profName,
+        vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
+      };
+      if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
+      if (procedureCode) patch2.procedure_code = procedureCode;
+      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
+      if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
+
+      try {
+        await patchBooking(booking.id, patch2);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] PATCH 2 (auto) falhou, tentando handoffOff:", err);
+      }
+
+      // 5) Garante bot ON via handoffOff
+      try {
+        await handoffOff(booking.id);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
+      }
+
+      const detailFinal = await fetchBookingRequestById(booking.id);
+      const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+      return { slots: finalSlots, cancelledId: targetId };
+    },
+    onSuccess: async ({ slots, cancelledId }) => {
+      const count = slots?.length ?? 0;
+      if (count === 0) {
+        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        pushRescheduleLog({
+          label: "Bot assumiu a conversa",
+          status: "warning",
+          detail: "Sem horários — o bot vai conduzir o cliente.",
+        });
+      } else {
+        toast.success(`Reagendamento iniciado — ${count} horário(s) serão oferecidos ao cliente.`);
+        pushRescheduleLog({
+          label: "Pronto! Bot assumiu o reagendamento",
+          status: "success",
+          detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
+        });
+      }
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
+      setActionDone(`Agenda #${cancelledId} cancelada e bot reagendando!`);
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      console.error("[rescheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
+      setRescheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no reagendamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+      });
+    },
+  });
+
   const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
@@ -2001,7 +2274,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                     {iaOpType === "reschedule" && (
                       <div className="flex flex-col gap-2">
                         <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente</label>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                            Nome do Cliente <span className="text-status-cancelled">*</span>
+                          </label>
                           <input
                             type="text"
                             value={assignLeadName}
@@ -2010,19 +2285,89 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
+
+                        {/* Buscar BRs do cliente */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleSearchClientBookings}
+                            disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            {rescheduleSearchLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSearchLoading ? "Buscando…" : "Buscar agendamentos do cliente"}
+                          </button>
+                          {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {rescheduleSearchResults.length} encontrado(s)
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Lista de BRs encontrados */}
+                        {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                          <div className="rounded-lg border border-border bg-surface/60 p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+                            {rescheduleSearchResults.map((br) => {
+                              const when = br.scheduled_at
+                                ? format(new Date(br.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                                : (br.preferred_window || "Sem horário");
+                              const selected = cancelBookingIdField.trim() === String(br.id);
+                              return (
+                                <button
+                                  key={br.id}
+                                  type="button"
+                                  onClick={() => selectClientBookingForReschedule(br)}
+                                  className={`text-left text-xs px-2.5 py-2 rounded-md border transition-all flex flex-col gap-0.5 ${
+                                    selected
+                                      ? "border-primary bg-primary/10 text-foreground"
+                                      : "border-border bg-background hover:border-primary/60 hover:bg-surface-elevated text-foreground"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium inline-flex items-center gap-1.5">
+                                      <Hash className="h-3 w-3 text-muted-foreground" />
+                                      {br.id} · {br.lead_name || "Sem nome"}
+                                    </span>
+                                    {selected && <Check className="h-3.5 w-3.5 text-primary" />}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                                    <Calendar className="h-3 w-3" />
+                                    {when}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {br.procedure_name || "—"} · {br.professional_name || "Sem profissional"}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {rescheduleSearchError && (
+                          <div className="text-[11px] text-status-canceled italic">{rescheduleSearchError}</div>
+                        )}
+
                         <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID do Agendamento a Reagendar</label>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                            ID do Agendamento a Reagendar <span className="text-status-cancelled">*</span>
+                          </label>
                           <input
                             type="text"
                             value={cancelBookingIdField}
                             onChange={(e) => setCancelBookingIdField(e.target.value)}
-                            placeholder="Ex: 483"
+                            placeholder="Ex: 483 (ou selecione acima)"
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Profissional</label>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                              Profissional <span className="text-status-cancelled">*</span>
+                            </label>
                             <select
                               value={selectedProfessionalId ?? ""}
                               onChange={(e) => {
@@ -2040,7 +2385,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             </select>
                           </div>
                           <div>
-                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento</label>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                              Procedimento <span className="text-status-cancelled">*</span>
+                            </label>
                             <select
                               value={selectedProcedureId ?? ""}
                               onChange={(e) => {
@@ -2057,20 +2404,79 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             </select>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 pt-1">
+
+                        {/* Status / log do reagendamento */}
+                        {rescheduleLog.length > 0 && (
+                          <div className="mt-1 rounded-lg border border-border bg-surface/60 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-foreground font-medium">Status do reagendamento</span>
+                              {!rescheduleSuggestMut.isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => setRescheduleLog([])}
+                                  className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                                >
+                                  Limpar
+                                </button>
+                              )}
+                            </div>
+                            <ul className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
+                              {rescheduleLog.map((entry, idx) => {
+                                const dot =
+                                  entry.status === "success" ? "bg-primary"
+                                  : entry.status === "error" ? "bg-destructive"
+                                  : entry.status === "warning" ? "bg-accent"
+                                  : "bg-muted-foreground";
+                                const textColor =
+                                  entry.status === "error" ? "text-destructive"
+                                  : entry.status === "warning" ? "text-accent-foreground"
+                                  : "text-foreground";
+                                const isLast = idx === rescheduleLog.length - 1;
+                                const showSpinner = rescheduleSuggestMut.isPending && isLast && entry.status === "info";
+                                return (
+                                  <li key={idx} className="flex items-start gap-2 text-xs leading-snug">
+                                    {showSpinner ? (
+                                      <span className="mt-0.5 inline-block h-2 w-2 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+                                    ) : (
+                                      <span className={`mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
+                                    )}
+                                    <span className="flex-1 min-w-0">
+                                      <span className={`font-medium ${textColor}`}>{entry.label}</span>
+                                      {entry.detail && (
+                                        <span className="block text-muted-foreground mt-0.5">{entry.detail}</span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
                           <button
                             type="button"
-                            disabled
-                            title="Ação ainda não implementada"
+                            onClick={() => rescheduleSuggestMut.mutate()}
+                            disabled={
+                              rescheduleSuggestMut.isPending ||
+                              !assignLeadName.trim() ||
+                              !cancelBookingIdField.trim() ||
+                              !selectedProfessionalId ||
+                              !selectedProcedureId
+                            }
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                            Reagendar
+                            {rescheduleSuggestMut.isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSuggestMut.isPending ? "Reagendando…" : "Reagendar"}
                           </button>
-                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
                         </div>
                       </div>
                     )}
+
 
                     {iaOpType === "cancel" && (
                       <div className="flex flex-col gap-2">

@@ -245,6 +245,54 @@ export async function fetchBookingRequests(): Promise<BookingListResponse> {
   return fetchFilteredBookings({});
 }
 
+// ── Buscar BRs por telefone (para reagendamento manual) ──────────────────────
+function digitsOnly(value: string): string {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+export async function fetchBookingsByPhone(
+  phone: string,
+  opts: { excludeId?: number; statuses?: string[] } = {}
+): Promise<BookingRequest[]> {
+  const phoneDigits = digitsOnly(phone);
+  if (!phoneDigits) return [];
+
+  const statuses = opts.statuses ?? ["confirmed"];
+  const search = phoneDigits.length > 4 ? phoneDigits.slice(-9) : phoneDigits;
+
+  try {
+    const { data } = await api.get("/api/booking/requests/", {
+      params: { search, limit: 100 },
+    });
+    const normalized = normalizeBookingListResponse(data);
+    const matchTarget = phoneDigits.slice(-8);
+
+    const filtered = (normalized.results as BookingRequest[]).filter((b) => {
+      if (opts.excludeId && b.id === opts.excludeId) return false;
+      if (!statuses.includes(b.status)) return false;
+      const candidatePhone = digitsOnly(b.contact_phone ?? b.phone ?? "");
+      if (!candidatePhone) return false;
+      // Match by last 8 digits to ignore country/area code variations
+      return candidatePhone.endsWith(matchTarget) || matchTarget.endsWith(candidatePhone.slice(-8));
+    });
+
+    // Order by scheduled_at asc (próximos primeiro), fallback para created_at desc
+    filtered.sort((a, b) => {
+      const aTime = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
+      const bTime = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
+      if (aTime && bTime) return aTime - bTime;
+      if (aTime) return -1;
+      if (bTime) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    return applyBookingProcedureNameOverrides(filtered);
+  } catch (err) {
+    console.error("[fetchBookingsByPhone] failed:", err);
+    return [];
+  }
+}
+
 export async function fetchBookingRequestById(id: number): Promise<BookingRequest> {
   const { data } = await api.get(`/api/booking/requests/${id}/`);
   return applyBookingProcedureNameOverride((data?.result ?? data) as BookingRequest);
