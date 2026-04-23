@@ -816,7 +816,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           ];
           for (const attempt of statusAttempts) {
             try {
-              await fetchCsrf();
               const r = await attempt.run();
               console.log(`[BookingDrawer] ${attempt.label} OK`, r);
               const refetched = await fetchBookingRequestById(booking!.id);
