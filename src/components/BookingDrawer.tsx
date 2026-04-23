@@ -1274,6 +1274,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         inferredProfessionalUnitId,
       });
       await patchBooking(booking.id, patch2);
+      pushScheduleLog({
+        label: "PATCH 2 — ativar bot",
+        status: "success",
+        detail: "Modo: auto_slots_bot",
+      });
 
       // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
@@ -1290,8 +1295,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         }));
         await patchBooking(booking.id, patch2Retry);
         detail = await fetchBookingRequestById(booking.id);
+        pushScheduleLog({
+          label: "PATCH 2 (retry) — reforçar modo bot",
+          status: detail?.booking_mode === "auto_slots_bot" ? "success" : "warning",
+          detail: `Modo após retry: ${detail?.booking_mode ?? "desconhecido"}`,
+        });
       }
       if (detail?.booking_mode !== "auto_slots_bot") {
+        pushScheduleLog({
+          label: "Validação final",
+          status: "error",
+          detail: "BR continuou em 'Slots disparados pelo dashboard'",
+        });
         throw new Error("Os slots foram enviados, mas o BR continuou em 'Slots disparados pelo dashboard'.");
       }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
