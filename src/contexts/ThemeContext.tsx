@@ -215,7 +215,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Does not touch --topbar-bg, --surface, --surface-raised, --surface-elevated, etc.
   useEffect(() => {
     const NIGHT_SOLID_BACKGROUNDS = ["216 65% 7%", "240 3% 9%", "200 40% 8%"];
-    const FROST_SOLID_BACKGROUNDS = ["220 30% 98%", "30 17% 95%", "213 33% 95%"];
+    const FROST_SOLID_BACKGROUNDS = ["0 0% 100%", "30 17% 95%", "213 33% 95%"];
     const FROST_GRADIENTS = [
       "linear-gradient(135deg, #ffffff 0%, #a8c8e8 100%)",
       "linear-gradient(135deg, #f5f0eb 0%, #b8c8e0 100%)",
