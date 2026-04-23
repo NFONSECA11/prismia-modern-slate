@@ -1357,6 +1357,81 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
+  // ── Checar disponibilidade (sem alterar o BR) ───────────────────────────────
+  // Só consulta /api/booking/suggest-slots/ e mostra os horários no log,
+  // sem disparar PATCH nem mudar booking_mode.
+  const checkSlotsMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      if (!bookingUnitId) throw new Error("Unidade indisponível");
+
+      setScheduleLog([]);
+      const profNameForLog = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
+        : null;
+      pushScheduleLog({
+        label: "Consultando horários disponíveis…",
+        status: "info",
+        detail: profNameForLog
+          ? `Profissional: ${profNameForLog}`
+          : "Sem preferência de profissional",
+      });
+
+      const params: Record<string, unknown> = {
+        procedure: selectedProcedureId,
+        unit: bookingUnitId,
+        n: 3,
+      };
+      if (selectedProfessionalId) params.professional = selectedProfessionalId;
+
+      const { data } = await api.get("/api/booking/suggest-slots/", { params });
+      const slots: Array<{ start_at?: string; label?: string }> =
+        (Array.isArray(data) ? data : (data?.results ?? data?.slots ?? data?.offer_slots ?? [])) as any;
+      return slots ?? [];
+    },
+    onSuccess: (slots) => {
+      if (!slots || slots.length === 0) {
+        pushScheduleLog({
+          label: "Sem disponibilidade no momento",
+          status: "warning",
+          detail: "Não encontramos horários para esse procedimento.",
+        });
+        return;
+      }
+      const formatSlot = (s: any) => {
+        if (s?.label) return String(s.label);
+        if (s?.start_at) {
+          const d = new Date(s.start_at);
+          if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          }
+          return String(s.start_at);
+        }
+        return JSON.stringify(s);
+      };
+      pushScheduleLog({
+        label: `${slots.length} horário(s) encontrado(s)`,
+        status: "success",
+        detail: slots.map(formatSlot).join(" • "),
+      });
+    },
+    onError: (err: any) => {
+      console.error("[checkSlotsMut] error:", err?.response?.status, err?.response?.data);
+      setScheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Sem disponibilidade no momento", status: "warning", detail: "Não encontramos horários para esse procedimento." }];
+      });
+    },
+  });
+
   const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
@@ -1813,16 +1888,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                           </button>
                           <button
                             type="button"
-                            onClick={() => scheduleSuggestMut.mutate()}
+                            onClick={() => checkSlotsMut.mutate()}
                             disabled={
+                              checkSlotsMut.isPending ||
                               scheduleSuggestMut.isPending ||
-                              !assignLeadName.trim() ||
                               !selectedProcedureId
                             }
+                            title="Apenas verifica horários disponíveis, sem criar agendamento"
                             className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
                             <Calendar className="h-3.5 w-3.5" />
-                            Checar
+                            {checkSlotsMut.isPending ? "Consultando…" : "Checar"}
                           </button>
                         </div>
                       </div>
