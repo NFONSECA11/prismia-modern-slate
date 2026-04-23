@@ -1509,7 +1509,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
       const results = await fetchBookingsByPhone(phone, {
         excludeId: booking.id,
-        statuses: ["confirmed"],
+        statuses: ["confirmed", "pending", "awaiting_choice", "handoff", "assisted"],
+        leadName: (detail?.lead_name ?? booking.lead_name ?? assignLeadName ?? "").toString(),
       });
       console.log("[handleSearchClientBookings] resultados:", results.length, results.map((r) => r.id));
       setRescheduleSearchResults(results);
