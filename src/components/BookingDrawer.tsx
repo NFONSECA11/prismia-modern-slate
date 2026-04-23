@@ -2261,24 +2261,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 </div>
               )}
 
-              {iaOpType === "reschedule" && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
-                <div className="rounded-lg border border-border bg-background p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {rescheduleSearchResults.map((br) => (
-                    <button
-                      key={br.id}
-                      type="button"
-                      onClick={() => selectClientBookingForReschedule(br)}
-                      className="w-full text-left rounded-md px-2.5 py-2 hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-foreground font-medium">#{br.id}</span>
-                        <span className="text-[10px] text-muted-foreground">{br.status}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{br.procedure_name} · {br.professional_name || "Sem profissional"}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
+
 
               {(iaOpType === "schedule" || iaOpType === "reschedule") && (
                 <>
