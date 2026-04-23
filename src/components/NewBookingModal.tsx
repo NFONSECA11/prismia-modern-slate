@@ -402,6 +402,23 @@ function ModalBody({
               />
             </div>
           )}
+
+          {/* Motivo — obrigatório */}
+          {!readOnly && (
+            <div>
+              <FieldLabel>
+                <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Motivo *</span>
+              </FieldLabel>
+              <textarea
+                value={form.motivo}
+                onChange={(e) => set("motivo")(e.target.value)}
+                placeholder="Ex.: cliente solicitou novo agendamento"
+                rows={2}
+                maxLength={300}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer — only for new bookings */}
