@@ -281,6 +281,8 @@ const AI_EVENT_KIND_MAP: Record<string, NoteEntryKind> = {
   direct_schedule: "ai_schedule",
   direct_reschedule: "ai_reschedule",
   direct_cancel: "ai_cancel",
+  ai_handoff: "ai_handoff",
+  handoff: "ai_handoff",
 };
 
 function formatEventTimestamp(ts?: string): string | undefined {
@@ -321,6 +323,7 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
   if (policyValue) meta.push({ label: "Policy", value: policyValue });
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
+  if (event.unit) meta.push({ label: "Unidade", value: event.unit });
   if (event.reason) meta.push({ label: "Motivo", value: event.reason });
 
   return {
