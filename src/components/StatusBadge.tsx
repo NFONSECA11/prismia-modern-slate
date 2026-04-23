@@ -107,6 +107,7 @@ export interface AiEvent {
   policy_key?: string;
   policy_value?: string;
   reason?: string;
+  unit?: string;
 }
 
 /**
