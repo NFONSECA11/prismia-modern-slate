@@ -1860,6 +1860,99 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
+  // ── Cancelamento manual (IA Ativa › Cancelamento): cancela BR alvo + bot OFF + log no BR atual ──
+  const iaCancelMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      const targetIdRaw = cancelBookingIdField.trim();
+      const targetId = Number(targetIdRaw);
+      if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a cancelar");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+
+      setRescheduleLog([]);
+
+      // 1) Cancela o BR alvo
+      pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
+      try {
+        await cancelBooking(targetId);
+        pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
+        } else {
+          pushRescheduleLog({
+            label: "Não foi possível cancelar o agendamento",
+            status: "error",
+            detail: `Status ${status ?? "?"}`,
+          });
+          throw err;
+        }
+      }
+
+      // 2) Bot OFF no BR atual (operador assume)
+      try {
+        await handoffOn(booking.id);
+      } catch (err) {
+        console.warn("[iaCancelMut] handoffOn falhou (pode já estar off):", err);
+      }
+
+      // 3) Loga no BR atual
+      const now = new Date();
+      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
+      const cancelHeader = `[${ts}] Cancelamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_CANCEL`;
+      const cancelDetail = `[${ts}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
+      const updatedNotes = [existingNotesRaw, cancelHeader, cancelDetail].filter(Boolean).join("\n");
+
+      try {
+        await patchBooking(booking.id, {
+          lead_name: assignLeadName.trim() || booking.lead_name,
+          notes: updatedNotes,
+          conversation_bot_mode: "off",
+          booking_mode: "handoff_manual",
+        });
+      } catch (err) {
+        console.warn("[iaCancelMut] patch de log falhou:", err);
+      }
+
+      return { cancelledId: targetId };
+    },
+    onSuccess: async ({ cancelledId }) => {
+      toast.success(`Agendamento #${cancelledId} cancelado.`);
+      pushRescheduleLog({
+        label: "Cancelamento concluído",
+        status: "success",
+        detail: `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
+      });
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: true });
+      setActionDone(`Agenda #${cancelledId} cancelada!`);
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      console.error("[iaCancelMut] error:", err?.response?.status, err?.response?.data);
+      setRescheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no cancelamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+      });
+    },
+  });
+
   const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
@@ -2662,7 +2755,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                     {iaOpType === "cancel" && (
                       <div className="flex flex-col gap-2">
                         <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Requisitante</label>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                            Nome do Cliente <span className="text-status-cancelled">*</span>
+                          </label>
                           <input
                             type="text"
                             value={assignLeadName}
@@ -2671,27 +2766,176 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
+
+                        {/* Buscar BRs do cliente */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleSearchClientBookings}
+                            disabled={rescheduleSearchLoading || iaCancelMut.isPending}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            {rescheduleSearchLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSearchLoading ? "Buscando…" : "Buscar agendamentos do cliente"}
+                          </button>
+                          {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {rescheduleSearchResults.length} encontrado(s)
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Lista de BRs encontrados */}
+                        {rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                          <div className="rounded-lg border border-border bg-surface/60 p-2 flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+                            {rescheduleSearchResults.map((br) => {
+                              const when = br.scheduled_at
+                                ? format(new Date(br.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                                : (br.preferred_window || "Sem horário");
+                              const selected = cancelBookingIdField.trim() === String(br.id);
+                              return (
+                                <button
+                                  key={br.id}
+                                  type="button"
+                                  onClick={() => selectClientBookingForReschedule(br)}
+                                  className={`text-left text-xs px-2.5 py-2 rounded-md border transition-all flex flex-col gap-0.5 ${
+                                    selected
+                                      ? "border-primary bg-primary/10 text-foreground"
+                                      : "border-border bg-background hover:border-primary/60 hover:bg-surface-elevated text-foreground"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium inline-flex items-center gap-1.5">
+                                      <Hash className="h-3 w-3 text-muted-foreground" />
+                                      {br.id} · {br.lead_name || "Sem nome"}
+                                    </span>
+                                    {selected && <Check className="h-3.5 w-3.5 text-primary" />}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                                    <Calendar className="h-3 w-3" />
+                                    {when}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {br.procedure_name || "—"} · {br.professional_name || "Sem profissional"}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {rescheduleSearchError && (
+                          <div className="text-[11px] text-status-canceled italic">{rescheduleSearchError}</div>
+                        )}
+
                         <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">ID do Agendamento a Cancelar</label>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                            ID do Agendamento a Cancelar <span className="text-status-cancelled">*</span>
+                          </label>
                           <input
                             type="text"
                             value={cancelBookingIdField}
                             onChange={(e) => setCancelBookingIdField(e.target.value)}
-                            placeholder="Ex: 483"
+                            placeholder="Ex: 483 (ou selecione acima)"
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
-                        <div className="flex items-center gap-2 pt-1">
+
+                        {/* Status / log do cancelamento */}
+                        {rescheduleLog.length > 0 && (
+                          <div className="mt-1 rounded-lg border border-border bg-surface/60 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-foreground font-medium">Status do cancelamento</span>
+                              {!iaCancelMut.isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => setRescheduleLog([])}
+                                  className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                                >
+                                  Limpar
+                                </button>
+                              )}
+                            </div>
+                            <ul className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
+                              {rescheduleLog.map((entry, idx) => {
+                                const dot =
+                                  entry.status === "success" ? "bg-primary"
+                                  : entry.status === "error" ? "bg-destructive"
+                                  : entry.status === "warning" ? "bg-accent"
+                                  : "bg-muted-foreground";
+                                const textColor =
+                                  entry.status === "error" ? "text-destructive"
+                                  : entry.status === "warning" ? "text-accent-foreground"
+                                  : "text-foreground";
+                                const isLast = idx === rescheduleLog.length - 1;
+                                const showSpinner = iaCancelMut.isPending && isLast && entry.status === "info";
+                                return (
+                                  <li key={idx} className="flex items-start gap-2 text-xs leading-snug">
+                                    {showSpinner ? (
+                                      <span className="mt-0.5 inline-block h-2 w-2 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+                                    ) : (
+                                      <span className={`mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
+                                    )}
+                                    <span className="flex-1 min-w-0">
+                                      <span className={`font-medium ${textColor}`}>{entry.label}</span>
+                                      {entry.detail && (
+                                        <span className="block text-muted-foreground mt-0.5">{entry.detail}</span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
+
+                        {(() => {
+                          const selectedBr =
+                            (selectedClientBooking && String(selectedClientBooking.id) === cancelBookingIdField.trim()
+                              ? selectedClientBooking
+                              : null) ??
+                            rescheduleSearchResults?.find(
+                              (b) => String(b.id) === cancelBookingIdField.trim(),
+                            );
+                          if (!selectedBr) return null;
+                          const whenLabel = selectedBr.scheduled_at
+                            ? format(new Date(selectedBr.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                            : selectedBr.preferred_window || "Sem horário definido";
+                          return (
+                            <div className="mt-2 rounded-lg border border-border bg-surface/60 px-3 py-2 flex items-center gap-2">
+                              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                  Agendamento atual
+                                </span>
+                                <span className="text-xs text-foreground font-medium">{whenLabel}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
                           <button
                             type="button"
-                            disabled
-                            title="Ação ainda não implementada"
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-status-canceled/15 text-status-canceled border border-status-canceled/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                            onClick={() => iaCancelMut.mutate()}
+                            disabled={
+                              iaCancelMut.isPending ||
+                              !assignLeadName.trim() ||
+                              !cancelBookingIdField.trim()
+                            }
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-status-canceled/15 text-status-canceled border border-status-canceled/30 hover:bg-status-canceled/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
-                            <XCircle className="h-3.5 w-3.5" />
-                            Cancelar Agenda
+                            {iaCancelMut.isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5" />
+                            )}
+                            {iaCancelMut.isPending ? "Cancelando…" : "Cancelar Agenda"}
                           </button>
-                          <span className="text-[10px] text-muted-foreground italic">Sem ação conectada</span>
                         </div>
                       </div>
                     )}
