@@ -252,31 +252,92 @@ function digitsOnly(value: string): string {
 
 export async function fetchBookingsByPhone(
   phone: string,
-  opts: { excludeId?: number; statuses?: string[] } = {}
+  opts: { excludeId?: number; statuses?: string[]; leadName?: string } = {}
 ): Promise<BookingRequest[]> {
   const phoneDigits = digitsOnly(phone);
-  if (!phoneDigits) return [];
+  const leadName = (opts.leadName ?? "").trim().toLowerCase();
+  if (!phoneDigits && !leadName) return [];
 
-  const statuses = opts.statuses ?? ["confirmed"];
-  const search = phoneDigits.length > 4 ? phoneDigits.slice(-9) : phoneDigits;
+  const statuses = opts.statuses?.length
+    ? opts.statuses
+    : ["confirmed", "pending", "awaiting_choice", "handoff", "assisted"];
 
-  try {
+  const matchTarget = phoneDigits.slice(-8);
+  const normalizeName = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  const normalizedLeadName = normalizeName(leadName);
+
+  const queries = Array.from(
+    new Set(
+      [
+        phoneDigits,
+        phoneDigits.slice(-11),
+        phoneDigits.slice(-9),
+        phoneDigits.slice(-8),
+        leadName,
+      ].filter((value) => typeof value === "string" && value.trim().length >= 3)
+    )
+  );
+
+  const candidates = new Map<number, BookingRequest>();
+
+  const collectFromSearch = async (search: string) => {
     const { data } = await api.get("/api/booking/requests/", {
       params: { search, limit: 100 },
     });
     const normalized = normalizeBookingListResponse(data);
-    const matchTarget = phoneDigits.slice(-8);
+    for (const booking of normalized.results as BookingRequest[]) {
+      candidates.set(booking.id, booking);
+    }
+  };
 
-    const filtered = (normalized.results as BookingRequest[]).filter((b) => {
-      if (opts.excludeId && b.id === opts.excludeId) return false;
-      if (!statuses.includes(b.status)) return false;
-      const candidatePhone = digitsOnly(b.contact_phone ?? b.phone ?? "");
-      if (!candidatePhone) return false;
-      // Match by last 8 digits to ignore country/area code variations
-      return candidatePhone.endsWith(matchTarget) || matchTarget.endsWith(candidatePhone.slice(-8));
-    });
+  try {
+    for (const search of queries) {
+      await collectFromSearch(search);
+    }
 
-    // Order by scheduled_at asc (próximos primeiro), fallback para created_at desc
+    // Fallback: se o backend não indexa telefone/nome, escaneia BRs ativos recentes
+    if (candidates.size === 0) {
+      const fallback = await fetchFilteredBookings({ limit: 200 });
+      for (const booking of fallback.results as BookingRequest[]) {
+        candidates.set(booking.id, booking);
+      }
+    }
+
+    const matches = await Promise.all(
+      Array.from(candidates.values()).map(async (booking) => {
+        if (opts.excludeId && booking.id === opts.excludeId) return null;
+        if (!statuses.includes(booking.status)) return null;
+
+        let candidatePhone = digitsOnly(booking.contact_phone ?? booking.phone ?? "");
+        if (!candidatePhone) {
+          candidatePhone = digitsOnly((await fetchBookingPhoneById(booking.id)) ?? "");
+        }
+
+        const nameMatches = normalizedLeadName
+          ? normalizeName(booking.lead_name ?? "").includes(normalizedLeadName) ||
+            normalizedLeadName.includes(normalizeName(booking.lead_name ?? ""))
+          : false;
+
+        const phoneMatches = !!matchTarget && !!candidatePhone && (
+          candidatePhone.endsWith(matchTarget) || matchTarget.endsWith(candidatePhone.slice(-8))
+        );
+
+        if (!phoneMatches && !nameMatches) return null;
+
+        return {
+          ...booking,
+          ...(candidatePhone ? { contact_phone: candidatePhone } : {}),
+        } as BookingRequest;
+      })
+    );
+
+    const filtered = matches.filter((item): item is BookingRequest => !!item);
+
     filtered.sort((a, b) => {
       const aTime = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
       const bTime = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
