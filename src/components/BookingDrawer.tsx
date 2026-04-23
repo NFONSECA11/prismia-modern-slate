@@ -1190,9 +1190,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           JSON.stringify(data ?? {});
         console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
         pushScheduleLog({
-          label: "suggest_slots — buscar horários",
+          label: "Falha ao buscar horários",
           status: "error",
-          detail: `${status ?? "?"}: ${String(detail).slice(0, 160)}`,
+          detail: "O sistema não conseguiu consultar a agenda. Tente novamente.",
         });
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
