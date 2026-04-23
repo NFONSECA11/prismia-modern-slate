@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BookingRequest, BookingStatus, BookingMode, Professional } from "@/types/booking";
-import { StatusBadge, detectAiTag } from "@/components/StatusBadge";
+import { StatusBadge, detectAiTag, extractAiEvents, type AiEvent } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import { markConversationRead } from "@/lib/conversationReadState";
@@ -277,14 +277,55 @@ function detectNoteKind(body: string): NoteEntryKind {
   return "generic";
 }
 
+const AI_EVENT_KIND_MAP: Record<string, NoteEntryKind> = {
+  direct_schedule: "ai_schedule",
+  direct_reschedule: "ai_reschedule",
+  direct_cancel: "ai_cancel",
+};
+
+function formatEventTimestamp(ts?: string): string | undefined {
+  if (!ts) return undefined;
+  try {
+    return format(new Date(ts), "dd/MM/yyyy HH:mm", { locale: ptBR });
+  } catch {
+    return undefined;
+  }
+}
+
+function aiEventToEntry(event: AiEvent): NoteEntry {
+  const kind = AI_EVENT_KIND_MAP[event.type] ?? "ai_schedule";
+  const meta: Array<{ label: string; value: string }> = [];
+
+  if (event.procedure_name) meta.push({ label: "Procedimento", value: event.procedure_name });
+  if (event.professional_name) meta.push({ label: "Profissional", value: event.professional_name });
+  const scheduled = formatEventTimestamp(event.scheduled_at);
+  if (scheduled) meta.push({ label: "Agendado para", value: scheduled });
+  if (event.reason) meta.push({ label: "Motivo", value: event.reason });
+
+  return {
+    kind,
+    timestamp: formatEventTimestamp(event.ts),
+    title: NOTE_KIND_STYLES[kind].title,
+    body: "",
+    meta,
+  };
+}
+
 function parseNotes(notes: string): NoteEntry[] {
+  // 0) Extrai ai_events JSON e remove o bloco do texto bruto antes do parsing legado.
+  const aiEvents = extractAiEvents(notes);
+  const aiEntries = aiEvents.map(aiEventToEntry);
+
+  let working = notes;
+  // Remove tanto o formato correto `"ai_events":` quanto o malformado `"ai_events"[`
+  working = working.replace(/\{\s*"ai_events"\s*:?\s*\[[\s\S]*?\]\s*\}/g, "");
+
   // Remove linhas que são apenas tags técnicas (BR_TAG_X = 1234)
-  const cleaned = notes
+  const cleaned = working
     .split("\n")
     .filter((ln) => !/^\s*BR_TAG_[A-Z_]+\s*=\s*\d+\s*$/i.test(ln))
     .join("\n");
 
-  const tsRegex = /\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]/g;
   const entries: NoteEntry[] = [];
 
   // 1) Captura texto "solto" antes da primeira tag [timestamp] como uma entrada separada,
@@ -320,11 +361,13 @@ function parseNotes(notes: string): NoteEntry[] {
     });
   }
 
-  if (entries.length === 0 && cleaned.trim()) {
+  if (entries.length === 0 && aiEntries.length === 0 && cleaned.trim()) {
     entries.push({ kind: "generic", title: "Nota", body: cleaned.trim(), meta: [] });
   }
 
-  return entries;
+  // Combina ai_events (mais ricos) com entradas legadas; ordena por timestamp quando possível.
+  const all = [...aiEntries, ...entries];
+  return all;
 }
 
 function NotesLog({ notes }: { notes: string }) {
