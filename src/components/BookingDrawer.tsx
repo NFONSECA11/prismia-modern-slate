@@ -1159,17 +1159,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
         pushScheduleLog({
-          label: "GET — confirmar modo da BR",
+          label: "Não foi possível preparar o agendamento",
           status: "error",
-          detail: `Modo atual: ${detailAfterPatch1?.booking_mode ?? "desconhecido"}`,
+          detail: "Tente novamente em instantes.",
         });
         throw new Error("O BR não entrou em 'Slots disparados pelo dashboard' antes do suggest_slots.");
       }
-      pushScheduleLog({
-        label: "GET — confirmar modo da BR",
-        status: "success",
-        detail: "BR pronta para suggest_slots",
-      });
 
       // 2) Solicita slots ao backend.
       // Se há profissional escolhido → envia procedure + unit + professional.
