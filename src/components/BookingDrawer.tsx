@@ -1807,13 +1807,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                           <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
                             Motivo <span className="text-status-cancelled">*</span>
                           </label>
-                          <textarea
+                          <select
                             value={scheduleReason}
-                            onChange={(e) => setScheduleReason(e.target.value.slice(0, 300))}
-                            placeholder="Ex.: cliente solicitou novo agendamento"
-                            rows={2}
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground resize-none"
-                          />
+                            onChange={(e) => setScheduleReason(e.target.value)}
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                          >
+                            <option value="">Selecionar motivo...</option>
+                            <option value="Solicitação do cliente por chat">Solicitação do cliente por chat</option>
+                            <option value="Solicitação do cliente por telefone">Solicitação do cliente por telefone</option>
+                            <option value="Solicitação do cliente presencial">Solicitação do cliente presencial</option>
+                          </select>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
