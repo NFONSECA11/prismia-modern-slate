@@ -906,13 +906,40 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       // Invalidate and refetch so the drawer updates status/bot badge/notes
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
       queryClient.invalidateQueries({ queryKey: ["booking-request-detail-bot", booking!.id] });
       
       if (wasCancelFlow) {
+        queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
+          if (!old?.results) return old;
+          return {
+            ...old,
+            results: old.results.map((b: any) =>
+              b.id === booking!.id ? { ...b, ...(result ?? {}), status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            ),
+          };
+        });
+        queryClient.setQueriesData<any>({ queryKey: ["booking-requests-updated"] }, (old: any) => {
+          if (!old?.results) return old;
+          return {
+            ...old,
+            results: old.results.map((b: any) =>
+              b.id === booking!.id ? { ...b, ...(result ?? {}), status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            ),
+          };
+        });
+        queryClient.setQueryData(["booking-request-detail-bot", booking!.id], (old: any) => ({
+          ...(old ?? booking),
+          ...(result ?? {}),
+          status: "failed",
+          booking_mode: "handoff_manual",
+          conversation_bot_mode: "off",
+        }));
+        await refetchBookingDetailForBot();
         setTimeout(() => {
-          refetchBookingDetailForBot();
+          onConfirmed();
           setActionDone(null);
-        }, 3000);
+        }, 1200);
       } else {
         await refetchBookingDetailForBot();
         setTimeout(() => {
