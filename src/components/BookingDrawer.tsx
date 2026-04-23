@@ -281,6 +281,8 @@ const AI_EVENT_KIND_MAP: Record<string, NoteEntryKind> = {
   direct_schedule: "ai_schedule",
   direct_reschedule: "ai_reschedule",
   direct_cancel: "ai_cancel",
+  ai_handoff: "ai_handoff",
+  handoff: "ai_handoff",
 };
 
 function formatEventTimestamp(ts?: string): string | undefined {
