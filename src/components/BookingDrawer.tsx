@@ -1189,20 +1189,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           data?.message ??
           JSON.stringify(data ?? {});
         console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
-        const detailStr = String(detail).toLowerCase();
-        const looksLikeNoAvailability =
-          status === 404 ||
-          status === 409 ||
-          status === 422 ||
-          /no.*(slot|availab|horár)|sem.*(disponib|horár|vag)|empty|unavailable|not.*found|no_slots/i.test(detailStr);
         pushScheduleLog({
-          label: looksLikeNoAvailability ? "Sem disponibilidade de horários" : "Não foi possível consultar a agenda",
-          status: looksLikeNoAvailability ? "warning" : "error",
-          detail: looksLikeNoAvailability
-            ? selectedProfessionalId
-              ? "Esse profissional não tem horários abertos para esse procedimento. Tente outro profissional ou deixe sem preferência."
-              : "Não há horários abertos para esse procedimento no momento."
-            : "Não conseguimos falar com a agenda agora. Tente novamente em instantes.",
+          label: "Sem disponibilidade de horários",
+          status: "warning",
+          detail: selectedProfessionalId
+            ? "Não encontramos disponibilidade para esse profissional. Tente outro ou deixe sem preferência."
+            : "Não encontramos disponibilidade no momento.",
         });
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
