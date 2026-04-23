@@ -1723,45 +1723,47 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
-                        <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Procedimento <span className="text-status-cancelled">*</span>
-                          </label>
-                          <select
-                            value={selectedProcedureId ?? ""}
-                            onChange={(e) => {
-                              setSelectedProcedureId(Number(e.target.value) || null);
-                              setSelectedSpecialtyId(null);
-                            }}
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
-                          >
-                            <option value="">Selecionar...</option>
-                            {(selectedProfessionalId ? proceduresForProfessional : proceduresForUnit).map((p) => (
-                              <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
-                            ))}
-                          </select>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                              Procedimento <span className="text-status-cancelled">*</span>
+                            </label>
+                            <select
+                              value={selectedProcedureId ?? ""}
+                              onChange={(e) => {
+                                setSelectedProcedureId(Number(e.target.value) || null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                            >
+                              <option value="">Selecionar...</option>
+                              {(selectedProfessionalId ? proceduresForProfessional : proceduresForUnit).map((p) => (
+                                <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                              Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
+                            </label>
+                            <select
+                              value={selectedProfessionalId ?? ""}
+                              onChange={(e) => {
+                                const id = Number(e.target.value) || null;
+                                setSelectedProfessionalId(id);
+                              }}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                            >
+                              <option value="">Sem preferência</option>
+                              {professionalsForUnit.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                            Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
-                          </label>
-                          <select
-                            value={selectedProfessionalId ?? ""}
-                            onChange={(e) => {
-                              const id = Number(e.target.value) || null;
-                              setSelectedProfessionalId(id);
-                            }}
-                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
-                          >
-                            <option value="">Sem preferência</option>
-                            {professionalsForUnit.map((p) => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
-                          <p className="text-[10px] text-muted-foreground/80 mt-1 italic">
-                            Se o cliente não indicou profissional, deixe em branco.
-                          </p>
-                        </div>
+                        <p className="text-[10px] text-muted-foreground/80 -mt-1 italic">
+                          Se o cliente não indicou profissional, deixe em branco.
+                        </p>
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             type="button"
