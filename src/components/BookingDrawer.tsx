@@ -424,7 +424,7 @@ function ActionButton({
 
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 
-export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt }: BookingDrawerProps) {
+export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt, mode = "details" }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   type ScheduleLogEntry = {

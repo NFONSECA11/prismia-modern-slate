@@ -897,7 +897,14 @@ export default function Index() {
             <BookingTable
               bookings={filteredBookings}
               isLoading={isLoading}
-              onSelectBooking={setSelectedBooking}
+              onSelectBooking={(booking) => {
+                setBookingDrawerMode("details");
+                setSelectedBooking(booking);
+              }}
+              onManageBooking={(booking) => {
+                setBookingDrawerMode("manage");
+                setSelectedBooking(booking);
+              }}
               aiEnabled={aiEnabled}
             />
           ) : (
@@ -911,7 +918,11 @@ export default function Index() {
 
       <BookingDrawer
         booking={selectedBooking}
-        onClose={() => setSelectedBooking(null)}
+        mode={bookingDrawerMode}
+        onClose={() => {
+          setSelectedBooking(null);
+          setBookingDrawerMode("details");
+        }}
         onConfirmed={() => {
           queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
           queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
