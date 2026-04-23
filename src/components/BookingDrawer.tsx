@@ -2140,9 +2140,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               const cachedId = cachedCancel?.cancelledId;
               const effectiveCancelId = idFromNotes || cachedId || cancelBookingIdField.trim() || lastCancelledIdRef.current;
               const procFromNotes = extractProcedureFromNotes(notesText);
-              const displayValue = isCancelCode && effectiveCancelId
-                ? `Cancelar agendamento #${effectiveCancelId}`
-                : (procFromNotes ?? overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name);
+              const displayValue = procFromNotes ?? overrideProcedureName ?? (bookingDetailForBot as any)?.procedure_name ?? booking.procedure_name;
               return <DetailRow icon={Hash} label="Procedimento" tone="primary" value={
                 isRescheduleCode ? (
                   <span className="flex items-center gap-1.5">
