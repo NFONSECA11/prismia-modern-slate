@@ -440,6 +440,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
+  const [scheduleReason, setScheduleReason] = useState("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
@@ -487,6 +488,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   useEffect(() => {
     const rawName = booking?.lead_name ?? "";
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
+    setScheduleReason("");
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
     setForceBotOff(false);
@@ -529,7 +531,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   // Resolve booking's unit id from auth units (booking has unit_name only)
-  const { units: authUnits, aiEnabled } = useAuth();
+  const { user, units: authUnits, aiEnabled } = useAuth();
 
   // IA Enabled: tipo de operação manual selecionada no Drawer (Agendamento / Reagendamento / Cancelamento).
   // Estrutura visual apenas — ações ainda não conectadas.
