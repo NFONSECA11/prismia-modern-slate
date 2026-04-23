@@ -1187,6 +1187,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
+        status: "awaiting_choice",
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
         procedure_name: procedureName,
@@ -1208,17 +1209,31 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       // 4) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
       let detail = await fetchBookingRequestById(booking.id);
+      if (detail?.status !== "awaiting_choice" || detail?.booking_mode !== "auto_slots_bot") {
+        const patch3Mode: Record<string, unknown> = {
+          status: "awaiting_choice",
+          booking_mode: "auto_slots_bot",
+          conversation_bot_mode: "on",
+        };
+        console.warn("[scheduleSuggestMut] PATCH 3b correcting auto state:", JSON.stringify({
+          actualStatus: detail?.status,
+          actualMode: detail?.booking_mode,
+          payload: patch3Mode,
+        }));
+        await patchBooking(booking.id, patch3Mode);
+        detail = await fetchBookingRequestById(booking.id);
+      }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
-        const patch3: Record<string, unknown> = {
+        const patch4: Record<string, unknown> = {
           procedure_name: procedureName,
         };
-        if (procedureCode) patch3.procedure_code = procedureCode;
-        console.warn("[scheduleSuggestMut] PATCH 3 correcting procedure_name:", JSON.stringify({
+        if (procedureCode) patch4.procedure_code = procedureCode;
+        console.warn("[scheduleSuggestMut] PATCH 4 correcting procedure_name:", JSON.stringify({
           expected: procedureName,
           actual: detail?.procedure_name,
-          payload: patch3,
+          payload: patch4,
         }));
-        await patchBooking(booking.id, patch3);
+        await patchBooking(booking.id, patch4);
         detail = await fetchBookingRequestById(booking.id);
       }
       const slotsFromDetail = (detail?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
