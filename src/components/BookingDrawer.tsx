@@ -1349,10 +1349,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
       const msg = typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários.");
       toast.error(msg);
-      // Só adiciona se a última entrada não for já um erro (evita duplicar logs já capturados nos passos)
+      // Só adiciona se a última entrada não for já um erro/aviso (evita duplicar logs já capturados nos passos)
       setScheduleLog((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.status === "error") return prev;
+        if (last?.status === "error" || last?.status === "warning") return prev;
         const now = new Date();
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
         return [...prev, { ts, label: "Não foi possível concluir", status: "error", detail: "Verifique a conexão e tente novamente." }];
