@@ -1478,7 +1478,77 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
-  // ── Reagendamento manual: buscar BRs ativos do cliente pelo telefone ────────
+  // ── Checar disponibilidade no contexto do REAGENDAMENTO ─────────────────────
+  // Mesma chamada de /api/booking/suggest-slots/, mas escreve em rescheduleLog
+  // (que é o log exibido no painel de Reagendamento).
+  const checkRescheduleSlotsMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      if (!bookingUnitId) throw new Error("Unidade indisponível");
+
+      setRescheduleLog([]);
+      const profNameForLog = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
+        : null;
+      pushRescheduleLog({
+        label: "Consultando horários disponíveis…",
+        status: "info",
+        detail: profNameForLog ? `Profissional: ${profNameForLog}` : "Sem preferência de profissional",
+      });
+
+      const params: Record<string, unknown> = {
+        procedure: selectedProcedureId,
+        unit: bookingUnitId,
+        n: 3,
+      };
+      if (selectedProfessionalId) params.professional = selectedProfessionalId;
+
+      const { data } = await api.get("/api/booking/suggest-slots/", { params });
+      const slots: Array<{ start_at?: string; label?: string }> =
+        (Array.isArray(data) ? data : (data?.results ?? data?.slots ?? data?.offer_slots ?? [])) as any;
+      return slots ?? [];
+    },
+    onSuccess: (slots) => {
+      if (!slots || slots.length === 0) {
+        pushRescheduleLog({
+          label: "Sem disponibilidade no momento",
+          status: "warning",
+          detail: "Não encontramos horários para esse procedimento.",
+        });
+        return;
+      }
+      const formatSlot = (s: any) => {
+        if (s?.label) return String(s.label);
+        if (s?.start_at) {
+          const d = new Date(s.start_at);
+          if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          }
+          return String(s.start_at);
+        }
+        return JSON.stringify(s);
+      };
+      pushRescheduleLog({
+        label: `${slots.length} horário(s) encontrado(s)`,
+        status: "success",
+        detail: slots.map(formatSlot).join(" • "),
+      });
+    },
+    onError: (err: any) => {
+      console.error("[checkRescheduleSlotsMut] error:", err?.response?.status, err?.response?.data);
+      pushRescheduleLog({
+        label: "Sem disponibilidade no momento",
+        status: "warning",
+        detail: "Não encontramos horários para esse procedimento.",
+      });
+    },
+  });
+
   const handleSearchClientBookings = async () => {
     if (!booking) return;
     setRescheduleSearchLoading(true);
