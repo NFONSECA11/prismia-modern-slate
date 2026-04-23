@@ -2434,9 +2434,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
                             >
                               <option value="">Selecionar...</option>
-                              {professionalsForUnit.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
+                              {(() => {
+                                const items = [...professionalsForUnit];
+                                if (selectedProfessionalId && !items.some((p) => p.id === selectedProfessionalId)) {
+                                  const fallback = professionals.find((p) => p.id === selectedProfessionalId);
+                                  if (fallback) items.unshift(fallback);
+                                }
+                                return items.map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ));
+                              })()}
                             </select>
                           </div>
                           <div>
