@@ -70,6 +70,7 @@ interface BookingDrawerProps {
   onConfirmed: () => void;
   logoUrl?: string | null;
   logoAlt?: string | null;
+  mode?: "details" | "manage";
 }
 
 const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];

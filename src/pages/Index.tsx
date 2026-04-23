@@ -79,6 +79,7 @@ export default function Index() {
     savePreference({ last_view: v });
   }, []);
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
+  const [bookingDrawerMode, setBookingDrawerMode] = useState<"details" | "manage">("details");
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
