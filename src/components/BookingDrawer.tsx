@@ -452,6 +452,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [rescheduleSearchResults, setRescheduleSearchResults] = useState<BookingRequest[] | null>(null);
   const [rescheduleSearchLoading, setRescheduleSearchLoading] = useState(false);
   const [rescheduleSearchError, setRescheduleSearchError] = useState<string | null>(null);
+  const [selectedClientBooking, setSelectedClientBooking] = useState<BookingRequest | null>(null);
   type RescheduleLogEntry = { ts: string; label: string; status: "info" | "success" | "warning" | "error"; detail?: string };
   const [rescheduleLog, setRescheduleLog] = useState<RescheduleLogEntry[]>([]);
   const pushRescheduleLog = (entry: Omit<RescheduleLogEntry, "ts">) => {
