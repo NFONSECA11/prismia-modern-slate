@@ -2251,7 +2251,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
               tone={isCancelCode ? "canceled" : isRescheduleCode ? "pending" : "primary"}
               className="col-span-2"
               value={
-                
                 hasProfessional && !isRescheduleCode ? (
                   effectiveProfessionalName
                 ) : (
