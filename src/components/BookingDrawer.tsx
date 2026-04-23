@@ -1345,17 +1345,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
     onError: (err: any) => {
       console.error("[scheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
-      const data = err?.response?.data;
-      const detail = typeof data === "object" ? (data?.detail || data?.error) : null;
-      const msg = typeof detail === "string" ? detail : (err?.message || "Não foi possível gerar horários.");
-      toast.error(msg);
-      // Só adiciona se a última entrada não for já um erro/aviso (evita duplicar logs já capturados nos passos)
+      // Mensagem amigável — detalhe técnico fica só no console.
+      // Não dispara toast aqui: o painel "Status do agendamento" já mostra o resultado.
       setScheduleLog((prev) => {
         const last = prev[prev.length - 1];
         if (last?.status === "error" || last?.status === "warning") return prev;
         const now = new Date();
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        return [...prev, { ts, label: "Não foi possível concluir", status: "error", detail: "Verifique a conexão e tente novamente." }];
+        return [...prev, { ts, label: "Sem disponibilidade de horários", status: "warning", detail: "Não encontramos disponibilidade no momento." }];
       });
     },
   });
