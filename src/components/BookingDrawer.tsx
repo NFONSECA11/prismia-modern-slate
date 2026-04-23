@@ -2257,7 +2257,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     placeholder="Ex: 483"
                     className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                   />
-                  {rescheduleSearchError && iaOpType === "reschedule" && <p className="text-xs text-status-canceled mt-1">{rescheduleSearchError}</p>}
+                  {rescheduleSearchError && (iaOpType === "reschedule" || iaOpType === "cancel") && <p className="text-xs text-status-canceled mt-1">{rescheduleSearchError}</p>}
                 </div>
               )}
 
@@ -2382,19 +2382,30 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
               )}
 
               {iaOpType === "cancel" && (
-                <button
-                  type="button"
-                  onClick={() => iaCancelMut.mutate()}
-                  disabled={iaCancelMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim()}
-                  className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  {iaCancelMut.isPending ? "Cancelando..." : "Cancelar agenda"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSearchClientBookings}
+                    disabled={rescheduleSearchLoading}
+                    className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    {rescheduleSearchLoading ? "Buscando..." : "Buscar BRs"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => iaCancelMut.mutate()}
+                    disabled={iaCancelMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim()}
+                    className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    {iaCancelMut.isPending ? "Cancelando..." : "Cancelar BR"}
+                  </button>
+                </>
               )}
             </div>
 
-            {iaOpType === "reschedule" && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+            {(iaOpType === "reschedule" || iaOpType === "cancel") && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
               <div className="rounded-xl border border-border bg-surface-elevated p-3">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
