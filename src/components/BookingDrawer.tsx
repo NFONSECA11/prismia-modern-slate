@@ -1281,11 +1281,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         }));
         await patchBooking(booking.id, patch2Retry);
         detail = await fetchBookingRequestById(booking.id);
-        pushScheduleLog({
-          label: "PATCH 2 (retry) — reforçar modo bot",
-          status: detail?.booking_mode === "auto_slots_bot" ? "success" : "warning",
-          detail: `Modo após retry: ${detail?.booking_mode ?? "desconhecido"}`,
-        });
       }
       if (detail?.booking_mode !== "auto_slots_bot") {
         pushScheduleLog({
