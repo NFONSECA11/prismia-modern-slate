@@ -589,11 +589,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                                     {isReschedule && (
                                       <span title="Reagendamento"><RefreshCw className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" /></span>
                                     )}
-                                    {effectiveId && !isReschedule
-                                      ? `Cancelar agendamento #${effectiveId}`
-                                      : isReschedule && rescheduleProcNameMap[booking.id]
-                                        ? rescheduleProcNameMap[booking.id]
-                                        : booking.procedure_name}
+                                    {isReschedule && rescheduleProcNameMap[booking.id]
+                                      ? rescheduleProcNameMap[booking.id]
+                                      : booking.procedure_name}
                                   </span>
                                   <span className="text-xs text-muted-foreground">{booking.unit_name}</span>
                                 </>
