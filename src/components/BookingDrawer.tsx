@@ -190,6 +190,12 @@ const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon
     icon: Sparkles,
     title: "IA · Cancelamento direto",
   },
+  ai_handoff: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: PhoneForwarded,
+    title: "IA · Transferência para humano",
+  },
   manual_schedule: {
     card: "bg-surface-elevated/40 border-border/40",
     chip: "bg-status-confirmed/20 text-status-confirmed",
