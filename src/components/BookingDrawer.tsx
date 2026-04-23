@@ -2932,6 +2932,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             )}
                             {iaCancelMut.isPending ? "Cancelando…" : "Cancelar Agenda"}
                           </button>
+                          <button
+                            type="button"
+                            onClick={handleSearchClientBookings}
+                            disabled={rescheduleSearchLoading || iaCancelMut.isPending}
+                            title="Buscar agendamentos do cliente pelo nome"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            {rescheduleSearchLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSearchLoading ? "Buscando…" : "Buscar BRs"}
+                          </button>
                         </div>
                       </div>
                     )}
