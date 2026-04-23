@@ -452,6 +452,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [rescheduleSearchResults, setRescheduleSearchResults] = useState<BookingRequest[] | null>(null);
   const [rescheduleSearchLoading, setRescheduleSearchLoading] = useState(false);
   const [rescheduleSearchError, setRescheduleSearchError] = useState<string | null>(null);
+  const [selectedClientBooking, setSelectedClientBooking] = useState<BookingRequest | null>(null);
   type RescheduleLogEntry = { ts: string; label: string; status: "info" | "success" | "warning" | "error"; detail?: string };
   const [rescheduleLog, setRescheduleLog] = useState<RescheduleLogEntry[]>([]);
   const pushRescheduleLog = (entry: Omit<RescheduleLogEntry, "ts">) => {
@@ -517,6 +518,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setRescheduleSearchResults(null);
     setRescheduleSearchLoading(false);
     setRescheduleSearchError(null);
+    setSelectedClientBooking(null);
     setRescheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
@@ -1528,6 +1530,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
   const selectClientBookingForReschedule = (br: BookingRequest) => {
     setCancelBookingIdField(String(br.id));
+    setSelectedClientBooking(br);
 
     const normalize = (value: string) =>
       (value ?? "")
@@ -2524,9 +2527,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         )}
 
                         {(() => {
-                          const selectedBr = rescheduleSearchResults?.find(
-                            (b) => String(b.id) === cancelBookingIdField.trim(),
-                          );
+                          const selectedBr =
+                            (selectedClientBooking && String(selectedClientBooking.id) === cancelBookingIdField.trim()
+                              ? selectedClientBooking
+                              : null) ??
+                            rescheduleSearchResults?.find(
+                              (b) => String(b.id) === cancelBookingIdField.trim(),
+                            );
                           if (!selectedBr) return null;
                           const whenLabel = selectedBr.scheduled_at
                             ? format(new Date(selectedBr.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
