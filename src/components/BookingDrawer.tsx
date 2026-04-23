@@ -2305,7 +2305,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                           setSelectedProcedureId(null);
                           setSelectedSpecialtyId(null);
                         }}
-                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                        disabled={iaOpType === "cancel"}
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="">{iaOpType === "schedule" ? "Sem preferência" : "Selecionar..."}</option>
                         {professionalsForUnit.map((p) => (
@@ -2322,8 +2323,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                           setSelectedProcedureId(Number(e.target.value) || null);
                           setSelectedSpecialtyId(null);
                         }}
-                        disabled={(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId}
-                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                        disabled={iaOpType === "cancel" || (iaOpType === "reschedule" && !selectedProfessionalId)}
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
                         {manageProcedureOptions.map((p) => (
