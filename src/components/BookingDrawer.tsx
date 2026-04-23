@@ -161,7 +161,7 @@ function DetailRow({
 // ── Notes Log Parser ─────────────────────────────────────────────────────────
 // Converte o texto bruto de notes em entradas estruturadas e legíveis.
 
-type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "manual_schedule" | "reschedule" | "cancel" | "generic";
+type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "ai_handoff" | "manual_schedule" | "reschedule" | "cancel" | "generic";
 
 interface NoteEntry {
   kind: NoteEntryKind;
@@ -189,6 +189,12 @@ const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon
     chip: "bg-status-canceled/20 text-status-canceled",
     icon: Sparkles,
     title: "IA · Cancelamento direto",
+  },
+  ai_handoff: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: PhoneForwarded,
+    title: "IA · Transferência para humano",
   },
   manual_schedule: {
     card: "bg-surface-elevated/40 border-border/40",
@@ -238,12 +244,20 @@ function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: 
 
 function detectNoteKind(body: string): NoteEntryKind {
   const lower = body.toLowerCase();
-  const isAi = /autom[áa]tic[oa] pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_DIRECT/i.test(body);
+  const isAi = /autom[áa]tic[oa] pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_(DIRECT|HANDOFF)/i.test(body) || /atendimento\s+humano\s+solicitado\s+pela\s+ia/i.test(body);
 
   // Para notas de IA, classificar pelo TIPO DE AÇÃO declarado no início
   // ("CANCELAMENTO/REAGENDAMENTO/AGENDAMENTO AUTOMATICO PELA IA"),
   // não por ocorrências da palavra no motivo.
   if (isAi) {
+    // Handoff (transferência para humano) tem prioridade — pode coexistir com palavras como "agendamento"
+    if (
+      /BR_TAG_AI_HANDOFF/i.test(body) ||
+      /policy\s*[:=]\s*\w*handoff/i.test(body) ||
+      /atendimento\s+humano\s+solicitado\s+pela\s+ia/i.test(body)
+    ) {
+      return "ai_handoff";
+    }
     const actionMatch = lower.match(/(cancelamento|reagendamento|agendamento)\s+autom[áa]tic[oa]\s+pela\s+ia/);
     const action = actionMatch?.[1];
     if (action === "cancelamento" || /policy\s*[:=]\s*\w*cancel/i.test(body) || /BR_TAG_AI_DIRECT_CANCEL/i.test(body)) return "ai_cancel";
