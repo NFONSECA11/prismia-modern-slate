@@ -1108,7 +1108,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         finalNameToSend: procedureName,
       });
       const unitName = booking.unit_name ?? "";
-      const profName = selectedProfessionalId
+      const selectedProfName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
