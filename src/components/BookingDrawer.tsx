@@ -280,8 +280,26 @@ function parseNotes(notes: string): NoteEntry[] {
     .filter((ln) => !/^\s*BR_TAG_[A-Z_]+\s*=\s*\d+\s*$/i.test(ln))
     .join("\n");
 
-  const entryRegex = /\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*([\s\S]*?)(?=\n\[\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\]|$)/g;
+  const tsRegex = /\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]/g;
   const entries: NoteEntry[] = [];
+
+  // 1) Captura texto "solto" antes da primeira tag [timestamp] como uma entrada separada,
+  //    para não perder notas antigas que o backend grava sem timestamp inline (ex: handoff IA).
+  const firstTs = cleaned.search(/\[\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\]/);
+  const preamble = (firstTs === -1 ? cleaned : cleaned.slice(0, firstTs)).trim();
+  if (preamble) {
+    const kind = detectNoteKind(preamble);
+    const { cleanBody, meta } = parseNoteMeta(preamble.replace(/\n+/g, " | "));
+    entries.push({
+      kind,
+      title: NOTE_KIND_STYLES[kind].title,
+      body: cleanBody || preamble,
+      meta,
+    });
+  }
+
+  // 2) Entradas com timestamp explícito
+  const entryRegex = /\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*([\s\S]*?)(?=\n\[\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\]|$)/g;
   let match: RegExpExecArray | null;
   while ((match = entryRegex.exec(cleaned)) !== null) {
     const timestamp = match[1];
