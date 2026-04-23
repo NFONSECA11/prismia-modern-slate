@@ -1555,9 +1555,80 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     if (!booking) return;
     setRescheduleSearchLoading(true);
     setRescheduleSearchError(null);
+    setRescheduleSearchResults(null);
+
+    const detail = bookingDetailForBot as any;
+    const typedId = cancelBookingIdField.trim();
+    const typedName = assignLeadName.trim();
+    const activeStatuses = ["confirmed", "pending", "awaiting_choice", "handoff", "assisted"];
+    const unitName = (detail?.unit_name ?? booking.unit_name ?? "").toString();
+    const normalizeName = (value: string) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
     try {
-      // 1) Tenta telefone do booking (listagem) ou do detalhe (mais completo)
-      const detail = bookingDetailForBot as any;
+      // ── Modo 1: busca por ID ─────────────────────────────────────────────
+      if (typedId) {
+        const idNum = Number(typedId);
+        if (!Number.isFinite(idNum) || idNum <= 0) {
+          setRescheduleSearchError("ID do agendamento inválido.");
+          setRescheduleSearchResults([]);
+          return;
+        }
+        if (idNum === booking.id) {
+          setRescheduleSearchError("Este é o BR atual. Informe outro ID.");
+          setRescheduleSearchResults([]);
+          return;
+        }
+        try {
+          const found = await fetchBookingRequestById(idNum);
+          if (!found) {
+            setRescheduleSearchError(`Nenhum agendamento encontrado com ID ${idNum}.`);
+            setRescheduleSearchResults([]);
+            return;
+          }
+          if (!activeStatuses.includes(found.status)) {
+            setRescheduleSearchError(`BR #${idNum} não está ativo (status: ${found.status}).`);
+            setRescheduleSearchResults([]);
+            return;
+          }
+          const candidateUnit = normalizeName(found.unit_name ?? "");
+          if (unitName && candidateUnit && candidateUnit !== normalizeName(unitName)) {
+            setRescheduleSearchError(`BR #${idNum} pertence a outra unidade (${found.unit_name}).`);
+            setRescheduleSearchResults([]);
+            return;
+          }
+          console.log("[handleSearchClientBookings] busca por ID:", idNum, "→ ok");
+          setRescheduleSearchResults([found]);
+          return;
+        } catch (err) {
+          console.error("[handleSearchClientBookings] erro busca por ID:", err);
+          setRescheduleSearchError(`Falha ao buscar BR #${idNum}.`);
+          setRescheduleSearchResults([]);
+          return;
+        }
+      }
+
+      // ── Modo 2: busca somente por NOME ───────────────────────────────────
+      if (typedName) {
+        const results = await fetchBookingsByPhone("", {
+          excludeId: booking.id,
+          statuses: activeStatuses,
+          leadName: typedName,
+          unitName,
+        });
+        console.log("[handleSearchClientBookings] busca por nome:", typedName, "→", results.length);
+        setRescheduleSearchResults(results);
+        if (results.length === 0) {
+          setRescheduleSearchError(`Nenhum agendamento ativo encontrado para "${typedName}".`);
+        }
+        return;
+      }
+
+      // ── Modo 3: padrão — telefone do BR atual ────────────────────────────
       let phone = (
         detail?.contact_phone ??
         detail?.phone ??
@@ -1566,14 +1637,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         ""
       ).toString().trim();
 
-      // 2) Fallback: busca explicitamente o telefone via endpoint de detalhe
       if (!phone) {
-        console.log("[handleSearchClientBookings] phone vazio no booking, buscando via fetchBookingPhoneById…");
         const fetched = await fetchBookingPhoneById(booking.id);
         phone = (fetched ?? "").toString().trim();
       }
-
-      console.log("[handleSearchClientBookings] phone resolvido:", phone || "(vazio)");
 
       if (!phone) {
         setRescheduleSearchError("Telefone do cliente indisponível neste BR.");
@@ -1583,11 +1650,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       const results = await fetchBookingsByPhone(phone, {
         excludeId: booking.id,
-        statuses: ["confirmed", "pending", "awaiting_choice", "handoff", "assisted"],
-        leadName: (detail?.lead_name ?? booking.lead_name ?? assignLeadName ?? "").toString(),
-        unitName: (detail?.unit_name ?? booking.unit_name ?? "").toString(),
+        statuses: activeStatuses,
+        leadName: (detail?.lead_name ?? booking.lead_name ?? "").toString(),
+        unitName,
       });
-      console.log("[handleSearchClientBookings] resultados:", results.length, results.map((r) => r.id), "unit:", booking.unit_name);
+      console.log("[handleSearchClientBookings] busca por telefone:", phone, "→", results.length);
       setRescheduleSearchResults(results);
       if (results.length === 0) {
         setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente nesta unidade.");
