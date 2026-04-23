@@ -1393,7 +1393,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     } else if (mode === "assisted_slots_dashboard") {
       if (booking.status === "handoff" && !hasChosenSlot) {
         if (!isConvo) actions.push(
-          <ActionButton key="suggest" onClick={() => scheduleSuggestMut.mutate()} disabled={busy} loading={scheduleSuggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
+          <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
         );
         actions.push(
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
@@ -1426,7 +1426,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!terminal) {
         if (!isConvo) {
           actions.push(
-            <ActionButton key="suggest" onClick={() => scheduleSuggestMut.mutate()} disabled={busy} loading={scheduleSuggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
+            <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" />,
             <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
           );
         }
