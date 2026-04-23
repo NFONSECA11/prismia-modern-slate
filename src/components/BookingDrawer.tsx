@@ -1131,11 +1131,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           returnedLeadName: (patch1aResult as any)?.lead_name,
           fullResult: patch1aResult,
         });
-        pushScheduleLog({
-          label: "PATCH 1 — preparar BR",
-          status: "success",
-          detail: `Modo: assisted_slots_dashboard${selectedProfessionalId ? " · com profissional" : ""}`,
-        });
       } catch (err: any) {
         console.error("[scheduleSuggestMut] PATCH 1a FALHOU:", {
           message: err?.message,
