@@ -447,6 +447,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
   const lastCancelledIdRef = useRef<string | null>(null);
+  // Reagendamento manual: busca de BRs do cliente pelo telefone do BR atual
+  const [rescheduleSearchResults, setRescheduleSearchResults] = useState<BookingRequest[] | null>(null);
+  const [rescheduleSearchLoading, setRescheduleSearchLoading] = useState(false);
+  const [rescheduleSearchError, setRescheduleSearchError] = useState<string | null>(null);
+  type RescheduleLogEntry = { ts: string; label: string; status: "info" | "success" | "warning" | "error"; detail?: string };
+  const [rescheduleLog, setRescheduleLog] = useState<RescheduleLogEntry[]>([]);
+  const pushRescheduleLog = (entry: Omit<RescheduleLogEntry, "ts">) => {
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setRescheduleLog((prev) => [...prev, { ...entry, ts }]);
+  };
   const [messageText, setMessageText] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
