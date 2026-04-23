@@ -95,6 +95,12 @@
     border-bottom: 1px solid hsl(0 0% 100% / 0.1) !important;
   }
 
+  /* Night: borda branca sutil de 1px nos cards de detalhe do Drawer de Agendamento */
+  [data-theme="night"] [data-booking-drawer] .rounded-lg.border,
+  [data-theme="night"] [data-booking-drawer] .rounded-xl.border {
+    border-color: hsl(0 0% 100% / 0.12) !important;
+  }
+
   /* Linha divisória sutil entre linhas da tabela no tema Frost (mesmo tom da borda) */
   [data-theme="frost"] tbody tr {
     border-bottom: 1px solid hsl(var(--border)) !important;
