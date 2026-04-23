@@ -53,6 +53,7 @@ export interface NewBookingFormData {
   time_end: string;
   notes: string;
   period: string;
+  motivo: string;
 }
 
 const PROCEDURES = [
