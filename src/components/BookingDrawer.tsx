@@ -1353,7 +1353,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         if (last?.status === "error") return prev;
         const now = new Date();
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        return [...prev, { ts, label: "Falha no fluxo", status: "error", detail: String(msg).slice(0, 200) }];
+        return [...prev, { ts, label: "Não foi possível concluir", status: "error", detail: "Verifique a conexão e tente novamente." }];
       });
     },
   });
