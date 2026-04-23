@@ -561,8 +561,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // Busca dados de agenda também no modo dedicado de gerenciamento aberto pelo ícone.
   const needsSchedulingLookups =
     !!booking &&
-    ((drawerMode === "manage" && (iaOpType === "schedule" || iaOpType === "reschedule")) ||
-      (aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule")));
+    ((drawerMode === "manage" && (iaOpType === "schedule" || iaOpType === "reschedule" || iaOpType === "cancel")) ||
+      (aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule" || iaOpType === "cancel")));
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
