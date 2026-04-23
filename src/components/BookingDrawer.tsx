@@ -2524,7 +2524,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
                               title="Buscar agendamentos do cliente"
                               aria-label="Buscar agendamentos do cliente"
-                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-elevated disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
                               {rescheduleSearchLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
