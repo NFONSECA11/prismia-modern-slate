@@ -2504,7 +2504,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               </span>
                             )}
                           </div>
-                          <div className="relative">
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
                             <input
                               type="text"
                               value={assignLeadName}
@@ -2516,21 +2516,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                                 }
                               }}
                               placeholder="Nome do cliente..."
-                              className="text-sm bg-surface border border-border rounded-lg pl-2 pr-9 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                             />
                             <button
                               type="button"
                               onClick={handleSearchClientBookings}
                               disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
-                              title="Buscar agendamentos do cliente"
-                              aria-label="Buscar agendamentos do cliente"
-                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              className="h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
                             >
                               {rescheduleSearchLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <Search className="h-3.5 w-3.5" />
                               )}
+                              {rescheduleSearchLoading ? "Buscando…" : "Buscar"}
                             </button>
                           </div>
                         </div>
@@ -2772,7 +2771,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               </span>
                             )}
                           </div>
-                          <div className="relative">
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
                             <input
                               type="text"
                               value={assignLeadName}
@@ -2784,21 +2783,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                                 }
                               }}
                               placeholder="Nome do cliente..."
-                              className="text-sm bg-surface border border-border rounded-lg pl-2 pr-9 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                             />
                             <button
                               type="button"
                               onClick={handleSearchClientBookings}
                               disabled={rescheduleSearchLoading || iaCancelMut.isPending}
-                              title="Buscar agendamentos do cliente"
-                              aria-label="Buscar agendamentos do cliente"
-                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              className="h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
                             >
                               {rescheduleSearchLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <Search className="h-3.5 w-3.5" />
                               )}
+                              {rescheduleSearchLoading ? "Buscando…" : "Buscar"}
                             </button>
                           </div>
                         </div>
