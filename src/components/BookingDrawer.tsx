@@ -1319,16 +1319,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         // ainda assim o bot vai conduzir. Avisa e fecha.
         toast.warning("Nenhum horário retornado, mas o bot foi acionado para conversar com o cliente.");
         pushScheduleLog({
-          label: "Concluído",
+          label: "Bot assumiu a conversa",
           status: "warning",
-          detail: "Bot acionado sem slots — vai conduzir a conversa",
+          detail: "Sem horários no momento — o bot vai conduzir o cliente.",
         });
       } else {
         toast.success(`Bot acionado — ${slots.length} horário(s) serão oferecidos ao cliente.`);
         pushScheduleLog({
-          label: "Concluído",
+          label: "Pronto! Bot assumiu a conversa",
           status: "success",
-          detail: `${slots.length} horário(s) serão oferecidos ao cliente`,
+          detail: `${slots.length} ${slots.length === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
         });
       }
       setActionDone("Bot assumiu a conversa!");
