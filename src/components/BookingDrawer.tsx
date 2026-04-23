@@ -2016,9 +2016,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           notes: updatedNotes,
           conversation_bot_mode: "off",
           booking_mode: "handoff_manual",
+          status: "failed",
+          allow_terminal_status_via_patch: true,
         });
       } catch (err) {
-        console.warn("[iaCancelMut] patch de log falhou:", err);
+        console.warn("[iaCancelMut] patch de log/status falhou:", err);
       }
 
       return { cancelledId: targetId };
