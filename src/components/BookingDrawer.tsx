@@ -2345,6 +2345,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       <>
         <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
         <aside
+          data-booking-drawer
           className="fixed right-6 z-50 w-full max-w-[480px] rounded-xl shadow-2xl animate-fade-in flex flex-col overflow-hidden"
           style={{
             top: "50%",
@@ -2717,6 +2718,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
 
       <aside
+        data-booking-drawer
         className="fixed right-0 top-0 z-50 h-full w-full max-w-[480px] shadow-lg animate-slide-in-right flex flex-col"
         style={{
           background: "hsl(var(--surface-raised))",
