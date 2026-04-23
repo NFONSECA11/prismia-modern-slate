@@ -518,6 +518,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setRescheduleSearchResults(null);
     setRescheduleSearchLoading(false);
     setRescheduleSearchError(null);
+    setSelectedClientBooking(null);
     setRescheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
