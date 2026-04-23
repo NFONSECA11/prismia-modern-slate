@@ -2,9 +2,9 @@ import { HandMetal, LayoutDashboard, Zap } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MODE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  handoff_manual: { icon: HandMetal, label: "Handoff Manual", color: "text-amber-400" },
-  assisted_slots_dashboard: { icon: LayoutDashboard, label: "Assistido (Dashboard)", color: "text-sky-400" },
-  auto_slots_bot: { icon: Zap, label: "Automático (Bot)", color: "text-emerald-400" },
+  handoff_manual: { icon: HandMetal, label: "Handoff Manual", color: "text-amber-500" },
+  assisted_slots_dashboard: { icon: LayoutDashboard, label: "Assistido (Dashboard)", color: "text-sky-500" },
+  auto_slots_bot: { icon: Zap, label: "Automático (Bot)", color: "text-emerald-500" },
 };
 
 interface BookingModeIconProps {
