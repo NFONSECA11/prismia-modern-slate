@@ -1528,14 +1528,47 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
 
   const selectClientBookingForReschedule = (br: BookingRequest) => {
     setCancelBookingIdField(String(br.id));
-    // Autopreenche profissional/procedimento do BR antigo (atendente pode ajustar)
-    if (br.professional_id) setSelectedProfessionalId(br.professional_id);
-    const matchedProc = allProcedures.find(
-      (p) => (p.name ?? "").trim().toLowerCase() === (br.procedure_name ?? "").trim().toLowerCase()
-    );
+
+    const normalize = (value: string) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    // Autopreenche Profissional: tenta por ID; se vier 0/inexistente, tenta por nome
+    let resolvedProfId: number | null = null;
+    if (br.professional_id && professionals.some((p) => p.id === br.professional_id)) {
+      resolvedProfId = br.professional_id;
+    } else if (br.professional_name) {
+      const target = normalize(br.professional_name);
+      const matched =
+        professionals.find((p) => normalize(p.name) === target) ??
+        professionals.find((p) => normalize(p.name).includes(target) || target.includes(normalize(p.name)));
+      if (matched) resolvedProfId = matched.id;
+    }
+    if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
+
+    // Autopreenche Procedimento: match exato → match parcial (acento/case-insensitive)
+    const procTarget = normalize(br.procedure_name ?? "");
+    let matchedProc =
+      allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
+      allProcedures.find((p) => procTarget && (
+        normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
+      ));
     if (matchedProc) setSelectedProcedureId(matchedProc.id);
+
     if (br.lead_name && !assignLeadName.trim()) setAssignLeadName(br.lead_name);
-    setRescheduleSearchResults(null); // colapsa lista após seleção
+
+    console.log("[selectClientBookingForReschedule] BR", br.id, "→ profId:", resolvedProfId, "procId:", matchedProc?.id, {
+      brProfId: br.professional_id,
+      brProfName: br.professional_name,
+      brProcName: br.procedure_name,
+      profsCount: professionals.length,
+      procsCount: allProcedures.length,
+    });
+
+    setRescheduleSearchResults(null);
   };
 
   // ── Reagendamento manual: cancela BR antigo + PATCH atual + suggest_slots + bot ON ──
