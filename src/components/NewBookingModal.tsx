@@ -206,12 +206,13 @@ function ModalBody({
     time_end: defaultTimeEnd,
     notes: slot.prefill?.notes ?? "",
     period: PERIODS[0],
+    motivo: "",
   });
 
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const isValid = !!form.lead_name.trim() && !!form.procedure_name;
+  const isValid = !!form.lead_name.trim() && !!form.procedure_name && !!form.motivo.trim();
 
   const handleSave = async () => {
     if (!isValid || readOnly) return;
