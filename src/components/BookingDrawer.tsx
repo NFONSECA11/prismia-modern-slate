@@ -296,10 +296,31 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
   const kind = AI_EVENT_KIND_MAP[event.type] ?? "ai_schedule";
   const meta: Array<{ label: string; value: string }> = [];
 
-  if (event.procedure_name) meta.push({ label: "Procedimento", value: event.procedure_name });
-  if (event.professional_name) meta.push({ label: "Profissional", value: event.professional_name });
+  if (event.procedure_name) {
+    const proc = event.procedure_slug
+      ? `${event.procedure_name} (${event.procedure_slug})`
+      : event.procedure_name;
+    meta.push({ label: "Procedimento", value: proc });
+  }
+  if (event.professional_name) {
+    const prof = event.professional_id
+      ? `${event.professional_name} (#${event.professional_id})`
+      : event.professional_name;
+    meta.push({ label: "Profissional", value: prof });
+  }
   const scheduled = formatEventTimestamp(event.scheduled_at);
   if (scheduled) meta.push({ label: "Agendado para", value: scheduled });
+
+  // Policy: aceita tanto `policy` (string) quanto `policy_key`/`policy_value`
+  let policyValue: string | undefined;
+  if (event.policy_key && event.policy_value) {
+    policyValue = `${event.policy_key}=${event.policy_value}`;
+  } else if (event.policy) {
+    policyValue = event.policy;
+  }
+  if (policyValue) meta.push({ label: "Policy", value: policyValue });
+
+  if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
   if (event.reason) meta.push({ label: "Motivo", value: event.reason });
 
   return {
