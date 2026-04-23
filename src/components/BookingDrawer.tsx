@@ -1088,6 +1088,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         vars_snapshot: cleanedVars,
         notes: updatedNotes,
       };
+      // Profissional é opcional: só envia se o usuário escolheu um.
+      // Sem profissional → suggest_slots roda só com unidade + procedimento
+      // e o cliente decide depois (slot carrega o profissional correspondente).
       if (selectedProfessionalId) {
         patch1.professional = selectedProfessionalId;
       }
