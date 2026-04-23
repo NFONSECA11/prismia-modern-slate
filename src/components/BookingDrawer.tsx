@@ -2504,34 +2504,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               </span>
                             )}
                           </div>
-                          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
-                            <input
-                              type="text"
-                              value={assignLeadName}
-                              onChange={(e) => setAssignLeadName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleSearchClientBookings();
-                                }
-                              }}
-                              placeholder="Nome do cliente..."
-                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleSearchClientBookings}
-                              disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
-                              className="h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
-                            >
-                              {rescheduleSearchLoading ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Search className="h-3.5 w-3.5" />
-                              )}
-                              {rescheduleSearchLoading ? "Buscando…" : "Buscar"}
-                            </button>
-                          </div>
+                          <input
+                            type="text"
+                            value={assignLeadName}
+                            onChange={(e) => setAssignLeadName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSearchClientBookings();
+                              }
+                            }}
+                            placeholder="Nome do cliente..."
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
                         </div>
 
                         {/* Lista de BRs encontrados */}
@@ -2753,6 +2738,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             <Calendar className="h-3.5 w-3.5" />
                             {checkRescheduleSlotsMut.isPending ? "Consultando…" : "Checar"}
                           </button>
+                          <button
+                            type="button"
+                            onClick={handleSearchClientBookings}
+                            disabled={rescheduleSearchLoading || rescheduleSuggestMut.isPending}
+                            title="Buscar agendamentos do cliente pelo nome"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            {rescheduleSearchLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSearchLoading ? "Buscando…" : "Buscar BRs"}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -2771,34 +2770,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               </span>
                             )}
                           </div>
-                          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
-                            <input
-                              type="text"
-                              value={assignLeadName}
-                              onChange={(e) => setAssignLeadName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleSearchClientBookings();
-                                }
-                              }}
-                              placeholder="Nome do cliente..."
-                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleSearchClientBookings}
-                              disabled={rescheduleSearchLoading || iaCancelMut.isPending}
-                              className="h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
-                            >
-                              {rescheduleSearchLoading ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Search className="h-3.5 w-3.5" />
-                              )}
-                              {rescheduleSearchLoading ? "Buscando…" : "Buscar"}
-                            </button>
-                          </div>
+                          <input
+                            type="text"
+                            value={assignLeadName}
+                            onChange={(e) => setAssignLeadName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSearchClientBookings();
+                              }
+                            }}
+                            placeholder="Nome do cliente..."
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                          />
                         </div>
 
                         {/* Lista de BRs encontrados */}
@@ -2947,6 +2931,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               <XCircle className="h-3.5 w-3.5" />
                             )}
                             {iaCancelMut.isPending ? "Cancelando…" : "Cancelar Agenda"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSearchClientBookings}
+                            disabled={rescheduleSearchLoading || iaCancelMut.isPending}
+                            title="Buscar agendamentos do cliente pelo nome"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                          >
+                            {rescheduleSearchLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5" />
+                            )}
+                            {rescheduleSearchLoading ? "Buscando…" : "Buscar BRs"}
                           </button>
                         </div>
                       </div>
