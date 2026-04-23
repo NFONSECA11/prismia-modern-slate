@@ -115,36 +115,13 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
   const actions: Omit<QuickAction, "action">[] = [];
   const isConvo = isConversationBooking(booking);
 
-  if (mode === "handoff_manual") {
-    if (booking.status === "handoff") {
-      if (!isConvo) actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
+  if (mode === "assisted_slots_dashboard") {
+    if (booking.status === "handoff" && !hasChosenSlot && !isConvo) {
+      actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" });
     }
-  } else if (mode === "assisted_slots_dashboard") {
-    if (booking.status === "handoff" && !hasChosenSlot) {
-      if (!isConvo) actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" });
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
-    } else if (booking.status === "awaiting_choice") {
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
-    } else if (hasChosenSlot && (booking.status === "handoff" || booking.status === "pending")) {
-      if (!isConvo) actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
-    }
-  } else if (mode === "auto_slots_bot") {
-    if (!terminal) {
-      if (hasChosenSlot && !isConvo) {
-        actions.push({ key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" });
-      }
-      actions.push({ key: "cancel", icon: XCircle, label: "Cancelar", variant: "danger" });
-    }
-  } else {
-    if (!terminal) {
-      if (!isConvo) {
-        actions.push(
-          { key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "default" },
-          { key: "confirm", icon: CheckCircle2, label: "Confirmar", variant: "primary" },
-        );
-      }
+  } else if (mode !== "auto_slots_bot" && mode !== "handoff_manual") {
+    if (!terminal && !isConvo) {
+      actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "default" });
     }
   }
 
