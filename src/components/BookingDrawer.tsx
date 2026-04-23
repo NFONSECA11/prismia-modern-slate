@@ -1797,17 +1797,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               {scheduleLog.map((entry, idx) => {
                                 const dot =
                                   entry.status === "success"
-                                    ? "bg-success"
+                                    ? "bg-primary"
                                     : entry.status === "error"
                                     ? "bg-destructive"
                                     : entry.status === "warning"
-                                    ? "bg-warning"
+                                    ? "bg-accent"
                                     : "bg-muted-foreground";
                                 const textColor =
                                   entry.status === "error"
                                     ? "text-destructive"
                                     : entry.status === "warning"
-                                    ? "text-warning"
+                                    ? "text-accent-foreground"
                                     : "text-foreground";
                                 return (
                                   <li key={idx} className="flex items-start gap-2 text-[11px] leading-tight">
