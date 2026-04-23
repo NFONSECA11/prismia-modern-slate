@@ -424,7 +424,7 @@ function ActionButton({
 
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
 
-export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt, mode = "details" }: BookingDrawerProps) {
+export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt, mode: drawerMode = "details" }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
   type ScheduleLogEntry = {
@@ -558,10 +558,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // Estrutura visual apenas — ações ainda não conectadas.
   type IaOpType = "schedule" | "reschedule" | "cancel";
   const [iaOpType, setIaOpType] = useState<IaOpType>("schedule");
-  // Always fetch scheduling lookups when the manual IA flow is active, even if the
-  // booking already has a professional assigned. Otherwise the procedure select can
-  // stay empty and the action never reaches the PATCH.
-  const needsSchedulingLookups = !!booking && aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule");
+  // Busca dados de agenda também no modo dedicado de gerenciamento aberto pelo ícone.
+  const needsSchedulingLookups =
+    !!booking &&
+    ((drawerMode === "manage" && (iaOpType === "schedule" || iaOpType === "reschedule")) ||
+      (aiEnabled && (iaOpType === "schedule" || iaOpType === "reschedule")));
   const bookingUnitId = (() => {
     const name = (booking?.unit_name ?? "").trim().toLowerCase();
     if (!name) return null;
@@ -2010,7 +2011,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     suggestMut.isPending ||
     scheduleSuggestMut.isPending;
 
-  const mode = booking.booking_mode as BookingMode;
+  const bookingMode = booking.booking_mode as BookingMode;
   const pCodeRaw = ((bookingDetailForBot as any)?.procedure_code ?? (booking as any).procedure_code ?? booking.procedure_slug ?? "").trim().toLowerCase();
   const pCodeFallback = pCodeRaw || (booking.procedure_name ?? "").trim().toLowerCase();
   const isConvo = ["human", "prices"].includes(pCodeRaw) || ["human", "prices"].includes(pCodeFallback);
@@ -2048,7 +2049,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
     const actions: React.ReactNode[] = [];
 
-    if (mode === "handoff_manual") {
+    if (bookingMode === "handoff_manual") {
       if (booking.status === "handoff") {
         if (!isConvo) actions.push(
           <ActionButton key="confirm" onClick={() => confirmMut.mutate()} disabled={busy} loading={confirmMut.isPending} icon={CheckCircle2} label="Confirmar" variant="primary" />,
@@ -2057,7 +2058,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       }
-    } else if (mode === "assisted_slots_dashboard") {
+    } else if (bookingMode === "assisted_slots_dashboard") {
       if (booking.status === "handoff" && !hasChosenSlot) {
         if (!isConvo) actions.push(
           <ActionButton key="suggest" onClick={() => suggestMut.mutate()} disabled={busy} loading={suggestMut.isPending} icon={CalendarSearch} label="Sugerir Horários" variant="primary" />,
@@ -2077,7 +2078,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           <ActionButton key="cancel" onClick={() => cancelMut.mutate()} disabled={busy} loading={cancelMut.isPending} icon={XCircle} label="Cancelar" variant="danger" />,
         );
       }
-    } else if (mode === "auto_slots_bot") {
+    } else if (bookingMode === "auto_slots_bot") {
       if (!terminal) {
         if (hasChosenSlot && !isConvo) {
           actions.push(
@@ -2612,7 +2613,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-status-pending" />
                 <span className="text-xs font-medium text-status-pending">
-                  {mode === "assisted_slots_dashboard"
+                  {bookingMode === "assisted_slots_dashboard"
                     ? "Nenhum slot selecionado — clique em 'Sugerir Horários' para enviar opções ao lead."
                     : "Nenhum slot selecionado."}
                 </span>
