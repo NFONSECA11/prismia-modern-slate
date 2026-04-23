@@ -1048,11 +1048,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
         : null;
       pushScheduleLog({
-        label: "Iniciando agendamento",
+        label: "Buscando horários disponíveis…",
         status: "info",
         detail: profNameForLog
-          ? `Procedimento + Profissional (${profNameForLog})`
-          : "Procedimento (sem preferência de profissional)",
+          ? `Profissional: ${profNameForLog}`
+          : "Sem preferência de profissional",
       });
 
       // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
@@ -1131,11 +1131,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           returnedLeadName: (patch1aResult as any)?.lead_name,
           fullResult: patch1aResult,
         });
-        pushScheduleLog({
-          label: "PATCH 1 — preparar BR",
-          status: "success",
-          detail: `Modo: assisted_slots_dashboard${selectedProfessionalId ? " · com profissional" : ""}`,
-        });
       } catch (err: any) {
         console.error("[scheduleSuggestMut] PATCH 1a FALHOU:", {
           message: err?.message,
@@ -1145,9 +1140,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           stack: err?.stack,
         });
         pushScheduleLog({
-          label: "PATCH 1 — preparar BR",
+          label: "Não foi possível preparar o agendamento",
           status: "error",
-          detail: `${err?.response?.status ?? "?"}: ${err?.message ?? "falhou"}`,
+          detail: "Tente novamente em instantes.",
         });
         throw err;
       }
@@ -1164,17 +1159,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       if (detailAfterPatch1?.booking_mode !== "assisted_slots_dashboard") {
         pushScheduleLog({
-          label: "GET — confirmar modo da BR",
+          label: "Não foi possível preparar o agendamento",
           status: "error",
-          detail: `Modo atual: ${detailAfterPatch1?.booking_mode ?? "desconhecido"}`,
+          detail: "Tente novamente em instantes.",
         });
         throw new Error("O BR não entrou em 'Slots disparados pelo dashboard' antes do suggest_slots.");
       }
-      pushScheduleLog({
-        label: "GET — confirmar modo da BR",
-        status: "success",
-        detail: "BR pronta para suggest_slots",
-      });
 
       // 2) Solicita slots ao backend.
       // Se há profissional escolhido → envia procedure + unit + professional.
@@ -1200,9 +1190,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           JSON.stringify(data ?? {});
         console.error("[scheduleSuggestMut] suggest_slots FAILED", { status, data, payload: suggestPayload });
         pushScheduleLog({
-          label: "suggest_slots — buscar horários",
+          label: "Falha ao buscar horários",
           status: "error",
-          detail: `${status ?? "?"}: ${String(detail).slice(0, 160)}`,
+          detail: "O sistema não conseguiu consultar a agenda. Tente novamente.",
         });
         throw new Error(`suggest_slots ${status ?? "?"}: ${String(detail).slice(0, 300)}`);
       }
@@ -1217,11 +1207,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       });
       const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
       pushScheduleLog({
-        label: "suggest_slots — buscar horários",
+        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
         status: offerCount > 0 ? "success" : "warning",
         detail: offerCount > 0
-          ? `${offerCount} horário(s) retornado(s)`
-          : "Nenhum horário disponível — bot conduzirá a conversa",
+          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
+          : "O bot vai conversar com o cliente para entender melhor",
       });
 
       // 4) PATCH na BR — coloca em automático (bot assume) e reforça os campos de procedimento
@@ -1275,11 +1265,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         inferredProfessionalUnitId,
       });
       await patchBooking(booking.id, patch2);
-      pushScheduleLog({
-        label: "PATCH 2 — ativar bot",
-        status: "success",
-        detail: "Modo: auto_slots_bot",
-      });
 
       // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
@@ -1296,17 +1281,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         }));
         await patchBooking(booking.id, patch2Retry);
         detail = await fetchBookingRequestById(booking.id);
-        pushScheduleLog({
-          label: "PATCH 2 (retry) — reforçar modo bot",
-          status: detail?.booking_mode === "auto_slots_bot" ? "success" : "warning",
-          detail: `Modo após retry: ${detail?.booking_mode ?? "desconhecido"}`,
-        });
       }
       if (detail?.booking_mode !== "auto_slots_bot") {
         pushScheduleLog({
-          label: "Validação final",
+          label: "Não foi possível ativar o bot",
           status: "error",
-          detail: "BR continuou em 'Slots disparados pelo dashboard'",
+          detail: "Os horários foram enviados, mas o bot não assumiu a conversa.",
         });
         throw new Error("Os slots foram enviados, mas o BR continuou em 'Slots disparados pelo dashboard'.");
       }
@@ -1339,16 +1319,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         // ainda assim o bot vai conduzir. Avisa e fecha.
         toast.warning("Nenhum horário retornado, mas o bot foi acionado para conversar com o cliente.");
         pushScheduleLog({
-          label: "Concluído",
+          label: "Bot assumiu a conversa",
           status: "warning",
-          detail: "Bot acionado sem slots — vai conduzir a conversa",
+          detail: "Sem horários no momento — o bot vai conduzir o cliente.",
         });
       } else {
         toast.success(`Bot acionado — ${slots.length} horário(s) serão oferecidos ao cliente.`);
         pushScheduleLog({
-          label: "Concluído",
+          label: "Pronto! Bot assumiu a conversa",
           status: "success",
-          detail: `${slots.length} horário(s) serão oferecidos ao cliente`,
+          detail: `${slots.length} ${slots.length === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
         });
       }
       setActionDone("Bot assumiu a conversa!");
@@ -1373,7 +1353,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         if (last?.status === "error") return prev;
         const now = new Date();
         const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        return [...prev, { ts, label: "Falha no fluxo", status: "error", detail: String(msg).slice(0, 200) }];
+        return [...prev, { ts, label: "Não foi possível concluir", status: "error", detail: "Verifique a conexão e tente novamente." }];
       });
     },
   });
