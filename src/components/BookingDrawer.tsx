@@ -1197,15 +1197,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
+        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
-        procedure_name: procedureName,
-        unit_name: unitName,
+        procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
+        unit_name: detailAfterSuggest?.unit_name || unitName,
+        vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
       };
+      if (selectedProcedureId) patch2.procedure = selectedProcedureId;
+      if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
       if (procedureCode) patch2.procedure_code = procedureCode;
       if (profName) patch2.professional_name = profName;
       if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
-      if (inferredProfessionalId) patch2.professional = inferredProfessionalId;
+      if (inferredProfessionalId || detailAfterSuggest?.professional_id) {
+        patch2.professional = inferredProfessionalId ?? detailAfterSuggest.professional_id;
+      }
       if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
       console.log("[scheduleSuggestMut] PATCH 2 (auto) payload:", JSON.stringify(patch2), {
         slotProfIds,
@@ -1218,6 +1224,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       // 5) Refetch detalhes — se o backend tiver mantido "Falar com atendente",
       // faz um PATCH corretivo final com o procedimento real selecionado.
       let detail = await fetchBookingRequestById(booking.id);
+      if (detail?.booking_mode !== "auto_slots_bot") {
+        const patch2Retry: Record<string, unknown> = {
+          ...patch2,
+          status: detail?.status ?? patch2.status ?? "awaiting_choice",
+          vars_snapshot: (detail as any)?.vars_snapshot ?? patch2.vars_snapshot,
+        };
+        console.warn("[scheduleSuggestMut] PATCH 2 retrying auto transition:", JSON.stringify({
+          actualMode: detail?.booking_mode,
+          payload: patch2Retry,
+        }));
+        await patchBooking(booking.id, patch2Retry);
+        detail = await fetchBookingRequestById(booking.id);
+      }
+      if (detail?.booking_mode !== "auto_slots_bot") {
+        throw new Error("Os slots foram enviados, mas o BR continuou em 'Slots disparados pelo dashboard'.");
+      }
       if (procedureName && detail?.procedure_name?.trim() !== procedureName.trim()) {
         const patch3: Record<string, unknown> = {
           procedure_name: procedureName,
