@@ -1048,11 +1048,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
         : null;
       pushScheduleLog({
-        label: "Iniciando agendamento",
+        label: "Buscando horários disponíveis…",
         status: "info",
         detail: profNameForLog
-          ? `Procedimento + Profissional (${profNameForLog})`
-          : "Procedimento (sem preferência de profissional)",
+          ? `Profissional: ${profNameForLog}`
+          : "Sem preferência de profissional",
       });
 
       // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
