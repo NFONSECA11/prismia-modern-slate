@@ -1860,6 +1860,99 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     },
   });
 
+  // ── Cancelamento manual (IA Ativa › Cancelamento): cancela BR alvo + bot OFF + log no BR atual ──
+  const iaCancelMut = useMutation({
+    mutationFn: async () => {
+      if (!booking) throw new Error("Sem agendamento aberto");
+      const targetIdRaw = cancelBookingIdField.trim();
+      const targetId = Number(targetIdRaw);
+      if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a cancelar");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+
+      setRescheduleLog([]);
+
+      // 1) Cancela o BR alvo
+      pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
+      try {
+        await cancelBooking(targetId);
+        pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
+        } else {
+          pushRescheduleLog({
+            label: "Não foi possível cancelar o agendamento",
+            status: "error",
+            detail: `Status ${status ?? "?"}`,
+          });
+          throw err;
+        }
+      }
+
+      // 2) Bot OFF no BR atual (operador assume)
+      try {
+        await handoffOn(booking.id);
+      } catch (err) {
+        console.warn("[iaCancelMut] handoffOn falhou (pode já estar off):", err);
+      }
+
+      // 3) Loga no BR atual
+      const now = new Date();
+      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
+      const cancelHeader = `[${ts}] Cancelamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_CANCEL`;
+      const cancelDetail = `[${ts}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
+      const updatedNotes = [existingNotesRaw, cancelHeader, cancelDetail].filter(Boolean).join("\n");
+
+      try {
+        await patchBooking(booking.id, {
+          lead_name: assignLeadName.trim() || booking.lead_name,
+          notes: updatedNotes,
+          conversation_bot_mode: "off",
+          booking_mode: "handoff_manual",
+        });
+      } catch (err) {
+        console.warn("[iaCancelMut] patch de log falhou:", err);
+      }
+
+      return { cancelledId: targetId };
+    },
+    onSuccess: async ({ cancelledId }) => {
+      toast.success(`Agendamento #${cancelledId} cancelado.`);
+      pushRescheduleLog({
+        label: "Cancelamento concluído",
+        status: "success",
+        detail: `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
+      });
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: true });
+      setActionDone(`Agenda #${cancelledId} cancelada!`);
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      console.error("[iaCancelMut] error:", err?.response?.status, err?.response?.data);
+      setRescheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no cancelamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+      });
+    },
+  });
+
   const scheduleConfirmMut = useMutation({
     mutationFn: async (slot: { start_at: string; label: string } & { professional_id?: number; professional_unit_id?: number }) => {
       if (!booking) throw new Error("Sem agendamento aberto");
