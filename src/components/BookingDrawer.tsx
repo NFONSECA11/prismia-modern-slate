@@ -405,6 +405,18 @@ import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNot
 export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt }: BookingDrawerProps) {
   const queryClient = useQueryClient();
   const [actionDone, setActionDone] = useState<string | null>(null);
+  type ScheduleLogEntry = {
+    ts: string;
+    label: string;
+    status: "info" | "success" | "warning" | "error";
+    detail?: string;
+  };
+  const [scheduleLog, setScheduleLog] = useState<ScheduleLogEntry[]>([]);
+  const pushScheduleLog = (entry: Omit<ScheduleLogEntry, "ts">) => {
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setScheduleLog((prev) => [...prev, { ...entry, ts }]);
+  };
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
   const [selectedProcedureId, setSelectedProcedureId] = useState<number | null>(null);
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
