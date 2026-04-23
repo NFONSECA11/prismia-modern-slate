@@ -1583,11 +1583,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         excludeId: booking.id,
         statuses: ["confirmed", "pending", "awaiting_choice", "handoff", "assisted"],
         leadName: (detail?.lead_name ?? booking.lead_name ?? assignLeadName ?? "").toString(),
+        unitName: (detail?.unit_name ?? booking.unit_name ?? "").toString(),
       });
-      console.log("[handleSearchClientBookings] resultados:", results.length, results.map((r) => r.id));
+      console.log("[handleSearchClientBookings] resultados:", results.length, results.map((r) => r.id), "unit:", booking.unit_name);
       setRescheduleSearchResults(results);
       if (results.length === 0) {
-        setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente.");
+        setRescheduleSearchError("Nenhum agendamento ativo encontrado para este cliente nesta unidade.");
       }
     } catch (err: any) {
       console.error("[handleSearchClientBookings] error:", err);

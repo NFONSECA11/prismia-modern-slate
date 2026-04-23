@@ -252,7 +252,7 @@ function digitsOnly(value: string): string {
 
 export async function fetchBookingsByPhone(
   phone: string,
-  opts: { excludeId?: number; statuses?: string[]; leadName?: string } = {}
+  opts: { excludeId?: number; statuses?: string[]; leadName?: string; unitName?: string } = {}
 ): Promise<BookingRequest[]> {
   const phoneDigits = digitsOnly(phone);
   const leadName = (opts.leadName ?? "").trim().toLowerCase();
@@ -308,10 +308,18 @@ export async function fetchBookingsByPhone(
       }
     }
 
+    const normalizedUnitName = opts.unitName ? normalizeName(opts.unitName) : "";
+
     const matches = await Promise.all(
       Array.from(candidates.values()).map(async (booking) => {
         if (opts.excludeId && booking.id === opts.excludeId) return null;
         if (!statuses.includes(booking.status)) return null;
+
+        // Filtro por unidade: só inclui BRs da mesma unidade que o BR de origem
+        if (normalizedUnitName) {
+          const candidateUnit = normalizeName(booking.unit_name ?? "");
+          if (candidateUnit !== normalizedUnitName) return null;
+        }
 
         let candidatePhone = digitsOnly(booking.contact_phone ?? booking.phone ?? "");
         if (!candidatePhone) {
