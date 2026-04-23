@@ -1726,24 +1726,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
-                              Procedimento <span className="text-status-cancelled">*</span>
-                            </label>
-                            <select
-                              value={selectedProcedureId ?? ""}
-                              onChange={(e) => {
-                                setSelectedProcedureId(Number(e.target.value) || null);
-                                setSelectedSpecialtyId(null);
-                              }}
-                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
-                            >
-                              <option value="">Selecionar...</option>
-                              {(selectedProfessionalId ? proceduresForProfessional : proceduresForUnit).map((p) => (
-                                <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
                               Profissional <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
                             </label>
                             <select
@@ -1757,6 +1739,24 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                               <option value="">Sem preferência</option>
                               {professionalsForUnit.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                              Procedimento <span className="text-status-cancelled">*</span>
+                            </label>
+                            <select
+                              value={selectedProcedureId ?? ""}
+                              onChange={(e) => {
+                                setSelectedProcedureId(Number(e.target.value) || null);
+                                setSelectedSpecialtyId(null);
+                              }}
+                              className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                            >
+                              <option value="">Selecionar...</option>
+                              {(selectedProfessionalId ? proceduresForProfessional : proceduresForUnit).map((p) => (
+                                <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
                               ))}
                             </select>
                           </div>
