@@ -33,6 +33,7 @@ import {
   XCircle,
   RotateCcw,
   CalendarSearch,
+  CalendarCog,
   PhoneForwarded,
   PhoneOff,
   Loader2,
@@ -676,6 +677,27 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, aiEnabled }
                               </Tooltip>
                             );
                           })()}
+
+                          {/* Gerenciar agenda — abre drawer com Agendar/Reagendar/Cancelar */}
+                          {!isTerminal(booking.status) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelectBooking(booking);
+                                  }}
+                                  aria-label="Gerenciar agenda"
+                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                >
+                                  <CalendarCog className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                Gerenciar agenda
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
 
                           {/* Quick actions - visible on hover */}
                           {(actions.length > 0 || isBotOff) && (
