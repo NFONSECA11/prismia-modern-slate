@@ -1888,16 +1888,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                           </button>
                           <button
                             type="button"
-                            onClick={() => scheduleSuggestMut.mutate()}
+                            onClick={() => checkSlotsMut.mutate()}
                             disabled={
+                              checkSlotsMut.isPending ||
                               scheduleSuggestMut.isPending ||
-                              !assignLeadName.trim() ||
                               !selectedProcedureId
                             }
+                            title="Apenas verifica horários disponíveis, sem criar agendamento"
                             className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                           >
                             <Calendar className="h-3.5 w-3.5" />
-                            Checar
+                            {checkSlotsMut.isPending ? "Consultando…" : "Checar"}
                           </button>
                         </div>
                       </div>
