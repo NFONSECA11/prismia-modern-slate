@@ -2141,6 +2141,319 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return err?.message || "Erro ao comunicar com o servidor. Tente novamente.";
   })();
 
+  const manageProcedureOptions = selectedProfessionalId ? proceduresForProfessional : proceduresForUnit;
+  const activeManageLog = iaOpType === "schedule" ? scheduleLog : rescheduleLog;
+
+  if (drawerMode === "manage") {
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
+        <aside
+          className="fixed right-0 top-0 z-50 h-full w-full max-w-[480px] shadow-lg animate-slide-in-right flex flex-col"
+          style={{
+            background: "hsl(var(--surface-raised))",
+            borderLeft: "1px solid hsl(var(--border))",
+          }}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
+            <div className="flex items-center gap-3">
+              {logoUrl ? (
+                <img src={logoUrl} alt={logoAlt || "Logo"} className="h-8 w-8 rounded-lg object-contain" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
+                  <Calendar className="h-4 w-4 text-primary-foreground" />
+                </div>
+              )}
+              <div>
+                <h2 className="text-sm font-semibold text-foreground leading-tight">Gerenciar agenda</h2>
+                <p className="text-xs text-muted-foreground font-mono">#{booking.id}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <div className="rounded-xl p-4 border border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface)) / 0.3)" }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{booking.lead_name || "Cliente"}</p>
+                  {(booking.contact_phone || booking.phone) && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {formatPhone(booking.contact_phone || booking.phone || "")}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">{booking.unit_name}</p>
+                </div>
+                <StatusBadge status={booking.status} size="md" hasSchedule={!!booking.scheduled_at} procedureName={booking.procedure_name} aiTag={detectAiTag(booking.notes)} />
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-surface border border-border w-full">
+              {([
+                { key: "schedule" as const, label: "Agendamento", Icon: Calendar },
+                { key: "reschedule" as const, label: "Reagendamento", Icon: RotateCcw },
+                { key: "cancel" as const, label: "Cancelamento", Icon: XCircle },
+              ]).map(({ key, label, Icon }) => {
+                const active = iaOpType === key;
+                const activeTone =
+                  key === "schedule"
+                    ? "bg-status-confirmed/15 text-status-confirmed"
+                    : key === "reschedule"
+                      ? "bg-status-pending/15 text-status-pending"
+                      : "bg-status-canceled/15 text-status-canceled";
+
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setIaOpType(key)}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-2 rounded-md transition-all ${active ? activeTone : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated"}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente *</label>
+                <input
+                  type="text"
+                  value={assignLeadName}
+                  onChange={(e) => setAssignLeadName(e.target.value)}
+                  placeholder="Nome do cliente..."
+                  className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {iaOpType === "schedule" && (
+                <>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Motivo *</label>
+                    <input
+                      type="text"
+                      value={scheduleReason}
+                      onChange={(e) => setScheduleReason(e.target.value)}
+                      placeholder="Ex: cliente pediu encaixe"
+                      className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </>
+              )}
+
+              {(iaOpType === "reschedule" || iaOpType === "cancel") && (
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider block">
+                      {iaOpType === "cancel" ? "ID Agendamento *" : "ID Agendamento a Cancelar *"}
+                    </label>
+                    {iaOpType === "reschedule" && (
+                      <button
+                        type="button"
+                        onClick={handleSearchClientBookings}
+                        disabled={rescheduleSearchLoading}
+                        className="text-[10px] font-medium px-2.5 py-1 rounded-md border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-all inline-flex items-center gap-1"
+                      >
+                        <Search className="h-3 w-3" />
+                        {rescheduleSearchLoading ? "Buscando..." : "Buscar BRs"}
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={cancelBookingIdField}
+                    onChange={(e) => setCancelBookingIdField(e.target.value)}
+                    placeholder="Ex: 483"
+                    className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                  />
+                  {rescheduleSearchError && iaOpType === "reschedule" && <p className="text-xs text-status-canceled mt-1">{rescheduleSearchError}</p>}
+                </div>
+              )}
+
+              {iaOpType === "reschedule" && rescheduleSearchResults && rescheduleSearchResults.length > 0 && (
+                <div className="rounded-lg border border-border bg-background p-2 space-y-1 max-h-40 overflow-y-auto">
+                  {rescheduleSearchResults.map((br) => (
+                    <button
+                      key={br.id}
+                      type="button"
+                      onClick={() => selectClientBookingForReschedule(br)}
+                      className="w-full text-left rounded-md px-2.5 py-2 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-foreground font-medium">#{br.id}</span>
+                        <span className="text-[10px] text-muted-foreground">{br.status}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{br.procedure_name} · {br.professional_name || "Sem profissional"}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {(iaOpType === "schedule" || iaOpType === "reschedule") && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                        Profissional {iaOpType === "reschedule" ? "*" : ""}
+                      </label>
+                      <select
+                        value={selectedProfessionalId ?? ""}
+                        onChange={(e) => {
+                          const id = Number(e.target.value) || null;
+                          setSelectedProfessionalId(id);
+                          setSelectedProcedureId(null);
+                          setSelectedSpecialtyId(null);
+                        }}
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                      >
+                        <option value="">{iaOpType === "schedule" ? "Sem preferência" : "Selecionar..."}</option>
+                        {professionalsForUnit.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento *</label>
+                      <select
+                        value={selectedProcedureId ?? ""}
+                        onChange={(e) => {
+                          setSelectedProcedureId(Number(e.target.value) || null);
+                          setSelectedSpecialtyId(null);
+                        }}
+                        disabled={iaOpType === "reschedule" && !selectedProfessionalId}
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <option value="">{iaOpType === "reschedule" && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
+                        {manageProcedureOptions.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {selectedProcedureId && !autoSpecialtyId && (
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Especialidade</label>
+                      <select
+                        value={selectedSpecialtyId ?? ""}
+                        onChange={(e) => setSelectedSpecialtyId(Number(e.target.value) || null)}
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full"
+                      >
+                        <option value="">Selecionar especialidade...</option>
+                        {allSpecialties.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name ?? `#${s.id}`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {iaOpType === "schedule" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => scheduleSuggestMut.mutate()}
+                    disabled={scheduleSuggestMut.isPending || !assignLeadName.trim() || !scheduleReason.trim() || !selectedProcedureId}
+                    className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Calendar className="h-3.5 w-3.5" />
+                    {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => checkSlotsMut.mutate()}
+                    disabled={checkSlotsMut.isPending || scheduleSuggestMut.isPending || !selectedProcedureId}
+                    className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Calendar className="h-3.5 w-3.5" />
+                    {checkSlotsMut.isPending ? "Consultando..." : "Checar"}
+                  </button>
+                </>
+              )}
+
+              {iaOpType === "reschedule" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => rescheduleSuggestMut.mutate()}
+                    disabled={rescheduleSuggestMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim() || !selectedProfessionalId || !selectedProcedureId}
+                    className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {rescheduleSuggestMut.isPending ? "Reagendando..." : "Reagendar"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => checkRescheduleSlotsMut.mutate()}
+                    disabled={checkRescheduleSlotsMut.isPending || rescheduleSuggestMut.isPending || !selectedProcedureId}
+                    className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                  >
+                    <Calendar className="h-3.5 w-3.5" />
+                    {checkRescheduleSlotsMut.isPending ? "Consultando..." : "Checar"}
+                  </button>
+                </>
+              )}
+
+              {iaOpType === "cancel" && (
+                <button
+                  type="button"
+                  onClick={() => iaCancelMut.mutate()}
+                  disabled={iaCancelMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim()}
+                  className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  {iaCancelMut.isPending ? "Cancelando..." : "Cancelar agenda"}
+                </button>
+              )}
+            </div>
+
+            {activeManageLog.length > 0 && (
+              <div className="rounded-xl border border-border bg-surface-elevated p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">Status da operação</span>
+                </div>
+                <ul className="space-y-2">
+                  {activeManageLog.map((entry, idx) => {
+                    const dotClass = entry.status === "success"
+                      ? "bg-status-confirmed"
+                      : entry.status === "warning"
+                        ? "bg-status-pending"
+                        : entry.status === "error"
+                          ? "bg-status-canceled"
+                          : "bg-muted-foreground";
+
+                    return (
+                      <li key={`${entry.ts}-${idx}`} className="flex items-start gap-2 text-xs leading-snug">
+                        <span className={`mt-1.5 inline-block h-2 w-2 rounded-full shrink-0 ${dotClass}`} />
+                        <span className="flex-1 min-w-0">
+                          <span className="font-medium text-foreground">{entry.label}</span>
+                          {entry.detail && <span className="block text-muted-foreground mt-0.5">{entry.detail}</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        </aside>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
