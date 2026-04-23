@@ -244,12 +244,20 @@ function parseNoteMeta(body: string): { cleanBody: string; meta: Array<{ label: 
 
 function detectNoteKind(body: string): NoteEntryKind {
   const lower = body.toLowerCase();
-  const isAi = /autom[áa]tic[oa] pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_DIRECT/i.test(body);
+  const isAi = /autom[áa]tic[oa] pela ia/.test(lower) || /policy\s*[:=]/i.test(body) || /BR_TAG_AI_(DIRECT|HANDOFF)/i.test(body) || /atendimento\s+humano\s+solicitado\s+pela\s+ia/i.test(body);
 
   // Para notas de IA, classificar pelo TIPO DE AÇÃO declarado no início
   // ("CANCELAMENTO/REAGENDAMENTO/AGENDAMENTO AUTOMATICO PELA IA"),
   // não por ocorrências da palavra no motivo.
   if (isAi) {
+    // Handoff (transferência para humano) tem prioridade — pode coexistir com palavras como "agendamento"
+    if (
+      /BR_TAG_AI_HANDOFF/i.test(body) ||
+      /policy\s*[:=]\s*\w*handoff/i.test(body) ||
+      /atendimento\s+humano\s+solicitado\s+pela\s+ia/i.test(body)
+    ) {
+      return "ai_handoff";
+    }
     const actionMatch = lower.match(/(cancelamento|reagendamento|agendamento)\s+autom[áa]tic[oa]\s+pela\s+ia/);
     const action = actionMatch?.[1];
     if (action === "cancelamento" || /policy\s*[:=]\s*\w*cancel/i.test(body) || /BR_TAG_AI_DIRECT_CANCEL/i.test(body)) return "ai_cancel";
