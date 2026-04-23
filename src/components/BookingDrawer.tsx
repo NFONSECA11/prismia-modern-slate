@@ -440,6 +440,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<number | null>(null);
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
+  const [scheduleReason, setScheduleReason] = useState("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
@@ -487,6 +488,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   useEffect(() => {
     const rawName = booking?.lead_name ?? "";
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
+    setScheduleReason("");
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
     setForceBotOff(false);
@@ -529,7 +531,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
   const needsProfessional = !!booking && (!hasProfessional || earlyProcCode === "reschedule");
 
   // Resolve booking's unit id from auth units (booking has unit_name only)
-  const { units: authUnits, aiEnabled } = useAuth();
+  const { user, units: authUnits, aiEnabled } = useAuth();
 
   // IA Enabled: tipo de operação manual selecionada no Drawer (Agendamento / Reagendamento / Cancelamento).
   // Estrutura visual apenas — ações ainda não conectadas.
@@ -1059,6 +1061,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     mutationFn: async () => {
       if (!booking) throw new Error("Sem agendamento aberto");
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      if (!scheduleReason.trim()) throw new Error("Informe o motivo");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
       setScheduleLog([]);
@@ -1073,21 +1076,26 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
           : "Sem preferência de profissional",
       });
 
-      // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
+      // 1) PATCH na BR — coloca em "slots enviados pelo dashboard" e preserva o histórico existente.
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
-      // Adiciona/garante a tag BR_TAG_MANUAL_SCHEDULE no notes
-      const existingNotesRaw = ((booking as any)?.notes ?? "") as string;
-      const hasManualTag = /BR_TAG_MANUAL_SCHEDULE/i.test(existingNotesRaw);
+      const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
       const now = new Date();
       const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const manualLog = `[${ts}] Agendamento manual via Dashboard por ${assignLeadName.trim() || "atendente"} | BR_TAG_MANUAL_SCHEDULE = ${booking.id}`;
-      const updatedNotes = hasManualTag
-        ? existingNotesRaw
-        : (existingNotesRaw ? `${existingNotesRaw}\n${manualLog}` : manualLog);
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
 
       const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
+      const profName = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+        : "Sem preferência";
+      const manualHeader = `[${ts}] Agendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_SCHEDULE`;
+      const manualDetail = `[${ts}]  agendamento #${booking.id} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | Motivo: ${scheduleReason.trim()}`;
+      const updatedNotes = [existingNotesRaw, manualHeader, manualDetail].filter(Boolean).join("\n");
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
         selectedProcedureId,
@@ -1100,7 +1108,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
         finalNameToSend: procedureName,
       });
       const unitName = booking.unit_name ?? "";
-      const profName = selectedProfessionalId
+      const selectedProfName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "";
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
@@ -1795,6 +1803,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
                           />
                         </div>
+                        <div>
+                          <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                            Motivo <span className="text-status-cancelled">*</span>
+                          </label>
+                          <textarea
+                            value={scheduleReason}
+                            onChange={(e) => setScheduleReason(e.target.value.slice(0, 300))}
+                            placeholder="Ex.: cliente solicitou novo agendamento"
+                            rows={2}
+                            className="text-sm bg-surface border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground resize-none"
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
@@ -1897,6 +1917,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             disabled={
                               scheduleSuggestMut.isPending ||
                               !assignLeadName.trim() ||
+                              !scheduleReason.trim() ||
                               !selectedProcedureId
                             }
                             className="text-xs font-medium px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
