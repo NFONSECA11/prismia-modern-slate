@@ -323,6 +323,7 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
   if (policyValue) meta.push({ label: "Policy", value: policyValue });
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
+  if (event.unit) meta.push({ label: "Unidade", value: event.unit });
   if (event.reason) meta.push({ label: "Motivo", value: event.reason });
 
   return {
