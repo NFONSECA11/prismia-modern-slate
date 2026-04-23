@@ -97,6 +97,7 @@ const AI_EVENT_TYPE_MAP: Record<string, AiTag> = {
 export interface AiEvent {
   type: string;
   ts?: string;
+  br_id?: number;
   procedure_slug?: string;
   procedure_name?: string;
   professional_id?: number;
