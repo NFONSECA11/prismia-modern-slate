@@ -2415,9 +2415,21 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
             {activeManageLog.length > 0 && (
               <div className="rounded-xl border border-border bg-surface-elevated p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">Status da operação</span>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">Status da operação</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (iaOpType === "schedule") setScheduleLog([]);
+                      else if (iaOpType === "reschedule") setRescheduleLog([]);
+                    }}
+                    className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Limpar
+                  </button>
                 </div>
                 <ul className="space-y-2">
                   {activeManageLog.map((entry, idx) => {
