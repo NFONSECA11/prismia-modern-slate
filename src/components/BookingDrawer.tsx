@@ -1777,6 +1777,54 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
                             {scheduleSuggestMut.isPending ? "Gerando horários…" : "Agendar"}
                           </button>
                         </div>
+                        {scheduleLog.length > 0 && (
+                          <div className="mt-1 rounded-lg border border-border bg-surface/60 p-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                Log da execução
+                              </span>
+                              {!scheduleSuggestMut.isPending && (
+                                <button
+                                  type="button"
+                                  onClick={() => setScheduleLog([])}
+                                  className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                                >
+                                  limpar
+                                </button>
+                              )}
+                            </div>
+                            <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+                              {scheduleLog.map((entry, idx) => {
+                                const dot =
+                                  entry.status === "success"
+                                    ? "bg-success"
+                                    : entry.status === "error"
+                                    ? "bg-destructive"
+                                    : entry.status === "warning"
+                                    ? "bg-warning"
+                                    : "bg-muted-foreground";
+                                const textColor =
+                                  entry.status === "error"
+                                    ? "text-destructive"
+                                    : entry.status === "warning"
+                                    ? "text-warning"
+                                    : "text-foreground";
+                                return (
+                                  <li key={idx} className="flex items-start gap-2 text-[11px] leading-tight">
+                                    <span className={`mt-1 inline-block h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
+                                    <span className="font-mono text-muted-foreground/80 shrink-0">{entry.ts}</span>
+                                    <span className="flex-1 min-w-0">
+                                      <span className={`font-medium ${textColor}`}>{entry.label}</span>
+                                      {entry.detail && (
+                                        <span className="text-muted-foreground"> — {entry.detail}</span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
 
