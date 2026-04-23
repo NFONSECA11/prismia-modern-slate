@@ -2245,18 +2245,30 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
               {(iaOpType === "reschedule" || iaOpType === "cancel") && (
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider block">
-                      {iaOpType === "cancel" ? "ID Agendamento *" : "ID Agendamento a Cancelar *"}
-                    </label>
+                  <div className="flex items-end gap-2">
+                    <div className="w-28 flex-shrink-0">
+                      <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                        ID Agend. *
+                      </label>
+                      <input
+                        type="text"
+                        value={cancelBookingIdField}
+                        onChange={(e) => setCancelBookingIdField(e.target.value)}
+                        placeholder="Ex: 483"
+                        className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">
+                        Data / Hora
+                      </label>
+                      <div className="text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground/90 truncate">
+                        {selectedClientBooking?.scheduled_at
+                          ? format(new Date(selectedClientBooking.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                          : <span className="text-muted-foreground">—</span>}
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    value={cancelBookingIdField}
-                    onChange={(e) => setCancelBookingIdField(e.target.value)}
-                    placeholder="Ex: 483"
-                    className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
-                  />
                   {rescheduleSearchError && (iaOpType === "reschedule" || iaOpType === "cancel") && <p className="text-xs text-status-canceled mt-1">{rescheduleSearchError}</p>}
                 </div>
               )}
