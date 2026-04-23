@@ -513,6 +513,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
     setMessageText("");
     setActionDone(null);
     setScheduleLog([]);
+    setRescheduleSearchResults(null);
+    setRescheduleSearchLoading(false);
+    setRescheduleSearchError(null);
+    setRescheduleLog([]);
     // IA mode: pré-seleciona a aba conforme procedure_code
     const code = ((booking as any)?.procedure_code ?? booking?.procedure_slug ?? "").trim().toLowerCase();
     if (code === "cancel") setIaOpType("cancel");
