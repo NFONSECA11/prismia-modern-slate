@@ -116,10 +116,10 @@ function getQuickActions(booking: BookingRequest): Omit<QuickAction, "action">[]
   const isConvo = isConversationBooking(booking);
 
   if (mode === "assisted_slots_dashboard") {
-    if (booking.status === "handoff" && !hasChosenSlot) {
-      if (!isConvo) actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" });
+    if (booking.status === "handoff" && !hasChosenSlot && !isConvo) {
+      actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "primary" });
     }
-  } else if (mode === "default") {
+  } else if (mode !== "auto_slots_bot" && mode !== "handoff_manual") {
     if (!terminal && !isConvo) {
       actions.push({ key: "suggest", icon: CalendarSearch, label: "Sugerir Horários", variant: "default" });
     }
