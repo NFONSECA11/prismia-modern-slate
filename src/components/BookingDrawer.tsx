@@ -792,7 +792,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
-        const logEntry = `[${timestamp}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
+        const logEntry = `[${timestamp}] BR_TAG_CANCEL_DONE | Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
         const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
         return await patchBooking(booking!.id, {
           lead_name: assignLeadName.trim() || booking!.lead_name,
@@ -800,6 +800,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           notes: newNotes,
           conversation_bot_mode: "off",
           booking_mode: "handoff_manual",
+          status: "failed",
         });
       }
 
