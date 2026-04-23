@@ -1042,6 +1042,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt 
       if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
       if (!selectedProcedureId) throw new Error("Selecione o procedimento");
 
+      setScheduleLog([]);
+      const profNameForLog = selectedProfessionalId
+        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
+        : null;
+      pushScheduleLog({
+        label: "Iniciando agendamento",
+        status: "info",
+        detail: profNameForLog
+          ? `Procedimento + Profissional (${profNameForLog})`
+          : "Procedimento (sem preferência de profissional)",
+      });
+
       // 1) PATCH na BR — coloca em "slots enviados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       // Adiciona/garante a tag BR_TAG_MANUAL_SCHEDULE no notes
