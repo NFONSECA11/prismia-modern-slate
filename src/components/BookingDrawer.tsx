@@ -60,6 +60,7 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Search,
 } from "lucide-react";
 
 interface BookingDrawerProps {
