@@ -87,10 +87,73 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
   },
 };
 
-/** Detect which AI tag (if any) is present in notes */
+// Map ai_events[].type → AiTag
+const AI_EVENT_TYPE_MAP: Record<string, AiTag> = {
+  direct_cancel: "cancel",
+  direct_reschedule: "reschedule",
+  direct_schedule: "schedule",
+};
+
+export interface AiEvent {
+  type: string;
+  ts?: string;
+  procedure_slug?: string;
+  procedure_name?: string;
+  professional_id?: number;
+  professional_name?: string;
+  scheduled_at?: string;
+  policy?: string;
+  policy_key?: string;
+  policy_value?: string;
+  reason?: string;
+}
+
+/**
+ * Extract ai_events JSON from notes. Tolerates the malformed shape
+ * `{"ai_events"[...]}` (missing colon after key) seen in early backend payloads.
+ */
+export function extractAiEvents(notes?: string | null): AiEvent[] {
+  if (!notes) return [];
+
+  // Find the start of an ai_events object — accept both `"ai_events":` and `"ai_events"[`
+  const re = /\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/;
+  const match = notes.match(re);
+  if (!match) return [];
+
+  try {
+    const arr = JSON.parse(match[1]);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((e) => e && typeof e === "object" && typeof e.type === "string") as AiEvent[];
+  } catch {
+    return [];
+  }
+}
+
+/** Get the latest AI event (by ts, falling back to array order) */
+export function getLatestAiEvent(notes?: string | null): AiEvent | null {
+  const events = extractAiEvents(notes);
+  if (events.length === 0) return null;
+
+  const sorted = [...events].sort((a, b) => {
+    const ta = a.ts ? Date.parse(a.ts) : 0;
+    const tb = b.ts ? Date.parse(b.ts) : 0;
+    return ta - tb;
+  });
+  return sorted[sorted.length - 1] ?? null;
+}
+
+/** Detect which AI tag (if any) is present in notes — JSON ai_events first, regex fallback */
 export function detectAiTag(notes?: string | null): AiTag | null {
   if (!notes) return null;
 
+  // 1) New format: ai_events JSON
+  const latestEvent = getLatestAiEvent(notes);
+  if (latestEvent) {
+    const mapped = AI_EVENT_TYPE_MAP[latestEvent.type];
+    if (mapped) return mapped;
+  }
+
+  // 2) Legacy format: BR_TAG_AI_DIRECT_* regex
   let latestTag: AiTag | null = null;
   let latestIndex = -1;
 
