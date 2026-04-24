@@ -122,17 +122,22 @@ export default function Index() {
   const apiParams = useMemo((): BookingFilterParams => {
     const base: BookingFilterParams = activeUnit ? { unit: activeUnit.id } : {};
     if (searchId) return { ...base, limit: 0 };
-    if (statusFilter === "handoff") return { ...base, status: "handoff", limit: 100 };
-    if (statusFilter === "awaiting_choice") return { ...base, status: "awaiting_choice", limit: 100 };
+    if (statusFilter === "handoff") return { ...base, status: "handoff", limit: 100, ordering: "-created_at" };
+    if (statusFilter === "awaiting_choice") return { ...base, status: "awaiting_choice", limit: 100, ordering: "-created_at" };
     if (isDateFilter) return { ...base, date_field: "created_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
-    return { ...base, limit: 100 };
+    return { ...base, limit: 100, ordering: "-created_at" };
   }, [statusFilter, searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
 
+  // Secondary query: same filter but ordered by -updated_at, so BRs recently
+  // updated (but created long ago) also enter the merged list and can rise to the top.
   const apiParamsUpdated = useMemo((): BookingFilterParams | null => {
-    if (searchId || !isDateFilter) return null;
+    if (searchId) return null;
     const base: BookingFilterParams = activeUnit ? { unit: activeUnit.id } : {};
-    return { ...base, date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
-  }, [searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
+    if (statusFilter === "handoff") return { ...base, status: "handoff", limit: 100, ordering: "-updated_at" };
+    if (statusFilter === "awaiting_choice") return { ...base, status: "awaiting_choice", limit: 100, ordering: "-updated_at" };
+    if (isDateFilter) return { ...base, date_field: "updated_at", date_from: dateFrom, date_to: dateTo, limit: 200 };
+    return { ...base, limit: 100, ordering: "-updated_at" };
+  }, [statusFilter, searchId, isDateFilter, dateFrom, dateTo, activeUnit]);
 
   // Main list query (created_at)
   const { data, isLoading: listLoading, isRefetching, refetch, isError } = useQuery({

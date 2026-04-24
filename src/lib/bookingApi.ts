@@ -180,6 +180,7 @@ export interface BookingFilterParams {
   search?: string;
   limit?: number;
   unit?: number;
+  ordering?: string;
 }
 
 /**
