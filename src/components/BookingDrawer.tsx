@@ -2252,7 +2252,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (procedureCode) patch1.procedure_code = procedureCode;
       if (effResolvedSpecialty) patch1.specialty = effResolvedSpecialty;
 
-      pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
+      pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName || "sem preferência"} · ${procedureName}` });
       try {
         await patchBooking(booking.id, patch1);
       } catch (err: any) {
