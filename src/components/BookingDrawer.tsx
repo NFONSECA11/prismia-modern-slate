@@ -952,9 +952,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     // Auto-preenchimento do ID da BR alvo para handoff_reschedule:
     // o evento traz a BR antiga em br_id ou cancelled_br_id.
     if (latest.type === "handoff_reschedule") {
+      const parsePossibleId = (value: unknown): number | null => {
+        if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
+        if (typeof value === "string") {
+          const parsed = Number(value.trim());
+          if (Number.isFinite(parsed) && parsed > 0) return parsed;
+        }
+        return null;
+      };
       const targetBrId =
-        (typeof (latest as any).cancelled_br_id === "number" && (latest as any).cancelled_br_id) ||
-        (typeof (latest as any).br_id === "number" && (latest as any).br_id) ||
+        parsePossibleId((latest as any).cancelled_br_id) ||
+        parsePossibleId(varsSnapshot.target_br_id) ||
+        parsePossibleId(varsSnapshot.booking_reference) ||
+        parsePossibleId((latest as any).br_id) ||
         null;
       if (targetBrId) {
         setCancelBookingIdField((prev) => (prev.trim() ? prev : String(targetBrId)));
@@ -2796,7 +2806,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                       <div className="text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground/90 truncate">
                         {selectedClientBooking?.scheduled_at
                           ? format(new Date(selectedClientBooking.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                          : <span className="text-muted-foreground">—</span>}
+                          : selectedClientBooking?.chosen_slot?.start_at
+                            ? format(new Date(selectedClientBooking.chosen_slot.start_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                            : <span className="text-muted-foreground">—</span>}
                       </div>
                     </div>
                   </div>
