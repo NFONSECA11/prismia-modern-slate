@@ -1607,20 +1607,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         )
       );
       const inferredProfessionalId =
-        selectedProfessionalId ??
+        effProfessionalId ??
         (slotProfIds.length === 1 ? (slotProfIds[0] as number) : null);
       const inferredProfessionalUnitId =
         slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
-        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        lead_name: effLeadName || detailAfterSuggest?.lead_name || booking.lead_name,
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
         procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
         unit_name: detailAfterSuggest?.unit_name || unitName,
         vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
       };
-      if (selectedProcedureId) patch2.procedure = selectedProcedureId;
+      if (effProcedureId) patch2.procedure = effProcedureId;
       if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
       if (procedureCode) patch2.procedure_code = procedureCode;
       if (profName) patch2.professional_name = profName;
