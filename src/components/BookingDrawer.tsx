@@ -333,12 +333,28 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
   if (event.unit) meta.push({ label: "Unidade", value: event.unit });
+  if (event.actor === "human" && event.actor_name) {
+    meta.push({ label: "Operador", value: event.actor_name });
+  }
   if (event.reason) meta.push({ label: "Motivo", value: event.reason });
+
+  // Para eventos manuais, sobrescreve o título padrão da IA
+  const baseTitle = NOTE_KIND_STYLES[kind].title;
+  const isManual = event.actor === "human" || event.type.startsWith("manual_");
+  const title = isManual
+    ? (kind === "manual_schedule"
+        ? "Agendamento manual via Dashboard"
+        : kind === "reschedule"
+          ? "Reagendamento manual via Dashboard"
+          : kind === "cancel"
+            ? "Cancelamento manual via Dashboard"
+            : baseTitle)
+    : baseTitle;
 
   return {
     kind,
     timestamp: formatEventTimestamp(event.ts),
-    title: NOTE_KIND_STYLES[kind].title,
+    title,
     body: "",
     meta,
   };
