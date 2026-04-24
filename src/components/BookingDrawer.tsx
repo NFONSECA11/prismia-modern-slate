@@ -2366,7 +2366,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
       const count = slots?.length ?? 0;
       if (isHandoffRescheduleFlow) {
-        toast.success("Data do agendamento removida — IA seguirá conduzindo.");
+        toast.success("Agendamento atualizado — IA seguirá conduzindo.");
       } else if (count === 0) {
         toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
         pushRescheduleLog({
@@ -2387,7 +2387,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
       setActionDone(
         isHandoffRescheduleFlow
-          ? "Data do agendamento removida!"
+          ? "Agendamento atualizado!"
           : `Agenda #${cancelledId} cancelada e bot reagendando!`
       );
       await refetchBookingDetailForBot();
