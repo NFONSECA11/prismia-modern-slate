@@ -854,33 +854,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     : null;
 
   // ── Auto-preenchimento para BRs com ai_events handoff_schedule/reschedule/cancel ──
-  // Quando a BR vem com type "handoff_*", os dados (procedure, professional, lead) já estão
-  // no próprio booking — pré-seleciona a aba e preenche os campos do form de Gerenciar Agenda.
+  // Usa a BR detalhada quando disponível, porque a listagem pode vir resumida.
   useEffect(() => {
-    if (!booking) return;
-    const events = extractAiEvents(booking.notes);
-    console.log("[handoff-autofill] BR", booking.id, "events:", events.map((e) => e.type), {
-      notes_preview: (booking.notes ?? "").slice(0, 200),
-      lead_name: booking.lead_name,
-      procedure_name: booking.procedure_name,
-      professional_name: booking.professional_name,
-      professional_id: booking.professional_id,
-      profsLoaded: professionals.length,
-      procsLoaded: allProcedures.length,
-    });
-    if (events.length === 0) return;
+    const sourceBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
+    if (!sourceBooking) return;
 
-    // Pega o último evento handoff_* (por ordem; ts pode estar ausente)
+    const events = extractAiEvents(sourceBooking.notes);
     const handoffEvents = events.filter((e) =>
       e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
     );
-    if (handoffEvents.length === 0) {
-      console.log("[handoff-autofill] no handoff_* event found, skipping");
-      return;
-    }
-    const latest = handoffEvents[handoffEvents.length - 1];
-    console.log("[handoff-autofill] latest handoff event:", latest);
+    if (handoffEvents.length === 0) return;
 
+    const latest = handoffEvents[handoffEvents.length - 1];
     const targetTab: IaOpType =
       latest.type === "handoff_cancel"
         ? "cancel"
@@ -896,44 +881,39 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         .toLowerCase()
         .trim();
 
-    // Nome do cliente — preenche se vier no booking (o reset já tenta isto, mas reforça)
-    const leadName = booking.lead_name ?? "";
-    if (leadName && leadName.toLowerCase() !== "não informado") {
+    const leadName = sourceBooking.lead_name ?? "";
+    if (leadName && normalize(leadName) !== "nao informado") {
       setAssignLeadName(leadName);
     }
 
-    // Profissional: tenta por ID; depois por nome (ignora "Nao informado"/"None")
-    const profName = (booking.professional_name ?? "").trim();
+    const profName = (sourceBooking.professional_name ?? "").trim();
     const profNameNormalized = normalize(profName);
-    const profValid = profName && !["nao informado", "não informado", "none"].includes(profNameNormalized);
+    const profValid = profName && !["nao informado", "none"].includes(profNameNormalized);
     if (professionals.length > 0) {
       let resolvedProfId: number | null = null;
-      if (booking.professional_id && professionals.some((p) => p.id === booking.professional_id)) {
-        resolvedProfId = booking.professional_id;
+      if (sourceBooking.professional_id && professionals.some((p) => p.id === sourceBooking.professional_id)) {
+        resolvedProfId = sourceBooking.professional_id;
       } else if (profValid) {
         const matched =
           professionals.find((p) => normalize(p.name) === profNameNormalized) ??
           professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
         if (matched) resolvedProfId = matched.id;
       }
-      console.log("[handoff-autofill] resolved profId:", resolvedProfId, "from", { profName, profId: booking.professional_id });
       if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
     }
 
-    // Procedimento: match por nome (acento/case-insensitive)
     if (allProcedures.length > 0) {
-      const procTarget = normalize(booking.procedure_name ?? "");
+      const procTarget = normalize(sourceBooking.procedure_name ?? "");
       if (procTarget) {
         const matchedProc =
           allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
           allProcedures.find((p) =>
             normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
           );
-        console.log("[handoff-autofill] resolved procId:", matchedProc?.id, "from procedure_name:", booking.procedure_name);
         if (matchedProc) setSelectedProcedureId(matchedProc.id);
       }
     }
-  }, [booking?.id, professionals.length, allProcedures.length]);
+  }, [booking?.id, bookingDetailForBot, professionals, allProcedures]);
 
   // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
   const resolvedUnitProcId = selectedProcedureId
