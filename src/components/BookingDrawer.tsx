@@ -1003,12 +1003,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       .toLowerCase()
       .trim();
 
+  const varsSnapshot = ((detailOrBooking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
+  const snapshotProfessionalId = typeof varsSnapshot.professional_id === "number" ? (varsSnapshot.professional_id as number) : null;
+  const snapshotProcedureName = typeof varsSnapshot.procedure_name === "string" ? (varsSnapshot.procedure_name as string) : "";
+
   const autofillProfessionalId = selectedProfessionalId ?? (() => {
-    const profName = (detailOrBooking?.professional_name ?? latestHandoffActionEvent?.professional_name ?? "").trim();
-    const profNameNormalized = normalizeAutofill(profName);
+    // 1) ID direto na BR
     if (detailOrBooking?.professional_id && professionals.some((p) => p.id === detailOrBooking.professional_id)) {
       return detailOrBooking.professional_id;
     }
+    // 2) ID do vars_snapshot (cliente expressou preferência)
+    if (snapshotProfessionalId && professionals.some((p) => p.id === snapshotProfessionalId)) {
+      return snapshotProfessionalId;
+    }
+    // 3) Match por nome (BR ou último evento de handoff)
+    const profName = (detailOrBooking?.professional_name ?? latestHandoffActionEvent?.professional_name ?? "").trim();
+    const profNameNormalized = normalizeAutofill(profName);
     if (!profNameNormalized || ["nao informado", "none"].includes(profNameNormalized)) return null;
     const matched =
       professionals.find((p) => normalizeAutofill(p.name) === profNameNormalized) ??
@@ -1017,7 +1027,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   })();
 
   const autofillProcedureId = selectedProcedureId ?? (() => {
-    const procName = detailOrBooking?.procedure_name ?? latestHandoffActionEvent?.procedure_name ?? "";
+    const procName = detailOrBooking?.procedure_name ?? latestHandoffActionEvent?.procedure_name ?? snapshotProcedureName ?? "";
     const procTarget = normalizeAutofill(procName);
     if (!procTarget) return null;
     const matched =
