@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkles, Hand } from "lucide-react";
+import { Sparkles, Hand, CalendarPlus, CalendarClock, CalendarX } from "lucide-react";
 
 interface StatusConfig {
   label: string;
