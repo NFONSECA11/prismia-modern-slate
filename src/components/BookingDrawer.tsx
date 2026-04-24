@@ -949,6 +949,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       setScheduleReason((prev) => prev.trim() ? prev : "Política de Agendamento Manual");
     }
 
+    // Auto-preenchimento do ID da BR alvo para handoff_reschedule:
+    // o evento traz a BR antiga em br_id ou cancelled_br_id.
+    if (latest.type === "handoff_reschedule") {
+      const targetBrId =
+        (typeof (latest as any).cancelled_br_id === "number" && (latest as any).cancelled_br_id) ||
+        (typeof (latest as any).br_id === "number" && (latest as any).br_id) ||
+        null;
+      if (targetBrId) {
+        setCancelBookingIdField((prev) => (prev.trim() ? prev : String(targetBrId)));
+      }
+    }
+
     const normalize = (value: string) =>
       (value ?? "")
         .normalize("NFD")
