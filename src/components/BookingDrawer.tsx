@@ -167,7 +167,7 @@ function DetailRow({
 // ── Notes Log Parser ─────────────────────────────────────────────────────────
 // Converte o texto bruto de notes em entradas estruturadas e legíveis.
 
-type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "ai_handoff" | "manual_schedule" | "reschedule" | "cancel" | "generic";
+type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "ai_handoff" | "handoff_schedule" | "handoff_reschedule" | "handoff_cancel" | "manual_schedule" | "reschedule" | "cancel" | "generic";
 
 interface NoteEntry {
   kind: NoteEntryKind;
