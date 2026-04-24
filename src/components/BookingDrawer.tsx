@@ -441,6 +441,25 @@ function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<strin
   return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
 }
 
+/**
+ * Faz PATCH no `notes` de uma BR cancelada para registrar o evento `manual_cancel`,
+ * fazendo merge com qualquer bloco `ai_events` existente. Usado para rastreabilidade
+ * quando a BR é cancelada como efeito colateral de outra ação (ex.: reagendamento).
+ */
+async function logManualCancelOnTargetBR(
+  targetId: number,
+  manualEvent: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const fresh = await fetchBookingRequestById(targetId);
+    const currentNotes = (fresh?.notes ?? "").trim();
+    const updatedNotes = appendManualAiEvent(currentNotes, manualEvent);
+    await patchBooking(targetId, { notes: updatedNotes, allow_terminal_status_via_patch: true });
+  } catch (err) {
+    console.warn(`[logManualCancelOnTargetBR] falhou para BR #${targetId}:`, err);
+  }
+}
+
 function NotesLog({ notes }: { notes: string }) {
   const entries = parseNotes(notes);
   if (entries.length === 0) return null;
