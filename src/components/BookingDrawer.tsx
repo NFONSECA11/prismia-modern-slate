@@ -202,6 +202,24 @@ const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon
     icon: PhoneForwarded,
     title: "IA · Transferência para humano",
   },
+  handoff_schedule: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarPlus,
+    title: "Handoff · Agendamento",
+  },
+  handoff_reschedule: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarClock,
+    title: "Handoff · Reagendamento",
+  },
+  handoff_cancel: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarX,
+    title: "Handoff · Cancelamento",
+  },
   manual_schedule: {
     card: "bg-surface-elevated/40 border-border/40",
     chip: "bg-status-confirmed/20 text-status-confirmed",
