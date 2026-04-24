@@ -206,6 +206,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
   const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
+  // BRs que tiveram ai_handoff em algum momento (mesmo que booking_mode atual seja outro)
+  const [handoffOriginSet, setHandoffOriginSet] = useState<Set<number>>(new Set());
   // Last incoming-message timestamp (ms) per handoff booking, for unread detection
   const [lastInMsgMap, setLastInMsgMap] = useState<Record<number, number>>({});
 
