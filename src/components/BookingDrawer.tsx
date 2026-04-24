@@ -2806,7 +2806,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                       <div className="text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground/90 truncate">
                         {selectedClientBooking?.scheduled_at
                           ? format(new Date(selectedClientBooking.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                          : <span className="text-muted-foreground">—</span>}
+                          : selectedClientBooking?.chosen_slot?.start_at
+                            ? format(new Date(selectedClientBooking.chosen_slot.start_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
                       </div>
                     </div>
                   </div>
