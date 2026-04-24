@@ -1238,9 +1238,35 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const profName = selectedProfessionalId
         ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
         : "Sem preferência";
-      const manualHeader = `[${ts}] Agendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_SCHEDULE`;
-      const manualDetail = `[${ts}]  agendamento #${booking.id} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | Motivo: ${scheduleReason.trim()}`;
-      const updatedNotes = [existingNotesRaw, manualHeader, manualDetail].filter(Boolean).join("\n");
+      // Monta evento ai_events e faz merge com bloco existente (preserva ai_handoff prévio).
+      const manualEvent = {
+        type: "manual_schedule",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: booking.id,
+        procedure_slug: procedureSlug || undefined,
+        procedure_name: procedureName || undefined,
+        professional_id: selectedProfessionalId ?? undefined,
+        professional_name: profName || undefined,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: scheduleReason.trim(),
+      };
+      const existingMatch = existingNotesRaw.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
+      let mergedEvents: any[] = [manualEvent];
+      let notesWithoutBlock = existingNotesRaw;
+      if (existingMatch) {
+        try {
+          const arr = JSON.parse(existingMatch[1]);
+          if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
+        } catch {
+          /* substitui bloco malformado */
+        }
+        notesWithoutBlock = existingNotesRaw.replace(existingMatch[0], "").trim();
+      }
+      const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
+      const updatedNotes = [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
         selectedProcedureId,
