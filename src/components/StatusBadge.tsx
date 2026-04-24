@@ -92,7 +92,7 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
   handoff: {
     regex: /BR_TAG_AI_HANDOFF/i,
     label: "🖐",
-    tooltip: "Handoff acionado pela IA",
+    tooltip: "Handoff acionado por política da IA",
     textClass: "text-orange-500",
     icon: "hand",
   },
