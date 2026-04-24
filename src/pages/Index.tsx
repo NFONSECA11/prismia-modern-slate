@@ -320,31 +320,52 @@ export default function Index() {
       }
     }
 
-    // Build the two new lines to APPEND (do not remove anything existing).
+    // Build the manual ai_events entry — same JSON schema used by AI events,
+    // diferenciado por actor="human" e type="manual_schedule".
     const operatorName =
       (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
       user?.name ||
       user?.username ||
       "Operador";
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const ts1 = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const ts2Date = new Date(now.getTime() + 60_000);
-    const ts2 = `${pad(ts2Date.getDate())}/${pad(ts2Date.getMonth() + 1)}/${ts2Date.getFullYear()} ${pad(ts2Date.getHours())}:${pad(ts2Date.getMinutes())}`;
 
-    const [y, m, d] = formData.date.split("-");
-    const dateBR = `${d}/${m}/${y}`;
     const profName = created?.professional_name || `#${formData.professional_id}`;
+    const scheduledAt = `${formData.date}T${formData.time}:00`;
 
-    const headerLine = `[${ts1}] Agendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_SCHEDULE`;
-    const detailLine = `[${ts2}]  agendamento #${newId ?? "?"} | Procedimento: ${formData.procedure_name} | Profissional: ${profName} | Data/Hora: ${dateBR} ${formData.time} | Motivo: ${formData.motivo.trim()}`;
+    const manualEvent = {
+      type: "manual_schedule",
+      ts: new Date().toISOString(),
+      actor: "human",
+      actor_name: operatorName,
+      br_id: newId,
+      procedure_name: formData.procedure_name,
+      professional_id: formData.professional_id,
+      professional_name: profName,
+      scheduled_at: scheduledAt,
+      unit: formData.unit_name,
+      policy: "manual_dashboard",
+      reason: formData.motivo.trim(),
+    };
 
-    // Append new lines to existing notes — preserve everything already there.
-    const composedNotes = [currentNotes, headerLine, detailLine].filter(Boolean).join("\n");
+    // Mescla com ai_events existente (caso o backend já tenha registrado algo).
+    const existingMatch = currentNotes.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
+    let mergedEvents: any[] = [manualEvent];
+    let notesWithoutBlock = currentNotes;
+    if (existingMatch) {
+      try {
+        const arr = JSON.parse(existingMatch[1]);
+        if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
+      } catch {
+        /* ignore — substitui bloco malformado */
+      }
+      notesWithoutBlock = currentNotes.replace(existingMatch[0], "").trim();
+    }
+
+    const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
+    const composedNotes = [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
 
     if (newId) {
       try {
-        console.log("[handleSaveBooking] PATCH notes →", { id: newId, before: currentNotes, after: composedNotes });
+        console.log("[handleSaveBooking] PATCH notes (ai_events) →", { id: newId, event: manualEvent });
         await patchBooking(newId, { notes: composedNotes });
       } catch (err) {
         console.error("[handleSaveBooking] PATCH notes falhou:", err);
