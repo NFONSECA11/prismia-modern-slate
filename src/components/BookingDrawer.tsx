@@ -2123,7 +2123,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const effProfId = selectedProfessionalId ?? autofillProfessionalId ?? null;
       const effProcId = selectedProcedureId ?? autofillProcedureId ?? null;
       if (!effLeadName) throw new Error("Informe o nome do cliente");
-      if (!effProfId) throw new Error("Selecione o profissional");
       if (!effProcId) throw new Error("Selecione o procedimento");
       // Sincroniza state local para que o restante do fluxo (logs/PATCH) use os valores corretos.
       if (!assignLeadName.trim()) setAssignLeadName(effLeadName);
@@ -2225,7 +2224,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         br_id: booking.id,
         procedure_slug: procedureSlug || undefined,
         procedure_name: procedureName || undefined,
-        professional_id: effProfId,
+        professional_id: effProfId ?? undefined,
         professional_name: profName || undefined,
         unit: booking.unit_name || undefined,
         policy: isHandoffRescheduleFlow ? "handoff_reschedule_manual" : "manual_dashboard",
@@ -2242,7 +2241,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       const patch1: Record<string, unknown> = {
         lead_name: effLeadName,
-        professional: effProfId,
         procedure: effProcId,
         procedure_name: procedureName,
         unit_name: booking.unit_name ?? "",
@@ -2250,6 +2248,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         vars_snapshot: cleanedVars,
         notes: updatedNotes,
       };
+      if (effProfId) patch1.professional = effProfId;
       if (procedureCode) patch1.procedure_code = procedureCode;
       if (effResolvedSpecialty) patch1.specialty = effResolvedSpecialty;
 
@@ -2267,12 +2266,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         throw new Error("BR não entrou em assisted_slots_dashboard");
       }
 
-      // 3) suggest_slots
-      pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
+      pushRescheduleLog({
+        label: "Buscando horários disponíveis…",
+        status: "info",
+        detail: effProfId ? `Profissional: ${profName}` : "Sem preferência de profissional",
+      });
       const suggestPayload: Record<string, unknown> = {
         procedure: effProcId,
-        professional: effProfId,
       };
+      if (effProfId) suggestPayload.professional = effProfId;
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
 
@@ -2284,7 +2286,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         pushRescheduleLog({
           label: "Sem disponibilidade de horários",
           status: "warning",
-          detail: "Tente outro profissional ou procedimento.",
+          detail: effProfId
+            ? "Tente outro profissional ou procedimento."
+            : "Não encontramos disponibilidade no momento.",
         });
         throw new Error(`suggest_slots ${status ?? "?"}`);
       }
@@ -2320,10 +2324,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         procedure: effProcId,
         procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
         unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
-        professional: effProfId,
-        professional_name: profName,
         vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
       };
+      if (effProfId) patch2.professional = effProfId;
+      if (profName) patch2.professional_name = profName;
       if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
       if (procedureCode) patch2.procedure_code = procedureCode;
       if (effResolvedSpecialty) patch2.specialty = effResolvedSpecialty;
