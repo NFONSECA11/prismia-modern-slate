@@ -1274,20 +1274,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         policy: "manual_dashboard",
         reason: scheduleReason.trim(),
       };
-      const existingMatch = existingNotesRaw.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
-      let mergedEvents: any[] = [manualEvent];
-      let notesWithoutBlock = existingNotesRaw;
-      if (existingMatch) {
-        try {
-          const arr = JSON.parse(existingMatch[1]);
-          if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
-        } catch {
-          /* substitui bloco malformado */
-        }
-        notesWithoutBlock = existingNotesRaw.replace(existingMatch[0], "").trim();
-      }
-      const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
-      const updatedNotes = [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
         selectedProcedureId,
