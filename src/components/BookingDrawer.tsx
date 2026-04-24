@@ -2196,21 +2196,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.name ||
         user?.username ||
         "Operador";
-      const manualEvent = {
+      const manualEvent: Record<string, unknown> = {
         type: "manual_reschedule",
         ts: now.toISOString(),
         actor: "human",
         actor_name: operatorName,
         br_id: booking.id,
-        cancelled_br_id: targetId,
         procedure_slug: procedureSlug || undefined,
         procedure_name: procedureName || undefined,
         professional_id: selectedProfessionalId ?? undefined,
         professional_name: profName || undefined,
         unit: booking.unit_name || undefined,
-        policy: "manual_dashboard",
-        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual",
+        policy: isHandoffRescheduleFlow ? "handoff_reschedule_manual" : "manual_dashboard",
+        reason: isHandoffRescheduleFlow
+          ? "Reagendamento solicitado pela IA — bot reassumirá após sugestão de horários"
+          : (assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual"),
       };
+      if (!isHandoffRescheduleFlow) {
+        manualEvent.cancelled_br_id = targetId;
+      }
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
