@@ -102,14 +102,14 @@ export default function Settings() {
   });
 
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
-    queryKey: ["professionals", activeUnit?.id],
+    queryKey: ["professionals", activeUnit?.id ?? "all"],
     queryFn: async () => {
       const { data } = await api.get(`/api/settings/professionals/`, {
-        params: { unit: activeUnit!.id },
+        params: activeUnit?.id ? { unit: activeUnit.id } : undefined,
       });
       return Array.isArray(data) ? data : (data?.results ?? []);
     },
-    enabled: !!activeUnit?.id,
+    enabled: !!user,
   });
   const getSettingValue = (obj: any, paths: string[]) => {
     for (const path of paths) {
