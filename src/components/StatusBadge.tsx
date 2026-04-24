@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkles, Hand } from "lucide-react";
+import { Sparkles, Hand, CalendarPlus, CalendarClock, CalendarX } from "lucide-react";
 
 interface StatusConfig {
   label: string;
@@ -57,14 +57,21 @@ const STATUS_MAP: Record<string, StatusConfig> = {
 
 // ── AI Tag configs ───────────────────────────────────────────────────────────
 
-export type AiTag = "cancel" | "reschedule" | "schedule" | "handoff";
+export type AiTag =
+  | "cancel"
+  | "reschedule"
+  | "schedule"
+  | "handoff"
+  | "handoff_schedule"
+  | "handoff_reschedule"
+  | "handoff_cancel";
 
 interface AiTagConfig {
   regex: RegExp;
   label: string;
   tooltip: string;
   textClass: string;
-  icon: "sparkles" | "hand";
+  icon: "sparkles" | "hand" | "calendar-plus" | "calendar-clock" | "calendar-x";
 }
 
 const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
@@ -96,6 +103,27 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     textClass: "text-orange-500",
     icon: "hand",
   },
+  handoff_schedule: {
+    regex: /BR_TAG_AI_HANDOFF_SCHEDULE/i,
+    label: "📅",
+    tooltip: "Agendado via handoff",
+    textClass: "text-emerald-500",
+    icon: "calendar-plus",
+  },
+  handoff_reschedule: {
+    regex: /BR_TAG_AI_HANDOFF_RESCHEDULE/i,
+    label: "📅",
+    tooltip: "Reagendado via handoff",
+    textClass: "text-amber-500",
+    icon: "calendar-clock",
+  },
+  handoff_cancel: {
+    regex: /BR_TAG_AI_HANDOFF_CANCEL/i,
+    label: "📅",
+    tooltip: "Cancelado via handoff",
+    textClass: "text-red-500",
+    icon: "calendar-x",
+  },
 };
 
 // Map ai_events[].type → AiTag
@@ -104,6 +132,9 @@ const AI_EVENT_TYPE_MAP: Record<string, AiTag> = {
   direct_reschedule: "reschedule",
   direct_schedule: "schedule",
   ai_handoff: "handoff",
+  handoff_schedule: "handoff_schedule",
+  handoff_reschedule: "handoff_reschedule",
+  handoff_cancel: "handoff_cancel",
 };
 
 export interface AiEvent {
@@ -244,6 +275,12 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
             <span className={`inline-flex items-center justify-center leading-none cursor-default ${tagConfig.textClass}`}>
               {tagConfig.icon === "hand" ? (
                 <Hand className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-plus" ? (
+                <CalendarPlus className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-clock" ? (
+                <CalendarClock className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-x" ? (
+                <CalendarX className="h-3.5 w-3.5" />
               ) : (
                 <Sparkles className="h-3.5 w-3.5" />
               )}

@@ -23,7 +23,17 @@ const HANDOFF_ORIGIN_CONFIG = {
 function hasHandoffInHistory(notes?: string | null): boolean {
   if (!notes) return false;
   const events = extractAiEvents(notes);
-  if (events.some((e) => e.type === "ai_handoff" || e.type === "handoff")) return true;
+  if (
+    events.some(
+      (e) =>
+        e.type === "ai_handoff" ||
+        e.type === "handoff" ||
+        e.type === "handoff_schedule" ||
+        e.type === "handoff_reschedule" ||
+        e.type === "handoff_cancel",
+    )
+  )
+    return true;
   return /BR_TAG_AI_HANDOFF/i.test(notes);
 }
 
