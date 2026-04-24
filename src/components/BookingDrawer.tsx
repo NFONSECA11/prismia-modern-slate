@@ -2219,6 +2219,50 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+
+      // ── Fluxo handoff_reschedule: apenas PATCH na BR limpando a data agendada.
+      // Mantém booking_mode atual, NÃO chama suggest_slots e NÃO força auto_slots_bot.
+      if (isHandoffRescheduleFlow) {
+        const cleanedVarsForReschedule = { ...cleanedVars };
+        delete (cleanedVarsForReschedule as any).chosen_slot;
+
+        const patchHandoff: Record<string, unknown> = {
+          lead_name: assignLeadName.trim(),
+          professional: selectedProfessionalId,
+          procedure: selectedProcedureId,
+          procedure_name: procedureName,
+          unit_name: booking.unit_name ?? "",
+          vars_snapshot: cleanedVarsForReschedule,
+          notes: updatedNotes,
+          scheduled_at: null,
+          chosen_slot: null,
+          chosen_slot_label: null,
+        };
+        if (procedureCode) patchHandoff.procedure_code = procedureCode;
+        if (resolvedSpecialty) patchHandoff.specialty = resolvedSpecialty;
+
+        pushRescheduleLog({
+          label: "Limpando data do agendamento…",
+          status: "info",
+          detail: `BR #${booking.id} ficará sem data marcada`,
+        });
+        try {
+          await patchBooking(booking.id, patchHandoff);
+        } catch (err: any) {
+          pushRescheduleLog({ label: "Falha ao limpar a data do agendamento", status: "error" });
+          throw err;
+        }
+
+        pushRescheduleLog({
+          label: "Data do agendamento removida",
+          status: "success",
+          detail: "Modo de atendimento mantido — IA seguirá conduzindo.",
+        });
+
+        return { slots: [] as Array<{ start_at: string; label: string }>, cancelledId: targetId, isHandoffRescheduleFlow };
+      }
+
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         professional: selectedProfessionalId,
@@ -2230,19 +2274,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         notes: updatedNotes,
       };
       if (procedureCode) patch1.procedure_code = procedureCode;
-      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
-
-      // No fluxo handoff_reschedule, a BR alvo é a própria — limpamos o slot já marcado
-      // (scheduled_at + chosen_slot) para que o suggestSlots gere novas opções.
-      if (isHandoffRescheduleFlow) {
-        patch1.scheduled_at = null;
-        patch1.chosen_slot = null;
-        patch1.chosen_slot_label = null;
-        const cleanedVarsForReschedule = { ...cleanedVars };
-        delete (cleanedVarsForReschedule as any).chosen_slot;
-        patch1.vars_snapshot = cleanedVarsForReschedule;
-      }
 
       pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
       try {
@@ -2339,12 +2371,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     },
     onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
       const count = slots?.length ?? 0;
-      if (count === 0) {
-        toast.warning(
-          isHandoffRescheduleFlow
-            ? "Bot acionado, mas sem horários no momento."
-            : `Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`
-        );
+      if (isHandoffRescheduleFlow) {
+        toast.success("Data do agendamento removida — IA seguirá conduzindo.");
+      } else if (count === 0) {
+        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
         pushRescheduleLog({
           label: "Bot assumiu a conversa",
           status: "warning",
@@ -2363,7 +2393,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
       setActionDone(
         isHandoffRescheduleFlow
-          ? "Bot reassumiu o reagendamento!"
+          ? "Data do agendamento removida!"
           : `Agenda #${cancelledId} cancelada e bot reagendando!`
       );
       await refetchBookingDetailForBot();
