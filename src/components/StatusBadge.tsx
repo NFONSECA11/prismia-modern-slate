@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Hand } from "lucide-react";
 
 interface StatusConfig {
   label: string;
@@ -57,13 +57,14 @@ const STATUS_MAP: Record<string, StatusConfig> = {
 
 // ── AI Tag configs ───────────────────────────────────────────────────────────
 
-export type AiTag = "cancel" | "reschedule" | "schedule";
+export type AiTag = "cancel" | "reschedule" | "schedule" | "handoff";
 
 interface AiTagConfig {
   regex: RegExp;
   label: string;
   tooltip: string;
   textClass: string;
+  icon: "sparkles" | "hand";
 }
 
 const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
@@ -72,18 +73,28 @@ const AI_TAG_CONFIG: Record<AiTag, AiTagConfig> = {
     label: "✨",
     tooltip: "Cancelado diretamente pela IA",
     textClass: "text-red-500",
+    icon: "sparkles",
   },
   reschedule: {
     regex: /BR_TAG_AI_DIRECT_RESCHEDULE/i,
     label: "✨",
     tooltip: "Reagendado diretamente pela IA",
     textClass: "text-amber-500",
+    icon: "sparkles",
   },
   schedule: {
     regex: /BR_TAG_AI_DIRECT_SCHEDULE/i,
     label: "✨",
     tooltip: "Agendado diretamente pela IA",
     textClass: "text-emerald-500",
+    icon: "sparkles",
+  },
+  handoff: {
+    regex: /BR_TAG_AI_HANDOFF/i,
+    label: "🖐",
+    tooltip: "Handoff acionado pela IA",
+    textClass: "text-orange-500",
+    icon: "hand",
   },
 };
 
@@ -92,6 +103,7 @@ const AI_EVENT_TYPE_MAP: Record<string, AiTag> = {
   direct_cancel: "cancel",
   direct_reschedule: "reschedule",
   direct_schedule: "schedule",
+  ai_handoff: "handoff",
 };
 
 export interface AiEvent {
@@ -230,7 +242,11 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
         <Tooltip>
           <TooltipTrigger asChild>
             <span className={`inline-flex items-center justify-center leading-none cursor-default ${tagConfig.textClass}`}>
-              <Sparkles className="h-3.5 w-3.5" />
+              {tagConfig.icon === "hand" ? (
+                <Hand className="h-3.5 w-3.5" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[9999] max-w-[220px] text-xs">
