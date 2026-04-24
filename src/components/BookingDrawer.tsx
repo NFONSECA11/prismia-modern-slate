@@ -1441,7 +1441,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
-        selectedProcedureId,
+        effProcedureId,
         nameFromAPI: selectedProc?.name,
         slugFromAPI: selectedProc?.slug,
         resolvedUnitProcId,
@@ -1451,8 +1451,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         finalNameToSend: procedureName,
       });
       const unitName = booking.unit_name ?? "";
-      const selectedProfName = selectedProfessionalId
-        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+      const selectedProfName = effProfessionalId
+        ? (professionals.find((p) => p.id === effProfessionalId)?.name ?? "")
         : "";
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
