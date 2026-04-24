@@ -985,6 +985,56 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     }
   }, [booking, bookingDetailForBot, professionals, allProcedures]);
 
+  const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
+  const latestHandoffActionEvent = (() => {
+    const events = extractAiEvents(detailOrBooking?.notes);
+    const handoffEvents = events.filter((e) =>
+      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+    );
+    return handoffEvents.length > 0 ? handoffEvents[handoffEvents.length - 1] : null;
+  })();
+
+  const autofillLeadName = (detailOrBooking?.lead_name ?? "").trim();
+
+  const normalizeAutofill = (value: string) =>
+    (value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const autofillProfessionalId = selectedProfessionalId ?? (() => {
+    const profName = (detailOrBooking?.professional_name ?? latestHandoffActionEvent?.professional_name ?? "").trim();
+    const profNameNormalized = normalizeAutofill(profName);
+    if (detailOrBooking?.professional_id && professionals.some((p) => p.id === detailOrBooking.professional_id)) {
+      return detailOrBooking.professional_id;
+    }
+    if (!profNameNormalized || ["nao informado", "none"].includes(profNameNormalized)) return null;
+    const matched =
+      professionals.find((p) => normalizeAutofill(p.name) === profNameNormalized) ??
+      professionals.find((p) => normalizeAutofill(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalizeAutofill(p.name)));
+    return matched?.id ?? null;
+  })();
+
+  const autofillProcedureId = selectedProcedureId ?? (() => {
+    const procName = detailOrBooking?.procedure_name ?? latestHandoffActionEvent?.procedure_name ?? "";
+    const procTarget = normalizeAutofill(procName);
+    if (!procTarget) return null;
+    const matched =
+      allProcedures.find((p) => normalizeAutofill(p.name ?? "") === procTarget) ??
+      allProcedures.find((p) => normalizeAutofill(p.name ?? "").includes(procTarget) || procTarget.includes(normalizeAutofill(p.name ?? "")));
+    return matched?.id ?? null;
+  })();
+
+  const manageProfessionalOptions = autofillProfessionalId && !professionalsForUnit.some((p) => p.id === autofillProfessionalId)
+    ? [...professionalsForUnit, ...professionals.filter((p) => p.id === autofillProfessionalId)]
+    : professionalsForUnit;
+
+  const baseManageProcedureOptions = (selectedProfessionalId ?? autofillProfessionalId) ? proceduresForProfessional : proceduresForUnit;
+  const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
+    ? [...baseManageProcedureOptions, ...allProcedures.filter((p) => p.id === autofillProcedureId)]
+    : baseManageProcedureOptions;
+
   const handleSendMessage = () => {
     const trimmed = messageText.trim();
     if (!trimmed || sendMsgMutation.isPending) return;
