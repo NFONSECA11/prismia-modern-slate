@@ -857,7 +857,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
   const resolvedUnitProcId = selectedProcedureId
     ? (unitProcLinks.find((up) => up.procedure === selectedProcedureId && up.unit_name?.toLowerCase() === booking?.unit_name?.toLowerCase())?.id
-       ?? unitProcLinks.find((up) => up.procedure === selectedProcedureId)?.id
+       ?? unitProcLinks.find((up) => up.procedure === effectiveProcedureId)?.id
        ?? null)
     : null;
 
