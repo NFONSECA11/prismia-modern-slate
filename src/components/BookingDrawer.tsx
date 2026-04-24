@@ -2602,7 +2602,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return err?.message || "Erro ao comunicar com o servidor. Tente novamente.";
   })();
 
-  const manageProcedureOptions = selectedProfessionalId ? proceduresForProfessional : proceduresForUnit;
   const activeManageLog = iaOpType === "schedule" ? scheduleLog : rescheduleLog;
 
   if (drawerMode === "manage") {
