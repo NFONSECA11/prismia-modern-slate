@@ -853,6 +853,73 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
     : null;
 
+  // ── Auto-preenchimento para BRs com ai_events handoff_schedule/reschedule/cancel ──
+  // Quando a BR vem com type "handoff_*", os dados (procedure, professional, lead) já estão
+  // no próprio booking — pré-seleciona a aba e preenche os campos do form de Gerenciar Agenda.
+  useEffect(() => {
+    if (!booking) return;
+    const events = extractAiEvents(booking.notes);
+    if (events.length === 0) return;
+
+    // Pega o último evento handoff_* (por ordem; ts pode estar ausente)
+    const handoffEvents = events.filter((e) =>
+      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+    );
+    if (handoffEvents.length === 0) return;
+    const latest = handoffEvents[handoffEvents.length - 1];
+
+    const targetTab: IaOpType =
+      latest.type === "handoff_cancel"
+        ? "cancel"
+        : latest.type === "handoff_reschedule"
+          ? "reschedule"
+          : "schedule";
+    setIaOpType(targetTab);
+
+    const normalize = (value: string) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    // Nome do cliente (apenas se ainda vazio — não sobrescrever o que o usuário digitou)
+    const leadName = booking.lead_name ?? "";
+    if (leadName && leadName.toLowerCase() !== "não informado" && !assignLeadName.trim()) {
+      setAssignLeadName(leadName);
+    }
+
+    // Profissional: tenta por ID; depois por nome (ignora "Nao informado"/"None")
+    const profName = (booking.professional_name ?? "").trim();
+    const profNameNormalized = normalize(profName);
+    const profValid = profName && !["nao informado", "não informado", "none"].includes(profNameNormalized);
+    if (!selectedProfessionalId && professionals.length > 0) {
+      let resolvedProfId: number | null = null;
+      if (booking.professional_id && professionals.some((p) => p.id === booking.professional_id)) {
+        resolvedProfId = booking.professional_id;
+      } else if (profValid) {
+        const matched =
+          professionals.find((p) => normalize(p.name) === profNameNormalized) ??
+          professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
+        if (matched) resolvedProfId = matched.id;
+      }
+      if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
+    }
+
+    // Procedimento: match por nome (acento/case-insensitive)
+    if (!selectedProcedureId && allProcedures.length > 0) {
+      const procTarget = normalize(booking.procedure_name ?? "");
+      if (procTarget) {
+        const matchedProc =
+          allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
+          allProcedures.find((p) =>
+            normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
+          );
+        if (matchedProc) setSelectedProcedureId(matchedProc.id);
+      }
+    }
+  }, [booking?.id, professionals.length, allProcedures.length]);
+
   // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
   const resolvedUnitProcId = selectedProcedureId
     ? (unitProcLinks.find((up) => up.procedure === selectedProcedureId && up.unit_name?.toLowerCase() === booking?.unit_name?.toLowerCase())?.id
