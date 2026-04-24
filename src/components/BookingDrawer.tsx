@@ -419,6 +419,27 @@ function parseNotes(notes: string): NoteEntry[] {
   return all;
 }
 
+/**
+ * Mescla um novo evento manual no bloco JSON `{"ai_events":[...]}` dentro de `notes`,
+ * preservando todo o restante do texto e qualquer evento prévio (ex.: `ai_handoff`).
+ */
+function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<string, unknown>): string {
+  const existingMatch = existingNotesRaw.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
+  let mergedEvents: any[] = [manualEvent];
+  let notesWithoutBlock = existingNotesRaw;
+  if (existingMatch) {
+    try {
+      const arr = JSON.parse(existingMatch[1]);
+      if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
+    } catch {
+      /* substitui bloco malformado */
+    }
+    notesWithoutBlock = existingNotesRaw.replace(existingMatch[0], "").trim();
+  }
+  const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
+  return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
+}
+
 function NotesLog({ notes }: { notes: string }) {
   const entries = parseNotes(notes);
   if (entries.length === 0) return null;
