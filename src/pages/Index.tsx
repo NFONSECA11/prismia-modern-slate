@@ -176,15 +176,39 @@ export default function Index() {
   // Ordena por max(created_at, updated_at) desc — BRs recém-atualizadas sobem ao topo.
   const bookings = useMemo(() => {
     if (searchId) return idResult ? [idResult] : [];
-    const map = new Map<number, BookingRequest>();
-    for (const b of (data?.results ?? [])) map.set(b.id, b);
-    for (const b of (dataUpdated?.results ?? [])) map.set(b.id, b);
-    const recencyTs = (b: BookingRequest) => {
-      const c = b.created_at ? Date.parse(b.created_at) : 0;
-      const u = b.updated_at ? Date.parse(b.updated_at) : 0;
-      return Math.max(isNaN(c) ? 0 : c, isNaN(u) ? 0 : u);
+
+    const parseTs = (value: unknown) => {
+      if (typeof value !== "string" || !value.trim()) return 0;
+      const ts = Date.parse(value);
+      return Number.isFinite(ts) ? ts : 0;
     };
-    return Array.from(map.values()).sort((a, b) => recencyTs(b) - recencyTs(a));
+
+    const recencyTs = (b: BookingRequest) => {
+      const rawUpdated = (b as any).updated_at ?? (b as any).updatedAt ?? (b as any).modified_at ?? (b as any).modifiedAt;
+      const rawCreated = (b as any).created_at ?? (b as any).createdAt;
+      const c = parseTs(rawCreated);
+      const u = parseTs(rawUpdated);
+      return Math.max(c, u);
+    };
+
+    const map = new Map<number, BookingRequest>();
+    for (const b of (data?.results ?? [])) {
+      map.set(b.id, b);
+    }
+    for (const b of (dataUpdated?.results ?? [])) {
+      const prev = map.get(b.id);
+      if (!prev) {
+        map.set(b.id, b);
+        continue;
+      }
+      map.set(b.id, recencyTs(b) >= recencyTs(prev) ? b : prev);
+    }
+
+    return Array.from(map.values()).sort((a, b) => {
+      const diff = recencyTs(b) - recencyTs(a);
+      if (diff !== 0) return diff;
+      return ((b.id ?? 0) as number) - ((a.id ?? 0) as number);
+    });
   }, [searchId, idResult, data, dataUpdated]);
 
   // ── Auto-patch: awaiting_choice → auto_slots_bot (once per BR) ──────────
