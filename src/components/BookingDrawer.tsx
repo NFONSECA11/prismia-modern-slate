@@ -2233,6 +2233,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
 
+      // No fluxo handoff_reschedule, a BR alvo é a própria — limpamos o slot já marcado
+      // (scheduled_at + chosen_slot) para que o suggestSlots gere novas opções.
+      if (isHandoffRescheduleFlow) {
+        patch1.scheduled_at = null;
+        patch1.chosen_slot = null;
+        patch1.chosen_slot_label = null;
+        const cleanedVarsForReschedule = { ...cleanedVars };
+        delete (cleanedVarsForReschedule as any).chosen_slot;
+        patch1.vars_snapshot = cleanedVarsForReschedule;
+      }
+
       pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
       try {
         await patchBooking(booking.id, patch1);
