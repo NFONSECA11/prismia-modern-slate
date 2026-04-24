@@ -1929,7 +1929,23 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }
       }
 
-      // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
+      // 1b) Loga manual_cancel na BR antiga para rastreabilidade
+      const operatorNameForLog =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      await logManualCancelOnTargetBR(targetId, {
+        type: "manual_cancel",
+        ts: new Date().toISOString(),
+        actor: "human",
+        actor_name: operatorNameForLog,
+        br_id: targetId,
+        replaced_by_br_id: booking.id,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: `Cancelado para reagendamento (nova BR #${booking.id})`,
+      });
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       const cleanedVars = { ...existingVars };
       delete (cleanedVars as any).intent;
