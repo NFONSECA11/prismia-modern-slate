@@ -1946,6 +1946,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         policy: "manual_dashboard",
         reason: `Cancelado para reagendamento (nova BR #${booking.id})`,
       });
+
+      // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       const cleanedVars = { ...existingVars };
       delete (cleanedVars as any).intent;
