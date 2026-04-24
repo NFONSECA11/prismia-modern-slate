@@ -275,6 +275,12 @@ export function StatusBadge({ status, size = "md", hasSchedule, procedureName, a
             <span className={`inline-flex items-center justify-center leading-none cursor-default ${tagConfig.textClass}`}>
               {tagConfig.icon === "hand" ? (
                 <Hand className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-plus" ? (
+                <CalendarPlus className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-clock" ? (
+                <CalendarClock className="h-3.5 w-3.5" />
+              ) : tagConfig.icon === "calendar-x" ? (
+                <CalendarX className="h-3.5 w-3.5" />
               ) : (
                 <Sparkles className="h-3.5 w-3.5" />
               )}
