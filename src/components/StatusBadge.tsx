@@ -114,6 +114,8 @@ export interface AiEvent {
   actor?: "ai" | "human";
   /** Nome do operador humano quando actor="human" */
   actor_name?: string;
+  /** ID do agendamento cancelado/substituído (em manual_cancel/manual_reschedule) */
+  cancelled_br_id?: number;
 }
 
 /**
