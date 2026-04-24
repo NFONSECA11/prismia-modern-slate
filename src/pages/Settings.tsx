@@ -102,14 +102,14 @@ export default function Settings() {
   });
 
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
-    queryKey: ["professionals", activeUnit?.id],
+    queryKey: ["professionals", activeUnit?.id ?? "all"],
     queryFn: async () => {
       const { data } = await api.get(`/api/settings/professionals/`, {
-        params: { unit: activeUnit!.id },
+        params: activeUnit?.id ? { unit: activeUnit.id } : undefined,
       });
       return Array.isArray(data) ? data : (data?.results ?? []);
     },
-    enabled: !!activeUnit?.id,
+    enabled: units.length > 0,
   });
   const getSettingValue = (obj: any, paths: string[]) => {
     for (const path of paths) {
@@ -642,8 +642,8 @@ export default function Settings() {
                 <span />
               </div>
 
-              {!activeUnit ? (
-                <p className="text-xs text-muted-foreground px-3">Nenhuma unidade ativa selecionada.</p>
+              {units.length === 0 ? (
+                <p className="text-xs text-muted-foreground px-3">Nenhuma unidade disponível.</p>
               ) : isLoadingProfessionals ? (
                 <p className="text-xs text-muted-foreground px-3">Carregando…</p>
               ) : professionals.length === 0 ? (
