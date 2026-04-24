@@ -2650,7 +2650,59 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           );
         }
       }
-    }
+      }
+
+      const detailFinal = await fetchBookingRequestById(booking.id);
+      const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+      return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
+    },
+    onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
+      const count = slots?.length ?? 0;
+      if (isHandoffRescheduleFlow) {
+        toast.success("Data do agendamento removida — IA seguirá conduzindo.");
+      } else if (count === 0) {
+        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        pushRescheduleLog({
+          label: "Bot assumiu a conversa",
+          status: "warning",
+          detail: "Sem horários — o bot vai conduzir o cliente.",
+        });
+      } else {
+        toast.success(`Reagendamento iniciado — ${count} horário(s) serão oferecidos ao cliente.`);
+        pushRescheduleLog({
+          label: "Pronto! Bot assumiu o reagendamento",
+          status: "success",
+          detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
+        });
+      }
+      if (!isHandoffRescheduleFlow) {
+        cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
+      }
+      setActionDone(
+        isHandoffRescheduleFlow
+          ? "Data do agendamento removida!"
+          : `Agenda #${cancelledId} cancelada e bot reagendando!`
+      );
+      await refetchBookingDetailForBot();
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      setTimeout(() => {
+        onConfirmed();
+        onClose();
+        setActionDone(null);
+      }, 1800);
+    },
+    onError: (err: any) => {
+      console.error("[rescheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
+      setRescheduleLog((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.status === "error" || last?.status === "warning") return prev;
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+        return [...prev, { ts, label: "Falha no reagendamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+      });
+    },
+  });
 
 
     // Reopen for terminal
