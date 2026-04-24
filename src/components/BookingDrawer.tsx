@@ -944,6 +944,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           : "schedule";
     setIaOpType(targetTab);
 
+    // Motivo padrão para handoff_schedule (Política de Agendamento Manual)
+    if (latest.type === "handoff_schedule") {
+      setScheduleReason((prev) => prev.trim() ? prev : "Política de Agendamento Manual");
+    }
+
     const normalize = (value: string) =>
       (value ?? "")
         .normalize("NFD")
