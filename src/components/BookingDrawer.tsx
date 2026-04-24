@@ -2196,6 +2196,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       };
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
+      // Loga manual_cancel também na BR cancelada (rastreabilidade do lado da vítima)
+      await logManualCancelOnTargetBR(targetId, {
+        type: "manual_cancel",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: targetId,
+        cancelled_from_br_id: booking.id,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Cancelado por ${operatorName} a pedido de ${assignLeadName.trim()}` : "Cancelamento manual via Dashboard",
+      });
+
       try {
         await patchBooking(booking.id, {
           lead_name: assignLeadName.trim() || booking.lead_name,
