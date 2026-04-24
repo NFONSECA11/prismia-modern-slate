@@ -2889,7 +2889,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <BookingModeIcon mode={booking.booking_mode} />
+                  <BookingModeIcon mode={booking.booking_mode} notes={(bookingDetailForBot as any)?.notes ?? booking.notes} />
                   {isConvo ? (
                     <h3 className="text-base font-semibold text-primary flex items-center gap-1.5">
                       <MessageSquare className="h-4 w-4 text-primary" />
