@@ -566,7 +566,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
-                            {aiEnabled && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} forceHandoffOrigin={handoffOriginSet.has(booking.id)} />}
+                            {(aiEnabled || handoffOriginSet.has(booking.id)) && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} forceHandoffOrigin={handoffOriginSet.has(booking.id)} />}
                             <span className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                               #{booking.id}
                             </span>
