@@ -1417,11 +1417,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.username ||
         "Operador";
 
-      const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
+      const selectedProc = effProcedureId ? allProcedures.find((p) => p.id === effProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
-      const profName = selectedProfessionalId
-        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+      const profName = effProfessionalId
+        ? (professionals.find((p) => p.id === effProfessionalId)?.name ?? "")
         : "Sem preferência";
       // Monta evento ai_events e faz merge com bloco existente (preserva ai_handoff prévio).
       const manualEvent = {
