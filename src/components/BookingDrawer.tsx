@@ -3083,7 +3083,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     type="button"
                     onClick={() => iaCancelMut.mutate()}
-                    disabled={iaCancelMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim()}
+                    disabled={
+                      iaCancelMut.isPending ||
+                      !assignLeadName.trim() ||
+                      (latestHandoffActionEvent?.type !== "handoff_cancel" && !cancelBookingIdField.trim())
+                    }
                     className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <XCircle className="h-3.5 w-3.5" />
