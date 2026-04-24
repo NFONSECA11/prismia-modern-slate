@@ -1018,8 +1018,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     const idStr = cancelBookingIdField.trim();
     const idNum = Number(idStr);
     if (!idStr || !Number.isFinite(idNum) || idNum <= 0) return;
+
+    const currentSource = (bookingDetailForBot as BookingRequest | undefined) ?? booking ?? null;
+    if (currentSource?.id === idNum) {
+      if (selectedClientBooking?.id !== idNum) {
+        setSelectedClientBooking(currentSource);
+      }
+      return;
+    }
+
     if (selectedClientBooking?.id === idNum) return;
-    if (booking?.id === idNum) return;
+
     let cancelled = false;
     (async () => {
       try {
@@ -1032,7 +1041,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return () => {
       cancelled = true;
     };
-  }, [cancelBookingIdField, selectedClientBooking?.id, booking?.id]);
+  }, [cancelBookingIdField, selectedClientBooking?.id, booking, bookingDetailForBot]);
 
   const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
   const latestHandoffActionEvent = (() => {
