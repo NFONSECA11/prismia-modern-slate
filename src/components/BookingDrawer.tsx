@@ -954,6 +954,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     if (latest.type === "handoff_reschedule") {
       const targetBrId =
         (typeof (latest as any).cancelled_br_id === "number" && (latest as any).cancelled_br_id) ||
+        (typeof varsSnapshot.target_br_id === "number" && (varsSnapshot.target_br_id as number)) ||
+        (typeof varsSnapshot.booking_reference === "number" && (varsSnapshot.booking_reference as number)) ||
         (typeof (latest as any).br_id === "number" && (latest as any).br_id) ||
         null;
       if (targetBrId) {
