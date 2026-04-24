@@ -2219,6 +2219,50 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
+      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
+
+      // ── Fluxo handoff_reschedule: apenas PATCH na BR limpando a data agendada.
+      // Mantém booking_mode atual, NÃO chama suggest_slots e NÃO força auto_slots_bot.
+      if (isHandoffRescheduleFlow) {
+        const cleanedVarsForReschedule = { ...cleanedVars };
+        delete (cleanedVarsForReschedule as any).chosen_slot;
+
+        const patchHandoff: Record<string, unknown> = {
+          lead_name: assignLeadName.trim(),
+          professional: selectedProfessionalId,
+          procedure: selectedProcedureId,
+          procedure_name: procedureName,
+          unit_name: booking.unit_name ?? "",
+          vars_snapshot: cleanedVarsForReschedule,
+          notes: updatedNotes,
+          scheduled_at: null,
+          chosen_slot: null,
+          chosen_slot_label: null,
+        };
+        if (procedureCode) patchHandoff.procedure_code = procedureCode;
+        if (resolvedSpecialty) patchHandoff.specialty = resolvedSpecialty;
+
+        pushRescheduleLog({
+          label: "Limpando data do agendamento…",
+          status: "info",
+          detail: `BR #${booking.id} ficará sem data marcada`,
+        });
+        try {
+          await patchBooking(booking.id, patchHandoff);
+        } catch (err: any) {
+          pushRescheduleLog({ label: "Falha ao limpar a data do agendamento", status: "error" });
+          throw err;
+        }
+
+        pushRescheduleLog({
+          label: "Data do agendamento removida",
+          status: "success",
+          detail: "Modo de atendimento mantido — IA seguirá conduzindo.",
+        });
+
+        return { slots: [] as Array<{ start_at: string; label: string }>, cancelledId: targetId, isHandoffRescheduleFlow };
+      }
+
       const patch1: Record<string, unknown> = {
         lead_name: assignLeadName.trim(),
         professional: selectedProfessionalId,
@@ -2230,19 +2274,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         notes: updatedNotes,
       };
       if (procedureCode) patch1.procedure_code = procedureCode;
-      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
       if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
-
-      // No fluxo handoff_reschedule, a BR alvo é a própria — limpamos o slot já marcado
-      // (scheduled_at + chosen_slot) para que o suggestSlots gere novas opções.
-      if (isHandoffRescheduleFlow) {
-        patch1.scheduled_at = null;
-        patch1.chosen_slot = null;
-        patch1.chosen_slot_label = null;
-        const cleanedVarsForReschedule = { ...cleanedVars };
-        delete (cleanedVarsForReschedule as any).chosen_slot;
-        patch1.vars_snapshot = cleanedVarsForReschedule;
-      }
 
       pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
       try {
@@ -2259,80 +2291,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
 
       // 3) suggest_slots
-      pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
-      const suggestPayload: Record<string, unknown> = {
-        procedure: selectedProcedureId,
-        professional: selectedProfessionalId,
-      };
-      if (procedureCode) suggestPayload.procedure_code = procedureCode;
-      if (bookingUnitId) suggestPayload.unit = bookingUnitId;
-
-      let suggestResponse: any;
-      try {
-        suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
-      } catch (err: any) {
-        const status = err?.response?.status;
-        pushRescheduleLog({
-          label: "Sem disponibilidade de horários",
-          status: "warning",
-          detail: "Tente outro profissional ou procedimento.",
-        });
-        throw new Error(`suggest_slots ${status ?? "?"}`);
-      }
-
-      const detailAfterSuggest = await fetchBookingRequestById(booking.id);
-      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
-      pushRescheduleLog({
-        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
-        status: offerCount > 0 ? "success" : "warning",
-        detail: offerCount > 0
-          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
-          : "O bot vai conversar com o cliente para entender melhor",
-      });
-
-      // 4) PATCH 2 → volta para auto_slots_bot (IA assume)
-      const offerSlotsRaw =
-        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
-        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
-        [];
-      const slotProfUnitIds = Array.from(
-        new Set(
-          offerSlotsRaw
-            .map((s: any) => Number(s?.professional_unit_id))
-            .filter((n: number) => Number.isFinite(n) && n > 0)
-        )
-      );
-      const inferredProfessionalUnitId = slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
-
-      const patch2: Record<string, unknown> = {
-        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
-        booking_mode: "auto_slots_bot",
-        conversation_bot_mode: "on",
-        procedure: selectedProcedureId,
-        procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
-        unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
-        professional: selectedProfessionalId,
-        professional_name: profName,
-        vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
-      };
-      if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
-      if (procedureCode) patch2.procedure_code = procedureCode;
-      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
-      if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
-
-      try {
-        await patchBooking(booking.id, patch2);
-      } catch (err) {
-        console.warn("[rescheduleSuggestMut] PATCH 2 (auto) falhou, tentando handoffOff:", err);
-      }
-
-      // 5) Garante bot ON via handoffOff
-      try {
-        await handoffOff(booking.id);
-      } catch (err) {
-        console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
-      }
-
+...
       const detailFinal = await fetchBookingRequestById(booking.id);
       const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
       return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
