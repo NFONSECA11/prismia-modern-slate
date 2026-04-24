@@ -22,10 +22,8 @@ const HANDOFF_ORIGIN_CONFIG = {
  */
 function hasHandoffInHistory(notes?: string | null): boolean {
   if (!notes) return false;
-  // 1) Novo schema: ai_events
   const events = extractAiEvents(notes);
   if (events.some((e) => e.type === "ai_handoff" || e.type === "handoff")) return true;
-  // 2) Legado: tag textual
   return /BR_TAG_AI_HANDOFF/i.test(notes);
 }
 
@@ -33,13 +31,16 @@ interface BookingModeIconProps {
   mode: string;
   /** Notes da BR — usado para detectar handoff histórico (opcional). */
   notes?: string | null;
+  /** Força exibir como "handoff origem IA" (quando a detecção foi feita por outro componente). */
+  forceHandoffOrigin?: boolean;
   size?: "sm" | "md";
   showLabel?: boolean;
 }
 
-export function BookingModeIcon({ mode, notes, size = "sm", showLabel = false }: BookingModeIconProps) {
+export function BookingModeIcon({ mode, notes, forceHandoffOrigin, size = "sm", showLabel = false }: BookingModeIconProps) {
   // Se a BR teve handoff em algum momento, exibe a mão (independente do booking_mode atual).
-  const overrideHandoff = hasHandoffInHistory(notes) && mode !== "handoff_manual";
+  const hasHandoff = forceHandoffOrigin || hasHandoffInHistory(notes);
+  const overrideHandoff = hasHandoff && mode !== "handoff_manual";
   const config = overrideHandoff ? HANDOFF_ORIGIN_CONFIG : MODE_CONFIG[mode];
   if (!config) return <span className="text-[10px] text-muted-foreground/50">{mode}</span>;
 
