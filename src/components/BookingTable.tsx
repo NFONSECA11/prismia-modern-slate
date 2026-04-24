@@ -346,7 +346,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
       return next;
     });
 
+    const detectHandoffOrigin = (notes: string): boolean => {
+      if (!notes) return false;
+      if (extractAiEvents(notes).some((e) => e.type === "ai_handoff" || e.type === "handoff")) return true;
+      return /BR_TAG_AI_HANDOFF/i.test(notes);
+    };
+
     const immediateResults: Record<number, AiTag> = {};
+    const immediateHandoff: number[] = [];
     const needsFetch: BookingRequest[] = [];
 
     for (const b of bookings) {
@@ -354,6 +361,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
       const listTag = detectAiTag(listNotes);
       if (listTag) {
         immediateResults[b.id] = listTag;
+      }
+      if (detectHandoffOrigin(listNotes)) {
+        immediateHandoff.push(b.id);
       }
 
       // Sempre busca detalhe em background para garantir a ÚLTIMA tag temporal
@@ -363,6 +373,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
 
     if (Object.keys(immediateResults).length > 0) {
       setAiTagMap((prev) => ({ ...prev, ...immediateResults }));
+    }
+    if (immediateHandoff.length > 0) {
+      setHandoffOriginSet((prev) => {
+        const next = new Set(prev);
+        immediateHandoff.forEach((id) => next.add(id));
+        return next;
+      });
     }
 
     if (needsFetch.length === 0) return;
@@ -382,20 +399,30 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
               const detail = await fetchBookingRequestById(b.id);
               const detailNotes = (detail as any).notes ?? "";
               const tag = detectAiTag(detailNotes);
-              return [b.id, tag] as const;
+              const isHandoff = detectHandoffOrigin(detailNotes);
+              return { id: b.id, tag, isHandoff } as const;
             } catch {
-              return [b.id, null] as const;
+              return { id: b.id, tag: null, isHandoff: false } as const;
             }
           })
         );
 
         if (cancelled || entries.length === 0) continue;
 
-        const foundEntries = entries.filter((entry): entry is readonly [number, AiTag] => Boolean(entry[1]));
-        if (foundEntries.length === 0) continue;
+        const tagEntries = entries.filter((e) => e.tag).map((e) => [e.id, e.tag] as const);
+        if (tagEntries.length > 0) {
+          const newTags = Object.fromEntries(tagEntries) as Record<number, AiTag>;
+          setAiTagMap((prev) => ({ ...prev, ...newTags }));
+        }
 
-        const newTags = Object.fromEntries(foundEntries) as Record<number, AiTag>;
-        setAiTagMap((prev) => ({ ...prev, ...newTags }));
+        const handoffIds = entries.filter((e) => e.isHandoff).map((e) => e.id);
+        if (handoffIds.length > 0) {
+          setHandoffOriginSet((prev) => {
+            const next = new Set(prev);
+            handoffIds.forEach((id) => next.add(id));
+            return next;
+          });
+        }
       }
     })();
 
