@@ -2110,13 +2110,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const targetIdRaw = cancelBookingIdField.trim();
       const targetId = Number(targetIdRaw);
       if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a reagendar");
-      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
-      if (!selectedProfessionalId) throw new Error("Selecione o profissional");
-      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      const effLeadName = (assignLeadName || autofillLeadName).trim();
+      const effProfId = selectedProfessionalId ?? autofillProfessionalId ?? null;
+      const effProcId = selectedProcedureId ?? autofillProcedureId ?? null;
+      if (!effLeadName) throw new Error("Informe o nome do cliente");
+      if (!effProfId) throw new Error("Selecione o profissional");
+      if (!effProcId) throw new Error("Selecione o procedimento");
+      // Sincroniza state local para que o restante do fluxo (logs/PATCH) use os valores corretos.
+      if (!assignLeadName.trim()) setAssignLeadName(effLeadName);
+      if (!selectedProfessionalId && effProfId) setSelectedProfessionalId(effProfId);
+      if (!selectedProcedureId && effProcId) setSelectedProcedureId(effProcId);
 
       setRescheduleLog([]);
-      const profName = professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`;
-      const selectedProc = allProcedures.find((p) => p.id === selectedProcedureId);
+      const profName = professionals.find((p) => p.id === effProfId)?.name ?? `#${effProfId}`;
+      const selectedProc = allProcedures.find((p) => p.id === effProcId);
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
@@ -2956,7 +2963,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     type="button"
                     onClick={() => rescheduleSuggestMut.mutate()}
-                    disabled={rescheduleSuggestMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim() || !selectedProfessionalId || !selectedProcedureId}
+                    disabled={rescheduleSuggestMut.isPending || !(assignLeadName || autofillLeadName).trim() || !cancelBookingIdField.trim() || !effectiveProfessionalId || !effectiveProcedureId}
                     className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
