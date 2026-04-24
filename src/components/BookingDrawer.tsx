@@ -1561,7 +1561,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         pushScheduleLog({
           label: "Sem disponibilidade de horários",
           status: "warning",
-          detail: selectedProfessionalId
+          detail: effProfessionalId
             ? "Não encontramos disponibilidade para esse profissional. Tente outro ou deixe sem preferência."
             : "Não encontramos disponibilidade no momento.",
         });
