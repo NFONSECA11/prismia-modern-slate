@@ -2121,10 +2121,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const procedureSlug = selectedProc?.slug ?? "";
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
 
-      // Detecta fluxo handoff_reschedule: a IA já criou a própria BR de reagendamento
-      // e pediu ajuda — não há BR antiga para cancelar.
-      const isHandoffRescheduleFlow =
-        latestHandoffActionEvent?.type === "handoff_reschedule" && targetId === booking.id;
+      // Detecta fluxo handoff_reschedule pela ação mais recente da IA.
+      // Nesse caso, o campo de ID pode apontar para outra BR por legado do autofill,
+      // então não devemos depender de targetId === booking.id.
+      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
 
       if (isHandoffRescheduleFlow) {
         pushRescheduleLog({
