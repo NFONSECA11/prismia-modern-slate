@@ -2324,12 +2324,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       const detailFinal = await fetchBookingRequestById(booking.id);
       const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
-      return { slots: finalSlots, cancelledId: targetId };
+      return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
     },
-    onSuccess: async ({ slots, cancelledId }) => {
+    onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
       const count = slots?.length ?? 0;
       if (count === 0) {
-        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        toast.warning(
+          isHandoffRescheduleFlow
+            ? "Bot acionado, mas sem horários no momento."
+            : `Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`
+        );
         pushRescheduleLog({
           label: "Bot assumiu a conversa",
           status: "warning",
@@ -2343,8 +2347,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
         });
       }
-      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
-      setActionDone(`Agenda #${cancelledId} cancelada e bot reagendando!`);
+      if (!isHandoffRescheduleFlow) {
+        cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
+      }
+      setActionDone(
+        isHandoffRescheduleFlow
+          ? "Bot reassumiu o reagendamento!"
+          : `Agenda #${cancelledId} cancelada e bot reagendando!`
+      );
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
