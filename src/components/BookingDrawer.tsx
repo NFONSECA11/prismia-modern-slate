@@ -1098,13 +1098,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     ? [...professionalsForUnit, ...professionals.filter((p) => p.id === autofillProfessionalId)]
     : professionalsForUnit;
 
+  const effectiveLeadName = (assignLeadName || autofillLeadName).trim();
   const effectiveProfessionalId = selectedProfessionalId ?? autofillProfessionalId;
   const effectiveProcedureId = selectedProcedureId ?? autofillProcedureId;
+  const effectiveCancelBookingId = cancelBookingIdField.trim();
 
   const baseManageProcedureOptions = effectiveProfessionalId ? proceduresForProfessional : proceduresForUnit;
   const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
     ? [...baseManageProcedureOptions, ...allProcedures.filter((p) => p.id === autofillProcedureId)]
     : baseManageProcedureOptions;
+
+  useEffect(() => {
+    if (iaOpType !== "reschedule") return;
+    if (!assignLeadName.trim() && autofillLeadName) setAssignLeadName(autofillLeadName);
+    if (!selectedProfessionalId && autofillProfessionalId) setSelectedProfessionalId(autofillProfessionalId);
+    if (!selectedProcedureId && autofillProcedureId) setSelectedProcedureId(autofillProcedureId);
+  }, [iaOpType, assignLeadName, autofillLeadName, selectedProfessionalId, autofillProfessionalId, selectedProcedureId, autofillProcedureId]);
 
   const handleSendMessage = () => {
     const trimmed = messageText.trim();
@@ -2963,7 +2972,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     type="button"
                     onClick={() => rescheduleSuggestMut.mutate()}
-                    disabled={rescheduleSuggestMut.isPending || !(assignLeadName || autofillLeadName).trim() || !cancelBookingIdField.trim() || !effectiveProfessionalId || !effectiveProcedureId}
+                    disabled={rescheduleSuggestMut.isPending || !effectiveLeadName || !effectiveCancelBookingId || !effectiveProfessionalId || !effectiveProcedureId}
                     className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
