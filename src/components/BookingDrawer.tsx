@@ -332,6 +332,7 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
   if (policyValue) meta.push({ label: "Policy", value: policyValue });
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
+  if (event.cancelled_br_id) meta.push({ label: "BR cancelada", value: `#${event.cancelled_br_id}` });
   if (event.unit) meta.push({ label: "Unidade", value: event.unit });
   if (event.actor === "human" && event.actor_name) {
     meta.push({ label: "Operador", value: event.actor_name });
@@ -417,6 +418,27 @@ function parseNotes(notes: string): NoteEntry[] {
   // Combina ai_events (mais ricos) com entradas legadas; ordena por timestamp quando possível.
   const all = [...aiEntries, ...entries];
   return all;
+}
+
+/**
+ * Mescla um novo evento manual no bloco JSON `{"ai_events":[...]}` dentro de `notes`,
+ * preservando todo o restante do texto e qualquer evento prévio (ex.: `ai_handoff`).
+ */
+function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<string, unknown>): string {
+  const existingMatch = existingNotesRaw.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
+  let mergedEvents: any[] = [manualEvent];
+  let notesWithoutBlock = existingNotesRaw;
+  if (existingMatch) {
+    try {
+      const arr = JSON.parse(existingMatch[1]);
+      if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
+    } catch {
+      /* substitui bloco malformado */
+    }
+    notesWithoutBlock = existingNotesRaw.replace(existingMatch[0], "").trim();
+  }
+  const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
+  return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
 }
 
 function NotesLog({ notes }: { notes: string }) {
@@ -1253,20 +1275,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         policy: "manual_dashboard",
         reason: scheduleReason.trim(),
       };
-      const existingMatch = existingNotesRaw.match(/\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/);
-      let mergedEvents: any[] = [manualEvent];
-      let notesWithoutBlock = existingNotesRaw;
-      if (existingMatch) {
-        try {
-          const arr = JSON.parse(existingMatch[1]);
-          if (Array.isArray(arr)) mergedEvents = [...arr, manualEvent];
-        } catch {
-          /* substitui bloco malformado */
-        }
-        notesWithoutBlock = existingNotesRaw.replace(existingMatch[0], "").trim();
-      }
-      const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
-      const updatedNotes = [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
         selectedProcedureId,
@@ -1925,9 +1934,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.name ||
         user?.username ||
         "Operador";
-      const reschedHeader = `[${ts}] Reagendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_RESCHEDULE`;
-      const reschedDetail = `[${ts}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
-      const updatedNotes = [existingNotesRaw, reschedHeader, reschedDetail].filter(Boolean).join("\n");
+      const manualEvent = {
+        type: "manual_reschedule",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: booking.id,
+        cancelled_br_id: targetId,
+        procedure_slug: procedureSlug || undefined,
+        procedure_name: procedureName || undefined,
+        professional_id: selectedProfessionalId ?? undefined,
+        professional_name: profName || undefined,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual",
+      };
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
@@ -2124,9 +2146,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.username ||
         "Operador";
       const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
-      const cancelHeader = `[${ts}] Cancelamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_CANCEL`;
-      const cancelDetail = `[${ts}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
-      const updatedNotes = [existingNotesRaw, cancelHeader, cancelDetail].filter(Boolean).join("\n");
+      const manualEvent = {
+        type: "manual_cancel",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: booking.id,
+        cancelled_br_id: targetId,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Cancelamento manual",
+      };
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       try {
         await patchBooking(booking.id, {
