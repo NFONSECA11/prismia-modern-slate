@@ -656,7 +656,15 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                             status={booking.status}
                             hasSchedule={!!booking.scheduled_at}
                             procedureName={booking.procedure_name}
-                            aiTag={aiEnabled ? (aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null) : null}
+                            aiTag={(() => {
+                              const resolvedTag = aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null;
+                              if (aiEnabled) return resolvedTag;
+                              // Mesmo com IA desligada, mostrar tags de handoff_* (ações via operador a partir de handoff)
+                              if (resolvedTag && (resolvedTag === "handoff_schedule" || resolvedTag === "handoff_reschedule" || resolvedTag === "handoff_cancel" || resolvedTag === "handoff")) {
+                                return resolvedTag;
+                              }
+                              return null;
+                            })()}
                           />
                           {aiEnabled && booking.confirmation && (
                             <div className="pl-[0.35rem]">
