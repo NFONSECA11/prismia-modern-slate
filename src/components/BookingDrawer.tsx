@@ -1030,7 +1030,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     ? [...professionalsForUnit, ...professionals.filter((p) => p.id === autofillProfessionalId)]
     : professionalsForUnit;
 
-  const baseManageProcedureOptions = (selectedProfessionalId ?? autofillProfessionalId) ? proceduresForProfessional : proceduresForUnit;
+  const effectiveProfessionalId = selectedProfessionalId ?? autofillProfessionalId;
+  const effectiveProcedureId = selectedProcedureId ?? autofillProcedureId;
+
+  const baseManageProcedureOptions = effectiveProfessionalId ? proceduresForProfessional : proceduresForUnit;
   const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
     ? [...baseManageProcedureOptions, ...allProcedures.filter((p) => p.id === autofillProcedureId)]
     : baseManageProcedureOptions;
@@ -2759,7 +2762,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                         Profissional {iaOpType === "reschedule" || iaOpType === "cancel" ? "*" : ""}
                       </label>
                       <select
-                        value={selectedProfessionalId ?? ""}
+                        value={effectiveProfessionalId ?? ""}
                         onChange={(e) => {
                           const id = Number(e.target.value) || null;
                           setSelectedProfessionalId(id);
@@ -2770,7 +2773,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                         className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="">{iaOpType === "schedule" ? "Sem preferência" : "Selecionar..."}</option>
-                        {professionalsForUnit.map((p) => (
+                        {manageProfessionalOptions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
@@ -2779,15 +2782,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     <div>
                       <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento *</label>
                       <select
-                        value={selectedProcedureId ?? ""}
+                        value={effectiveProcedureId ?? ""}
                         onChange={(e) => {
                           setSelectedProcedureId(Number(e.target.value) || null);
                           setSelectedSpecialtyId(null);
                         }}
-                        disabled={iaOpType === "cancel" || (iaOpType === "reschedule" && !selectedProfessionalId)}
+                        disabled={iaOpType === "cancel" || (iaOpType === "reschedule" && !effectiveProfessionalId)}
                         className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
+                        <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !effectiveProfessionalId ? "—" : "Selecionar..."}</option>
                         {manageProcedureOptions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
                         ))}
@@ -2817,19 +2820,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             <div className="flex items-center gap-2">
               {iaOpType === "schedule" && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => scheduleSuggestMut.mutate()}
-                    disabled={scheduleSuggestMut.isPending || !assignLeadName.trim() || !scheduleReason.trim() || !selectedProcedureId}
-                    className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
-                  >
-                    <Calendar className="h-3.5 w-3.5" />
-                    {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => checkSlotsMut.mutate()}
-                    disabled={checkSlotsMut.isPending || scheduleSuggestMut.isPending || !selectedProcedureId}
+                    <button
+                      type="button"
+                      onClick={() => scheduleSuggestMut.mutate()}
+                      disabled={scheduleSuggestMut.isPending || !(assignLeadName || autofillLeadName).trim() || !scheduleReason.trim() || !effectiveProcedureId}
+                      className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => checkSlotsMut.mutate()}
+                      disabled={checkSlotsMut.isPending || scheduleSuggestMut.isPending || !effectiveProcedureId}
                     className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <Calendar className="h-3.5 w-3.5" />
