@@ -1098,13 +1098,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     ? [...professionalsForUnit, ...professionals.filter((p) => p.id === autofillProfessionalId)]
     : professionalsForUnit;
 
+  const effectiveLeadName = (assignLeadName || autofillLeadName).trim();
   const effectiveProfessionalId = selectedProfessionalId ?? autofillProfessionalId;
   const effectiveProcedureId = selectedProcedureId ?? autofillProcedureId;
+  const effectiveCancelBookingId = cancelBookingIdField.trim();
 
   const baseManageProcedureOptions = effectiveProfessionalId ? proceduresForProfessional : proceduresForUnit;
   const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
     ? [...baseManageProcedureOptions, ...allProcedures.filter((p) => p.id === autofillProcedureId)]
     : baseManageProcedureOptions;
+
+  useEffect(() => {
+    if (iaOpType !== "reschedule") return;
+    if (!assignLeadName.trim() && autofillLeadName) setAssignLeadName(autofillLeadName);
+    if (!selectedProfessionalId && autofillProfessionalId) setSelectedProfessionalId(autofillProfessionalId);
+    if (!selectedProcedureId && autofillProcedureId) setSelectedProcedureId(autofillProcedureId);
+  }, [iaOpType, assignLeadName, autofillLeadName, selectedProfessionalId, autofillProfessionalId, selectedProcedureId, autofillProcedureId]);
 
   const handleSendMessage = () => {
     const trimmed = messageText.trim();
