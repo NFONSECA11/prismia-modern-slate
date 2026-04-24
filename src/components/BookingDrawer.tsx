@@ -2121,43 +2121,56 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const procedureSlug = selectedProc?.slug ?? "";
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
 
-      // 1) Cancela o BR antigo
-      pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
-      try {
-        await cancelBooking(targetId);
-        pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
-      } catch (err: any) {
-        const status = err?.response?.status;
-        // 404 → já cancelado; segue
-        if (status === 404) {
-          pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
-        } else {
-          pushRescheduleLog({
-            label: "Não foi possível cancelar o agendamento antigo",
-            status: "error",
-            detail: `Status ${status ?? "?"}`,
-          });
-          throw err;
-        }
-      }
+      // Detecta fluxo handoff_reschedule: a IA já criou a própria BR de reagendamento
+      // e pediu ajuda — não há BR antiga para cancelar.
+      const isHandoffRescheduleFlow =
+        latestHandoffActionEvent?.type === "handoff_reschedule" && targetId === booking.id;
 
-      // 1b) Loga manual_cancel na BR antiga para rastreabilidade
-      const operatorNameForLog =
-        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
-        user?.name ||
-        user?.username ||
-        "Operador";
-      await logManualCancelOnTargetBR(targetId, {
-        type: "manual_cancel",
-        ts: new Date().toISOString(),
-        actor: "human",
-        actor_name: operatorNameForLog,
-        br_id: targetId,
-        replaced_by_br_id: booking.id,
-        unit: booking.unit_name || undefined,
-        policy: "manual_dashboard",
-        reason: `Cancelado para reagendamento (nova BR #${booking.id})`,
-      });
+      if (isHandoffRescheduleFlow) {
+        pushRescheduleLog({
+          label: `Reagendamento solicitado pela IA — sem cancelamento de BR`,
+          status: "info",
+          detail: `BR #${booking.id} será preparada para novos horários`,
+        });
+      } else {
+        // 1) Cancela o BR antigo (fluxo padrão de reagendamento manual)
+        pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
+        try {
+          await cancelBooking(targetId);
+          pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
+        } catch (err: any) {
+          const status = err?.response?.status;
+          // 404 → já cancelado; segue
+          if (status === 404) {
+            pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
+          } else {
+            pushRescheduleLog({
+              label: "Não foi possível cancelar o agendamento antigo",
+              status: "error",
+              detail: `Status ${status ?? "?"}`,
+            });
+            throw err;
+          }
+        }
+
+        // 1b) Loga manual_cancel na BR antiga para rastreabilidade
+        const operatorNameForLog =
+          (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+          user?.name ||
+          user?.username ||
+          "Operador";
+        await logManualCancelOnTargetBR(targetId, {
+          type: "manual_cancel",
+          ts: new Date().toISOString(),
+          actor: "human",
+          actor_name: operatorNameForLog,
+          br_id: targetId,
+          replaced_by_br_id: booking.id,
+          unit: booking.unit_name || undefined,
+          policy: "manual_dashboard",
+          reason: `Cancelado para reagendamento (nova BR #${booking.id})`,
+        });
+      }
 
       // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
@@ -2183,21 +2196,25 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.name ||
         user?.username ||
         "Operador";
-      const manualEvent = {
+      const manualEvent: Record<string, unknown> = {
         type: "manual_reschedule",
         ts: now.toISOString(),
         actor: "human",
         actor_name: operatorName,
         br_id: booking.id,
-        cancelled_br_id: targetId,
         procedure_slug: procedureSlug || undefined,
         procedure_name: procedureName || undefined,
         professional_id: selectedProfessionalId ?? undefined,
         professional_name: profName || undefined,
         unit: booking.unit_name || undefined,
-        policy: "manual_dashboard",
-        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual",
+        policy: isHandoffRescheduleFlow ? "handoff_reschedule_manual" : "manual_dashboard",
+        reason: isHandoffRescheduleFlow
+          ? "Reagendamento solicitado pela IA — bot reassumirá após sugestão de horários"
+          : (assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual"),
       };
+      if (!isHandoffRescheduleFlow) {
+        manualEvent.cancelled_br_id = targetId;
+      }
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
@@ -2307,12 +2324,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       const detailFinal = await fetchBookingRequestById(booking.id);
       const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
-      return { slots: finalSlots, cancelledId: targetId };
+      return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
     },
-    onSuccess: async ({ slots, cancelledId }) => {
+    onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
       const count = slots?.length ?? 0;
       if (count === 0) {
-        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        toast.warning(
+          isHandoffRescheduleFlow
+            ? "Bot acionado, mas sem horários no momento."
+            : `Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`
+        );
         pushRescheduleLog({
           label: "Bot assumiu a conversa",
           status: "warning",
@@ -2326,8 +2347,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
         });
       }
-      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
-      setActionDone(`Agenda #${cancelledId} cancelada e bot reagendando!`);
+      if (!isHandoffRescheduleFlow) {
+        cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
+      }
+      setActionDone(
+        isHandoffRescheduleFlow
+          ? "Bot reassumiu o reagendamento!"
+          : `Agenda #${cancelledId} cancelada e bot reagendando!`
+      );
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
