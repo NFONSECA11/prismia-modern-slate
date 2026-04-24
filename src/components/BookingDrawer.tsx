@@ -827,10 +827,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     enabled: needsProfessional || needsSchedulingLookups,
   });
 
-  // Derived: procedures available for selected professional
-  const proceduresForProfessional = selectedProfessionalId
+  // Derived: procedures available for selected/effective professional
+  const proceduresForProfessional = effectiveProfessionalId
     ? allProcedures.filter((p) =>
-        profProcLinks.some((link) => link.professional === selectedProfessionalId && link.procedure === p.id)
+        profProcLinks.some((link) => link.professional === effectiveProfessionalId && link.procedure === p.id)
       )
     : [];
 
@@ -849,15 +849,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   })();
 
   // Auto-resolve specialty when procedure changes
-  const autoSpecialtyId = selectedProcedureId
-    ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
+  const autoSpecialtyId = effectiveProcedureId
+    ? procSpecLinks.find((ps) => ps.procedure === effectiveProcedureId)?.specialty ?? null
     : null;
 
 
-  // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
-  const resolvedUnitProcId = selectedProcedureId
-    ? (unitProcLinks.find((up) => up.procedure === selectedProcedureId && up.unit_name?.toLowerCase() === booking?.unit_name?.toLowerCase())?.id
-       ?? unitProcLinks.find((up) => up.procedure === selectedProcedureId)?.id
+  // Auto-resolve unit-procedure ID (procedure_code) for the selected/effective procedure + unit
+  const resolvedUnitProcId = effectiveProcedureId
+    ? (unitProcLinks.find((up) => up.procedure === effectiveProcedureId && up.unit_name?.toLowerCase() === booking?.unit_name?.toLowerCase())?.id
+       ?? unitProcLinks.find((up) => up.procedure === effectiveProcedureId)?.id
        ?? null)
     : null;
 
