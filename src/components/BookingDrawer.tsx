@@ -1933,9 +1933,22 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.name ||
         user?.username ||
         "Operador";
-      const reschedHeader = `[${ts}] Reagendamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_RESCHEDULE`;
-      const reschedDetail = `[${ts}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${procedureName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
-      const updatedNotes = [existingNotesRaw, reschedHeader, reschedDetail].filter(Boolean).join("\n");
+      const manualEvent = {
+        type: "manual_reschedule",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: booking.id,
+        cancelled_br_id: targetId,
+        procedure_slug: procedureSlug || undefined,
+        procedure_name: procedureName || undefined,
+        professional_id: selectedProfessionalId ?? undefined,
+        professional_name: profName || undefined,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual",
+      };
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
