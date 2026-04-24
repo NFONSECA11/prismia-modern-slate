@@ -2145,9 +2145,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.username ||
         "Operador";
       const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
-      const cancelHeader = `[${ts}] Cancelamento manual via Dashboard por ${operatorName} | BR_TAG_MANUAL_CANCEL`;
-      const cancelDetail = `[${ts}] Cancelamento do agendamento #${targetId} solicitado por ${assignLeadName.trim() || "N/A"}`;
-      const updatedNotes = [existingNotesRaw, cancelHeader, cancelDetail].filter(Boolean).join("\n");
+      const manualEvent = {
+        type: "manual_cancel",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: booking.id,
+        cancelled_br_id: targetId,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Cancelamento manual",
+      };
+      const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
 
       try {
         await patchBooking(booking.id, {
