@@ -923,6 +923,68 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     },
   });
 
+  // ── Auto-preenchimento para BRs com ai_events handoff_schedule/reschedule/cancel ──
+  // Usa a BR detalhada quando disponível, porque a listagem pode vir resumida.
+  useEffect(() => {
+    const sourceBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
+    if (!sourceBooking) return;
+
+    const events = extractAiEvents(sourceBooking.notes);
+    const handoffEvents = events.filter((e) =>
+      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+    );
+    if (handoffEvents.length === 0) return;
+
+    const latest = handoffEvents[handoffEvents.length - 1];
+    const targetTab: IaOpType =
+      latest.type === "handoff_cancel"
+        ? "cancel"
+        : latest.type === "handoff_reschedule"
+          ? "reschedule"
+          : "schedule";
+    setIaOpType(targetTab);
+
+    const normalize = (value: string) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    const leadName = sourceBooking.lead_name ?? "";
+    if (leadName && normalize(leadName) !== "nao informado") {
+      setAssignLeadName(leadName);
+    }
+
+    const profName = (sourceBooking.professional_name ?? "").trim();
+    const profNameNormalized = normalize(profName);
+    const profValid = profName && !["nao informado", "none"].includes(profNameNormalized);
+    if (professionals.length > 0) {
+      let resolvedProfId: number | null = null;
+      if (sourceBooking.professional_id && professionals.some((p) => p.id === sourceBooking.professional_id)) {
+        resolvedProfId = sourceBooking.professional_id;
+      } else if (profValid) {
+        const matched =
+          professionals.find((p) => normalize(p.name) === profNameNormalized) ??
+          professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
+        if (matched) resolvedProfId = matched.id;
+      }
+      if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
+    }
+
+    if (allProcedures.length > 0) {
+      const procTarget = normalize(sourceBooking.procedure_name ?? "");
+      if (procTarget) {
+        const matchedProc =
+          allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
+          allProcedures.find((p) =>
+            normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
+          );
+        if (matchedProc) setSelectedProcedureId(matchedProc.id);
+      }
+    }
+  }, [booking, bookingDetailForBot, professionals, allProcedures]);
+
   const handleSendMessage = () => {
     const trimmed = messageText.trim();
     if (!trimmed || sendMsgMutation.isPending) return;
