@@ -2956,7 +2956,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     type="button"
                     onClick={() => rescheduleSuggestMut.mutate()}
-                    disabled={rescheduleSuggestMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim() || !selectedProfessionalId || !selectedProcedureId}
+                    disabled={rescheduleSuggestMut.isPending || !(assignLeadName || autofillLeadName).trim() || !cancelBookingIdField.trim() || !effectiveProfessionalId || !effectiveProcedureId}
                     className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
