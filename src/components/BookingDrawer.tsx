@@ -1387,13 +1387,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   const scheduleSuggestMut = useMutation({
     mutationFn: async () => {
       if (!booking) throw new Error("Sem agendamento aberto");
-      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+      const effLeadName = (assignLeadName || autofillLeadName).trim();
+      const effProcedureId = effectiveProcedureId;
+      const effProfessionalId = effectiveProfessionalId;
+      if (!effLeadName) throw new Error("Informe o nome do cliente");
       if (!scheduleReason.trim()) throw new Error("Informe o motivo");
-      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      if (!effProcedureId) throw new Error("Selecione o procedimento");
 
       setScheduleLog([]);
-      const profNameForLog = selectedProfessionalId
-        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? `#${selectedProfessionalId}`)
+      const profNameForLog = effProfessionalId
+        ? (professionals.find((p) => p.id === effProfessionalId)?.name ?? `#${effProfessionalId}`)
         : null;
       pushScheduleLog({
         label: "Buscando horários disponíveis…",
@@ -1414,11 +1417,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         user?.username ||
         "Operador";
 
-      const selectedProc = selectedProcedureId ? allProcedures.find((p) => p.id === selectedProcedureId) : undefined;
+      const selectedProc = effProcedureId ? allProcedures.find((p) => p.id === effProcedureId) : undefined;
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
-      const profName = selectedProfessionalId
-        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+      const profName = effProfessionalId
+        ? (professionals.find((p) => p.id === effProfessionalId)?.name ?? "")
         : "Sem preferência";
       // Monta evento ai_events e faz merge com bloco existente (preserva ai_handoff prévio).
       const manualEvent = {
@@ -1429,7 +1432,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         br_id: booking.id,
         procedure_slug: procedureSlug || undefined,
         procedure_name: procedureName || undefined,
-        professional_id: selectedProfessionalId ?? undefined,
+        professional_id: effProfessionalId ?? undefined,
         professional_name: profName || undefined,
         unit: booking.unit_name || undefined,
         policy: "manual_dashboard",
@@ -1438,7 +1441,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
       const procedureCode = procedureSlug || resolvedUnitProcId || "";
       console.log("[scheduleSuggestMut] PROCEDURE DEBUG:", {
-        selectedProcedureId,
+        effProcedureId,
         nameFromAPI: selectedProc?.name,
         slugFromAPI: selectedProc?.slug,
         resolvedUnitProcId,
@@ -1448,8 +1451,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         finalNameToSend: procedureName,
       });
       const unitName = booking.unit_name ?? "";
-      const selectedProfName = selectedProfessionalId
-        ? (professionals.find((p) => p.id === selectedProfessionalId)?.name ?? "")
+      const selectedProfName = effProfessionalId
+        ? (professionals.find((p) => p.id === effProfessionalId)?.name ?? "")
         : "";
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
@@ -1471,8 +1474,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       delete (cleanedVars as any).confidence;
 
       const patch1: Record<string, unknown> = {
-        lead_name: assignLeadName.trim(),
-        procedure: selectedProcedureId,
+        lead_name: effLeadName,
+        procedure: effProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
@@ -1482,8 +1485,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // Profissional é opcional: só envia se o usuário escolheu um.
       // Sem profissional → suggest_slots roda só com unidade + procedimento
       // e o cliente decide depois (slot carrega o profissional correspondente).
-      if (selectedProfessionalId) {
-        patch1.professional = selectedProfessionalId;
+      if (effProfessionalId) {
+        patch1.professional = effProfessionalId;
       }
       if (procedureCode) patch1.procedure_code = procedureCode;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
@@ -1536,10 +1539,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // Se há profissional escolhido → envia procedure + unit + professional.
       // Sem profissional → envia só procedure + unit (backend retorna slots de vários profissionais).
       const suggestPayload: Record<string, unknown> = {};
-      if (selectedProcedureId) suggestPayload.procedure = selectedProcedureId;
+      if (effProcedureId) suggestPayload.procedure = effProcedureId;
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
-      if (selectedProfessionalId) suggestPayload.professional = selectedProfessionalId;
+      if (effProfessionalId) suggestPayload.professional = effProfessionalId;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
       try {
@@ -1558,7 +1561,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         pushScheduleLog({
           label: "Sem disponibilidade de horários",
           status: "warning",
-          detail: selectedProfessionalId
+          detail: effProfessionalId
             ? "Não encontramos disponibilidade para esse profissional. Tente outro ou deixe sem preferência."
             : "Não encontramos disponibilidade no momento.",
         });
@@ -1604,20 +1607,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         )
       );
       const inferredProfessionalId =
-        selectedProfessionalId ??
+        effProfessionalId ??
         (slotProfIds.length === 1 ? (slotProfIds[0] as number) : null);
       const inferredProfessionalUnitId =
         slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
-        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        lead_name: effLeadName || detailAfterSuggest?.lead_name || booking.lead_name,
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
         procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
         unit_name: detailAfterSuggest?.unit_name || unitName,
         vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
       };
-      if (selectedProcedureId) patch2.procedure = selectedProcedureId;
+      if (effProcedureId) patch2.procedure = effProcedureId;
       if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
       if (procedureCode) patch2.procedure_code = procedureCode;
       if (profName) patch2.professional_name = profName;
