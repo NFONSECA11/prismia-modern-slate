@@ -2135,7 +2135,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const selectedProc = allProcedures.find((p) => p.id === effProcId);
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
-      const procedureCode = procedureSlug || resolvedUnitProcId || "";
+      const effResolvedUnitProcId =
+        unitProcLinks.find((up) => up.procedure === effProcId && up.unit_name?.toLowerCase() === booking.unit_name?.toLowerCase())?.id
+        ?? unitProcLinks.find((up) => up.procedure === effProcId)?.id
+        ?? resolvedUnitProcId;
+      const effResolvedSpecialty = selectedSpecialtyId ?? procSpecLinks.find((ps) => ps.procedure === effProcId)?.specialty ?? autoSpecialtyId;
+      const procedureCode = procedureSlug || effResolvedUnitProcId || "";
 
       // Detecta fluxo handoff_reschedule pela ação mais recente da IA.
       // Nesse caso, o campo de ID pode apontar para outra BR por legado do autofill,
@@ -2220,13 +2225,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         br_id: booking.id,
         procedure_slug: procedureSlug || undefined,
         procedure_name: procedureName || undefined,
-        professional_id: selectedProfessionalId ?? undefined,
+        professional_id: effProfId,
         professional_name: profName || undefined,
         unit: booking.unit_name || undefined,
         policy: isHandoffRescheduleFlow ? "handoff_reschedule_manual" : "manual_dashboard",
         reason: isHandoffRescheduleFlow
           ? "Reagendamento solicitado pela IA — bot reassumirá após sugestão de horários"
-          : (assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Reagendamento manual"),
+          : (effLeadName ? `Solicitado por ${effLeadName}` : "Reagendamento manual"),
       };
       if (!isHandoffRescheduleFlow) {
         manualEvent.cancelled_br_id = targetId;
@@ -2235,14 +2240,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       if (procedureName.trim()) rememberBookingProcedureNameOverride(booking.id, procedureName);
 
-      const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
-
-      // ── Fluxo handoff_reschedule: NÃO cancela BR antiga, mas segue o mesmo
-      // fluxo padrão (PATCH → assisted_slots_dashboard → suggest_slots → PATCH → auto_slots_bot).
       const patch1: Record<string, unknown> = {
-        lead_name: assignLeadName.trim(),
-        professional: selectedProfessionalId,
-        procedure: selectedProcedureId,
+        lead_name: effLeadName,
+        professional: effProfId,
+        procedure: effProcId,
         procedure_name: procedureName,
         unit_name: booking.unit_name ?? "",
         booking_mode: "assisted_slots_dashboard",
@@ -2250,7 +2251,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         notes: updatedNotes,
       };
       if (procedureCode) patch1.procedure_code = procedureCode;
-      if (resolvedSpecialty) patch1.specialty = resolvedSpecialty;
+      if (effResolvedSpecialty) patch1.specialty = effResolvedSpecialty;
 
       pushRescheduleLog({ label: "Preparando agendamento…", status: "info", detail: `Profissional: ${profName} · ${procedureName}` });
       try {
@@ -2269,8 +2270,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // 3) suggest_slots
       pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
       const suggestPayload: Record<string, unknown> = {
-        procedure: selectedProcedureId,
-        professional: selectedProfessionalId,
+        procedure: effProcId,
+        professional: effProfId,
       };
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
@@ -2313,19 +2314,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const inferredProfessionalUnitId = slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
 
       const patch2: Record<string, unknown> = {
-        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        lead_name: effLeadName || detailAfterSuggest?.lead_name || booking.lead_name,
         booking_mode: "auto_slots_bot",
         conversation_bot_mode: "on",
-        procedure: selectedProcedureId,
+        procedure: effProcId,
         procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
         unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
-        professional: selectedProfessionalId,
+        professional: effProfId,
         professional_name: profName,
         vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
       };
       if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
       if (procedureCode) patch2.procedure_code = procedureCode;
-      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
+      if (effResolvedSpecialty) patch2.specialty = effResolvedSpecialty;
       if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
 
       try {
