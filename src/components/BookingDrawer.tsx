@@ -2221,41 +2221,35 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
 
-      // ── Fluxo handoff_reschedule: apenas PATCH na BR limpando a data agendada.
+      // ── Fluxo handoff_reschedule: apenas PATCH na BR preservando a data agendada.
       // Mantém booking_mode atual, NÃO chama suggest_slots e NÃO força auto_slots_bot.
       if (isHandoffRescheduleFlow) {
-        const cleanedVarsForReschedule = { ...cleanedVars };
-        delete (cleanedVarsForReschedule as any).chosen_slot;
-
         const patchHandoff: Record<string, unknown> = {
           lead_name: assignLeadName.trim(),
           professional: selectedProfessionalId,
           procedure: selectedProcedureId,
           procedure_name: procedureName,
           unit_name: booking.unit_name ?? "",
-          vars_snapshot: cleanedVarsForReschedule,
+          vars_snapshot: cleanedVars,
           notes: updatedNotes,
-          scheduled_at: null,
-          chosen_slot: null,
-          chosen_slot_label: null,
         };
         if (procedureCode) patchHandoff.procedure_code = procedureCode;
         if (resolvedSpecialty) patchHandoff.specialty = resolvedSpecialty;
 
         pushRescheduleLog({
-          label: "Limpando data do agendamento…",
+          label: "Atualizando agendamento…",
           status: "info",
-          detail: `BR #${booking.id} ficará sem data marcada`,
+          detail: `BR #${booking.id} — IA seguirá conduzindo`,
         });
         try {
           await patchBooking(booking.id, patchHandoff);
         } catch (err: any) {
-          pushRescheduleLog({ label: "Falha ao limpar a data do agendamento", status: "error" });
+          pushRescheduleLog({ label: "Falha ao atualizar o agendamento", status: "error" });
           throw err;
         }
 
         pushRescheduleLog({
-          label: "Data do agendamento removida",
+          label: "Agendamento atualizado",
           status: "success",
           detail: "Modo de atendimento mantido — IA seguirá conduzindo.",
         });
@@ -2372,7 +2366,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
       const count = slots?.length ?? 0;
       if (isHandoffRescheduleFlow) {
-        toast.success("Data do agendamento removida — IA seguirá conduzindo.");
+        toast.success("Agendamento atualizado — IA seguirá conduzindo.");
       } else if (count === 0) {
         toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
         pushRescheduleLog({
@@ -2393,7 +2387,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
       setActionDone(
         isHandoffRescheduleFlow
-          ? "Data do agendamento removida!"
+          ? "Agendamento atualizado!"
           : `Agenda #${cancelledId} cancelada e bot reagendando!`
       );
       await refetchBookingDetailForBot();
