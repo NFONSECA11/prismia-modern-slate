@@ -827,16 +827,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     enabled: needsProfessional || needsSchedulingLookups,
   });
 
-  const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
-
-  const latestHandoffActionEvent = (() => {
-    const events = extractAiEvents(detailOrBooking?.notes);
-    const handoffEvents = events.filter((e) =>
-      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
-    );
-    return handoffEvents.length > 0 ? handoffEvents[handoffEvents.length - 1] : null;
-  })();
-
   // Derived: procedures available for selected professional
   const proceduresForProfessional = selectedProfessionalId
     ? allProcedures.filter((p) =>
@@ -857,62 +847,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     if (unitProcedureIds.size === 0) return allProcedures;
     return allProcedures.filter((p) => unitProcedureIds.has(p.id));
   })();
-
-  const normalizedBookingLeadName = (detailOrBooking?.lead_name ?? "").trim();
-  const normalizedEventLeadName = "";
-  const autofillLeadName = normalizedBookingLeadName || normalizedEventLeadName;
-
-  const autofillProfessionalId = (() => {
-    if (selectedProfessionalId) return selectedProfessionalId;
-    const profName = (detailOrBooking?.professional_name ?? latestHandoffActionEvent?.professional_name ?? "").trim();
-    const normalize = (value: string) =>
-      (value ?? "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-    const profNameNormalized = normalize(profName);
-    if (detailOrBooking?.professional_id && professionals.some((p) => p.id === detailOrBooking.professional_id)) {
-      return detailOrBooking.professional_id;
-    }
-    if (!profNameNormalized || ["nao informado", "none"].includes(profNameNormalized)) return null;
-    const matched =
-      professionals.find((p) => normalize(p.name) === profNameNormalized) ??
-      professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
-    return matched?.id ?? null;
-  })();
-
-  const autofillProcedureId = (() => {
-    if (selectedProcedureId) return selectedProcedureId;
-    const procName = detailOrBooking?.procedure_name ?? latestHandoffActionEvent?.procedure_name ?? "";
-    const normalize = (value: string) =>
-      (value ?? "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-    const procTarget = normalize(procName);
-    if (!procTarget) return null;
-    const matched =
-      allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
-      allProcedures.find((p) => normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? "")));
-    return matched?.id ?? null;
-  })();
-
-  const manageProfessionalOptions = autofillProfessionalId && !professionalsForUnit.some((p) => p.id === autofillProfessionalId)
-    ? [
-        ...professionalsForUnit,
-        ...professionals.filter((p) => p.id === autofillProfessionalId),
-      ]
-    : professionalsForUnit;
-
-  const baseManageProcedureOptions = selectedProfessionalId ? proceduresForProfessional : proceduresForUnit;
-  const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
-    ? [
-        ...baseManageProcedureOptions,
-        ...allProcedures.filter((p) => p.id === autofillProcedureId),
-      ]
-    : baseManageProcedureOptions;
 
   // Auto-resolve specialty when procedure changes
   const autoSpecialtyId = selectedProcedureId
