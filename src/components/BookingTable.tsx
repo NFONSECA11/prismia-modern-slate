@@ -348,7 +348,17 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
 
     const detectHandoffOrigin = (notes: string): boolean => {
       if (!notes) return false;
-      if (extractAiEvents(notes).some((e) => e.type === "ai_handoff" || e.type === "handoff")) return true;
+      if (
+        extractAiEvents(notes).some(
+          (e) =>
+            e.type === "ai_handoff" ||
+            e.type === "handoff" ||
+            e.type === "handoff_schedule" ||
+            e.type === "handoff_reschedule" ||
+            e.type === "handoff_cancel",
+        )
+      )
+        return true;
       return /BR_TAG_AI_HANDOFF/i.test(notes);
     };
 
