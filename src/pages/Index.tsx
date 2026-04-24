@@ -168,12 +168,18 @@ export default function Index() {
   const isLoading = searchId ? idLoading : listLoading;
 
   // Merge created_at + updated_at results (deduplicate by id)
+  // Ordena por max(created_at, updated_at) desc — BRs recém-atualizadas sobem ao topo.
   const bookings = useMemo(() => {
     if (searchId) return idResult ? [idResult] : [];
     const map = new Map<number, BookingRequest>();
     for (const b of (data?.results ?? [])) map.set(b.id, b);
     for (const b of (dataUpdated?.results ?? [])) map.set(b.id, b);
-    return Array.from(map.values());
+    const recencyTs = (b: BookingRequest) => {
+      const c = b.created_at ? Date.parse(b.created_at) : 0;
+      const u = b.updated_at ? Date.parse(b.updated_at) : 0;
+      return Math.max(isNaN(c) ? 0 : c, isNaN(u) ? 0 : u);
+    };
+    return Array.from(map.values()).sort((a, b) => recencyTs(b) - recencyTs(a));
   }, [searchId, idResult, data, dataUpdated]);
 
   // ── Auto-patch: awaiting_choice → auto_slots_bot (once per BR) ──────────
