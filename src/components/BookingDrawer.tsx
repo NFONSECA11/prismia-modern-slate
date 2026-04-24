@@ -283,6 +283,10 @@ const AI_EVENT_KIND_MAP: Record<string, NoteEntryKind> = {
   direct_cancel: "ai_cancel",
   ai_handoff: "ai_handoff",
   handoff: "ai_handoff",
+  // Eventos manuais (operador humano via Dashboard)
+  manual_schedule: "manual_schedule",
+  manual_reschedule: "reschedule",
+  manual_cancel: "cancel",
 };
 
 function formatEventTimestamp(ts?: string): string | undefined {
