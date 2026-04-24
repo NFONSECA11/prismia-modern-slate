@@ -2291,60 +2291,79 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
 
       // 3) suggest_slots
-...
-      const detailFinal = await fetchBookingRequestById(booking.id);
-      const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
-      return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
-    },
-    onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
-      const count = slots?.length ?? 0;
-      if (count === 0) {
-        toast.warning(
-          isHandoffRescheduleFlow
-            ? "Bot acionado, mas sem horários no momento."
-            : `Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`
-        );
+      pushRescheduleLog({ label: "Buscando horários disponíveis…", status: "info" });
+      const suggestPayload: Record<string, unknown> = {
+        procedure: selectedProcedureId,
+        professional: selectedProfessionalId,
+      };
+      if (procedureCode) suggestPayload.procedure_code = procedureCode;
+      if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+
+      let suggestResponse: any;
+      try {
+        suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
+      } catch (err: any) {
+        const status = err?.response?.status;
         pushRescheduleLog({
-          label: "Bot assumiu a conversa",
+          label: "Sem disponibilidade de horários",
           status: "warning",
-          detail: "Sem horários — o bot vai conduzir o cliente.",
+          detail: "Tente outro profissional ou procedimento.",
         });
-      } else {
-        toast.success(`Reagendamento iniciado — ${count} horário(s) serão oferecidos ao cliente.`);
-        pushRescheduleLog({
-          label: "Pronto! Bot assumiu o reagendamento",
-          status: "success",
-          detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
-        });
+        throw new Error(`suggest_slots ${status ?? "?"}`);
       }
-      if (!isHandoffRescheduleFlow) {
-        cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
-      }
-      setActionDone(
-        isHandoffRescheduleFlow
-          ? "Bot reassumiu o reagendamento!"
-          : `Agenda #${cancelledId} cancelada e bot reagendando!`
-      );
-      await refetchBookingDetailForBot();
-      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
-      setTimeout(() => {
-        onConfirmed();
-        onClose();
-        setActionDone(null);
-      }, 1800);
-    },
-    onError: (err: any) => {
-      console.error("[rescheduleSuggestMut] error:", err?.response?.status, err?.response?.data);
-      setRescheduleLog((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.status === "error" || last?.status === "warning") return prev;
-        const now = new Date();
-        const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-        return [...prev, { ts, label: "Falha no reagendamento", status: "error", detail: err?.message ?? "Erro inesperado" }];
+
+      const detailAfterSuggest = await fetchBookingRequestById(booking.id);
+      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      pushRescheduleLog({
+        label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
+        status: offerCount > 0 ? "success" : "warning",
+        detail: offerCount > 0
+          ? `${offerCount} ${offerCount === 1 ? "horário será oferecido" : "horários serão oferecidos"} ao cliente`
+          : "O bot vai conversar com o cliente para entender melhor",
       });
-    },
-  });
+
+      // 4) PATCH 2 → volta para auto_slots_bot (IA assume)
+      const offerSlotsRaw =
+        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        [];
+      const slotProfUnitIds = Array.from(
+        new Set(
+          offerSlotsRaw
+            .map((s: any) => Number(s?.professional_unit_id))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        )
+      );
+      const inferredProfessionalUnitId = slotProfUnitIds.length === 1 ? (slotProfUnitIds[0] as number) : null;
+
+      const patch2: Record<string, unknown> = {
+        lead_name: assignLeadName.trim() || detailAfterSuggest?.lead_name || booking.lead_name,
+        booking_mode: "auto_slots_bot",
+        conversation_bot_mode: "on",
+        procedure: selectedProcedureId,
+        procedure_name: procedureName || detailAfterSuggest?.procedure_name || booking.procedure_name,
+        unit_name: detailAfterSuggest?.unit_name || booking.unit_name || "",
+        professional: selectedProfessionalId,
+        professional_name: profName,
+        vars_snapshot: (detailAfterSuggest as any)?.vars_snapshot ?? cleanedVars,
+      };
+      if (detailAfterSuggest?.status) patch2.status = detailAfterSuggest.status;
+      if (procedureCode) patch2.procedure_code = procedureCode;
+      if (resolvedSpecialty) patch2.specialty = resolvedSpecialty;
+      if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
+
+      try {
+        await patchBooking(booking.id, patch2);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] PATCH 2 (auto) falhou, tentando handoffOff:", err);
+      }
+
+      // 5) Garante bot ON via handoffOff
+      try {
+        await handoffOff(booking.id);
+      } catch (err) {
+        console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
+      }
 
   // ── Cancelamento manual (IA Ativa › Cancelamento): cancela BR alvo + bot OFF + log no BR atual ──
   const iaCancelMut = useMutation({
