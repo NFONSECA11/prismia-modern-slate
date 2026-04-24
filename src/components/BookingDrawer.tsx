@@ -333,6 +333,8 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
   if (event.cancelled_br_id) meta.push({ label: "BR cancelada", value: `#${event.cancelled_br_id}` });
+  if (event.cancelled_from_br_id) meta.push({ label: "Cancelado por", value: `BR #${event.cancelled_from_br_id}` });
+  if (event.replaced_by_br_id) meta.push({ label: "Substituído por", value: `BR #${event.replaced_by_br_id}` });
   if (event.unit) meta.push({ label: "Unidade", value: event.unit });
   if (event.actor === "human" && event.actor_name) {
     meta.push({ label: "Operador", value: event.actor_name });
