@@ -109,7 +109,7 @@ export default function Settings() {
       });
       return Array.isArray(data) ? data : (data?.results ?? []);
     },
-    enabled: !!user,
+    enabled: units.length > 0,
   });
   const getSettingValue = (obj: any, paths: string[]) => {
     for (const path of paths) {
