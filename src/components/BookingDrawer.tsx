@@ -2398,16 +2398,90 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     },
   });
 
-  // ── Cancelamento manual (IA Ativa › Cancelamento): cancela BR alvo + bot OFF + log no BR atual ──
+  // ── Cancelamento manual (IA Ativa › Cancelamento) ──
+  // Dois fluxos:
+  //  • handoff_cancel: a BR ATUAL é o próprio pedido de cancelamento → registra justificativa
+  //    no JSON ai_events e cancela o próprio BR (booking.id).
+  //  • Demais casos: cancela a BR alvo informada no campo + log + bot OFF na BR atual.
   const iaCancelMut = useMutation({
     mutationFn: async () => {
       if (!booking) throw new Error("Sem agendamento aberto");
+      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
+
+      const isHandoffCancelFlow = latestHandoffActionEvent?.type === "handoff_cancel";
+
+      setRescheduleLog([]);
+
+      const now = new Date();
+      const operatorName =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+
+      // ─────────────────────────────────────────────────────────────────────
+      // Fluxo handoff_cancel: cancela o próprio BR após registrar justificativa
+      // ─────────────────────────────────────────────────────────────────────
+      if (isHandoffCancelFlow) {
+        const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
+        const manualEvent = {
+          type: "manual_cancel",
+          ts: now.toISOString(),
+          actor: "human",
+          actor_name: operatorName,
+          br_id: booking.id,
+          unit: booking.unit_name || undefined,
+          policy: "manual_dashboard",
+          reason: assignLeadName.trim()
+            ? `Cancelamento solicitado por ${assignLeadName.trim()}`
+            : "Cancelamento manual via Dashboard",
+        };
+        const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
+
+        // 1) Insere o JSON de justificativa nas notes
+        pushRescheduleLog({ label: "Registrando justificativa…", status: "info" });
+        try {
+          await patchBooking(booking.id, {
+            lead_name: assignLeadName.trim() || booking.lead_name,
+            notes: updatedNotes,
+          });
+          pushRescheduleLog({ label: "Justificativa registrada", status: "success" });
+        } catch (err: any) {
+          pushRescheduleLog({
+            label: "Falha ao registrar justificativa",
+            status: "warning",
+            detail: `Status ${err?.response?.status ?? "?"}`,
+          });
+        }
+
+        // 2) Cancela o próprio BR
+        pushRescheduleLog({ label: `Cancelando agendamento #${booking.id}…`, status: "info" });
+        try {
+          await cancelBooking(booking.id);
+          pushRescheduleLog({ label: `Agendamento #${booking.id} cancelado`, status: "success" });
+        } catch (err: any) {
+          const status = err?.response?.status;
+          if (status === 404) {
+            pushRescheduleLog({ label: `Agendamento #${booking.id} já estava cancelado`, status: "warning" });
+          } else {
+            pushRescheduleLog({
+              label: "Não foi possível cancelar o agendamento",
+              status: "error",
+              detail: `Status ${status ?? "?"}`,
+            });
+            throw err;
+          }
+        }
+
+        return { cancelledId: booking.id, selfCancel: true as const };
+      }
+
+      // ─────────────────────────────────────────────────────────────────────
+      // Fluxo padrão: cancela BR alvo informada no campo + bot OFF na atual
+      // ─────────────────────────────────────────────────────────────────────
       const targetIdRaw = cancelBookingIdField.trim();
       const targetId = Number(targetIdRaw);
       if (!targetId || Number.isNaN(targetId)) throw new Error("Informe o ID do agendamento a cancelar");
-      if (!assignLeadName.trim()) throw new Error("Informe o nome do cliente");
-
-      setRescheduleLog([]);
 
       // 1) Cancela o BR alvo
       pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
@@ -2436,13 +2510,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
 
       // 3) Loga no BR atual
-      const now = new Date();
-      const ts = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const operatorName =
-        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
-        user?.name ||
-        user?.username ||
-        "Operador";
       const existingNotesRaw = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string).trim();
       const manualEvent = {
         type: "manual_cancel",
@@ -2483,23 +2550,32 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         console.warn("[iaCancelMut] patch de log/status falhou:", err);
       }
 
-      return { cancelledId: targetId };
+      return { cancelledId: targetId, selfCancel: false as const };
     },
-    onSuccess: async ({ cancelledId }) => {
+    onSuccess: async ({ cancelledId, selfCancel }) => {
       toast.success(`Agendamento #${cancelledId} cancelado.`);
       pushRescheduleLog({
         label: "Cancelamento concluído",
         status: "success",
-        detail: `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
+        detail: selfCancel
+          ? `Agendamento #${cancelledId} cancelado com justificativa registrada.`
+          : `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
       });
-      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: true });
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: !selfCancel });
       setActionDone(`Agenda #${cancelledId} cancelada!`);
+
+      // Para self-cancel (handoff_cancel) o próprio BR foi cancelado → status "cancelled".
+      // Para o fluxo padrão, BR atual vira "failed" + handoff_manual + bot off.
+      const updatedFields = selfCancel
+        ? { status: "cancelled" as const }
+        : { status: "failed" as const, booking_mode: "handoff_manual" as const, conversation_bot_mode: "off" as const };
+
       queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
         if (!old?.results) return old;
         return {
           ...old,
           results: old.results.map((b: any) =>
-            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            b.id === booking!.id ? { ...b, ...updatedFields } : b
           ),
         };
       });
@@ -2508,15 +2584,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         return {
           ...old,
           results: old.results.map((b: any) =>
-            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            b.id === booking!.id ? { ...b, ...updatedFields } : b
           ),
         };
       });
       queryClient.setQueryData(["booking-request-detail-bot", booking!.id], (old: any) => ({
         ...(old ?? booking),
-        status: "failed",
-        booking_mode: "handoff_manual",
-        conversation_bot_mode: "off",
+        ...updatedFields,
       }));
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
@@ -3009,7 +3083,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                   <button
                     type="button"
                     onClick={() => iaCancelMut.mutate()}
-                    disabled={iaCancelMut.isPending || !assignLeadName.trim() || !cancelBookingIdField.trim()}
+                    disabled={
+                      iaCancelMut.isPending ||
+                      !assignLeadName.trim() ||
+                      (latestHandoffActionEvent?.type !== "handoff_cancel" && !cancelBookingIdField.trim())
+                    }
                     className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <XCircle className="h-3.5 w-3.5" />
