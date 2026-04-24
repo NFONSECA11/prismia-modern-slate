@@ -1474,8 +1474,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       delete (cleanedVars as any).confidence;
 
       const patch1: Record<string, unknown> = {
-        lead_name: assignLeadName.trim(),
-        procedure: selectedProcedureId,
+        lead_name: effLeadName,
+        procedure: effProcedureId,
         procedure_name: procedureName,
         unit_name: unitName,
         booking_mode: "assisted_slots_dashboard",
@@ -1485,8 +1485,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // Profissional é opcional: só envia se o usuário escolheu um.
       // Sem profissional → suggest_slots roda só com unidade + procedimento
       // e o cliente decide depois (slot carrega o profissional correspondente).
-      if (selectedProfessionalId) {
-        patch1.professional = selectedProfessionalId;
+      if (effProfessionalId) {
+        patch1.professional = effProfessionalId;
       }
       if (procedureCode) patch1.procedure_code = procedureCode;
       const resolvedSpecialty = selectedSpecialtyId ?? autoSpecialtyId;
