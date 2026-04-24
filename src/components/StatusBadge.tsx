@@ -116,6 +116,10 @@ export interface AiEvent {
   actor_name?: string;
   /** ID do agendamento cancelado/substituído (em manual_cancel/manual_reschedule) */
   cancelled_br_id?: number;
+  /** Em manual_cancel gravado na BR cancelada: BR que disparou o cancelamento */
+  cancelled_from_br_id?: number;
+  /** Em manual_cancel gravado na BR antiga durante reagendamento: nova BR */
+  replaced_by_br_id?: number;
 }
 
 /**

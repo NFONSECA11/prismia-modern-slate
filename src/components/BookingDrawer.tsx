@@ -333,6 +333,8 @@ function aiEventToEntry(event: AiEvent): NoteEntry {
 
   if (event.br_id) meta.push({ label: "BR", value: `#${event.br_id}` });
   if (event.cancelled_br_id) meta.push({ label: "BR cancelada", value: `#${event.cancelled_br_id}` });
+  if (event.cancelled_from_br_id) meta.push({ label: "Cancelado por", value: `BR #${event.cancelled_from_br_id}` });
+  if (event.replaced_by_br_id) meta.push({ label: "Substituído por", value: `BR #${event.replaced_by_br_id}` });
   if (event.unit) meta.push({ label: "Unidade", value: event.unit });
   if (event.actor === "human" && event.actor_name) {
     meta.push({ label: "Operador", value: event.actor_name });
@@ -439,6 +441,25 @@ function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<strin
   }
   const aiEventsBlock = JSON.stringify({ ai_events: mergedEvents });
   return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
+}
+
+/**
+ * Faz PATCH no `notes` de uma BR cancelada para registrar o evento `manual_cancel`,
+ * fazendo merge com qualquer bloco `ai_events` existente. Usado para rastreabilidade
+ * quando a BR é cancelada como efeito colateral de outra ação (ex.: reagendamento).
+ */
+async function logManualCancelOnTargetBR(
+  targetId: number,
+  manualEvent: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const fresh = await fetchBookingRequestById(targetId);
+    const currentNotes = (fresh?.notes ?? "").trim();
+    const updatedNotes = appendManualAiEvent(currentNotes, manualEvent);
+    await patchBooking(targetId, { notes: updatedNotes, allow_terminal_status_via_patch: true });
+  } catch (err) {
+    console.warn(`[logManualCancelOnTargetBR] falhou para BR #${targetId}:`, err);
+  }
 }
 
 function NotesLog({ notes }: { notes: string }) {
@@ -1910,6 +1931,24 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }
       }
 
+      // 1b) Loga manual_cancel na BR antiga para rastreabilidade
+      const operatorNameForLog =
+        (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+        user?.name ||
+        user?.username ||
+        "Operador";
+      await logManualCancelOnTargetBR(targetId, {
+        type: "manual_cancel",
+        ts: new Date().toISOString(),
+        actor: "human",
+        actor_name: operatorNameForLog,
+        br_id: targetId,
+        replaced_by_br_id: booking.id,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: `Cancelado para reagendamento (nova BR #${booking.id})`,
+      });
+
       // 2) PATCH no BR atual → modo "slots disparados pelo dashboard"
       const existingVars = ((booking as any)?.vars_snapshot ?? {}) as Record<string, unknown>;
       const cleanedVars = { ...existingVars };
@@ -2158,6 +2197,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         reason: assignLeadName.trim() ? `Solicitado por ${assignLeadName.trim()}` : "Cancelamento manual",
       };
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
+
+      // Loga manual_cancel também na BR cancelada (rastreabilidade do lado da vítima)
+      await logManualCancelOnTargetBR(targetId, {
+        type: "manual_cancel",
+        ts: now.toISOString(),
+        actor: "human",
+        actor_name: operatorName,
+        br_id: targetId,
+        cancelled_from_br_id: booking.id,
+        unit: booking.unit_name || undefined,
+        policy: "manual_dashboard",
+        reason: assignLeadName.trim() ? `Cancelado por ${operatorName} a pedido de ${assignLeadName.trim()}` : "Cancelamento manual via Dashboard",
+      });
 
       try {
         await patchBooking(booking.id, {
