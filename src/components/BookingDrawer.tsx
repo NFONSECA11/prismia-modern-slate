@@ -853,87 +853,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     ? procSpecLinks.find((ps) => ps.procedure === selectedProcedureId)?.specialty ?? null
     : null;
 
-  // ── Auto-preenchimento para BRs com ai_events handoff_schedule/reschedule/cancel ──
-  // Quando a BR vem com type "handoff_*", os dados (procedure, professional, lead) já estão
-  // no próprio booking — pré-seleciona a aba e preenche os campos do form de Gerenciar Agenda.
-  useEffect(() => {
-    if (!booking) return;
-    const events = extractAiEvents(booking.notes);
-    console.log("[handoff-autofill] BR", booking.id, "events:", events.map((e) => e.type), {
-      notes_preview: (booking.notes ?? "").slice(0, 200),
-      lead_name: booking.lead_name,
-      procedure_name: booking.procedure_name,
-      professional_name: booking.professional_name,
-      professional_id: booking.professional_id,
-      profsLoaded: professionals.length,
-      procsLoaded: allProcedures.length,
-    });
-    if (events.length === 0) return;
-
-    // Pega o último evento handoff_* (por ordem; ts pode estar ausente)
-    const handoffEvents = events.filter((e) =>
-      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
-    );
-    if (handoffEvents.length === 0) {
-      console.log("[handoff-autofill] no handoff_* event found, skipping");
-      return;
-    }
-    const latest = handoffEvents[handoffEvents.length - 1];
-    console.log("[handoff-autofill] latest handoff event:", latest);
-
-    const targetTab: IaOpType =
-      latest.type === "handoff_cancel"
-        ? "cancel"
-        : latest.type === "handoff_reschedule"
-          ? "reschedule"
-          : "schedule";
-    setIaOpType(targetTab);
-
-    const normalize = (value: string) =>
-      (value ?? "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-
-    // Nome do cliente — preenche se vier no booking (o reset já tenta isto, mas reforça)
-    const leadName = booking.lead_name ?? "";
-    if (leadName && leadName.toLowerCase() !== "não informado") {
-      setAssignLeadName(leadName);
-    }
-
-    // Profissional: tenta por ID; depois por nome (ignora "Nao informado"/"None")
-    const profName = (booking.professional_name ?? "").trim();
-    const profNameNormalized = normalize(profName);
-    const profValid = profName && !["nao informado", "não informado", "none"].includes(profNameNormalized);
-    if (professionals.length > 0) {
-      let resolvedProfId: number | null = null;
-      if (booking.professional_id && professionals.some((p) => p.id === booking.professional_id)) {
-        resolvedProfId = booking.professional_id;
-      } else if (profValid) {
-        const matched =
-          professionals.find((p) => normalize(p.name) === profNameNormalized) ??
-          professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
-        if (matched) resolvedProfId = matched.id;
-      }
-      console.log("[handoff-autofill] resolved profId:", resolvedProfId, "from", { profName, profId: booking.professional_id });
-      if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
-    }
-
-    // Procedimento: match por nome (acento/case-insensitive)
-    if (allProcedures.length > 0) {
-      const procTarget = normalize(booking.procedure_name ?? "");
-      if (procTarget) {
-        const matchedProc =
-          allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
-          allProcedures.find((p) =>
-            normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
-          );
-        console.log("[handoff-autofill] resolved procId:", matchedProc?.id, "from procedure_name:", booking.procedure_name);
-        if (matchedProc) setSelectedProcedureId(matchedProc.id);
-      }
-    }
-  }, [booking?.id, professionals.length, allProcedures.length]);
 
   // Auto-resolve unit-procedure ID (procedure_code) for the selected procedure + unit
   const resolvedUnitProcId = selectedProcedureId
@@ -1003,6 +922,121 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       queryClient.invalidateQueries({ queryKey: ["booking-messages", booking?.id] });
     },
   });
+
+  // ── Auto-preenchimento para BRs com ai_events handoff_schedule/reschedule/cancel ──
+  // Usa a BR detalhada quando disponível, porque a listagem pode vir resumida.
+  useEffect(() => {
+    const sourceBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
+    if (!sourceBooking) return;
+
+    const events = extractAiEvents(sourceBooking.notes);
+    const handoffEvents = events.filter((e) =>
+      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+    );
+    if (handoffEvents.length === 0) return;
+
+    const latest = handoffEvents[handoffEvents.length - 1];
+    const targetTab: IaOpType =
+      latest.type === "handoff_cancel"
+        ? "cancel"
+        : latest.type === "handoff_reschedule"
+          ? "reschedule"
+          : "schedule";
+    setIaOpType(targetTab);
+
+    const normalize = (value: string) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    const leadName = sourceBooking.lead_name ?? "";
+    if (leadName && normalize(leadName) !== "nao informado") {
+      setAssignLeadName(leadName);
+    }
+
+    const profName = (sourceBooking.professional_name ?? "").trim();
+    const profNameNormalized = normalize(profName);
+    const profValid = profName && !["nao informado", "none"].includes(profNameNormalized);
+    if (professionals.length > 0) {
+      let resolvedProfId: number | null = null;
+      if (sourceBooking.professional_id && professionals.some((p) => p.id === sourceBooking.professional_id)) {
+        resolvedProfId = sourceBooking.professional_id;
+      } else if (profValid) {
+        const matched =
+          professionals.find((p) => normalize(p.name) === profNameNormalized) ??
+          professionals.find((p) => normalize(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalize(p.name)));
+        if (matched) resolvedProfId = matched.id;
+      }
+      if (resolvedProfId) setSelectedProfessionalId(resolvedProfId);
+    }
+
+    if (allProcedures.length > 0) {
+      const procTarget = normalize(sourceBooking.procedure_name ?? "");
+      if (procTarget) {
+        const matchedProc =
+          allProcedures.find((p) => normalize(p.name ?? "") === procTarget) ??
+          allProcedures.find((p) =>
+            normalize(p.name ?? "").includes(procTarget) || procTarget.includes(normalize(p.name ?? ""))
+          );
+        if (matchedProc) setSelectedProcedureId(matchedProc.id);
+      }
+    }
+  }, [booking, bookingDetailForBot, professionals, allProcedures]);
+
+  const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
+  const latestHandoffActionEvent = (() => {
+    const events = extractAiEvents(detailOrBooking?.notes);
+    const handoffEvents = events.filter((e) =>
+      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+    );
+    return handoffEvents.length > 0 ? handoffEvents[handoffEvents.length - 1] : null;
+  })();
+
+  const autofillLeadName = (detailOrBooking?.lead_name ?? "").trim();
+
+  const normalizeAutofill = (value: string) =>
+    (value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const autofillProfessionalId = selectedProfessionalId ?? (() => {
+    const profName = (detailOrBooking?.professional_name ?? latestHandoffActionEvent?.professional_name ?? "").trim();
+    const profNameNormalized = normalizeAutofill(profName);
+    if (detailOrBooking?.professional_id && professionals.some((p) => p.id === detailOrBooking.professional_id)) {
+      return detailOrBooking.professional_id;
+    }
+    if (!profNameNormalized || ["nao informado", "none"].includes(profNameNormalized)) return null;
+    const matched =
+      professionals.find((p) => normalizeAutofill(p.name) === profNameNormalized) ??
+      professionals.find((p) => normalizeAutofill(p.name).includes(profNameNormalized) || profNameNormalized.includes(normalizeAutofill(p.name)));
+    return matched?.id ?? null;
+  })();
+
+  const autofillProcedureId = selectedProcedureId ?? (() => {
+    const procName = detailOrBooking?.procedure_name ?? latestHandoffActionEvent?.procedure_name ?? "";
+    const procTarget = normalizeAutofill(procName);
+    if (!procTarget) return null;
+    const matched =
+      allProcedures.find((p) => normalizeAutofill(p.name ?? "") === procTarget) ??
+      allProcedures.find((p) => normalizeAutofill(p.name ?? "").includes(procTarget) || procTarget.includes(normalizeAutofill(p.name ?? "")));
+    return matched?.id ?? null;
+  })();
+
+  const manageProfessionalOptions = autofillProfessionalId && !professionalsForUnit.some((p) => p.id === autofillProfessionalId)
+    ? [...professionalsForUnit, ...professionals.filter((p) => p.id === autofillProfessionalId)]
+    : professionalsForUnit;
+
+  const effectiveProfessionalId = selectedProfessionalId ?? autofillProfessionalId;
+  const effectiveProcedureId = selectedProcedureId ?? autofillProcedureId;
+
+  const baseManageProcedureOptions = effectiveProfessionalId ? proceduresForProfessional : proceduresForUnit;
+  const manageProcedureOptions = autofillProcedureId && !baseManageProcedureOptions.some((p) => p.id === autofillProcedureId)
+    ? [...baseManageProcedureOptions, ...allProcedures.filter((p) => p.id === autofillProcedureId)]
+    : baseManageProcedureOptions;
 
   const handleSendMessage = () => {
     const trimmed = messageText.trim();
@@ -2571,7 +2605,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return err?.message || "Erro ao comunicar com o servidor. Tente novamente.";
   })();
 
-  const manageProcedureOptions = selectedProfessionalId ? proceduresForProfessional : proceduresForUnit;
   const activeManageLog = iaOpType === "schedule" ? scheduleLog : rescheduleLog;
 
   if (drawerMode === "manage") {
@@ -2667,7 +2700,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente *</label>
                 <input
                   type="text"
-                  value={assignLeadName}
+                  value={assignLeadName || autofillLeadName}
                   onChange={(e) => setAssignLeadName(e.target.value)}
                   placeholder="Nome do cliente..."
                   className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
@@ -2729,7 +2762,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                         Profissional {iaOpType === "reschedule" || iaOpType === "cancel" ? "*" : ""}
                       </label>
                       <select
-                        value={selectedProfessionalId ?? ""}
+                        value={effectiveProfessionalId ?? ""}
                         onChange={(e) => {
                           const id = Number(e.target.value) || null;
                           setSelectedProfessionalId(id);
@@ -2740,7 +2773,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                         className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="">{iaOpType === "schedule" ? "Sem preferência" : "Selecionar..."}</option>
-                        {professionalsForUnit.map((p) => (
+                        {manageProfessionalOptions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
@@ -2749,15 +2782,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     <div>
                       <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Procedimento *</label>
                       <select
-                        value={selectedProcedureId ?? ""}
+                        value={effectiveProcedureId ?? ""}
                         onChange={(e) => {
                           setSelectedProcedureId(Number(e.target.value) || null);
                           setSelectedSpecialtyId(null);
                         }}
-                        disabled={iaOpType === "cancel" || (iaOpType === "reschedule" && !selectedProfessionalId)}
+                        disabled={iaOpType === "cancel" || (iaOpType === "reschedule" && !effectiveProfessionalId)}
                         className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !selectedProfessionalId ? "—" : "Selecionar..."}</option>
+                        <option value="">{(iaOpType === "reschedule" || iaOpType === "cancel") && !effectiveProfessionalId ? "—" : "Selecionar..."}</option>
                         {manageProcedureOptions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name ?? p.slug ?? `#${p.id}`}</option>
                         ))}
@@ -2787,19 +2820,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             <div className="flex items-center gap-2">
               {iaOpType === "schedule" && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => scheduleSuggestMut.mutate()}
-                    disabled={scheduleSuggestMut.isPending || !assignLeadName.trim() || !scheduleReason.trim() || !selectedProcedureId}
-                    className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
-                  >
-                    <Calendar className="h-3.5 w-3.5" />
-                    {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => checkSlotsMut.mutate()}
-                    disabled={checkSlotsMut.isPending || scheduleSuggestMut.isPending || !selectedProcedureId}
+                    <button
+                      type="button"
+                      onClick={() => scheduleSuggestMut.mutate()}
+                      disabled={scheduleSuggestMut.isPending || !(assignLeadName || autofillLeadName).trim() || !scheduleReason.trim() || !effectiveProcedureId}
+                      className="text-xs font-medium px-3 py-2 rounded-lg gradient-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => checkSlotsMut.mutate()}
+                      disabled={checkSlotsMut.isPending || scheduleSuggestMut.isPending || !effectiveProcedureId}
                     className="text-xs font-medium px-3 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1.5"
                   >
                     <Calendar className="h-3.5 w-3.5" />
