@@ -110,6 +110,10 @@ export interface AiEvent {
   unit?: string;
   old_dt?: string;
   new_dt?: string;
+  /** "ai" (default) ou "human" — diferencia ações da IA das ações manuais do operador */
+  actor?: "ai" | "human";
+  /** Nome do operador humano quando actor="human" */
+  actor_name?: string;
 }
 
 /**
