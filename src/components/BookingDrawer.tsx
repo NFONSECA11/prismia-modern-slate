@@ -2130,7 +2130,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (!selectedProcedureId && effProcId) setSelectedProcedureId(effProcId);
 
       setRescheduleLog([]);
-      const profName = professionals.find((p) => p.id === effProfId)?.name ?? `#${effProfId}`;
+      const profName = effProfId ? (professionals.find((p) => p.id === effProfId)?.name ?? `#${effProfId}`) : "";
       const selectedProc = allProcedures.find((p) => p.id === effProcId);
       const procedureName = selectedProc?.name ?? booking.procedure_name ?? "";
       const procedureSlug = selectedProc?.slug ?? "";
