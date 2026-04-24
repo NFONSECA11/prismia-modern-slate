@@ -2697,7 +2697,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Nome do Cliente *</label>
                 <input
                   type="text"
-                  value={assignLeadName}
+                  value={assignLeadName || autofillLeadName}
                   onChange={(e) => setAssignLeadName(e.target.value)}
                   placeholder="Nome do cliente..."
                   className="text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 w-full placeholder:text-muted-foreground"
