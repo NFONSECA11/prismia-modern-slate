@@ -1002,6 +1002,28 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     }
   }, [booking, bookingDetailForBot, professionals, allProcedures]);
 
+  // ── Sincroniza selectedClientBooking quando o ID da BR alvo é digitado/auto-preenchido ──
+  // Garante que a Data/Hora apareça mesmo sem clicar em "Buscar BRs" (ex: handoff_reschedule).
+  useEffect(() => {
+    const idStr = cancelBookingIdField.trim();
+    const idNum = Number(idStr);
+    if (!idStr || !Number.isFinite(idNum) || idNum <= 0) return;
+    if (selectedClientBooking?.id === idNum) return;
+    if (booking?.id === idNum) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const br = await fetchBookingRequestById(idNum);
+        if (!cancelled && br) setSelectedClientBooking(br);
+      } catch (err) {
+        console.warn("[BookingDrawer] failed to fetch target BR", idNum, err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cancelBookingIdField, selectedClientBooking?.id, booking?.id]);
+
   const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
   const latestHandoffActionEvent = (() => {
     const events = extractAiEvents(detailOrBooking?.notes);
