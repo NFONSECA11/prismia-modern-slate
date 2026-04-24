@@ -2552,21 +2552,30 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       return { cancelledId: targetId, selfCancel: false as const };
     },
-    onSuccess: async ({ cancelledId }) => {
+    onSuccess: async ({ cancelledId, selfCancel }) => {
       toast.success(`Agendamento #${cancelledId} cancelado.`);
       pushRescheduleLog({
         label: "Cancelamento concluído",
         status: "success",
-        detail: `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
+        detail: selfCancel
+          ? `Agendamento #${cancelledId} cancelado com justificativa registrada.`
+          : `Agendamento #${cancelledId} foi cancelado e o bot foi desligado.`,
       });
-      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: true });
+      cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: !selfCancel });
       setActionDone(`Agenda #${cancelledId} cancelada!`);
+
+      // Para self-cancel (handoff_cancel) o próprio BR foi cancelado → status "cancelled".
+      // Para o fluxo padrão, BR atual vira "failed" + handoff_manual + bot off.
+      const updatedFields = selfCancel
+        ? { status: "cancelled" as const }
+        : { status: "failed" as const, booking_mode: "handoff_manual" as const, conversation_bot_mode: "off" as const };
+
       queryClient.setQueriesData<any>({ queryKey: ["booking-requests"] }, (old: any) => {
         if (!old?.results) return old;
         return {
           ...old,
           results: old.results.map((b: any) =>
-            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            b.id === booking!.id ? { ...b, ...updatedFields } : b
           ),
         };
       });
@@ -2575,15 +2584,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         return {
           ...old,
           results: old.results.map((b: any) =>
-            b.id === booking!.id ? { ...b, status: "failed", booking_mode: "handoff_manual", conversation_bot_mode: "off" } : b
+            b.id === booking!.id ? { ...b, ...updatedFields } : b
           ),
         };
       });
       queryClient.setQueryData(["booking-request-detail-bot", booking!.id], (old: any) => ({
         ...(old ?? booking),
-        status: "failed",
-        booking_mode: "handoff_manual",
-        conversation_bot_mode: "off",
+        ...updatedFields,
       }));
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
