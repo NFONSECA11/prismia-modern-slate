@@ -49,6 +49,8 @@ import {
   PhoneOff,
   Hourglass,
   CalendarClock,
+  CalendarPlus,
+  CalendarX,
   Bot,
   MessageSquare,
   Send,
@@ -165,7 +167,7 @@ function DetailRow({
 // ── Notes Log Parser ─────────────────────────────────────────────────────────
 // Converte o texto bruto de notes em entradas estruturadas e legíveis.
 
-type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "ai_handoff" | "manual_schedule" | "reschedule" | "cancel" | "generic";
+type NoteEntryKind = "ai_schedule" | "ai_reschedule" | "ai_cancel" | "ai_handoff" | "handoff_schedule" | "handoff_reschedule" | "handoff_cancel" | "manual_schedule" | "reschedule" | "cancel" | "generic";
 
 interface NoteEntry {
   kind: NoteEntryKind;
@@ -199,6 +201,24 @@ const NOTE_KIND_STYLES: Record<NoteEntryKind, { card: string; chip: string; icon
     chip: "bg-status-handoff/20 text-status-handoff",
     icon: PhoneForwarded,
     title: "IA · Transferência para humano",
+  },
+  handoff_schedule: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarPlus,
+    title: "Handoff · Agendamento",
+  },
+  handoff_reschedule: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarClock,
+    title: "Handoff · Reagendamento",
+  },
+  handoff_cancel: {
+    card: "bg-surface-elevated/40 border-border/40",
+    chip: "bg-status-handoff/20 text-status-handoff",
+    icon: CalendarX,
+    title: "Handoff · Cancelamento",
   },
   manual_schedule: {
     card: "bg-surface-elevated/40 border-border/40",
@@ -283,6 +303,9 @@ const AI_EVENT_KIND_MAP: Record<string, NoteEntryKind> = {
   direct_cancel: "ai_cancel",
   ai_handoff: "ai_handoff",
   handoff: "ai_handoff",
+  handoff_schedule: "handoff_schedule",
+  handoff_reschedule: "handoff_reschedule",
+  handoff_cancel: "handoff_cancel",
   // Eventos manuais (operador humano via Dashboard)
   manual_schedule: "manual_schedule",
   manual_reschedule: "reschedule",
