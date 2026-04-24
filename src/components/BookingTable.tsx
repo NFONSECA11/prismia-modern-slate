@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookingRequest, BookingStatus, BookingMode } from "@/types/booking";
-import { StatusBadge, detectAiTag, type AiTag } from "@/components/StatusBadge";
+import { StatusBadge, detectAiTag, extractAiEvents, type AiTag } from "@/components/StatusBadge";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { BookingModeIcon } from "@/components/BookingModeIcon";
 import {
@@ -206,6 +206,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
   const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
+  // BRs que tiveram ai_handoff em algum momento (mesmo que booking_mode atual seja outro)
+  const [handoffOriginSet, setHandoffOriginSet] = useState<Set<number>>(new Set());
   // Last incoming-message timestamp (ms) per handoff booking, for unread detection
   const [lastInMsgMap, setLastInMsgMap] = useState<Record<number, number>>({});
 
@@ -344,7 +346,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
       return next;
     });
 
+    const detectHandoffOrigin = (notes: string): boolean => {
+      if (!notes) return false;
+      if (extractAiEvents(notes).some((e) => e.type === "ai_handoff" || e.type === "handoff")) return true;
+      return /BR_TAG_AI_HANDOFF/i.test(notes);
+    };
+
     const immediateResults: Record<number, AiTag> = {};
+    const immediateHandoff: number[] = [];
     const needsFetch: BookingRequest[] = [];
 
     for (const b of bookings) {
@@ -352,6 +361,9 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
       const listTag = detectAiTag(listNotes);
       if (listTag) {
         immediateResults[b.id] = listTag;
+      }
+      if (detectHandoffOrigin(listNotes)) {
+        immediateHandoff.push(b.id);
       }
 
       // Sempre busca detalhe em background para garantir a ÚLTIMA tag temporal
@@ -361,6 +373,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
 
     if (Object.keys(immediateResults).length > 0) {
       setAiTagMap((prev) => ({ ...prev, ...immediateResults }));
+    }
+    if (immediateHandoff.length > 0) {
+      setHandoffOriginSet((prev) => {
+        const next = new Set(prev);
+        immediateHandoff.forEach((id) => next.add(id));
+        return next;
+      });
     }
 
     if (needsFetch.length === 0) return;
@@ -380,20 +399,30 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
               const detail = await fetchBookingRequestById(b.id);
               const detailNotes = (detail as any).notes ?? "";
               const tag = detectAiTag(detailNotes);
-              return [b.id, tag] as const;
+              const isHandoff = detectHandoffOrigin(detailNotes);
+              return { id: b.id, tag, isHandoff } as const;
             } catch {
-              return [b.id, null] as const;
+              return { id: b.id, tag: null, isHandoff: false } as const;
             }
           })
         );
 
         if (cancelled || entries.length === 0) continue;
 
-        const foundEntries = entries.filter((entry): entry is readonly [number, AiTag] => Boolean(entry[1]));
-        if (foundEntries.length === 0) continue;
+        const tagEntries = entries.filter((e) => e.tag).map((e) => [e.id, e.tag] as const);
+        if (tagEntries.length > 0) {
+          const newTags = Object.fromEntries(tagEntries) as Record<number, AiTag>;
+          setAiTagMap((prev) => ({ ...prev, ...newTags }));
+        }
 
-        const newTags = Object.fromEntries(foundEntries) as Record<number, AiTag>;
-        setAiTagMap((prev) => ({ ...prev, ...newTags }));
+        const handoffIds = entries.filter((e) => e.isHandoff).map((e) => e.id);
+        if (handoffIds.length > 0) {
+          setHandoffOriginSet((prev) => {
+            const next = new Set(prev);
+            handoffIds.forEach((id) => next.add(id));
+            return next;
+          });
+        }
       }
     })();
 
@@ -527,7 +556,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
-                            {aiEnabled && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} />}
+                            {aiEnabled && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} forceHandoffOrigin={handoffOriginSet.has(booking.id)} />}
                             <span className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                               #{booking.id}
                             </span>
