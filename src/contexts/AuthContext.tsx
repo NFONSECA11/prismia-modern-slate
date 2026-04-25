@@ -115,7 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const data = await fetchDashboardBootstrap(state.activeUnit?.id);
         if (cancelled) return;
-        console.log("[Auth] dashboard bootstrap response:", JSON.stringify(data), "for unit:", state.activeUnit?.id);
         const enabled = !!data?.ai_settings?.ai_enabled;
         setState((prev) => (prev.aiEnabled === enabled ? prev : { ...prev, aiEnabled: enabled }));
       } catch (err) {
