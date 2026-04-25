@@ -93,6 +93,20 @@ const rawEnvApiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
 const envApiBaseUrl = rawEnvApiBaseUrl && !isTryCloudflareUrl(rawEnvApiBaseUrl) ? rawEnvApiBaseUrl : null;
 
+// Limpeza defensiva: remover qualquer chave antiga de baseURL que possa
+// conter um túnel trycloudflare obsoleto (sessões/builds anteriores).
+const LEGACY_API_BASE_URL_KEYS = ["api_base_url", "api_base_url_v1", "API_BASE_URL"];
+try {
+  for (const key of LEGACY_API_BASE_URL_KEYS) {
+    const v = localStorage.getItem(key);
+    if (v && /trycloudflare\.com/i.test(v)) {
+      localStorage.removeItem(key);
+    }
+  }
+} catch {
+  // ignore
+}
+
 function resolveApiBaseUrl(): string {
   const persistedApiBaseUrl = readPersistedApiBaseUrl();
 
