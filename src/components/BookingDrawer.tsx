@@ -949,9 +949,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       setScheduleReason((prev) => prev.trim() ? prev : "Política de Agendamento Manual");
     }
 
-    // Auto-preenchimento do ID da BR alvo para handoff_reschedule:
-    // o evento traz a BR antiga em br_id ou cancelled_br_id.
-    if (latest.type === "handoff_reschedule") {
+    // Auto-preenchimento do ID da BR alvo:
+    // - handoff_reschedule: usa a BR antiga (cancelled_br_id / referência).
+    // - handoff_cancel: a própria BR atual é a BR a ser cancelada.
+    if (latest.type === "handoff_reschedule" || latest.type === "handoff_cancel") {
       const parsePossibleId = (value: unknown): number | null => {
         if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
         if (typeof value === "string") {
@@ -960,14 +961,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }
         return null;
       };
+
       const targetBrId =
-        parsePossibleId((latest as any).cancelled_br_id) ||
-        parsePossibleId(varsSnapshot.target_br_id) ||
-        parsePossibleId(varsSnapshot.booking_reference) ||
-        parsePossibleId((latest as any).br_id) ||
-        null;
+        latest.type === "handoff_cancel"
+          ? sourceBooking.id
+          : parsePossibleId((latest as any).cancelled_br_id) ||
+            parsePossibleId(varsSnapshot.target_br_id) ||
+            parsePossibleId(varsSnapshot.booking_reference) ||
+            parsePossibleId((latest as any).br_id) ||
+            null;
+
       if (targetBrId) {
-        setCancelBookingIdField((prev) => (prev.trim() ? prev : String(targetBrId)));
+        setCancelBookingIdField(String(targetBrId));
       }
     }
 
