@@ -1025,7 +1025,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     if (!idStr || !Number.isFinite(idNum) || idNum <= 0) return;
 
     const currentSource = (bookingDetailForBot as BookingRequest | undefined) ?? booking ?? null;
-    const isCurrentBookingCancelFlow = latestHandoffActionEvent?.type === "handoff_cancel";
+    const latestCurrentHandoffEvent = (() => {
+      const events = extractAiEvents(currentSource?.notes);
+      const handoffEvents = events.filter((e) =>
+        e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+      );
+      return handoffEvents.length > 0 ? handoffEvents[handoffEvents.length - 1] : null;
+    })();
+    const isCurrentBookingCancelFlow = latestCurrentHandoffEvent?.type === "handoff_cancel";
 
     if (currentSource?.id === idNum || isCurrentBookingCancelFlow) {
       if (currentSource && selectedClientBooking?.id !== currentSource.id) {
@@ -1048,7 +1055,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return () => {
       cancelled = true;
     };
-  }, [cancelBookingIdField, selectedClientBooking?.id, booking, bookingDetailForBot, latestHandoffActionEvent?.type]);
+  }, [cancelBookingIdField, selectedClientBooking?.id, booking, bookingDetailForBot]);
 
   const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
   const latestHandoffActionEvent = (() => {
