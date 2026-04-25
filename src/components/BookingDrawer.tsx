@@ -1018,15 +1018,17 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   }, [booking, bookingDetailForBot, professionals, allProcedures]);
 
   // ── Sincroniza selectedClientBooking quando o ID da BR alvo é digitado/auto-preenchido ──
-  // Garante que a Data/Hora apareça mesmo sem clicar em "Buscar BRs" (ex: handoff_reschedule).
+  // Garante que a Data/Hora apareça mesmo sem clicar em "Buscar BRs".
   useEffect(() => {
     const idStr = cancelBookingIdField.trim();
     const idNum = Number(idStr);
     if (!idStr || !Number.isFinite(idNum) || idNum <= 0) return;
 
     const currentSource = (bookingDetailForBot as BookingRequest | undefined) ?? booking ?? null;
-    if (currentSource?.id === idNum) {
-      if (selectedClientBooking?.id !== idNum) {
+    const isCurrentBookingCancelFlow = latestHandoffActionEvent?.type === "handoff_cancel";
+
+    if (currentSource?.id === idNum || isCurrentBookingCancelFlow) {
+      if (currentSource && selectedClientBooking?.id !== currentSource.id) {
         setSelectedClientBooking(currentSource);
       }
       return;
@@ -1046,7 +1048,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     return () => {
       cancelled = true;
     };
-  }, [cancelBookingIdField, selectedClientBooking?.id, booking, bookingDetailForBot]);
+  }, [cancelBookingIdField, selectedClientBooking?.id, booking, bookingDetailForBot, latestHandoffActionEvent?.type]);
 
   const detailOrBooking = (bookingDetailForBot as BookingRequest | undefined) ?? booking;
   const latestHandoffActionEvent = (() => {
