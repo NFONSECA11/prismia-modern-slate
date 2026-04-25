@@ -137,7 +137,6 @@ function getApiBaseUrlCandidates(currentBaseUrl?: string | null): string[] {
 }
 
 let resolvedApiBaseUrl = resolveApiBaseUrl();
-console.log("[API] boot baseURL:", resolvedApiBaseUrl, "DEFAULT:", DEFAULT_API_BASE_URL);
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 const api = axios.create({
