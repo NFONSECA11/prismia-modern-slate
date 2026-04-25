@@ -173,6 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const setActiveUnit = (unit: Unit | null) => {
+    console.log(
+      "[Auth] setActiveUnit:",
+      unit?.id ?? "null",
+      unit?.name ?? "(Todas)",
+      "from:",
+      new Error().stack?.split("\n").slice(2, 5).join(" | ")
+    );
     setState((s) => ({ ...s, activeUnit: unit }));
   };
 
