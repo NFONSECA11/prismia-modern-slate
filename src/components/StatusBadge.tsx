@@ -204,10 +204,31 @@ export function detectAiTag(notes?: string | null): AiTag | null {
   if (!notes) return null;
 
   // 1) New format: ai_events JSON
-  const latestEvent = getLatestAiEvent(notes);
-  if (latestEvent) {
-    const mapped = AI_EVENT_TYPE_MAP[latestEvent.type];
-    if (mapped) return mapped;
+  // Prioridade: handoff_* (ação do operador via Dashboard a partir de handoff)
+  // tem precedência sobre direct_* (ação direta da IA). Quando ambos existem
+  // na mesma BR, o fluxo humano é o que interessa exibir na coluna Status.
+  const events = extractAiEvents(notes);
+  if (events.length > 0) {
+    const sorted = [...events].sort((a, b) => {
+      const ta = a.ts ? Date.parse(a.ts) : 0;
+      const tb = b.ts ? Date.parse(b.ts) : 0;
+      return ta - tb;
+    });
+
+    // Procura o último handoff_* primeiro
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const t = sorted[i].type;
+      if (t === "handoff_schedule" || t === "handoff_reschedule" || t === "handoff_cancel") {
+        const mapped = AI_EVENT_TYPE_MAP[t];
+        if (mapped) return mapped;
+      }
+    }
+
+    // Caso contrário, usa o último evento mapeável (direct_*, ai_handoff)
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const mapped = AI_EVENT_TYPE_MAP[sorted[i].type];
+      if (mapped) return mapped;
+    }
   }
 
   // 2) Legacy format: BR_TAG_AI_DIRECT_* regex
