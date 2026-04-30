@@ -551,36 +551,35 @@ function WeekView({
   }, [bookings]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto gcal-grid">
       <div style={{ minWidth: `${Math.max(professionals.length, 1) * days.length * 110 + 60}px` }}>
         {/* Header grouped by professional */}
-        <div className="sticky top-0 z-10 border-b border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
+        <div className="gcal-header sticky top-0 z-10 border-b">
           {professionals.length === 0 ? (
             <div className="flex">
-              <div className="w-[60px] flex-shrink-0 border-r border-border" />
-              <div className="flex-1 px-3 py-2 text-xs italic text-muted-foreground">Sem profissionais</div>
+              <div className="w-[60px] flex-shrink-0 gcal-time-col" />
+              <div className="flex-1 px-3 py-2 text-xs italic" style={{ color: "#70757a" }}>Sem profissionais</div>
             </div>
           ) : (
             <>
-              <div className="flex border-b border-border">
-                <div className="w-[60px] flex-shrink-0 border-r border-border" />
+              <div className="flex border-b" style={{ borderColor: "#e0e0e0" }}>
+                <div className="w-[60px] flex-shrink-0 gcal-time-col" />
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
-                    className={`flex-1 px-2 py-1.5 text-center`}
-                    style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}
+                    className={`gcal-header-prof flex-1 px-2 py-1.5 text-center ${pi > 0 ? "gcal-col-divider-strong" : ""}`}
                     title={`${prof.name} (${prof.specialty})`}
                   >
-                    <p className="text-[11px] font-semibold leading-tight truncate text-foreground">{prof.name}</p>
-                    <p className="text-[9px] truncate text-muted-foreground">{prof.specialty}</p>
+                    <p className="text-[11px] font-semibold leading-tight truncate">{prof.name}</p>
+                    <p className="gcal-prof-spec text-[9px] truncate">{prof.specialty}</p>
                   </div>
                 ))}
               </div>
 
               <div className="flex">
-                <div className="w-[60px] flex-shrink-0 border-r border-border" />
+                <div className="w-[60px] flex-shrink-0 gcal-time-col" />
                 {professionals.map((prof, pi) => (
-                  <div key={`days_${prof.id}`} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
+                  <div key={`days_${prof.id}`} className={`flex-1 flex ${pi > 0 ? "gcal-col-divider-strong" : ""}`}>
                     {days.map((day, di) => {
                       const today = isToday(day);
                       const dateKey = format(day, "yyyy-MM-dd");
@@ -588,28 +587,19 @@ function WeekView({
                       return (
                         <div
                           key={`${prof.id}_${dateKey}`}
-                          className={`flex-1 px-2 py-2 text-center ${today && !holiday ? "bg-primary/10" : ""}`}
-                          style={{
-                            borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined,
-                            ...(holiday ? { background: "hsl(var(--holiday-bg))" } : {}),
-                          }}
+                          className={`flex-1 px-2 py-2 text-center ${di > 0 ? "gcal-col-divider" : ""}`}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-wider ${holiday ? "text-[hsl(var(--holiday-text))]" : today ? "text-primary" : "text-muted-foreground"}`}
-                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
-                          >
+                          <p className="gcal-day-name">
                             {format(day, "EEE", { locale: ptBR })}
                           </p>
-                          <p className={`text-sm font-bold leading-tight ${holiday ? "" : today ? "text-primary" : "text-foreground"}`}
-                             style={holiday ? { color: "hsl(var(--holiday-text))" } : undefined}
-                          >
-                            {format(day, "dd")}
+                          <p className="leading-tight mt-1">
+                            <span className={`gcal-day-num ${holiday ? "is-holiday" : today ? "is-today" : ""}`}>
+                              {format(day, "dd")}
+                            </span>
                           </p>
                           {holiday && (
                             <div className="mt-1 leading-tight" title={holiday.local_name}>
-                              <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: "hsl(var(--holiday-text))" }}>
-                                Feriado
-                              </p>
-                              <p className="text-[10px] font-medium truncate" style={{ color: "hsl(var(--holiday-text))" }}>
+                              <p className="gcal-day-holiday-label text-[10px] font-medium truncate">
                                 {holiday.local_name}
                               </p>
                             </div>
@@ -629,38 +619,42 @@ function WeekView({
           {currentTimeTop !== null && days.some((d) => isToday(d)) && currentTimeTop >= 0 && (
             <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
               <div className="w-[60px] flex-shrink-0 pr-2 text-right">
-                <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
+                <span className="gcal-now-label text-[10px]">{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-px flex-1 bg-primary/70 relative">
-                <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
+              <div className="gcal-now-line flex-1 relative">
+                <div className="gcal-now-dot absolute -left-1 -top-1" />
               </div>
             </div>
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
-                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="gcal-hour-row flex" style={{ height: `${CELL_HEIGHT}px` }}>
+              <div className="gcal-time-col w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5">
+                <span className="gcal-time-label">{String(hour).padStart(2, "0")}:00</span>
               </div>
 
               {professionals.length === 0 ? (
                 <div className="flex-1" />
               ) : (
                 professionals.map((prof, pi) => (
-                  <div key={prof.id} className="flex-1 flex" style={{ borderLeft: pi > 0 ? "1px solid hsl(var(--border))" : undefined }}>
+                  <div key={prof.id} className={`flex-1 flex ${pi > 0 ? "gcal-col-divider-strong" : ""}`}>
                     {days.map((day, di) => {
                       const dateKey = format(day, "yyyy-MM-dd");
                       const today = isToday(day);
                       const holiday = holidayMap.get(dateKey);
+                      const isWeekend = getDay(day) === 0 || getDay(day) === 6;
+                      const dayOff = Boolean(holiday) || isWeekend;
                       const bookingKey = `${prof.id}_${dateKey}`;
                       const cellBookings = (byProfDay[bookingKey] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
 
                       return (
-                        <div key={bookingKey} className={`flex-1 relative ${today && !holiday ? "bg-primary/[0.03]" : ""}`} style={{
-                          borderLeft: di > 0 ? "1px solid hsl(var(--border-subtle))" : undefined,
-                          ...(holiday ? { background: "hsl(var(--holiday-bg) / 0.5)" } : {}),
-                        }}>
-                          <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
+                        <div
+                          key={bookingKey}
+                          className={`flex-1 relative ${di > 0 ? "gcal-col-divider" : ""} ${dayOff ? "gcal-off-col" : today ? "gcal-today-col" : ""}`}
+                        >
+                          {!dayOff && (
+                            <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
+                          )}
                           {cellBookings.map((booking) => {
                             const dt = getSlotDateTime(booking)!;
                             return (
