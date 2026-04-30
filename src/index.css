@@ -571,6 +571,150 @@
   }
 }
 
+/* ══════ GOOGLE-CALENDAR-LIKE AGENDA GRID (always light) ══════ */
+/* Scoped to .gcal-grid — keeps the surrounding dashboard theme intact. */
+.gcal-grid {
+  background: #ffffff !important;
+  color: #3c4043;
+  border-top: 1px solid #e0e0e0;
+}
+.gcal-grid .gcal-time-col {
+  background: #ffffff !important;
+  border-right: 1px solid #e0e0e0 !important;
+  color: #70757a !important;
+}
+.gcal-grid .gcal-time-label {
+  color: #70757a !important;
+  font-size: 11px !important;
+  font-family: "Roboto", "Inter", system-ui, sans-serif;
+}
+.gcal-grid .gcal-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+.gcal-grid .gcal-header-prof {
+  background: #ffffff !important;
+  border-color: #e0e0e0 !important;
+}
+.gcal-grid .gcal-header-prof p {
+  color: #3c4043 !important;
+}
+.gcal-grid .gcal-header-prof p.gcal-prof-spec {
+  color: #70757a !important;
+}
+.gcal-grid .gcal-day-name {
+  color: #70757a !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+.gcal-grid .gcal-day-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #3c4043 !important;
+  border-radius: 9999px;
+  line-height: 1;
+}
+.gcal-grid .gcal-day-num.is-today {
+  background: #1a73e8 !important;
+  color: #ffffff !important;
+}
+.gcal-grid .gcal-day-num.is-holiday {
+  background: #e53935 !important;
+  color: #ffffff !important;
+}
+.gcal-grid .gcal-day-holiday-label {
+  color: #e53935 !important;
+  font-weight: 600;
+}
+/* Hour rows */
+.gcal-grid .gcal-hour-row {
+  border-bottom: 1px solid #f1f3f4 !important;
+  position: relative;
+}
+/* Half-hour dashed line */
+.gcal-grid .gcal-hour-row::after {
+  content: "";
+  position: absolute;
+  left: 60px;
+  right: 0;
+  top: 50%;
+  border-top: 1px dashed #f1f3f4;
+  opacity: 0.4;
+  pointer-events: none;
+}
+/* Day / professional column dividers */
+.gcal-grid .gcal-col-divider {
+  border-left: 1px solid #f1f3f4 !important;
+}
+.gcal-grid .gcal-col-divider-strong {
+  border-left: 1px solid #e0e0e0 !important;
+}
+/* Off-hours / weekend / holiday columns: subtle diagonal stripes */
+.gcal-grid .gcal-off-col {
+  background-color: #fafafa !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0,
+    transparent 6px,
+    #f1f3f4 6px,
+    #f1f3f4 7px
+  ) !important;
+}
+/* Today column subtle tint */
+.gcal-grid .gcal-today-col {
+  background-color: #e8f0fe !important;
+  background-image: linear-gradient(180deg, rgba(232, 240, 254, 0.55), rgba(232, 240, 254, 0.25)) !important;
+}
+/* Current time line */
+.gcal-grid .gcal-now-line {
+  background: #e53935 !important;
+  height: 2px !important;
+}
+.gcal-grid .gcal-now-dot {
+  width: 10px !important;
+  height: 10px !important;
+  background: #e53935 !important;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+.gcal-grid .gcal-now-label {
+  color: #e53935 !important;
+  font-weight: 700;
+}
+/* Appointment cards: 5 rotating palettes */
+.gcal-card {
+  border-radius: 6px;
+  padding: 4px 6px 4px 8px;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+  border-left-width: 3px;
+  border-left-style: solid;
+  transition: filter 120ms ease, transform 120ms ease;
+}
+.gcal-card:hover { filter: brightness(0.97); }
+.gcal-card .gcal-card-name {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: inherit;
+}
+.gcal-card .gcal-card-meta {
+  font-size: 11px;
+  line-height: 1.15;
+  opacity: 0.85;
+}
+.gcal-card.gcal-c-blue   { background: #e8f0fe; border-left-color: #4285f4; color: #1a56db; }
+.gcal-card.gcal-c-green  { background: #e6f4ea; border-left-color: #34a853; color: #1e7e34; }
+.gcal-card.gcal-c-yellow { background: #fce8b2; border-left-color: #fbbc04; color: #7a4f00; }
+.gcal-card.gcal-c-red    { background: #fce4ec; border-left-color: #ea4335; color: #b71c1c; }
+.gcal-card.gcal-c-purple { background: #ede7f6; border-left-color: #7c4dff; color: #4527a0; }
+
 /* ══════ PRINT STYLES ══════ */
 @media print {
   /* Remove ALL backgrounds, shadows, colors from everything */
