@@ -289,6 +289,17 @@ function useCurrentTimeTop(startHour: number) {
 }
 
 // ── Shared booking event card ──────────────────────────────────────────────
+const GCAL_CARD_PALETTES = ["gcal-c-blue", "gcal-c-green", "gcal-c-yellow", "gcal-c-red", "gcal-c-purple"] as const;
+
+function pickGcalPalette(booking: BookingRequest): string {
+  // Stable color per booking id so the same appointment keeps its color across renders.
+  const raw = String(booking.id ?? booking.lead_name ?? "0");
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) hash = (hash * 31 + raw.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % GCAL_CARD_PALETTES.length;
+  return GCAL_CARD_PALETTES[idx];
+}
+
 function AppointmentCard({
   booking,
   topOffset,
@@ -315,30 +326,26 @@ function AppointmentCard({
       )
   );
 
+  const palette = pickGcalPalette(booking);
+
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1 right-1 rounded-lg text-left transition-all hover:brightness-105 hover:z-10 hover:scale-[1.01] z-10 ${isPast ? "opacity-50" : ""}`}
+      className={`gcal-card ${palette} absolute left-1 right-1 text-left transition-all hover:z-10 z-10 ${isPast ? "opacity-60" : ""}`}
       style={{
         top: `${topOffset + 2}px`,
         minHeight: compact ? "40px" : "48px",
-        background: "hsl(var(--appointment-bg))",
-        color: "hsl(var(--appointment-text))",
-        borderLeft: "3px solid hsl(var(--status-confirmed))",
-        padding: "6px 8px",
-        boxShadow: "0 1px 3px hsl(var(--background) / 0.15)",
       }}
     >
-      <span className="block text-[11px] font-bold truncate leading-tight">
+      <span className="gcal-card-name block truncate">
         {booking.lead_name}
       </span>
-      <div className="mt-0.5 flex items-center gap-2 text-[10px] leading-tight" style={{ color: "hsl(var(--muted-foreground))" }}>
+      <div className="gcal-card-meta mt-0.5 flex items-center gap-2">
         <span className="flex items-center gap-0.5">
           <Clock className="h-2.5 w-2.5 flex-shrink-0" />
           {String(dt.hour).padStart(2, "0")}:{String(dt.minute).padStart(2, "0")}
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: "hsl(var(--status-confirmed))" }} />
           #{booking.id}
         </span>
         {hasSentConfirmation && booking.confirmation && (
