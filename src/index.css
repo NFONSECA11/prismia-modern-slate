@@ -707,6 +707,43 @@
 .gcal-card.gcal-c-red    { background: #fbd0d9; border-left-color: #c62828; color: #8b0d18; }
 .gcal-card.gcal-c-purple { background: #ddd0f5; border-left-color: #5e35b1; color: #311b92; }
 
+/* ══════ GOOGLE-CALENDAR-LIKE BOOKING DETAIL MODAL ══════ */
+.gcal-modal { color: #202124; }
+.gcal-modal h1, .gcal-modal h2, .gcal-modal h3, .gcal-modal h4 { color: #202124 !important; }
+.gcal-modal label { color: #5f6368 !important; }
+.gcal-modal p { color: #3c4043; }
+.gcal-modal .text-foreground { color: #202124 !important; }
+.gcal-modal .text-muted-foreground { color: #5f6368 !important; }
+.gcal-modal .border-border,
+.gcal-modal [class*="border-border"] { border-color: #e0e0e0 !important; }
+.gcal-modal .surface-elevated,
+.gcal-modal [class*="bg-surface"] { background: #f8f9fa !important; }
+.gcal-modal input,
+.gcal-modal select,
+.gcal-modal textarea {
+  background: #ffffff !important;
+  color: #202124 !important;
+  border-color: #dadce0 !important;
+}
+.gcal-modal input::placeholder,
+.gcal-modal textarea::placeholder { color: #9aa0a6 !important; }
+.gcal-modal input:focus,
+.gcal-modal select:focus,
+.gcal-modal textarea:focus {
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 1px #1a73e8 !important;
+  outline: none !important;
+}
+.gcal-modal .gradient-primary,
+.gcal-modal [class*="gradient-primary"] {
+  background: #1a73e8 !important;
+  background-image: none !important;
+}
+.gcal-modal .text-primary { color: #1a73e8 !important; }
+.gcal-modal .text-primary-foreground { color: #ffffff !important; }
+.gcal-modal .bg-primary\/10 { background: #e8f0fe !important; }
+.gcal-modal [class*="border-primary"] { border-color: #1a73e8 !important; }
+
 /* ══════ PRINT STYLES ══════ */
 @media print {
   /* Remove ALL backgrounds, shadows, colors from everything */

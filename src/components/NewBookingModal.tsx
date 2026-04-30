@@ -243,8 +243,8 @@ function ModalBody({
 
       {/* Modal */}
       <div
-        className="fixed z-[121] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg border border-border animate-fade-in flex flex-col"
-        style={{ background: "hsl(var(--surface-raised))", maxHeight: "90vh" }}
+        className="gcal-modal fixed z-[121] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg animate-fade-in flex flex-col"
+        style={{ background: "#ffffff", border: "1px solid #e0e0e0", maxHeight: "90vh" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border surface-elevated rounded-t-2xl flex-shrink-0">
