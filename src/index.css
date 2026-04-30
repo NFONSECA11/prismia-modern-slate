@@ -690,20 +690,22 @@
 .gcal-card:hover { filter: brightness(0.97); }
 .gcal-card .gcal-card-name {
   font-size: 12px;
-  font-weight: 500;
-  line-height: 1.15;
+  font-weight: 700;
+  line-height: 1.2;
   color: inherit;
+  letter-spacing: 0.01em;
 }
 .gcal-card .gcal-card-meta {
   font-size: 11px;
-  line-height: 1.15;
-  opacity: 0.85;
+  line-height: 1.2;
+  font-weight: 600;
+  opacity: 1;
 }
-.gcal-card.gcal-c-blue   { background: #e8f0fe; border-left-color: #4285f4; color: #1a56db; }
-.gcal-card.gcal-c-green  { background: #e6f4ea; border-left-color: #34a853; color: #1e7e34; }
-.gcal-card.gcal-c-yellow { background: #fce8b2; border-left-color: #fbbc04; color: #7a4f00; }
-.gcal-card.gcal-c-red    { background: #fce4ec; border-left-color: #ea4335; color: #b71c1c; }
-.gcal-card.gcal-c-purple { background: #ede7f6; border-left-color: #7c4dff; color: #4527a0; }
+.gcal-card.gcal-c-blue   { background: #d6e4fd; border-left-color: #1a56db; color: #0b3da8; }
+.gcal-card.gcal-c-green  { background: #d4ecdb; border-left-color: #1e7e34; color: #0f5223; }
+.gcal-card.gcal-c-yellow { background: #fbe09a; border-left-color: #c98b00; color: #5a3a00; }
+.gcal-card.gcal-c-red    { background: #fbd0d9; border-left-color: #c62828; color: #8b0d18; }
+.gcal-card.gcal-c-purple { background: #ddd0f5; border-left-color: #5e35b1; color: #311b92; }
 
 /* ══════ PRINT STYLES ══════ */
 @media print {
