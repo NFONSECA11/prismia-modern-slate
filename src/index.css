@@ -603,11 +603,11 @@
   color: #70757a !important;
 }
 .gcal-grid .gcal-day-name {
-  color: #70757a !important;
+  color: #3c4043 !important;
   font-size: 11px !important;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-weight: 500;
+  font-weight: 700;
 }
 .gcal-grid .gcal-day-num {
   display: inline-flex;
@@ -616,8 +616,8 @@
   width: 28px;
   height: 28px;
   font-size: 20px;
-  font-weight: 400;
-  color: #3c4043 !important;
+  font-weight: 600;
+  color: #202124 !important;
   border-radius: 9999px;
   line-height: 1;
 }
