@@ -945,8 +945,8 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
       <div
         ref={printAreaRef}
         id={showUnitHeader ? undefined : "agenda-print-area"}
-        className="agenda-print-area rounded-xl border border-border/60 shadow-md flex flex-col overflow-hidden w-full"
-        style={{ maxHeight: showUnitHeader ? undefined : "calc(100vh - 80px)", background: "hsl(var(--surface))" }}
+        className="agenda-print-area shadow-md flex flex-col overflow-hidden w-full"
+        style={{ maxHeight: showUnitHeader ? undefined : "calc(100vh - 80px)", background: "#ffffff", border: "1px solid #e0e0e0", borderRadius: "12px" }}
       >
         {/* Print-only header */}
         <div className="hidden print:block px-4 pt-4 pb-2 border-b border-border">
