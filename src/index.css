@@ -635,7 +635,7 @@
 }
 /* Hour rows */
 .gcal-grid .gcal-hour-row {
-  border-bottom: 1px solid #f1f3f4 !important;
+  border-bottom: 1px solid #c8ccd1 !important;
   position: relative;
 }
 /* Half-hour dashed line */
@@ -645,16 +645,16 @@
   left: 60px;
   right: 0;
   top: 50%;
-  border-top: 1px dashed #f1f3f4;
-  opacity: 0.4;
+  border-top: 1px dashed #b8bcc2;
+  opacity: 0.85;
   pointer-events: none;
 }
 /* Day / professional column dividers */
 .gcal-grid .gcal-col-divider {
-  border-left: 1px solid #f1f3f4 !important;
+  border-left: 1px solid #c8ccd1 !important;
 }
 .gcal-grid .gcal-col-divider-strong {
-  border-left: 1px solid #e0e0e0 !important;
+  border-left: 1px solid #9aa0a6 !important;
 }
 /* Off-hours / weekend / holiday columns: subtle diagonal stripes */
 .gcal-grid .gcal-off-col {
