@@ -433,22 +433,34 @@ function DayView({
 
   const holiday = holidayMap.get(dateKey);
 
+  const today = isToday(day);
+  const isWeekend = getDay(day) === 0 || getDay(day) === 6;
+  const dayOff = Boolean(holiday) || isWeekend;
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto gcal-grid">
       {holiday && (
-        <div className="px-4 py-2 text-xs font-semibold flex items-center gap-2" style={{ background: "hsl(var(--holiday-bg))", color: "hsl(var(--holiday-text))", borderBottom: "1px solid hsl(var(--holiday-border))" }}>
+        <div className="px-4 py-2 text-xs font-semibold flex items-center gap-2 gcal-day-holiday-label" style={{ background: "#fdecea", borderBottom: "1px solid #f5c6c2" }}>
           <span>🎉</span>
           <span>FERIADO: {holiday.local_name}</span>
         </div>
       )}
       <div className="inline-flex flex-col min-w-full">
+        {/* Day banner (Google-style: weekday + day-circle) */}
+        <div className="gcal-header flex items-center justify-center gap-3 py-2 border-b">
+          <span className="gcal-day-name">{format(day, "EEE", { locale: ptBR })}</span>
+          <span className={`gcal-day-num ${holiday ? "is-holiday" : today ? "is-today" : ""}`}>
+            {format(day, "dd")}
+          </span>
+        </div>
+
         {/* Prof headers */}
-        <div className="flex border-b sticky top-0 z-10 border-border" style={{ background: "hsl(var(--table-header-bg))" }}>
-          <div className="w-[60px] flex-shrink-0 border-r border-border" />
+        <div className="gcal-header flex border-b sticky top-0 z-10">
+          <div className="w-[60px] flex-shrink-0 gcal-time-col" />
           {professionals.map((prof) => (
-            <div key={prof.id} className="w-[200px] border-r last:border-r-0 px-3 py-2.5 border-border">
-              <p className="text-xs font-semibold truncate text-foreground">{prof.name}</p>
-              <p className="text-[10px] truncate text-muted-foreground">{prof.specialty}</p>
+            <div key={prof.id} className="gcal-header-prof w-[200px] border-r last:border-r-0 px-3 py-2.5">
+              <p className="text-xs font-semibold truncate">{prof.name}</p>
+              <p className="gcal-prof-spec text-[10px] truncate">{prof.specialty}</p>
             </div>
           ))}
         </div>
@@ -458,24 +470,30 @@ function DayView({
           {showNow && currentTimeTop !== null && currentTimeTop >= 0 && (
             <div className="absolute left-0 right-0 z-20 flex -translate-y-1/2 items-center pointer-events-none" style={{ top: `${currentTimeTop}px` }}>
               <div className="w-[60px] flex-shrink-0 pr-2 text-right">
-                <span className="text-[9px] font-bold text-primary">{format(new Date(), "HH:mm")}</span>
+                <span className="gcal-now-label text-[10px]">{format(new Date(), "HH:mm")}</span>
               </div>
-              <div className="h-px flex-1 bg-primary/70 relative">
-                <div className="absolute -left-1 -top-[3px] h-2 w-2 rounded-full bg-primary" />
+              <div className="gcal-now-line flex-1 relative">
+                <div className="gcal-now-dot absolute -left-1 -top-1" />
               </div>
             </div>
           )}
 
           {HOURS.map((hour) => (
-            <div key={hour} className="flex border-b border-border" style={{ height: `${CELL_HEIGHT}px` }}>
-              <div className="w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-border">
-                <span className="text-[10px] font-mono text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <div key={hour} className="gcal-hour-row flex" style={{ height: `${CELL_HEIGHT}px` }}>
+              <div className="gcal-time-col w-[60px] flex-shrink-0 flex items-start justify-end pr-2 pt-1.5">
+                <span className="gcal-time-label">{String(hour).padStart(2, "0")}:00</span>
               </div>
-              {professionals.map((prof) => {
+              {professionals.map((prof, pi) => {
                 const cellBookings = (byProf[prof.id] ?? []).filter((b) => getSlotDateTime(b)?.hour === hour);
+                const colOff = dayOff || !isProfAvailable(availMap, prof.id, day, hour);
                 return (
-                  <div key={prof.id} className="w-[200px] last:border-r-0 relative border-r border-border">
-                    <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
+                  <div
+                    key={prof.id}
+                    className={`w-[200px] last:border-r-0 relative ${pi > 0 ? "gcal-col-divider" : ""} ${dayOff ? "gcal-off-col" : today ? "gcal-today-col" : ""}`}
+                  >
+                    {!dayOff && (
+                      <EmptyCell onClick={() => onCellClick({ date: day, hour, minute: 0, professional: prof })} available={isProfAvailable(availMap, prof.id, day, hour)} />
+                    )}
                     {cellBookings.map((booking) => {
                       const dt = getSlotDateTime(booking)!;
                       return (
