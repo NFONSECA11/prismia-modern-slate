@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-import DiagnosticCard from "@/components/DiagnosticCard";
+
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
