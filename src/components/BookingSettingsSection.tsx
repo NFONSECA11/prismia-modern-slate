@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -36,19 +36,14 @@ const MODE_OPTIONS: { value: string; label: string }[] = [
   { value: "auto_slots_bot", label: "Automático (Bot)" },
 ];
 
-export default function BookingSettingsSection() {
-  const { activeUnit } = useAuth();
+function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: string }) {
   const qc = useQueryClient();
-  const unitId = activeUnit?.id;
-
-  const endpoint = unitId ? `/api/booking/booking-settings/by-unit/${unitId}/` : "";
+  const endpoint = `/api/booking/booking-settings/by-unit/${unitId}/`;
 
   const { data, isLoading, isError } = useQuery<BookingSettings | null>({
     queryKey: ["booking-settings-by-unit", unitId],
-    enabled: !!unitId,
     queryFn: async () => {
       const { data } = await api.get(endpoint);
-      // Backend may return object or {results:[...]} — normalize.
       if (Array.isArray(data?.results)) {
         return data.results.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data.results[0] ?? null;
       }
@@ -96,7 +91,6 @@ export default function BookingSettingsSection() {
     mutationFn: async () => {
       await fetchCsrf();
       const payload = { ...form };
-      // Try PATCH first; on 405, fallback to PUT.
       try {
         const { data } = await api.patch(endpoint, payload);
         return data;
@@ -109,7 +103,7 @@ export default function BookingSettingsSection() {
       }
     },
     onSuccess: () => {
-      toast.success("Configurações salvas");
+      toast.success(`Configurações salvas (${unitName})`);
       qc.invalidateQueries({ queryKey: ["booking-settings-by-unit", unitId] });
       qc.invalidateQueries({ queryKey: ["booking-settings", unitId] });
       setDirty(false);
@@ -120,10 +114,182 @@ export default function BookingSettingsSection() {
     },
   });
 
-  const headerId = useMemo(() => "section-modo-atendimento", []);
+  return (
+    <div className="rounded-lg border border-border/60 p-3 space-y-4" style={{ background: "hsl(var(--surface-elevated))" }}>
+      <div className="flex items-center justify-between px-1 pb-2 border-b border-border/60">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-bold text-foreground">{unitName}</span>
+        </div>
+        <span className="text-[10px] text-muted-foreground font-mono">#{data?.id ?? "—"}</span>
+      </div>
+
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground px-1">Carregando…</p>
+      ) : isError ? (
+        <p className="text-xs text-destructive px-1">Erro ao carregar configurações.</p>
+      ) : (
+        <>
+          {/* Geral */}
+          <div className="space-y-3 pl-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Geral</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Modo padrão</span>
+                <select
+                  className="h-8 text-xs rounded-md border border-border bg-background text-foreground px-2"
+                  value={form.default_booking_mode ?? ""}
+                  onChange={(e) => update("default_booking_mode", e.target.value)}
+                >
+                  {MODE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Horizonte de agendamento (dias)</span>
+                <Input
+                  type="number"
+                  min={0}
+                  className="h-8 text-xs"
+                  value={form.booking_horizon_days ?? 0}
+                  onChange={(e) => update("booking_horizon_days", Number(e.target.value))}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 sm:col-span-2">
+                <span className="text-[11px] text-muted-foreground">UI de escolha (WhatsApp)</span>
+                <Input
+                  className="h-8 text-xs"
+                  value={form.wa_choice_ui_mode ?? ""}
+                  onChange={(e) => update("wa_choice_ui_mode", e.target.value)}
+                  placeholder="ex: list, buttons"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Confirmação */}
+          <div className="space-y-3 pl-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Confirmação</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">Ativada</span>
+                <Switch
+                  checked={!!form.confirmation_enabled}
+                  onCheckedChange={(v) => update("confirmation_enabled", v)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Enviar antes de (horas)</span>
+                <Input
+                  type="number"
+                  min={0}
+                  className="h-8 text-xs"
+                  value={form.confirmation_send_before_hours ?? 0}
+                  onChange={(e) => update("confirmation_send_before_hours", Number(e.target.value))}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Expira em (minutos)</span>
+                <Input
+                  type="number"
+                  min={0}
+                  className="h-8 text-xs"
+                  value={form.confirmation_expiration_minutes ?? 0}
+                  onChange={(e) => update("confirmation_expiration_minutes", Number(e.target.value))}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Horário início</span>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={(form.confirmation_allowed_start_time ?? "").slice(0, 5)}
+                  onChange={(e) => update("confirmation_allowed_start_time", e.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Horário fim</span>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={(form.confirmation_allowed_end_time ?? "").slice(0, 5)}
+                  onChange={(e) => update("confirmation_allowed_end_time", e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted-foreground">Dias permitidos</span>
+              <div className="flex flex-wrap gap-1.5">
+                {WEEKDAY_LABELS.map((label, idx) => {
+                  const active = (form.confirmation_allowed_weekdays ?? []).includes(idx);
+                  return (
+                    <button
+                      type="button"
+                      key={idx}
+                      onClick={() => toggleWeekday(idx)}
+                      className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                        active
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:bg-surface-elevated"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] text-muted-foreground">Permitir fins de semana</span>
+              <Switch
+                checked={!!form.confirmation_allow_weekends}
+                onCheckedChange={(v) => update("confirmation_allow_weekends", v)}
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-2 border-t border-border/30">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground">
+                Criado: {data?.created_at ? new Date(data.created_at).toLocaleDateString("pt-BR") : "—"}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Atualizado: {data?.updated_at ? new Date(data.updated_at).toLocaleDateString("pt-BR") : "—"}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              disabled={!dirty || saveMutation.isPending}
+              onClick={() => saveMutation.mutate()}
+            >
+              <Save className="h-3.5 w-3.5" />
+              {saveMutation.isPending ? "Salvando…" : "Salvar"}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function BookingSettingsSection() {
+  const { units } = useAuth();
 
   return (
-    <Collapsible defaultOpen={false} id={headerId}>
+    <Collapsible defaultOpen={false} id="section-modo-atendimento">
       <CollapsibleTrigger
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
@@ -135,177 +301,15 @@ export default function BookingSettingsSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-5"
+        className="mt-2 rounded-xl border border-border p-4 space-y-4"
         style={{ background: "hsl(var(--surface))" }}
       >
-        {!unitId ? (
-          <p className="text-xs text-muted-foreground px-1">Nenhuma unidade ativa selecionada.</p>
-        ) : isLoading ? (
-          <p className="text-xs text-muted-foreground px-1">Carregando…</p>
-        ) : isError ? (
-          <p className="text-xs text-destructive px-1">Erro ao carregar configurações.</p>
+        {!units || units.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1">Nenhuma unidade disponível.</p>
         ) : (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between px-1 pb-2 border-b border-border/60">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-bold text-foreground">{activeUnit?.name}</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-mono">#{data?.id ?? "—"}</span>
-            </div>
-
-            {/* Geral */}
-            <div className="space-y-3 pl-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Geral</span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Modo padrão</span>
-                  <select
-                    className="h-8 text-xs rounded-md border border-border bg-background text-foreground px-2"
-                    value={form.default_booking_mode ?? ""}
-                    onChange={(e) => update("default_booking_mode", e.target.value)}
-                  >
-                    {MODE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Horizonte de agendamento (dias)</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    className="h-8 text-xs"
-                    value={form.booking_horizon_days ?? 0}
-                    onChange={(e) => update("booking_horizon_days", Number(e.target.value))}
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1 sm:col-span-2">
-                  <span className="text-[11px] text-muted-foreground">UI de escolha (WhatsApp)</span>
-                  <Input
-                    className="h-8 text-xs"
-                    value={form.wa_choice_ui_mode ?? ""}
-                    onChange={(e) => update("wa_choice_ui_mode", e.target.value)}
-                    placeholder="ex: list, buttons"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Confirmação */}
-            <div className="space-y-3 pl-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Confirmação</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground">Ativada</span>
-                  <Switch
-                    checked={!!form.confirmation_enabled}
-                    onCheckedChange={(v) => update("confirmation_enabled", v)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Enviar antes de (horas)</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    className="h-8 text-xs"
-                    value={form.confirmation_send_before_hours ?? 0}
-                    onChange={(e) => update("confirmation_send_before_hours", Number(e.target.value))}
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Expira em (minutos)</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    className="h-8 text-xs"
-                    value={form.confirmation_expiration_minutes ?? 0}
-                    onChange={(e) => update("confirmation_expiration_minutes", Number(e.target.value))}
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Horário início</span>
-                  <Input
-                    type="time"
-                    className="h-8 text-xs"
-                    value={(form.confirmation_allowed_start_time ?? "").slice(0, 5)}
-                    onChange={(e) => update("confirmation_allowed_start_time", e.target.value)}
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] text-muted-foreground">Horário fim</span>
-                  <Input
-                    type="time"
-                    className="h-8 text-xs"
-                    value={(form.confirmation_allowed_end_time ?? "").slice(0, 5)}
-                    onChange={(e) => update("confirmation_allowed_end_time", e.target.value)}
-                  />
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] text-muted-foreground">Dias permitidos</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {WEEKDAY_LABELS.map((label, idx) => {
-                    const active = (form.confirmation_allowed_weekdays ?? []).includes(idx);
-                    return (
-                      <button
-                        type="button"
-                        key={idx}
-                        onClick={() => toggleWeekday(idx)}
-                        className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
-                          active
-                            ? "border-primary bg-primary/15 text-primary"
-                            : "border-border text-muted-foreground hover:bg-surface-elevated"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-muted-foreground">Permitir fins de semana</span>
-                <Switch
-                  checked={!!form.confirmation_allow_weekends}
-                  onCheckedChange={(v) => update("confirmation_allow_weekends", v)}
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-border/30">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] text-muted-foreground">
-                  Criado: {data?.created_at ? new Date(data.created_at).toLocaleDateString("pt-BR") : "—"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  Atualizado: {data?.updated_at ? new Date(data.updated_at).toLocaleDateString("pt-BR") : "—"}
-                </span>
-              </div>
-              <Button
-                size="sm"
-                className="h-8 text-xs gap-1.5"
-                disabled={!dirty || saveMutation.isPending}
-                onClick={() => saveMutation.mutate()}
-              >
-                <Save className="h-3.5 w-3.5" />
-                {saveMutation.isPending ? "Salvando…" : "Salvar"}
-              </Button>
-            </div>
-          </>
+          units.map((u) => (
+            <UnitBookingSettings key={u.id} unitId={u.id} unitName={u.name} />
+          ))
         )}
       </CollapsibleContent>
     </Collapsible>
