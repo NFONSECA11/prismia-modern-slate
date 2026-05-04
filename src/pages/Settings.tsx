@@ -39,6 +39,7 @@ import ProfessionalUnitsLinkSection from "@/components/professional/Professional
 import ProfessionalProceduresLinkSection from "@/components/professional/ProfessionalProceduresLinkSection";
 import ProfessionalAvailabilitiesLinkSection from "@/components/professional/ProfessionalAvailabilitiesLinkSection";
 import ProfessionalTimeOffsLinkSection from "@/components/professional/ProfessionalTimeOffsLinkSection";
+import BookingSettingsSection from "@/components/BookingSettingsSection";
 
 export default function Settings() {
   const { company, units, activeUnit, canManage, canManageUsers, isAgent } = useAuth();
