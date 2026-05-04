@@ -44,13 +44,17 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
     queryKey: ["booking-settings-by-unit", unitId],
     queryFn: async () => {
       const { data } = await api.get(endpoint);
+      console.info(`[BookingSettings] unit=${unitId} raw response:`, data);
+      let result: any = data;
       if (Array.isArray(data?.results)) {
-        return data.results.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data.results[0] ?? null;
+        result = data.results.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data.results[0] ?? null;
+      } else if (Array.isArray(data)) {
+        result = data.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data[0] ?? null;
+      } else if (data?.data && typeof data.data === "object") {
+        result = data.data;
       }
-      if (Array.isArray(data)) {
-        return data.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data[0] ?? null;
-      }
-      return data ?? null;
+      console.info(`[BookingSettings] unit=${unitId} normalized:`, result);
+      return result ?? null;
     },
   });
 
