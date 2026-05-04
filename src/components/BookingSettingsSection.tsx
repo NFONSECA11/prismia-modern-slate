@@ -59,6 +59,9 @@ const hasBookingSettingsFields = (settings: any) => Boolean(
     settings.default_booking_mode != null ||
     settings.booking_horizon_days != null ||
     settings.min_advance_minutes != null ||
+    settings.minimum_advance_minutes != null ||
+    settings.min_booking_advance_minutes != null ||
+    settings.advance_min_minutes != null ||
     settings.wa_choice_ui_mode != null ||
     settings.confirmation_enabled != null ||
     settings.confirmation_send_before_hours != null ||
@@ -101,7 +104,7 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
       setForm({
         default_booking_mode: data.default_booking_mode ?? "handoff_manual",
         booking_horizon_days: data.booking_horizon_days ?? 0,
-        min_advance_minutes: data.min_advance_minutes ?? 0,
+        min_advance_minutes: data.min_advance_minutes ?? (data as any).minimum_advance_minutes ?? (data as any).min_booking_advance_minutes ?? (data as any).advance_min_minutes ?? 0,
         wa_choice_ui_mode: data.wa_choice_ui_mode ?? "",
         confirmation_enabled: !!data.confirmation_enabled,
         confirmation_send_before_hours: data.confirmation_send_before_hours ?? 0,
@@ -185,7 +188,7 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] text-muted-foreground">Antecedência mínima (minutos)</span>
+                <span className="text-[11px] text-muted-foreground">Min advance minutes</span>
                 <Input
                   type="number"
                   min={0}
