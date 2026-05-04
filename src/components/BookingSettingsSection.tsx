@@ -287,16 +287,20 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
 
 export default function BookingSettingsSection() {
   const { units } = useAuth();
+  const unitCount = units?.length ?? 0;
 
   return (
-    <Collapsible defaultOpen={false} id="section-modo-atendimento">
+    <Collapsible defaultOpen id="section-modo-atendimento">
       <CollapsibleTrigger
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
       >
         <div className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">Modo de Atendimento</span>
+          <div className="text-left">
+            <span className="text-sm font-bold text-foreground">Modo de Atendimento por Unidade</span>
+            <p className="text-xs text-muted-foreground">{unitCount} {unitCount === 1 ? "unidade" : "unidades"}</p>
+          </div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
