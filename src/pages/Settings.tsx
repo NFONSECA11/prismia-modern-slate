@@ -736,7 +736,7 @@ export default function Settings() {
         {/* ─── 5) Detalhes Agendamento ─── */}
         <section className="space-y-3">
           <div className="flex items-center px-1 pb-1 border-b border-border/70">
-            <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Detalhes Agendamento</span>
+            <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Agendamento</span>
           </div>
 
           {/* Modo de Atendimento */}
