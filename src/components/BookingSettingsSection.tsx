@@ -15,6 +15,7 @@ type BookingSettings = {
   unit?: number;
   default_booking_mode?: "handoff_manual" | "assisted_slots_dashboard" | "auto_slots_bot" | string;
   booking_horizon_days?: number | null;
+  min_advance_minutes?: number | null;
   wa_choice_ui_mode?: string | null;
   confirmation_enabled?: boolean;
   confirmation_send_before_hours?: number | null;
@@ -57,6 +58,7 @@ const hasBookingSettingsFields = (settings: any) => Boolean(
   settings && (
     settings.default_booking_mode != null ||
     settings.booking_horizon_days != null ||
+    settings.min_advance_minutes != null ||
     settings.wa_choice_ui_mode != null ||
     settings.confirmation_enabled != null ||
     settings.confirmation_send_before_hours != null ||
@@ -99,6 +101,7 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
       setForm({
         default_booking_mode: data.default_booking_mode ?? "handoff_manual",
         booking_horizon_days: data.booking_horizon_days ?? 0,
+        min_advance_minutes: data.min_advance_minutes ?? 0,
         wa_choice_ui_mode: data.wa_choice_ui_mode ?? "",
         confirmation_enabled: !!data.confirmation_enabled,
         confirmation_send_before_hours: data.confirmation_send_before_hours ?? 0,
@@ -179,6 +182,16 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
                   className="h-8 text-xs"
                   value={form.booking_horizon_days ?? 0}
                   onChange={(e) => update("booking_horizon_days", Number(e.target.value))}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-muted-foreground">Antecedência mínima (minutos)</span>
+                <Input
+                  type="number"
+                  min={0}
+                  className="h-8 text-xs"
+                  value={form.min_advance_minutes ?? 0}
+                  onChange={(e) => update("min_advance_minutes", Number(e.target.value))}
                 />
               </label>
             </div>
