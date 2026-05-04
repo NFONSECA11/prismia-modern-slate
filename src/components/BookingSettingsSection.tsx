@@ -36,6 +36,38 @@ const MODE_OPTIONS: { value: string; label: string }[] = [
   { value: "auto_slots_bot", label: "Automático (Bot)" },
 ];
 
+const unwrapSettingsPayload = (payload: any): any[] => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload.flatMap(unwrapSettingsPayload);
+  if (Array.isArray(payload?.results)) return unwrapSettingsPayload(payload.results);
+  if (payload?.data && typeof payload.data === "object") return unwrapSettingsPayload(payload.data);
+  if (payload?.result && typeof payload.result === "object") return unwrapSettingsPayload(payload.result);
+  if (payload?.booking_settings && typeof payload.booking_settings === "object") return unwrapSettingsPayload(payload.booking_settings);
+  if (payload?.booking_setting && typeof payload.booking_setting === "object") return unwrapSettingsPayload(payload.booking_setting);
+  if (payload?.settings && typeof payload.settings === "object") return unwrapSettingsPayload(payload.settings);
+  return [payload];
+};
+
+const pickSettingsByUnit = (payload: any, unitId: number) => {
+  const items = unwrapSettingsPayload(payload);
+  return items.find((s: any) => Number(s?.unit?.id ?? s?.unit_id ?? s?.unit) === Number(unitId)) ?? items[0] ?? null;
+};
+
+const hasBookingSettingsFields = (settings: any) => Boolean(
+  settings && (
+    settings.default_booking_mode != null ||
+    settings.booking_horizon_days != null ||
+    settings.wa_choice_ui_mode != null ||
+    settings.confirmation_enabled != null ||
+    settings.confirmation_send_before_hours != null ||
+    settings.confirmation_expiration_minutes != null ||
+    settings.confirmation_allowed_start_time != null ||
+    settings.confirmation_allowed_end_time != null ||
+    settings.confirmation_allow_weekends != null ||
+    Array.isArray(settings.confirmation_allowed_weekdays)
+  )
+);
+
 function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: string }) {
   const qc = useQueryClient();
   const endpoint = `/api/booking/booking-settings/by-unit/${unitId}/`;
@@ -43,18 +75,19 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
   const { data, isLoading, isError } = useQuery<BookingSettings | null>({
     queryKey: ["booking-settings-by-unit", unitId],
     queryFn: async () => {
-      const { data } = await api.get(endpoint);
-      console.info(`[BookingSettings] unit=${unitId} raw response:`, data);
-      let result: any = data;
-      if (Array.isArray(data?.results)) {
-        result = data.results.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data.results[0] ?? null;
-      } else if (Array.isArray(data)) {
-        result = data.find((s: any) => Number(s?.unit) === Number(unitId)) ?? data[0] ?? null;
-      } else if (data?.data && typeof data.data === "object") {
-        result = data.data;
-      }
-      console.info(`[BookingSettings] unit=${unitId} normalized:`, result);
-      return result ?? null;
+      const [byUnitRes, legacyRes] = await Promise.allSettled([
+        api.get(endpoint),
+        api.get(`/api/settings/booking-settings/`, { params: { unit: unitId } }),
+      ]);
+
+      const byUnitSetting = byUnitRes.status === "fulfilled" ? pickSettingsByUnit(byUnitRes.value.data, unitId) : null;
+      const legacySetting = legacyRes.status === "fulfilled" ? pickSettingsByUnit(legacyRes.value.data, unitId) : null;
+      const merged = { ...(byUnitSetting ?? {}), ...(legacySetting ?? {}) };
+
+      if (hasBookingSettingsFields(merged)) return merged;
+      if (hasBookingSettingsFields(byUnitSetting)) return byUnitSetting;
+      if (hasBookingSettingsFields(legacySetting)) return legacySetting;
+      return Object.keys(merged).length > 0 ? merged : null;
     },
   });
 
