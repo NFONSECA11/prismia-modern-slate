@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-import DiagnosticCard from "@/components/DiagnosticCard";
+
 import ProceduresByUnitSection from "@/components/ProceduresByUnitSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
 import ServiceCategoriesSection from "@/components/ServiceCategoriesSection";
@@ -855,25 +855,6 @@ export default function Settings() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Diagnóstico */}
-          <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">Diagnóstico</span>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
-              {units.length === 0 ? (
-                <p className="text-xs text-muted-foreground px-3">Nenhuma unidade encontrada.</p>
-              ) : (
-                units.map((unit) => (
-                  <DiagnosticCard key={unit.id} unit={unit} />
-                ))
-              )}
-            </CollapsibleContent>
-          </Collapsible>
         </section>
         </>)}
 
