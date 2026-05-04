@@ -135,19 +135,6 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Geral</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] text-muted-foreground">Modo padrão</span>
-                <select
-                  className="h-8 text-xs rounded-md border border-border bg-background text-foreground px-2"
-                  value={form.default_booking_mode ?? ""}
-                  onChange={(e) => update("default_booking_mode", e.target.value)}
-                >
-                  {MODE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="flex flex-col gap-1">
                 <span className="text-[11px] text-muted-foreground">Horizonte de agendamento (dias)</span>
                 <Input
                   type="number"
@@ -155,16 +142,6 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
                   className="h-8 text-xs"
                   value={form.booking_horizon_days ?? 0}
                   onChange={(e) => update("booking_horizon_days", Number(e.target.value))}
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[11px] text-muted-foreground">UI de escolha (WhatsApp)</span>
-                <Input
-                  className="h-8 text-xs"
-                  value={form.wa_choice_ui_mode ?? ""}
-                  onChange={(e) => update("wa_choice_ui_mode", e.target.value)}
-                  placeholder="ex: list, buttons"
                 />
               </label>
             </div>
