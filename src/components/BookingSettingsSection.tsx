@@ -328,7 +328,7 @@ export default function BookingSettingsSection() {
         <div className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
           <div className="text-left">
-            <span className="text-sm font-bold text-foreground">Modo de Atendimento por Unidade</span>
+            <span className="text-sm font-bold text-foreground">Detalhes Agendamento</span>
             <p className="text-xs text-muted-foreground">{unitCount} {unitCount === 1 ? "unidade" : "unidades"}</p>
           </div>
         </div>
