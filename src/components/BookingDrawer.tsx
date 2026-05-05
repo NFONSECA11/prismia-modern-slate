@@ -1648,8 +1648,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       if (effProfessionalId) suggestPayload.professional = effProfessionalId;
       const fromDate = getFromDateByDays(scheduleFromDays);
-      if (fromDate) suggestPayload.from_date = fromDate;
-      console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
+      if (fromDate) {
+        // Envia em múltiplas variações para máxima compat com o backend
+        suggestPayload.from_date = fromDate;
+        (suggestPayload as any).start_date = fromDate;
+        (suggestPayload as any).date_from = fromDate;
+      }
+      console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload), { scheduleFromDays, fromDate });
       let suggestResponse: any;
       try {
         suggestResponse = await suggestSlots(booking.id, suggestPayload as any);
