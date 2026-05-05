@@ -1484,7 +1484,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const effProcedureId = effectiveProcedureId;
       const effProfessionalId = effectiveProfessionalId;
       if (!effLeadName) throw new Error("Informe o nome do cliente");
-      if (!scheduleReason.trim()) throw new Error("Informe o motivo");
       if (!effProcedureId) throw new Error("Selecione o procedimento");
 
       setScheduleLog([]);
