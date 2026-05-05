@@ -1822,7 +1822,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // sem disparar PATCH nem mudar booking_mode.
   const checkSlotsMut = useMutation({
     mutationFn: async () => {
-      if (!selectedProcedureId) throw new Error("Selecione o procedimento");
+      const procIdForCheck = selectedProcedureId ?? autofillProcedureId ?? null;
+      if (!procIdForCheck) throw new Error("Selecione o procedimento");
       if (!bookingUnitId) throw new Error("Unidade indisponível");
 
       setScheduleLog([]);
@@ -1838,7 +1839,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       });
 
       const params: Record<string, unknown> = {
-        procedure: selectedProcedureId,
+        procedure: procIdForCheck,
         unit: bookingUnitId,
         n: 3,
       };
