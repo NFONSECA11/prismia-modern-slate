@@ -320,7 +320,7 @@ export default function BookingSettingsSection() {
   const unitCount = units?.length ?? 0;
 
   return (
-    <Collapsible defaultOpen id="section-modo-atendimento">
+    <Collapsible id="section-modo-atendimento">
       <CollapsibleTrigger
         className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated"
         style={{ background: "hsl(var(--surface))" }}
