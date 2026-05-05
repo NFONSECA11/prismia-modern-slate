@@ -409,6 +409,10 @@ export async function handoffOff(id: number): Promise<void> {
 
 // ── Sugerir horários ─────────────────────────────────────────────────────────
 export interface SuggestSlotsPayload {
+  procedure?: number | string;
+  procedure_code?: number | string;
+  unit?: number | string;
+  professional?: number | string;
   preferred_window?: string;
   preferred_period?: string;
   from_date?: string; // yyyy-MM-dd
@@ -416,8 +420,7 @@ export interface SuggestSlotsPayload {
 
 export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}): Promise<any> {
   await fetchCsrf();
-  const params: Record<string, unknown> = {};
-  if (payload.from_date) params.from_date = payload.from_date;
+  const params: Record<string, unknown> = { ...payload };
   const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload, { params });
   return data;
 }

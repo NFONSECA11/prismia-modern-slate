@@ -80,6 +80,18 @@ function isTerminal(status: BookingStatus) {
   return TERMINAL_STATUSES.includes(status);
 }
 
+function formatDateForApi(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function getFromDateByDays(daysValue: string): string | undefined {
+  const days = parseInt(daysValue, 10);
+  if (!Number.isFinite(days) || days <= 0) return undefined;
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return formatDateForApi(date);
+}
+
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (digits.length === 13 && digits.startsWith("55")) return `(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 9)}-${digits.slice(9)}`;
@@ -1635,12 +1647,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       if (effProfessionalId) suggestPayload.professional = effProfessionalId;
-      const fromDaysNum = parseInt(scheduleFromDays, 10);
-      if (Number.isFinite(fromDaysNum) && fromDaysNum > 0) {
-        const d = new Date();
-        d.setDate(d.getDate() + fromDaysNum);
-        suggestPayload.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      }
+      const fromDate = getFromDateByDays(scheduleFromDays);
+      if (fromDate) suggestPayload.from_date = fromDate;
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
       try {
@@ -1851,12 +1859,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         n: 3,
       };
       if (selectedProfessionalId) params.professional = selectedProfessionalId;
-      const fromDaysNumChk = parseInt(scheduleFromDays, 10);
-      if (Number.isFinite(fromDaysNumChk) && fromDaysNumChk > 0) {
-        const d = new Date();
-        d.setDate(d.getDate() + fromDaysNumChk);
-        params.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      }
+      const fromDate = getFromDateByDays(scheduleFromDays);
+      if (fromDate) params.from_date = fromDate;
 
       const { data } = await api.get("/api/booking/suggest-slots/", { params });
       const slots: Array<{ start_at?: string; label?: string }> =
