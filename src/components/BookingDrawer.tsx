@@ -664,6 +664,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     const rawName = booking?.lead_name ?? "";
     setAssignLeadName(rawName.toLowerCase() === "não informado" ? "" : rawName);
     setScheduleReason("");
+    setScheduleFromDays("");
     setCancelBookingIdField("");
     setOverrideProcedureName(null);
     setForceBotOff(false);
