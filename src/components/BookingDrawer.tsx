@@ -1851,6 +1851,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         n: 3,
       };
       if (selectedProfessionalId) params.professional = selectedProfessionalId;
+      const fromDaysNumChk = parseInt(scheduleFromDays, 10);
+      if (Number.isFinite(fromDaysNumChk) && fromDaysNumChk > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + fromDaysNumChk);
+        params.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
 
       const { data } = await api.get("/api/booking/suggest-slots/", { params });
       const slots: Array<{ start_at?: string; label?: string }> =
