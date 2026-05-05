@@ -603,6 +603,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   const [mockAssignedProfessional, setMockAssignedProfessional] = useState<{ id: number; name: string } | null>(null);
   const [assignLeadName, setAssignLeadName] = useState("");
   const [scheduleReason, setScheduleReason] = useState("");
+  const [scheduleFromDays, setScheduleFromDays] = useState<string>("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
@@ -1634,6 +1635,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       if (effProfessionalId) suggestPayload.professional = effProfessionalId;
+      const fromDaysNum = parseInt(scheduleFromDays, 10);
+      if (Number.isFinite(fromDaysNum) && fromDaysNum > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + fromDaysNum);
+        suggestPayload.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
       try {
@@ -1844,6 +1851,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         n: 3,
       };
       if (selectedProfessionalId) params.professional = selectedProfessionalId;
+      const fromDaysNumChk = parseInt(scheduleFromDays, 10);
+      if (Number.isFinite(fromDaysNumChk) && fromDaysNumChk > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + fromDaysNumChk);
+        params.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
 
       const { data } = await api.get("/api/booking/suggest-slots/", { params });
       const slots: Array<{ start_at?: string; label?: string }> =
@@ -3040,6 +3053,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                       <Calendar className="h-3.5 w-3.5" />
                       {scheduleSuggestMut.isPending ? "Agendando..." : "Agendar"}
                     </button>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        value={scheduleFromDays}
+                        onChange={(e) => setScheduleFromDays(e.target.value)}
+                        placeholder="dias"
+                        title="A partir de quantos dias (1 = amanhã)"
+                        className="h-8 w-14 text-xs px-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <span className="text-[10px] text-muted-foreground">dia(s)</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => checkSlotsMut.mutate()}

@@ -411,6 +411,7 @@ export async function handoffOff(id: number): Promise<void> {
 export interface SuggestSlotsPayload {
   preferred_window?: string;
   preferred_period?: string;
+  from_date?: string; // yyyy-MM-dd
 }
 
 export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}): Promise<any> {
