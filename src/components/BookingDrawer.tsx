@@ -3108,6 +3108,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     <RotateCcw className="h-3.5 w-3.5" />
                     {rescheduleSuggestMut.isPending ? "Reagendando..." : "Reagendar"}
                   </button>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      value={rescheduleFromDays}
+                      onChange={(e) => setRescheduleFromDays(e.target.value)}
+                      placeholder="dias"
+                      title="A partir de quantos dias (1 = amanhã)"
+                      className="h-8 w-14 text-xs px-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <span className="text-[10px] text-muted-foreground">dia(s)</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => checkRescheduleSlotsMut.mutate()}
