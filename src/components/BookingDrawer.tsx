@@ -616,6 +616,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   const [assignLeadName, setAssignLeadName] = useState("");
   const [scheduleReason, setScheduleReason] = useState("");
   const [scheduleFromDays, setScheduleFromDays] = useState<string>("");
+  const [rescheduleFromDays, setRescheduleFromDays] = useState<string>("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
