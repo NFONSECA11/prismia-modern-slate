@@ -616,6 +616,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   const [assignLeadName, setAssignLeadName] = useState("");
   const [scheduleReason, setScheduleReason] = useState("");
   const [scheduleFromDays, setScheduleFromDays] = useState<string>("");
+  const [rescheduleFromDays, setRescheduleFromDays] = useState<string>("");
   const [cancelBookingIdField, setCancelBookingIdField] = useState("");
   const [overrideProcedureName, setOverrideProcedureName] = useState<string | null>(null);
   const [forceBotOff, setForceBotOff] = useState(false);
@@ -1936,6 +1937,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         n: 3,
       };
       if (selectedProfessionalId) params.professional = selectedProfessionalId;
+      const fromDateR = getFromDateByDays(rescheduleFromDays);
+      if (fromDateR) params.from_date = fromDateR;
 
       const { data } = await api.get("/api/booking/suggest-slots/", { params });
       const slots: Array<{ start_at?: string; label?: string }> =
@@ -2311,6 +2314,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (effProfId) suggestPayload.professional = effProfId;
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+      const fromDateRS = getFromDateByDays(rescheduleFromDays);
+      if (fromDateRS) suggestPayload.from_date = fromDateRS;
 
       let suggestResponse: any;
       try {
@@ -3103,6 +3108,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     <RotateCcw className="h-3.5 w-3.5" />
                     {rescheduleSuggestMut.isPending ? "Reagendando..." : "Reagendar"}
                   </button>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      value={rescheduleFromDays}
+                      onChange={(e) => setRescheduleFromDays(e.target.value)}
+                      placeholder="dias"
+                      title="A partir de quantos dias (1 = amanhã)"
+                      className="h-8 w-14 text-xs px-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <span className="text-[10px] text-muted-foreground">dia(s)</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => checkRescheduleSlotsMut.mutate()}
