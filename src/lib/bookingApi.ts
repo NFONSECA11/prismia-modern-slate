@@ -416,7 +416,9 @@ export interface SuggestSlotsPayload {
 
 export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}): Promise<any> {
   await fetchCsrf();
-  const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload);
+  const params: Record<string, unknown> = {};
+  if (payload.from_date) params.from_date = payload.from_date;
+  const { data } = await api.post(`/api/booking/requests/${id}/suggest_slots/`, payload, { params });
   return data;
 }
 
