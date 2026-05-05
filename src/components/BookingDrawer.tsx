@@ -1937,6 +1937,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         n: 3,
       };
       if (selectedProfessionalId) params.professional = selectedProfessionalId;
+      const fromDateR = getFromDateByDays(rescheduleFromDays);
+      if (fromDateR) params.from_date = fromDateR;
 
       const { data } = await api.get("/api/booking/suggest-slots/", { params });
       const slots: Array<{ start_at?: string; label?: string }> =
