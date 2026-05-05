@@ -1635,6 +1635,12 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
       if (effProfessionalId) suggestPayload.professional = effProfessionalId;
+      const fromDaysNum = parseInt(scheduleFromDays, 10);
+      if (Number.isFinite(fromDaysNum) && fromDaysNum > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + fromDaysNum);
+        suggestPayload.from_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
       console.log("[scheduleSuggestMut] suggest_slots payload:", JSON.stringify(suggestPayload));
       let suggestResponse: any;
       try {
