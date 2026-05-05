@@ -80,6 +80,18 @@ function isTerminal(status: BookingStatus) {
   return TERMINAL_STATUSES.includes(status);
 }
 
+function formatDateForApi(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function getFromDateByDays(daysValue: string): string | undefined {
+  const days = parseInt(daysValue, 10);
+  if (!Number.isFinite(days) || days <= 0) return undefined;
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return formatDateForApi(date);
+}
+
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (digits.length === 13 && digits.startsWith("55")) return `(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 9)}-${digits.slice(9)}`;
