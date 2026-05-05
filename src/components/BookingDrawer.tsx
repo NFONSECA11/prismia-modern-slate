@@ -2314,6 +2314,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (effProfId) suggestPayload.professional = effProfId;
       if (procedureCode) suggestPayload.procedure_code = procedureCode;
       if (bookingUnitId) suggestPayload.unit = bookingUnitId;
+      const fromDateRS = getFromDateByDays(rescheduleFromDays);
+      if (fromDateRS) suggestPayload.from_date = fromDateRS;
 
       let suggestResponse: any;
       try {
