@@ -2385,7 +2385,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       }
 
       const detailAfterSuggest = await fetchBookingRequestById(booking.id);
-      const offerCount = Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots.length : 0;
+      const offerSlotsRaw =
+        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
+        (Array.isArray((suggestResponse as any)?.slots) ? (suggestResponse as any).slots : null) ??
+        (Array.isArray((suggestResponse as any)?.result?.offer_slots) ? (suggestResponse as any).result.offer_slots : null) ??
+        [];
+      const offerCount = offerSlotsRaw.length;
       pushRescheduleLog({
         label: offerCount > 0 ? "Horários encontrados" : "Sem horários disponíveis",
         status: offerCount > 0 ? "success" : "warning",
@@ -2395,10 +2401,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       });
 
       // 4) PATCH 2 → volta para auto_slots_bot (IA assume)
-      const offerSlotsRaw =
-        (Array.isArray(detailAfterSuggest?.offer_slots) ? detailAfterSuggest.offer_slots : null) ??
-        (Array.isArray((suggestResponse as any)?.offer_slots) ? (suggestResponse as any).offer_slots : null) ??
-        [];
       const slotProfUnitIds = Array.from(
         new Set(
           offerSlotsRaw
@@ -2424,21 +2426,44 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (effResolvedSpecialty) patch2.specialty = effResolvedSpecialty;
       if (inferredProfessionalUnitId) patch2.professional_unit = inferredProfessionalUnitId;
 
-      try {
-        await patchBooking(booking.id, patch2);
-      } catch (err) {
-        console.warn("[rescheduleSuggestMut] PATCH 2 (auto) falhou, tentando handoffOff:", err);
-      }
+      await patchBooking(booking.id, patch2);
 
-      // 5) Garante bot ON via handoffOff
+      // 5) Garante bot ON via handoffOff e valida o estado real retornado pelo backend.
       try {
         await handoffOff(booking.id);
       } catch (err) {
         console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
       }
 
-      const detailFinal = await fetchBookingRequestById(booking.id);
-      const finalSlots = (detailFinal?.offer_slots ?? []) as Array<{ start_at: string; label: string }>;
+      let detailFinal = await fetchBookingRequestById(booking.id);
+      const finalBotMode = String((detailFinal as any)?.conversation_bot_mode ?? (detailFinal as any)?.conversation?.bot_mode ?? "").toLowerCase();
+      if (detailFinal?.booking_mode !== "auto_slots_bot" || finalBotMode !== "on") {
+        const patchRetry = {
+          ...patch2,
+          booking_mode: "auto_slots_bot",
+          conversation_bot_mode: "on",
+          status: detailFinal?.status ?? patch2.status ?? "awaiting_choice",
+          vars_snapshot: (detailFinal as any)?.vars_snapshot ?? patch2.vars_snapshot,
+        };
+        console.warn("[rescheduleSuggestMut] retry bot ON:", JSON.stringify({
+          booking_mode: detailFinal?.booking_mode,
+          conversation_bot_mode: (detailFinal as any)?.conversation_bot_mode,
+          conversation: (detailFinal as any)?.conversation,
+          payload: patchRetry,
+        }));
+        await patchBooking(booking.id, patchRetry);
+        try {
+          await handoffOff(booking.id);
+        } catch (err) {
+          console.warn("[rescheduleSuggestMut] handoffOff retry falhou:", err);
+        }
+        detailFinal = await fetchBookingRequestById(booking.id);
+      }
+
+      const finalSlots =
+        (Array.isArray(detailFinal?.offer_slots) && detailFinal.offer_slots.length > 0
+          ? detailFinal.offer_slots
+          : offerSlotsRaw) as Array<{ start_at: string; label: string }>;
       return { slots: finalSlots, cancelledId: targetId, isHandoffRescheduleFlow };
     },
     onSuccess: async ({ slots, cancelledId, isHandoffRescheduleFlow }) => {
@@ -2446,7 +2471,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (isHandoffRescheduleFlow) {
         toast.success("Agendamento atualizado — IA seguirá conduzindo.");
       } else if (count === 0) {
-        toast.warning(`Agendamento #${cancelledId} cancelado. Bot acionado, mas sem horários no momento.`);
+        toast.warning("Bot acionado, mas sem horários no momento.");
         pushRescheduleLog({
           label: "Bot assumiu a conversa",
           status: "warning",
