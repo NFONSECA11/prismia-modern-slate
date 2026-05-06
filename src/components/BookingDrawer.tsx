@@ -1200,20 +1200,24 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         return patchResult;
       }
 
-      // Reschedule flow: cancel target BR + assign professional/procedure + handoffOff
+      // Reschedule flow: only ai_handoff (handoff_reschedule) cancels the target BR.
       if (isRescheduleFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
-        console.log("[BookingDrawer] Reschedule flow — cancelling BR #", targetId, "and assigning on current BR #", booking!.id);
-        // Step 1: Cancel the target booking
-        await cancelBooking(targetId);
-        // Step 2: PATCH current BR with professional, procedure, lead_name
+        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        console.log("[BookingDrawer] Reschedule flow — assigning on current BR #", booking!.id, { targetId, isHandoffRescheduleFlow });
+        if (isHandoffRescheduleFlow) {
+          await cancelBooking(targetId);
+        }
+        // PATCH current BR with professional, procedure, lead_name
         const now = new Date();
         const timestamp = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
         const existingNotes = (bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "";
         const realProcName = selectedProcedureId ? (allProcedures.find((p) => p.id === selectedProcedureId)?.name ?? "") : "";
         const profName = professionals.find((p) => p.id === profId)?.name ?? "";
-        const logEntry = `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${realProcName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
+        const logEntry = isHandoffRescheduleFlow
+          ? `[${timestamp}] Reagendamento: cancelamento do agendamento #${targetId} | Procedimento: ${realProcName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`
+          : `[${timestamp}] Reagendamento: novos horários solicitados | Procedimento: ${realProcName || "N/A"} | Profissional: ${profName || "N/A"} | por ${assignLeadName.trim() || "N/A"}`;
         const newNotes = existingNotes ? `${existingNotes}\n${logEntry}` : logEntry;
         const payload: Record<string, unknown> = {
           lead_name: assignLeadName.trim() || booking!.lead_name,
