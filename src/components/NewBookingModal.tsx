@@ -187,6 +187,36 @@ function ModalBody({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Frases prontas de Motivo (editáveis, persistidas em localStorage)
+  const PRESETS_KEY = "prismia-booking-motivo-presets-v1";
+  const DEFAULT_PRESETS = [
+    "Cliente solicitou novo agendamento",
+    "Reagendamento por indisponibilidade do profissional",
+    "Encaixe solicitado pelo cliente",
+    "Agendamento confirmado por telefone",
+    "Retorno de procedimento",
+  ];
+  const [presets, setPresets] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(PRESETS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) return parsed;
+      }
+    } catch {}
+    return DEFAULT_PRESETS;
+  });
+  const [editingPresets, setEditingPresets] = useState(false);
+  const persistPresets = (next: string[]) => {
+    setPresets(next);
+    try { localStorage.setItem(PRESETS_KEY, JSON.stringify(next)); } catch {}
+  };
+  const updatePreset = (idx: number, value: string) =>
+    persistPresets(presets.map((p, i) => (i === idx ? value : p)));
+  const removePreset = (idx: number) =>
+    persistPresets(presets.filter((_, i) => i !== idx));
+  const addPreset = () => persistPresets([...presets, "Nova frase"]);
+
   // Fetch unit-procedures for the active unit (only when creating new)
   const { data: unitProcedureNames = [] } = useQuery({
     queryKey: ["new-booking-unit-procedures", unit?.id],
@@ -398,28 +428,64 @@ function ModalBody({
             </div>
           </div>
 
-          {/* Observações */}
+          {/* Motivo — obrigatório, com frases prontas editáveis */}
           {!readOnly && (
             <div>
-              <FieldLabel>
-                <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Observações</span>
-              </FieldLabel>
-              <textarea
-                value={form.notes}
-                onChange={(e) => set("notes")(e.target.value)}
-                placeholder="Informações adicionais, preferências do cliente..."
-                rows={3}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/60 focus:border-primary/60 transition-all resize-none"
-              />
-            </div>
-          )}
+              <div className="flex items-center justify-between mb-1.5">
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Motivo *</span>
+                </FieldLabel>
+                <button
+                  type="button"
+                  onClick={() => setEditingPresets((v) => !v)}
+                  className="text-[10px] font-semibold uppercase tracking-wider text-primary hover:underline"
+                >
+                  {editingPresets ? "Concluir" : "Editar frases"}
+                </button>
+              </div>
 
-          {/* Motivo — obrigatório */}
-          {!readOnly && (
-            <div>
-              <FieldLabel>
-                <span className="flex items-center gap-1.5"><StickyNote className="h-3 w-3" /> Motivo *</span>
-              </FieldLabel>
+              {/* Chips de frases prontas */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {presets.map((p, idx) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    {editingPresets ? (
+                      <>
+                        <input
+                          value={p}
+                          onChange={(e) => updatePreset(idx, e.target.value)}
+                          className="px-2 py-1 text-xs rounded-full border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60 min-w-[120px]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePreset(idx)}
+                          className="text-muted-foreground hover:text-destructive text-xs"
+                          title="Remover"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => set("motivo")(p)}
+                        className="px-2.5 py-1 text-xs rounded-full border border-border bg-surface text-foreground hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                      >
+                        {p}
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {editingPresets && (
+                  <button
+                    type="button"
+                    onClick={addPreset}
+                    className="px-2.5 py-1 text-xs rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+                  >
+                    + nova
+                  </button>
+                )}
+              </div>
+
               <textarea
                 value={form.motivo}
                 onChange={(e) => set("motivo")(e.target.value)}
