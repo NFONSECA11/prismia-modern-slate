@@ -724,7 +724,9 @@ export interface CreateBookingPayload {
   lead_name: string;
   phone: string;
   procedure_name: string;
+  procedure_id?: number | null;
   unit_name: string;
+  unit_id?: number | null;
   professional_id: number;
   date: string;
   time: string;
@@ -733,69 +735,61 @@ export interface CreateBookingPayload {
   period: string;
 }
 
+// Compose `YYYY-MM-DDTHH:MM:00-03:00` (Brazil timezone) from date+time inputs.
+function composeBrazilDateTime(date: string, time: string): string {
+  return `${date}T${time}:00-03:00`;
+}
+
 export async function createBooking(
   payload: CreateBookingPayload
 ): Promise<BookingRequest> {
-  const scheduledAt = `${payload.date}T${payload.time}:00`;
+  if (!payload.unit_id) {
+    throw new Error("unit_id é obrigatório para criar agendamento manual.");
+  }
+  if (!payload.procedure_id) {
+    throw new Error("procedure_id é obrigatório para criar agendamento manual.");
+  }
+
+  const scheduledAt = composeBrazilDateTime(payload.date, payload.time);
   const body = {
-    lead_name: payload.lead_name,
-    phone: payload.phone,
-    contact_phone: payload.phone,
-    procedure_name: payload.procedure_name,
-    unit_name: payload.unit_name,
+    unit_id: payload.unit_id,
+    procedure_id: payload.procedure_id,
     professional_id: payload.professional_id,
-    professional: payload.professional_id,
-    preferred_period: payload.period,
-    preferred_window: `${payload.date} - ${payload.period}`,
     scheduled_at: scheduledAt,
-    status: "confirmed",
+    lead_name: payload.lead_name,
+    contact_phone: (payload.phone ?? "").replace(/\D/g, ""),
     booking_mode: "handoff_manual",
-    conversation_bot_mode: "off",
-    notes: payload.notes,
-    source: "manual_dashboard",
-    manual: true,
-    vars_snapshot: {
-      preferred_window: `${payload.date} - ${payload.period}`,
-      chosen_slot: {
-        start_at: scheduledAt,
-        label: `${payload.date} às ${payload.time}`,
-      },
-    },
+    notes: payload.notes ?? "",
   };
+
   await fetchCsrf();
   try {
-    const response = await api.post<any>("/api/booking/requests/", body);
+    const response = await api.post<any>("/api/booking/requests/create/", body);
     const data = response.data;
-    console.log("[createBooking] POST response", { status: response.status, data });
+    console.log("[createBooking] POST /create/ response", { status: response.status, data });
     const created = (data?.result ?? data) as BookingRequest;
     const createdId = (created as any)?.id;
     if (!createdId || createdId <= 0) {
-      console.warn("[createBooking] Resposta sem ID válido — backend não persistiu", data);
       throw new Error("Backend retornou sucesso mas não criou o BR (sem ID na resposta).");
     }
     return applyBookingProcedureNameOverride(created);
   } catch (err: any) {
-    const allow = err?.response?.headers?.allow ?? err?.response?.headers?.Allow;
-    if (err?.response?.status === 405) {
-      console.error("[createBooking] Backend recusou POST em /api/booking/requests/", {
-        allow,
-        body,
-      });
-      const localBooking = applyBookingProcedureNameOverride({
-        id: -Date.now(),
-        ...body,
-        professional_name: `#${payload.professional_id}`,
-        procedure_slug: payload.procedure_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-        preferred_window: body.preferred_window,
-        preferred_period: payload.period,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        chosen_slot: body.vars_snapshot.chosen_slot,
-        vars_snapshot: body.vars_snapshot,
-        confirmation: null,
-      } as BookingRequest);
-      persistManualBookingDraft(localBooking);
-      return localBooking;
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+    const errorCode = data?.error ?? data?.detail;
+    console.error("[createBooking] Falha em /api/booking/requests/create/", { status, data, body });
+
+    if (status === 409 && errorCode === "slot_already_taken") {
+      throw new Error("Já existe agendamento confirmado para este profissional neste horário.");
+    }
+    if (status === 403) {
+      throw new Error("Você não tem permissão para criar agendamento nesta unidade.");
+    }
+    if (status === 400) {
+      const msg = typeof errorCode === "string"
+        ? errorCode
+        : (data ? JSON.stringify(data) : "Campos obrigatórios faltando ou WhatsApp não configurado na unidade.");
+      throw new Error(msg);
     }
     throw err;
   }
