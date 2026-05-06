@@ -2485,13 +2485,13 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           detail: `${count} ${count === 1 ? "horário foi enviado" : "horários foram enviados"} ao cliente.`,
         });
       }
-      if (!isHandoffRescheduleFlow) {
+      if (isHandoffRescheduleFlow) {
         cancelledBookingCache.set(booking!.id, { cancelledId: String(cancelledId), botOff: false });
       }
       setActionDone(
         isHandoffRescheduleFlow
           ? "Agendamento atualizado!"
-          : `Agenda #${cancelledId} cancelada e bot reagendando!`
+          : "Bot reagendando!"
       );
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
