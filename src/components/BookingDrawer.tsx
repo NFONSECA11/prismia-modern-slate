@@ -2230,35 +2230,26 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const effResolvedSpecialty = selectedSpecialtyId ?? procSpecLinks.find((ps) => ps.procedure === effProcId)?.specialty ?? autoSpecialtyId;
       const procedureCode = procedureSlug || effResolvedUnitProcId || "";
 
-      // Detecta fluxo handoff_reschedule pela ação mais recente da IA.
-      // Nesse caso, o campo de ID pode apontar para outra BR por legado do autofill,
-      // então não devemos depender de targetId === booking.id.
+      // REGRA: só cancelar uma BR quando o fluxo é ai_handoff (handoff_reschedule).
+      // Em qualquer outro cenário (reagendamento manual direto, reopen→reschedule,
+      // manual_reschedule registrado pelo dashboard) NÃO cancelamos nenhuma BR.
       const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
-
-      // Reabrir→Reagendar: a própria BR foi reaberta via /reopen/ e está em handoff.
-      // Não devemos cancelar nada (não há "BR antiga" — é a mesma).
-      const isManualReopenRescheduleFlow =
-        latestHandoffActionEvent?.type === "manual_reschedule" && targetId === booking.id;
-
-      const skipCancel = isHandoffRescheduleFlow || isManualReopenRescheduleFlow;
+      const shouldCancel = isHandoffRescheduleFlow;
+      const skipCancel = !shouldCancel;
 
       if (skipCancel) {
         pushRescheduleLog({
-          label: isManualReopenRescheduleFlow
-            ? `BR #${booking.id} reaberta para reagendamento — sem cancelamento`
-            : `Reagendamento solicitado pela IA — sem cancelamento de BR`,
+          label: `BR #${booking.id} será preparada para novos horários — sem cancelamento`,
           status: "info",
-          detail: `BR #${booking.id} será preparada para novos horários`,
         });
       } else {
-        // 1) Cancela o BR antigo (fluxo padrão de reagendamento manual)
+        // 1) Cancela o BR antigo apenas no fluxo ai_handoff
         pushRescheduleLog({ label: `Cancelando agendamento #${targetId}…`, status: "info" });
         try {
           await cancelBooking(targetId);
           pushRescheduleLog({ label: `Agendamento #${targetId} cancelado`, status: "success" });
         } catch (err: any) {
           const status = err?.response?.status;
-          // 404 → já cancelado; segue
           if (status === 404) {
             pushRescheduleLog({ label: `Agendamento #${targetId} já estava cancelado`, status: "warning" });
           } else {
