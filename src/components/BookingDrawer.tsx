@@ -2248,7 +2248,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // `handoff_reschedule` sozinho apenas indica que a IA pediu reagendamento manual,
       // mas não autoriza cancelar a BR original.
       const currentNotes = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string);
-      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+      const isHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
       const shouldCancel = isHandoffRescheduleFlow;
       const skipCancel = !shouldCancel;
 
