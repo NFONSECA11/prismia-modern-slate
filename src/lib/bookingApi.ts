@@ -443,8 +443,15 @@ export async function fetchAgendaBookings(
     },
   });
   const normalized = normalizeBookingListResponse(data);
-  console.log("[Agenda] Server-filtered results:", normalized.results.length);
-  return normalized.results as BookingRequest[];
+  const serverResults = normalized.results as BookingRequest[];
+  const serverKeys = new Set(serverResults.map(getManualBookingMatchKey));
+  const localDrafts = readManualBookingDrafts().filter((booking) => {
+    const dt = String(booking.scheduled_at ?? booking.chosen_slot?.start_at ?? booking.vars_snapshot?.chosen_slot?.start_at ?? "").slice(0, 10);
+    const unitMatches = Number((booking as any).unit ?? (booking as any).unit_id) === unitId || !Number.isFinite(Number((booking as any).unit ?? (booking as any).unit_id));
+    return unitMatches && dt >= dateFrom && dt <= dateTo && !serverKeys.has(getManualBookingMatchKey(booking));
+  });
+  console.log("[Agenda] Server-filtered results:", serverResults.length, "local drafts:", localDrafts.length);
+  return applyBookingProcedureNameOverrides([...serverResults, ...localDrafts]);
 }
 
 // ── Listar profissionais por unidade ──────────────────────────────────────────
