@@ -480,7 +480,19 @@ function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<strin
 
 function hasAiHandoffOrigin(notes?: string | null): boolean {
   if (!notes) return false;
-  return extractAiEvents(notes).some((event) => event.type === "ai_handoff" || event.type === "handoff") || /BR_TAG_AI_HANDOFF\b/i.test(notes);
+  const events = extractAiEvents(notes);
+  if (events.length > 0) {
+    // ai_handoff só vale se for o ÚLTIMO evento (por ts; fallback ordem do array).
+    const sorted = [...events].sort((a, b) => {
+      const ta = a.ts ? Date.parse(a.ts) : 0;
+      const tb = b.ts ? Date.parse(b.ts) : 0;
+      return ta - tb;
+    });
+    const last = sorted[sorted.length - 1];
+    if (last && (last.type === "ai_handoff" || last.type === "handoff")) return true;
+    return false;
+  }
+  return /BR_TAG_AI_HANDOFF\b/i.test(notes);
 }
 
 /**
