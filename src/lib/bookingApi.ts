@@ -413,11 +413,29 @@ export async function handoffOn(id: number): Promise<void> {
   await api.post(`/api/booking/requests/${id}/handoff_on/`);
 }
 
-export async function handoffOff(id: number): Promise<void> {
+export async function handoffOff(
+  id: number,
+  resumeTo?: { flow_key: string; version: number; state: string } | null,
+): Promise<void> {
   await fetchCsrf();
-  await api.post(`/api/booking/requests/${id}/handoff_off/`, {
-    resume_to: { flow_key: "booking", version: 1, state: "BOOKING_PROCEDURE" },
-  });
+  // Tentativa 1: com resume_to (default = booking/BOOKING_PROCEDURE) ou o informado.
+  // Tentativa 2: payload vazio (backend decide o resume) — alguns estados rejeitam state inválido silenciosamente.
+  const primaryBody =
+    resumeTo === null
+      ? {}
+      : { resume_to: resumeTo ?? { flow_key: "booking", version: 1, state: "BOOKING_PROCEDURE" } };
+  try {
+    await api.post(`/api/booking/requests/${id}/handoff_off/`, primaryBody);
+  } catch (err: any) {
+    const status = err?.response?.status;
+    // Se a primeira tentativa falhar por validação de resume_to, tenta sem body.
+    if (status && status >= 400 && status < 500 && resumeTo !== null) {
+      console.warn("[handoffOff] primary failed, retrying with empty body", { status });
+      await api.post(`/api/booking/requests/${id}/handoff_off/`, {});
+      return;
+    }
+    throw err;
+  }
 }
 
 // ── Sugerir horários ─────────────────────────────────────────────────────────
