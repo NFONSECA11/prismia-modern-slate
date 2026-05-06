@@ -380,8 +380,8 @@ function ModalBody({
               <TextInput value={form.procedure_name} onChange={() => {}} placeholder="" disabled />
             ) : (
               <SelectInput
-                value={form.procedure_name}
-                onChange={set("procedure_name")}
+                value={form.procedure_id ? String(form.procedure_id) : ""}
+                onChange={handleProcedureChange}
                 options={procedureOptions}
                 placeholder="Selecione o procedimento"
               />
