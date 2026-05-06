@@ -2,11 +2,13 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
+import { cancelBooking } from "@/lib/bookingApi";
 import { Professional, BookingConfirmation } from "@/types/booking";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
+import { useToast } from "@/hooks/use-toast";
 import {
   X,
   User,
@@ -19,6 +21,7 @@ import {
   CheckCircle2,
   Loader2,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 
 export interface NewBookingSlot {
