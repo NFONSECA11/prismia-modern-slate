@@ -406,7 +406,12 @@ function ModalBody({
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {/* Context pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/25">
+            <span
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+              style={accent
+                ? { background: accent.bg, color: accent.text, borderColor: `${accent.border}40` }
+                : { background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))", borderColor: "hsl(var(--primary) / 0.25)" }}
+            >
               <Clock className="h-3 w-3" />
               {defaultTime} – {defaultTimeEnd}
             </span>
