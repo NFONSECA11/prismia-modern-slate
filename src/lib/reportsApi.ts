@@ -12,8 +12,16 @@ export interface ReportFilters {
 
 function toParams(filters: ReportFilters): Record<string, string> {
   const params: Record<string, string> = {};
+  // Backend espera nomes sem o sufixo "_id" (mesma convenção dos outros endpoints).
+  const keyMap: Record<string, string> = {
+    unit_id: "unit",
+    professional_id: "professional",
+    procedure_id: "procedure",
+  };
   Object.entries(filters).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== "") params[k] = String(v);
+    if (v === undefined || v === null || v === "") return;
+    const key = keyMap[k] ?? k;
+    params[key] = String(v);
   });
   return params;
 }
