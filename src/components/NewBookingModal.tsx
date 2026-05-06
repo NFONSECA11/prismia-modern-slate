@@ -400,7 +400,15 @@ function ModalBody({
             <FieldLabel>
               <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
             </FieldLabel>
-            <TextInput value={readOnly ? formatPhone(form.phone) : form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" disabled={readOnly} />
+            {readOnly ? (
+              form.phone ? (
+                <TextInput value={formatPhone(form.phone)} onChange={set("phone")} disabled />
+              ) : (
+                <p className="text-xs text-muted-foreground italic px-3 py-2">Não informado</p>
+              )
+            ) : (
+              <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" />
+            )}
           </div>
 
           {/* Procedimento */}
