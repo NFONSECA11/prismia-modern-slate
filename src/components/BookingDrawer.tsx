@@ -2435,15 +2435,33 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
       await patchBooking(booking.id, patch2);
 
-      // 5) Garante bot ON via handoffOff e valida o estado real retornado pelo backend.
-      try {
-        await handoffOff(booking.id);
-      } catch (err) {
-        console.warn("[rescheduleSuggestMut] handoffOff falhou (pode já estar ligado):", err);
-      }
+      // 5) Garante bot ON via handoffOff. Tenta com resume_to padrão; se backend não ligar,
+      //    tenta novamente com payload vazio (deixa o backend decidir o resume).
+      const ensureBotOn = async (): Promise<string> => {
+        try {
+          await handoffOff(booking.id);
+        } catch (err) {
+          console.warn("[rescheduleSuggestMut] handoffOff falhou:", err);
+        }
+        let detail = await fetchBookingRequestById(booking.id);
+        let mode = String((detail as any)?.conversation_bot_mode ?? (detail as any)?.conversation?.bot_mode ?? "").toLowerCase();
+        if (mode !== "on") {
+          console.warn("[rescheduleSuggestMut] bot ainda OFF após handoffOff, retry sem resume_to");
+          try {
+            await handoffOff(booking.id, null);
+          } catch (err) {
+            console.warn("[rescheduleSuggestMut] handoffOff(null) falhou:", err);
+          }
+          detail = await fetchBookingRequestById(booking.id);
+          mode = String((detail as any)?.conversation_bot_mode ?? (detail as any)?.conversation?.bot_mode ?? "").toLowerCase();
+        }
+        return mode;
+      };
 
       let detailFinal = await fetchBookingRequestById(booking.id);
-      const finalBotMode = String((detailFinal as any)?.conversation_bot_mode ?? (detailFinal as any)?.conversation?.bot_mode ?? "").toLowerCase();
+      let finalBotMode = await ensureBotOn();
+      detailFinal = await fetchBookingRequestById(booking.id);
+
       if (detailFinal?.booking_mode !== "auto_slots_bot" || finalBotMode !== "on") {
         const patchRetry = {
           ...patch2,
@@ -2459,13 +2477,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           payload: patchRetry,
         }));
         await patchBooking(booking.id, patchRetry);
-        try {
-          await handoffOff(booking.id);
-        } catch (err) {
-          console.warn("[rescheduleSuggestMut] handoffOff retry falhou:", err);
-        }
+        finalBotMode = await ensureBotOn();
         detailFinal = await fetchBookingRequestById(booking.id);
       }
+
+      console.log("[rescheduleSuggestMut] estado final:", {
+        booking_mode: detailFinal?.booking_mode,
+        conversation_bot_mode: (detailFinal as any)?.conversation_bot_mode,
+        conversation: (detailFinal as any)?.conversation,
+      });
 
       const finalSlots =
         (Array.isArray(detailFinal?.offer_slots) && detailFinal.offer_slots.length > 0
