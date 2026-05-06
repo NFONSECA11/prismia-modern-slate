@@ -80,14 +80,15 @@ export default function Reports() {
     { id: "performance", label: "Performance" },
   ];
 
-  // Default: últimos 30 dias
+  // Default: mês corrente (dia 1 até último dia do mês)
   const today = new Date();
-  const thirtyAgo = new Date();
-  thirtyAgo.setDate(today.getDate() - 30);
-  const toIso = (d: Date) => d.toISOString().slice(0, 10);
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const toIso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const [filters, setFilters] = useState<ReportFilters>({
-    date_from: toIso(thirtyAgo),
-    date_to: toIso(today),
+    date_from: toIso(firstOfMonth),
+    date_to: toIso(lastOfMonth),
   });
   const [unitDefaultApplied, setUnitDefaultApplied] = useState(false);
 
