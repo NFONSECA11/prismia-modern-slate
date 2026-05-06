@@ -389,9 +389,22 @@ export async function cancelBooking(id: number): Promise<void> {
 }
 
 // ── Reabrir ──────────────────────────────────────────────────────────────────
-export async function reopenBooking(id: number): Promise<void> {
+/**
+ * Reabre uma BR terminal (confirmed/cancelled/failed) movendo-a para handoff.
+ *
+ * `intent` declara a INTENÇÃO operacional do clique para o backend registrar
+ * em `ai_events` (ex.: manual_reschedule vs manual_reopen):
+ *  - "reschedule": reabrindo para reagendar (origem: status confirmed)
+ *  - "recover":    reabrindo para recuperar/reprocessar (cancelled/failed)
+ *
+ * O backend pode ignorar o body se ainda não tratar o campo — sem quebrar.
+ */
+export async function reopenBooking(
+  id: number,
+  intent: "reschedule" | "recover" = "recover",
+): Promise<void> {
   await fetchCsrf();
-  await api.post(`/api/booking/requests/${id}/reopen/`);
+  await api.post(`/api/booking/requests/${id}/reopen/`, { intent });
 }
 
 // ── Handoff ON / OFF ─────────────────────────────────────────────────────────
