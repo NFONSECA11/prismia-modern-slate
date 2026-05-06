@@ -1210,7 +1210,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
-        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+        const isHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
         console.log("[BookingDrawer] Reschedule flow — assigning on current BR #", booking!.id, { targetId, isHandoffRescheduleFlow });
         if (isHandoffRescheduleFlow) {
           await cancelBooking(targetId);
