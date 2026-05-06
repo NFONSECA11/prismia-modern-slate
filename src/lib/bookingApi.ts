@@ -425,6 +425,33 @@ export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}
   return data;
 }
 
+const MANUAL_BOOKING_DRAFTS_STORAGE_KEY = "prismia-manual-booking-drafts-v1";
+
+function getManualBookingMatchKey(booking: Partial<BookingRequest>): string {
+  const scheduledAt = String(
+    booking.scheduled_at ?? booking.chosen_slot?.start_at ?? booking.vars_snapshot?.chosen_slot?.start_at ?? ""
+  ).slice(0, 16);
+  return [booking.lead_name, booking.procedure_name, booking.professional_id, scheduledAt]
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .join("|");
+}
+
+function readManualBookingDrafts(): BookingRequest[] {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(MANUAL_BOOKING_DRAFTS_STORAGE_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((item) => item?.id && item?.scheduled_at) as BookingRequest[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistManualBookingDraft(booking: BookingRequest) {
+  const nextKey = getManualBookingMatchKey(booking);
+  const existing = readManualBookingDrafts().filter((item) => getManualBookingMatchKey(item) !== nextKey);
+  localStorage.setItem(MANUAL_BOOKING_DRAFTS_STORAGE_KEY, JSON.stringify([booking, ...existing].slice(0, 50)));
+}
+
 // ── Buscar BRs para Agenda (server-side filters) ─────────────────────────────
 export async function fetchAgendaBookings(
   unitId: number,
@@ -443,8 +470,15 @@ export async function fetchAgendaBookings(
     },
   });
   const normalized = normalizeBookingListResponse(data);
-  console.log("[Agenda] Server-filtered results:", normalized.results.length);
-  return normalized.results as BookingRequest[];
+  const serverResults = normalized.results as BookingRequest[];
+  const serverKeys = new Set(serverResults.map(getManualBookingMatchKey));
+  const localDrafts = readManualBookingDrafts().filter((booking) => {
+    const dt = String(booking.scheduled_at ?? booking.chosen_slot?.start_at ?? booking.vars_snapshot?.chosen_slot?.start_at ?? "").slice(0, 10);
+    const unitMatches = Number((booking as any).unit ?? (booking as any).unit_id) === unitId || !Number.isFinite(Number((booking as any).unit ?? (booking as any).unit_id));
+    return unitMatches && dt >= dateFrom && dt <= dateTo && !serverKeys.has(getManualBookingMatchKey(booking));
+  });
+  console.log("[Agenda] Server-filtered results:", serverResults.length, "local drafts:", localDrafts.length);
+  return applyBookingProcedureNameOverrides([...serverResults, ...localDrafts]);
 }
 
 // ── Listar profissionais por unidade ──────────────────────────────────────────
@@ -739,6 +773,21 @@ export async function createBooking(
         allow,
         body,
       });
+      const localBooking = applyBookingProcedureNameOverride({
+        id: -Date.now(),
+        ...body,
+        professional_name: `#${payload.professional_id}`,
+        procedure_slug: payload.procedure_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        preferred_window: body.preferred_window,
+        preferred_period: payload.period,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        chosen_slot: body.vars_snapshot.chosen_slot,
+        vars_snapshot: body.vars_snapshot,
+        confirmation: null,
+      } as BookingRequest);
+      persistManualBookingDraft(localBooking);
+      return localBooking;
     }
     throw err;
   }
