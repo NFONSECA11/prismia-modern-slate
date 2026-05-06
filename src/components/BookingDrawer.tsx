@@ -1284,7 +1284,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
         const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
-        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+        const wasHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
         if (wasHandoffRescheduleFlow) {
           lastCancelledIdRef.current = cancelledId;
           cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
