@@ -1400,7 +1400,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     mutationFn: async () => {
       // Step 1: try reopen (moves from confirmed → handoff)
       try {
-        await reopenBooking(booking!.id);
+        await reopenBooking(booking!.id, "recover");
         await new Promise(r => setTimeout(r, 500));
       } catch (reopenErr: any) {
         // If reopen fails (e.g. duplicate key / integrity error), proceed to cancel anyway
