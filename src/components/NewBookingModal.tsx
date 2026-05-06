@@ -50,7 +50,9 @@ export interface NewBookingFormData {
   lead_name: string;
   phone: string;
   procedure_name: string;
+  procedure_id: number | null;
   unit_name: string;
+  unit_id: number | null;
   professional_id: number;
   date: string;
   time: string;
@@ -218,7 +220,7 @@ function ModalBody({
   const addPreset = () => persistPresets([...presets, "Nova frase"]);
 
   // Fetch unit-procedures for the active unit (only when creating new)
-  const { data: unitProcedureNames = [] } = useQuery({
+  const { data: unitProcedures = [] } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["new-booking-unit-procedures", unit?.id],
     queryFn: async () => {
       await fetchCsrf();
@@ -226,13 +228,21 @@ function ModalBody({
         params: { unit: unit!.id, page_size: 500 },
       });
       const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? data?.result?.results ?? []);
-      const names = new Set<string>();
+      const seen = new Map<number, string>();
       for (const item of list) {
         if (item?.is_active === false || item?.enabled === false) continue;
         const name = item?.procedure_name ?? item?.procedure?.name ?? item?.name;
-        if (name) names.add(String(name));
+        const procedureId =
+          item?.procedure_id ??
+          item?.procedure?.id ??
+          (typeof item?.procedure === "number" ? item.procedure : null);
+        if (name && procedureId && !seen.has(procedureId)) {
+          seen.set(procedureId, String(name));
+        }
       }
-      return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      return Array.from(seen.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     },
     enabled: !!unit && !readOnly,
     staleTime: 60_000,
@@ -244,7 +254,9 @@ function ModalBody({
     lead_name: slot.prefill?.lead_name ?? "",
     phone: slot.prefill?.phone ?? "",
     procedure_name: slot.prefill?.procedure_name ?? "",
+    procedure_id: null,
     unit_name: slot.prefill?.unit_name ?? unitName,
+    unit_id: unit?.id ?? null,
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
@@ -257,7 +269,7 @@ function ModalBody({
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const isValid = !!form.lead_name.trim() && !!form.procedure_name && !!form.motivo.trim();
+  const isValid = !!form.lead_name.trim() && !!form.procedure_id && !!form.motivo.trim() && !!form.unit_id;
 
   const handleSave = async () => {
     if (!isValid || readOnly) return;
@@ -275,7 +287,13 @@ function ModalBody({
   };
 
   const profOptions = professionals.map((p) => ({ value: String(p.id), label: p.name }));
-  const procedureOptions = unitProcedureNames.map((p) => ({ value: p, label: p }));
+  const procedureOptions = unitProcedures.map((p) => ({ value: String(p.id), label: p.name }));
+
+  const handleProcedureChange = (idStr: string) => {
+    const id = Number(idStr);
+    const found = unitProcedures.find((p) => p.id === id);
+    setForm((f) => ({ ...f, procedure_id: id, procedure_name: found?.name ?? "" }));
+  };
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
@@ -362,8 +380,8 @@ function ModalBody({
               <TextInput value={form.procedure_name} onChange={() => {}} placeholder="" disabled />
             ) : (
               <SelectInput
-                value={form.procedure_name}
-                onChange={set("procedure_name")}
+                value={form.procedure_id ? String(form.procedure_id) : ""}
+                onChange={handleProcedureChange}
                 options={procedureOptions}
                 placeholder="Selecione o procedimento"
               />

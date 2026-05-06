@@ -351,11 +351,7 @@ export default function Index() {
         err?.message ??
         "Erro desconhecido";
       console.error("[handleSaveBooking] createBooking falhou:", err);
-      toast.error(
-        status === 405
-          ? "Backend ainda não permite criar agendamento manual (405). Habilite POST em /api/booking/requests/."
-          : `Falha ao criar agendamento${status ? ` (${status})` : ""}: ${detail}`,
-      );
+      toast.error(`Falha ao criar agendamento${status ? ` (${status})` : ""}: ${detail}`);
       throw err;
     }
     const newId = created?.id;
