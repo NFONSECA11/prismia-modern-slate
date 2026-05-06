@@ -827,6 +827,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
         procedure_name: booking.procedure_name,
         unit_name: booking.unit_name,
         confirmation: booking.confirmation ?? null,
+        palette: pickGcalPalette(booking) as any,
       },
     });
   };
