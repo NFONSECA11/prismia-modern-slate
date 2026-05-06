@@ -482,24 +482,14 @@ function ModalBody({
             </div>
           </div>
 
-          {/* Unidade e Período */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>
-                <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
-              </FieldLabel>
-              <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
-
-            </div>
-            <div>
-              <FieldLabel>Período</FieldLabel>
-              {readOnly ? (
-                <TextInput value={form.period} onChange={() => {}} placeholder="" disabled />
-              ) : (
-                <SelectInput value={form.period} onChange={set("period")} options={periodOptions} />
-              )}
-            </div>
+          {/* Unidade */}
+          <div>
+            <FieldLabel>
+              <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
+            </FieldLabel>
+            <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
           </div>
+
 
           {/* Motivo — obrigatório, com frases prontas editáveis */}
           {!readOnly && (
