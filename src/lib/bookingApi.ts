@@ -702,22 +702,44 @@ export interface CreateBookingPayload {
 export async function createBooking(
   payload: CreateBookingPayload
 ): Promise<BookingRequest> {
+  const scheduledAt = `${payload.date}T${payload.time}:00`;
   const body = {
     lead_name: payload.lead_name,
     phone: payload.phone,
+    contact_phone: payload.phone,
     procedure_name: payload.procedure_name,
     unit_name: payload.unit_name,
     professional_id: payload.professional_id,
+    professional: payload.professional_id,
     preferred_period: payload.period,
+    preferred_window: `${payload.date} - ${payload.period}`,
+    scheduled_at: scheduledAt,
+    status: "confirmed",
+    booking_mode: "handoff_manual",
+    conversation_bot_mode: "off",
+    notes: payload.notes,
+    source: "manual_dashboard",
+    manual: true,
     vars_snapshot: {
       preferred_window: `${payload.date} - ${payload.period}`,
       chosen_slot: {
-        start_at: `${payload.date}T${payload.time}:00`,
+        start_at: scheduledAt,
         label: `${payload.date} às ${payload.time}`,
       },
     },
   };
   await fetchCsrf();
-  const { data } = await api.post<BookingRequest>("/api/booking/requests/", body);
-  return data;
+  try {
+    const { data } = await api.post<BookingRequest>("/api/booking/requests/", body);
+    return applyBookingProcedureNameOverride(((data as any)?.result ?? data) as BookingRequest);
+  } catch (err: any) {
+    const allow = err?.response?.headers?.allow ?? err?.response?.headers?.Allow;
+    if (err?.response?.status === 405) {
+      console.error("[createBooking] Backend recusou POST em /api/booking/requests/", {
+        allow,
+        body,
+      });
+    }
+    throw err;
+  }
 }
