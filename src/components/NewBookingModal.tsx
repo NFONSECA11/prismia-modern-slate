@@ -471,7 +471,10 @@ function ModalBody({
               </div>
 
               {/* Quando/Onde card */}
-              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 grid grid-cols-2 gap-x-4 gap-y-3">
+              <div
+                className="rounded-xl border border-border bg-surface-elevated/50 p-4 grid grid-cols-2 gap-x-4 gap-y-3"
+                style={accent ? { borderLeft: `4px solid ${accent.border}` } : undefined}
+              >
                 <div>
                   <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                     <Calendar className="h-3 w-3" /> Data
