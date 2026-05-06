@@ -339,7 +339,24 @@ export default function Index() {
   }, [bookings, activeUnit, debouncedSearch, searchId, hideCancelled]);
 
   const handleSaveBooking = async (formData: NewBookingFormData) => {
-    const created = await createBooking(formData);
+    let created;
+    try {
+      created = await createBooking(formData);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail =
+        err?.response?.data?.detail ??
+        err?.response?.data?.error ??
+        err?.message ??
+        "Erro desconhecido";
+      console.error("[handleSaveBooking] createBooking falhou:", err);
+      toast.error(
+        status === 405
+          ? "Backend ainda não permite criar agendamento manual (405). Habilite POST em /api/booking/requests/."
+          : `Falha ao criar agendamento${status ? ` (${status})` : ""}: ${detail}`,
+      );
+      throw err;
+    }
     const newId = created?.id;
 
     // Re-fetch the freshly created booking so we have the up-to-date `notes`
