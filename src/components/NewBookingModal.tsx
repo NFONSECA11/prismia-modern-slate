@@ -428,7 +428,10 @@ function ModalBody({
           {readOnly ? (
             <>
               {/* Cliente card */}
-              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 space-y-3">
+              <div
+                className="rounded-xl border border-border bg-surface-elevated/50 p-4 space-y-3"
+                style={accent ? { borderLeft: `4px solid ${accent.border}` } : undefined}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
