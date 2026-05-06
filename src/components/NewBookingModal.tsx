@@ -2,11 +2,13 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
+import { cancelBooking } from "@/lib/bookingApi";
 import { Professional, BookingConfirmation } from "@/types/booking";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
+import { useToast } from "@/hooks/use-toast";
 import {
   X,
   User,
@@ -19,6 +21,7 @@ import {
   CheckCircle2,
   Loader2,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 
 export interface NewBookingSlot {
@@ -188,6 +191,35 @@ function ModalBody({
   const readOnly = !!slot.prefill;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleCancelBooking = async () => {
+    const bookingId = slot.prefill?.booking_id;
+    if (!bookingId) return;
+    setCancelling(true);
+    try {
+      await cancelBooking(bookingId);
+      toast({ title: "Agendamento cancelado", description: `BR #${bookingId} foi cancelado.` });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda-bookings"] });
+      onClose();
+    } catch (err: any) {
+      console.error("[NewBookingModal] cancelBooking falhou:", err);
+      toast({
+        title: "Erro ao cancelar",
+        description: err?.response?.data?.detail ?? err?.message ?? "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+      setConfirmCancel(false);
+    }
+  };
+
 
   // Frases prontas de Motivo (editáveis, persistidas em localStorage)
   const PRESETS_KEY = "prismia-booking-motivo-presets-v1";
@@ -548,6 +580,45 @@ function ModalBody({
                     Confirmar Agendamento
                   </>
                 )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Footer — read-only (existing booking): cancel button */}
+        {readOnly && slot.prefill?.booking_id && (
+          <div className="px-5 py-4 border-t border-border surface-elevated rounded-b-2xl flex-shrink-0 flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-all"
+            >
+              Fechar
+            </button>
+            {confirmCancel ? (
+              <button
+                onClick={handleCancelBooking}
+                disabled={cancelling}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-status-canceled text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {cancelling ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Cancelando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Confirmar cancelamento
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => setConfirmCancel(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-status-canceled/40 text-status-canceled text-sm font-semibold transition-all hover:bg-status-canceled/10"
+              >
+                <Trash2 className="h-4 w-4" />
+                Cancelar agendamento
               </button>
             )}
           </div>
