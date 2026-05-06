@@ -142,10 +142,9 @@ function SelectInput({
   );
 }
 
-export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBookingModalProps) {
+export function NewBookingModal({ slot, professionals, unit, onClose, onSave }: NewBookingModalProps) {
   if (!slot) return null;
 
-  // Compute defaults from the clicked slot
   const defaultTime = `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
   const defaultTimeEnd = `${String(slot.hour + 1).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
   const defaultDate = `${slot.date.getFullYear()}-${String(slot.date.getMonth() + 1).padStart(2, "0")}-${String(slot.date.getDate()).padStart(2, "0")}`;
@@ -157,6 +156,7 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
       defaultTimeEnd={defaultTimeEnd}
       defaultDate={defaultDate}
       professionals={professionals}
+      unit={unit ?? null}
       onClose={onClose}
       onSave={onSave}
     />
