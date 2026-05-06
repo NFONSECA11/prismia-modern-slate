@@ -946,7 +946,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
     const events = extractAiEvents(sourceBooking.notes);
     const handoffEvents = events.filter((e) =>
-      e.type === "handoff_schedule" || e.type === "handoff_reschedule" || e.type === "handoff_cancel"
+      e.type === "handoff_schedule" ||
+      e.type === "handoff_reschedule" ||
+      e.type === "handoff_cancel" ||
+      e.type === "manual_reschedule" ||
+      e.type === "manual_reopen"
     );
     if (handoffEvents.length === 0) return;
 
@@ -954,7 +958,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     const targetTab: IaOpType =
       latest.type === "handoff_cancel"
         ? "cancel"
-        : latest.type === "handoff_reschedule"
+        : latest.type === "handoff_reschedule" || latest.type === "manual_reschedule"
           ? "reschedule"
           : "schedule";
     setIaOpType(targetTab);
@@ -963,11 +967,20 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     if (latest.type === "handoff_schedule") {
       setScheduleReason((prev) => prev.trim() ? prev : "Política de Agendamento Manual");
     }
+    // Motivo padrão para reagendamento manual (operador clicou Reagendar numa BR confirmada)
+    if (latest.type === "manual_reschedule") {
+      setScheduleReason((prev) => prev.trim() ? prev : "Reagendamento manual");
+    }
 
     // Auto-preenchimento do ID da BR alvo:
     // - handoff_reschedule: usa a BR antiga (cancelled_br_id / referência).
     // - handoff_cancel: a própria BR atual é a BR a ser cancelada.
-    if (latest.type === "handoff_reschedule" || latest.type === "handoff_cancel") {
+    // - manual_reschedule (origem reopen): a própria BR é a que será reagendada.
+    if (
+      latest.type === "handoff_reschedule" ||
+      latest.type === "handoff_cancel" ||
+      latest.type === "manual_reschedule"
+    ) {
       const parsePossibleId = (value: unknown): number | null => {
         if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
         if (typeof value === "string") {
@@ -978,7 +991,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       };
 
       const targetBrId =
-        latest.type === "handoff_cancel"
+        latest.type === "handoff_cancel" || latest.type === "manual_reschedule"
           ? sourceBooking.id
           : parsePossibleId((latest as any).cancelled_br_id) ||
             parsePossibleId(varsSnapshot.target_br_id) ||
