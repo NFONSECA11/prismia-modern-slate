@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { fetchCsrf } from "@/lib/authApi";
-import { cancelBooking } from "@/lib/bookingApi";
+import { cancelBooking, fetchBookingPhoneById } from "@/lib/bookingApi";
 import { Professional, BookingConfirmation } from "@/types/booking";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import { useToast } from "@/hooks/use-toast";
@@ -297,6 +297,21 @@ function ModalBody({
     period: PERIODS[0],
     motivo: "",
   });
+
+  // Em modo leitura, se a BR não veio com telefone na lista, busca pelo detalhe
+  useEffect(() => {
+    if (!readOnly) return;
+    if (form.phone) return;
+    const id = slot.prefill?.booking_id;
+    if (!id) return;
+    let cancelled = false;
+    fetchBookingPhoneById(id).then((p) => {
+      if (!cancelled && p) setForm((f) => (f.phone ? f : { ...f, phone: p }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [readOnly, slot.prefill?.booking_id, form.phone]);
 
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
