@@ -1432,7 +1432,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   });
 
   const reopenMut = useMutation({
-    mutationFn: () => reopenBooking(booking!.id),
+    mutationFn: () => {
+      // Intent semantics:
+      // - confirmed → operador vai REAGENDAR (registrar manual_reschedule)
+      // - cancelled/failed/outros → recuperação operacional (manual_reopen)
+      const intent: "reschedule" | "recover" =
+        booking?.status === "confirmed" ? "reschedule" : "recover";
+      return reopenBooking(booking!.id, intent);
+    },
     onMutate: async () => {
       // Optimistic: update cached booking list so status changes instantly
       await queryClient.cancelQueries({ queryKey: ["booking-requests"] });
