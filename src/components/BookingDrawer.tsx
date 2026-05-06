@@ -1400,7 +1400,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     mutationFn: async () => {
       // Step 1: try reopen (moves from confirmed → handoff)
       try {
-        await reopenBooking(booking!.id);
+        await reopenBooking(booking!.id, "recover");
         await new Promise(r => setTimeout(r, 500));
       } catch (reopenErr: any) {
         // If reopen fails (e.g. duplicate key / integrity error), proceed to cancel anyway
@@ -1432,7 +1432,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   });
 
   const reopenMut = useMutation({
-    mutationFn: () => reopenBooking(booking!.id),
+    mutationFn: () => {
+      // Intent semantics:
+      // - confirmed → operador vai REAGENDAR (registrar manual_reschedule)
+      // - cancelled/failed/outros → recuperação operacional (manual_reopen)
+      const intent: "reschedule" | "recover" =
+        booking?.status === "confirmed" ? "reschedule" : "recover";
+      return reopenBooking(booking!.id, intent);
+    },
     onMutate: async () => {
       // Optimistic: update cached booking list so status changes instantly
       await queryClient.cancelQueries({ queryKey: ["booking-requests"] });
@@ -2801,8 +2808,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
     // Reopen for terminal
     if (terminal) {
+      const isReschedule = booking.status === "confirmed";
       actions.push(
-        <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
+        <ActionButton
+          key="reopen"
+          onClick={() => reopenMut.mutate()}
+          disabled={busy}
+          loading={reopenMut.isPending}
+          icon={isReschedule ? CalendarClock : RotateCcw}
+          label={isReschedule ? "Reagendar" : "Reabrir"}
+        />,
       );
       if (booking.status === "confirmed" && pCodeRaw !== "cancel") {
         actions.push(
