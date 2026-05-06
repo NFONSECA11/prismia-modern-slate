@@ -1209,7 +1209,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (isRescheduleFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
-        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
+        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
         console.log("[BookingDrawer] Reschedule flow — assigning on current BR #", booking!.id, { targetId, isHandoffRescheduleFlow });
         if (isHandoffRescheduleFlow) {
           await cancelBooking(targetId);
@@ -1282,7 +1283,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
-        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
+        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
         if (wasHandoffRescheduleFlow) {
           lastCancelledIdRef.current = cancelledId;
           cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
