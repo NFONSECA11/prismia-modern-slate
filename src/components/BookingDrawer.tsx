@@ -478,6 +478,11 @@ function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<strin
   return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
 }
 
+function hasAiHandoffOrigin(notes?: string | null): boolean {
+  if (!notes) return false;
+  return extractAiEvents(notes).some((event) => event.type === "ai_handoff" || event.type === "handoff") || /BR_TAG_AI_HANDOFF\b/i.test(notes);
+}
+
 /**
  * Faz PATCH no `notes` de uma BR cancelada para registrar o evento `manual_cancel`,
  * fazendo merge com qualquer bloco `ai_events` existente. Usado para rastreabilidade
