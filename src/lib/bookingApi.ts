@@ -773,6 +773,21 @@ export async function createBooking(
         allow,
         body,
       });
+      const localBooking = applyBookingProcedureNameOverride({
+        id: -Date.now(),
+        ...body,
+        professional_name: `#${payload.professional_id}`,
+        procedure_slug: payload.procedure_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        preferred_window: body.preferred_window,
+        preferred_period: payload.period,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        chosen_slot: body.vars_snapshot.chosen_slot,
+        vars_snapshot: body.vars_snapshot,
+        confirmation: null,
+      } as BookingRequest);
+      persistManualBookingDraft(localBooking);
+      return localBooking;
     }
     throw err;
   }
