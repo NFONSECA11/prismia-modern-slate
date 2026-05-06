@@ -1432,13 +1432,45 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   });
 
   const reopenMut = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       // Intent semantics:
       // - confirmed → operador vai REAGENDAR (registrar manual_reschedule)
       // - cancelled/failed/outros → recuperação operacional (manual_reopen)
+      const previousStatus = booking?.status;
       const intent: "reschedule" | "recover" =
-        booking?.status === "confirmed" ? "reschedule" : "recover";
-      return reopenBooking(booking!.id, intent);
+        previousStatus === "confirmed" ? "reschedule" : "recover";
+      const result = await reopenBooking(booking!.id, intent);
+
+      // Após reabrir, registra evento manual no `notes` (ai_events)
+      try {
+        const operatorName =
+          (user?.first_name && `${user.first_name}${user.last_name ? " " + user.last_name : ""}`.trim()) ||
+          (user as any)?.name ||
+          user?.username ||
+          "Operador";
+        const fresh = await fetchBookingRequestById(booking!.id);
+        const currentNotes = (fresh?.notes ?? "").trim();
+        const isReschedule = intent === "reschedule";
+        const manualEvent: Record<string, unknown> = {
+          type: isReschedule ? "manual_reschedule" : "manual_reopen",
+          ts: new Date().toISOString(),
+          actor: "human",
+          actor_name: operatorName,
+          br_id: booking!.id,
+          from_status: previousStatus,
+          unit: booking!.unit_name || undefined,
+          policy: "manual_dashboard",
+          reason: isReschedule
+            ? "Reagendamento manual (BR confirmada reaberta para reagendar)"
+            : "Reabertura manual para reprocessar",
+        };
+        const updatedNotes = appendManualAiEvent(currentNotes, manualEvent);
+        await patchBooking(booking!.id, { notes: updatedNotes });
+      } catch (err) {
+        console.warn("[reopenMut] falha ao registrar ai_events:", err);
+      }
+
+      return result;
     },
     onMutate: async () => {
       // Optimistic: update cached booking list so status changes instantly
@@ -1458,7 +1490,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       );
     },
     onSuccess: async () => {
-      setActionDone("Reaberto!");
+      setActionDone(booking?.status === "confirmed" ? "Pronto para reagendar!" : "Reaberto!");
       await refetchBookingDetailForBot();
       queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
       setTimeout(() => {
