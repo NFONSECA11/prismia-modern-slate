@@ -2808,8 +2808,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
     // Reopen for terminal
     if (terminal) {
+      const isReschedule = booking.status === "confirmed";
       actions.push(
-        <ActionButton key="reopen" onClick={() => reopenMut.mutate()} disabled={busy} loading={reopenMut.isPending} icon={RotateCcw} label="Reabrir" />,
+        <ActionButton
+          key="reopen"
+          onClick={() => reopenMut.mutate()}
+          disabled={busy}
+          loading={reopenMut.isPending}
+          icon={isReschedule ? CalendarClock : RotateCcw}
+          label={isReschedule ? "Reagendar" : "Reabrir"}
+        />,
       );
       if (booking.status === "confirmed" && pCodeRaw !== "cancel") {
         actions.push(
