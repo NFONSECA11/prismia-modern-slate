@@ -91,16 +91,18 @@ export default function Reports() {
   });
   const [unitDefaultApplied, setUnitDefaultApplied] = useState(false);
 
-  // Default da unidade conforme acesso do usuário:
-  // - acesso a múltiplas unidades → "Todas as unidades" (undefined)
-  // - acesso a apenas 1 unidade → aquela unidade
+  // Sincroniza filters.unit_id com a unidade ativa do header.
+  // - Troca de unidade no seletor → atualiza o filtro dos relatórios.
+  // - "Todas as unidades" (activeUnit=null) → remove unit_id.
   useEffect(() => {
-    if (unitDefaultApplied) return;
-    if (units.length === 1) {
-      setFilters((f) => ({ ...f, unit_id: units[0].id }));
-    }
+    setFilters((f) => {
+      const nextId = activeUnit?.id;
+      if (f.unit_id === nextId) return f;
+      const { unit_id: _drop, ...rest } = f;
+      return nextId ? { ...rest, unit_id: nextId } : rest;
+    });
     setUnitDefaultApplied(true);
-  }, [units, unitDefaultApplied]);
+  }, [activeUnit]);
 
   const activeUnitId = filters.unit_id ?? activeUnit?.id;
 
