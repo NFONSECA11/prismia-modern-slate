@@ -50,7 +50,9 @@ export interface NewBookingFormData {
   lead_name: string;
   phone: string;
   procedure_name: string;
+  procedure_id: number | null;
   unit_name: string;
+  unit_id: number | null;
   professional_id: number;
   date: string;
   time: string;
