@@ -1210,7 +1210,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
         const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
-        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+        const isHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
         console.log("[BookingDrawer] Reschedule flow — assigning on current BR #", booking!.id, { targetId, isHandoffRescheduleFlow });
         if (isHandoffRescheduleFlow) {
           await cancelBooking(targetId);
@@ -1284,7 +1284,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
         const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
-        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+        const wasHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
         if (wasHandoffRescheduleFlow) {
           lastCancelledIdRef.current = cancelledId;
           cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
@@ -2248,7 +2248,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // `handoff_reschedule` sozinho apenas indica que a IA pediu reagendamento manual,
       // mas não autoriza cancelar a BR original.
       const currentNotes = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string);
-      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
+      const isHandoffRescheduleFlow = hasAiHandoffOrigin(currentNotes);
       const shouldCancel = isHandoffRescheduleFlow;
       const skipCancel = !shouldCancel;
 
