@@ -459,7 +459,10 @@ function ModalBody({
               </div>
 
               {/* Procedimento card */}
-              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4">
+              <div
+                className="rounded-xl border border-border bg-surface-elevated/50 p-4"
+                style={accent ? { borderLeft: `4px solid ${accent.border}` } : undefined}
+              >
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   <Stethoscope className="h-3 w-3" /> Procedimento
                 </div>
