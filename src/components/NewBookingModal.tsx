@@ -187,6 +187,36 @@ function ModalBody({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Frases prontas de Motivo (editáveis, persistidas em localStorage)
+  const PRESETS_KEY = "prismia-booking-motivo-presets-v1";
+  const DEFAULT_PRESETS = [
+    "Cliente solicitou novo agendamento",
+    "Reagendamento por indisponibilidade do profissional",
+    "Encaixe solicitado pelo cliente",
+    "Agendamento confirmado por telefone",
+    "Retorno de procedimento",
+  ];
+  const [presets, setPresets] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(PRESETS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) return parsed;
+      }
+    } catch {}
+    return DEFAULT_PRESETS;
+  });
+  const [editingPresets, setEditingPresets] = useState(false);
+  const persistPresets = (next: string[]) => {
+    setPresets(next);
+    try { localStorage.setItem(PRESETS_KEY, JSON.stringify(next)); } catch {}
+  };
+  const updatePreset = (idx: number, value: string) =>
+    persistPresets(presets.map((p, i) => (i === idx ? value : p)));
+  const removePreset = (idx: number) =>
+    persistPresets(presets.filter((_, i) => i !== idx));
+  const addPreset = () => persistPresets([...presets, "Nova frase"]);
+
   // Fetch unit-procedures for the active unit (only when creating new)
   const { data: unitProcedureNames = [] } = useQuery({
     queryKey: ["new-booking-unit-procedures", unit?.id],
