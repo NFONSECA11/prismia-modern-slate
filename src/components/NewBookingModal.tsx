@@ -220,7 +220,7 @@ function ModalBody({
   const addPreset = () => persistPresets([...presets, "Nova frase"]);
 
   // Fetch unit-procedures for the active unit (only when creating new)
-  const { data: unitProcedureNames = [] } = useQuery({
+  const { data: unitProcedures = [] } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["new-booking-unit-procedures", unit?.id],
     queryFn: async () => {
       await fetchCsrf();
@@ -228,13 +228,21 @@ function ModalBody({
         params: { unit: unit!.id, page_size: 500 },
       });
       const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? data?.result?.results ?? []);
-      const names = new Set<string>();
+      const seen = new Map<number, string>();
       for (const item of list) {
         if (item?.is_active === false || item?.enabled === false) continue;
         const name = item?.procedure_name ?? item?.procedure?.name ?? item?.name;
-        if (name) names.add(String(name));
+        const procedureId =
+          item?.procedure_id ??
+          item?.procedure?.id ??
+          (typeof item?.procedure === "number" ? item.procedure : null);
+        if (name && procedureId && !seen.has(procedureId)) {
+          seen.set(procedureId, String(name));
+        }
       }
-      return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      return Array.from(seen.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     },
     enabled: !!unit && !readOnly,
     staleTime: 60_000,
@@ -246,7 +254,9 @@ function ModalBody({
     lead_name: slot.prefill?.lead_name ?? "",
     phone: slot.prefill?.phone ?? "",
     procedure_name: slot.prefill?.procedure_name ?? "",
+    procedure_id: null,
     unit_name: slot.prefill?.unit_name ?? unitName,
+    unit_id: unit?.id ?? null,
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
