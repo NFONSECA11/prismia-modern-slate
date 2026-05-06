@@ -478,6 +478,11 @@ function appendManualAiEvent(existingNotesRaw: string, manualEvent: Record<strin
   return [notesWithoutBlock, aiEventsBlock].filter(Boolean).join("\n");
 }
 
+function hasAiHandoffOrigin(notes?: string | null): boolean {
+  if (!notes) return false;
+  return extractAiEvents(notes).some((event) => event.type === "ai_handoff" || event.type === "handoff") || /BR_TAG_AI_HANDOFF\b/i.test(notes);
+}
+
 /**
  * Faz PATCH no `notes` de uma BR cancelada para registrar o evento `manual_cancel`,
  * fazendo merge com qualquer bloco `ai_events` existente. Usado para rastreabilidade
@@ -1204,7 +1209,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       if (isRescheduleFlow) {
         const targetId = Number(cancelBookingIdField.trim());
         if (!targetId || isNaN(targetId)) throw new Error("ID de agendamento inválido");
-        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
+        const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
         console.log("[BookingDrawer] Reschedule flow — assigning on current BR #", booking!.id, { targetId, isHandoffRescheduleFlow });
         if (isHandoffRescheduleFlow) {
           await cancelBooking(targetId);
@@ -1277,7 +1283,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
-        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        const currentNotes = ((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string;
+        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
         if (wasHandoffRescheduleFlow) {
           lastCancelledIdRef.current = cancelledId;
           cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
@@ -2237,10 +2244,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const effResolvedSpecialty = selectedSpecialtyId ?? procSpecLinks.find((ps) => ps.procedure === effProcId)?.specialty ?? autoSpecialtyId;
       const procedureCode = procedureSlug || effResolvedUnitProcId || "";
 
-      // REGRA: só cancelar uma BR quando o fluxo é ai_handoff (handoff_reschedule).
-      // Em qualquer outro cenário (reagendamento manual direto, reopen→reschedule,
-      // manual_reschedule registrado pelo dashboard) NÃO cancelamos nenhuma BR.
-      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+      // REGRA: só cancelar uma BR quando existe origem explícita de `ai_handoff`.
+      // `handoff_reschedule` sozinho apenas indica que a IA pediu reagendamento manual,
+      // mas não autoriza cancelar a BR original.
+      const currentNotes = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string);
+      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
       const shouldCancel = isHandoffRescheduleFlow;
       const skipCancel = !shouldCancel;
 
