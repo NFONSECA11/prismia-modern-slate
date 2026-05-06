@@ -2330,7 +2330,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           ? "Reagendamento solicitado pela IA — bot reassumirá após sugestão de horários"
           : (effLeadName ? `Solicitado por ${effLeadName}` : "Reagendamento manual"),
       };
-      if (!isHandoffRescheduleFlow) {
+      if (!skipCancel) {
         manualEvent.cancelled_br_id = targetId;
       }
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
