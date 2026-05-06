@@ -764,8 +764,16 @@ export async function createBooking(
   };
   await fetchCsrf();
   try {
-    const { data } = await api.post<BookingRequest>("/api/booking/requests/", body);
-    return applyBookingProcedureNameOverride(((data as any)?.result ?? data) as BookingRequest);
+    const response = await api.post<any>("/api/booking/requests/", body);
+    const data = response.data;
+    console.log("[createBooking] POST response", { status: response.status, data });
+    const created = (data?.result ?? data) as BookingRequest;
+    const createdId = (created as any)?.id;
+    if (!createdId || createdId <= 0) {
+      console.warn("[createBooking] Resposta sem ID válido — backend não persistiu", data);
+      throw new Error("Backend retornou sucesso mas não criou o BR (sem ID na resposta).");
+    }
+    return applyBookingProcedureNameOverride(created);
   } catch (err: any) {
     const allow = err?.response?.headers?.allow ?? err?.response?.headers?.Allow;
     if (err?.response?.status === 405) {
