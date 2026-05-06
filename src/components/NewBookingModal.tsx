@@ -191,6 +191,35 @@ function ModalBody({
   const readOnly = !!slot.prefill;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleCancelBooking = async () => {
+    const bookingId = slot.prefill?.booking_id;
+    if (!bookingId) return;
+    setCancelling(true);
+    try {
+      await cancelBooking(bookingId);
+      toast({ title: "Agendamento cancelado", description: `BR #${bookingId} foi cancelado.` });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-requests-updated"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda-bookings"] });
+      onClose();
+    } catch (err: any) {
+      console.error("[NewBookingModal] cancelBooking falhou:", err);
+      toast({
+        title: "Erro ao cancelar",
+        description: err?.response?.data?.detail ?? err?.message ?? "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+      setConfirmCancel(false);
+    }
+  };
+
 
   // Frases prontas de Motivo (editáveis, persistidas em localStorage)
   const PRESETS_KEY = "prismia-booking-motivo-presets-v1";
