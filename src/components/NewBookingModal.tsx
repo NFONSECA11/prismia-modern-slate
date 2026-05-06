@@ -396,99 +396,142 @@ function ModalBody({
             </span>
           </div>
 
-          {/* Cliente */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Cliente {!readOnly && "*"}</span>
-            </FieldLabel>
-            {readOnly && slot.prefill?.booking_id && (
-              <div className="mb-1 space-y-1">
-                <p className="text-[11px] text-muted-foreground">BR #{slot.prefill.booking_id}</p>
-                <ConfirmationIndicator confirmation={slot.prefill?.confirmation ?? null} />
+          {readOnly ? (
+            <>
+              {/* Cliente card */}
+              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      <User className="h-3 w-3" /> Cliente
+                    </div>
+                    <p className="text-sm font-semibold text-foreground truncate">{form.lead_name || "—"}</p>
+                  </div>
+                  {slot.prefill?.booking_id && (
+                    <span className="shrink-0 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold tracking-wide">
+                      BR #{slot.prefill.booking_id}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-foreground">
+                    {form.phone ? formatPhone(form.phone) : <span className="text-muted-foreground italic text-xs">Não informado</span>}
+                  </span>
+                </div>
+                {slot.prefill?.confirmation && (
+                  <div className="pt-2 border-t border-border/60">
+                    <ConfirmationIndicator confirmation={slot.prefill.confirmation} />
+                  </div>
+                )}
               </div>
-            )}
-            <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" disabled={readOnly} />
-          </div>
 
-          {/* Telefone */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
-            </FieldLabel>
-            {readOnly ? (
-              form.phone ? (
-                <TextInput value={formatPhone(form.phone)} onChange={set("phone")} disabled />
-              ) : (
-                <p className="text-xs text-muted-foreground italic px-3 py-2">Não informado</p>
-              )
-            ) : (
-              <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" />
-            )}
-          </div>
+              {/* Procedimento card */}
+              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  <Stethoscope className="h-3 w-3" /> Procedimento
+                </div>
+                <p className="text-sm font-semibold text-foreground">{form.procedure_name || "—"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">com {slot.professional.name}</p>
+              </div>
 
-          {/* Procedimento */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><Stethoscope className="h-3 w-3" /> Procedimento {!readOnly && "*"}</span>
-            </FieldLabel>
-            {readOnly ? (
-              <TextInput value={form.procedure_name} onChange={() => {}} placeholder="" disabled />
-            ) : (
-              <SelectInput
-                value={form.procedure_id ? String(form.procedure_id) : ""}
-                onChange={handleProcedureChange}
-                options={procedureOptions}
-                placeholder="Selecione o procedimento"
-              />
-            )}
-          </div>
+              {/* Quando/Onde card */}
+              <div className="rounded-xl border border-border bg-surface-elevated/50 p-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                <div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    <Calendar className="h-3 w-3" /> Data
+                  </div>
+                  <p className="text-sm font-medium text-foreground">{displayDate}</p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    <Clock className="h-3 w-3" /> Horário
+                  </div>
+                  <p className="text-sm font-medium text-foreground">{form.time} – {form.time_end}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t border-border/60">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    <Building2 className="h-3 w-3" /> Unidade
+                  </div>
+                  <p className="text-sm font-medium text-foreground">{form.unit_name || "—"}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Cliente */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Cliente *</span>
+                </FieldLabel>
+                <TextInput value={form.lead_name} onChange={set("lead_name")} placeholder="Nome completo" />
+              </div>
 
-          {/* Profissional */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Profissional</span>
-            </FieldLabel>
-            {readOnly ? (
-              <TextInput value={slot.professional.name} onChange={() => {}} placeholder="" disabled />
-            ) : (
-              <SelectInput
-                value={String(form.professional_id)}
-                onChange={(v) => set("professional_id")(Number(v))}
-                options={profOptions}
-              />
-            )}
-          </div>
+              {/* Telefone */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Telefone</span>
+                </FieldLabel>
+                <TextInput value={form.phone} onChange={set("phone")} placeholder="+55 11 99999-9999" />
+              </div>
 
-          {/* Data */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
-            </FieldLabel>
-            <TextInput value={displayDate} onChange={readOnly ? () => {} : set("date")} placeholder="DD/MM/AAAA" disabled={readOnly} />
-          </div>
+              {/* Procedimento */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><Stethoscope className="h-3 w-3" /> Procedimento *</span>
+                </FieldLabel>
+                <SelectInput
+                  value={form.procedure_id ? String(form.procedure_id) : ""}
+                  onChange={handleProcedureChange}
+                  options={procedureOptions}
+                  placeholder="Selecione o procedimento"
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Início</span>
-              </FieldLabel>
-              <TextInput value={form.time} onChange={set("time")} placeholder="HH:MM" disabled={readOnly} />
-            </div>
-            <div>
-              <FieldLabel>
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Término</span>
-              </FieldLabel>
-              <TextInput value={form.time_end} onChange={set("time_end")} placeholder="HH:MM" disabled={readOnly} />
-            </div>
-          </div>
+              {/* Profissional */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Profissional</span>
+                </FieldLabel>
+                <SelectInput
+                  value={String(form.professional_id)}
+                  onChange={(v) => set("professional_id")(Number(v))}
+                  options={profOptions}
+                />
+              </div>
 
-          {/* Unidade */}
-          <div>
-            <FieldLabel>
-              <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
-            </FieldLabel>
-            <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
-          </div>
+              {/* Data */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Data</span>
+                </FieldLabel>
+                <TextInput value={displayDate} onChange={set("date")} placeholder="DD/MM/AAAA" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <FieldLabel>
+                    <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Início</span>
+                  </FieldLabel>
+                  <TextInput value={form.time} onChange={set("time")} placeholder="HH:MM" />
+                </div>
+                <div>
+                  <FieldLabel>
+                    <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" /> Término</span>
+                  </FieldLabel>
+                  <TextInput value={form.time_end} onChange={set("time_end")} placeholder="HH:MM" />
+                </div>
+              </div>
+
+              {/* Unidade */}
+              <div>
+                <FieldLabel>
+                  <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
+                </FieldLabel>
+                <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
+              </div>
+            </>
+          )}
 
 
           {/* Motivo — obrigatório, com frases prontas editáveis */}
