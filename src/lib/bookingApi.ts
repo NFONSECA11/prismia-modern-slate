@@ -425,6 +425,33 @@ export async function suggestSlots(id: number, payload: SuggestSlotsPayload = {}
   return data;
 }
 
+const MANUAL_BOOKING_DRAFTS_STORAGE_KEY = "prismia-manual-booking-drafts-v1";
+
+function getManualBookingMatchKey(booking: Partial<BookingRequest>): string {
+  const scheduledAt = String(
+    booking.scheduled_at ?? booking.chosen_slot?.start_at ?? booking.vars_snapshot?.chosen_slot?.start_at ?? ""
+  ).slice(0, 16);
+  return [booking.lead_name, booking.procedure_name, booking.professional_id, scheduledAt]
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .join("|");
+}
+
+function readManualBookingDrafts(): BookingRequest[] {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(MANUAL_BOOKING_DRAFTS_STORAGE_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((item) => item?.id && item?.scheduled_at) as BookingRequest[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistManualBookingDraft(booking: BookingRequest) {
+  const nextKey = getManualBookingMatchKey(booking);
+  const existing = readManualBookingDrafts().filter((item) => getManualBookingMatchKey(item) !== nextKey);
+  localStorage.setItem(MANUAL_BOOKING_DRAFTS_STORAGE_KEY, JSON.stringify([booking, ...existing].slice(0, 50)));
+}
+
 // ── Buscar BRs para Agenda (server-side filters) ─────────────────────────────
 export async function fetchAgendaBookings(
   unitId: number,
