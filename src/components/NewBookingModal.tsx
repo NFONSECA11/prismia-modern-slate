@@ -385,11 +385,8 @@ function ModalBody({
               <FieldLabel>
                 <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
               </FieldLabel>
-              {readOnly ? (
-                <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
-              ) : (
-                <SelectInput value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
-              )}
+              <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
+
             </div>
             <div>
               <FieldLabel>Período</FieldLabel>
