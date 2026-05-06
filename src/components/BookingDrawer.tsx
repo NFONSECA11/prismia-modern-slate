@@ -1277,16 +1277,19 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         setActionDone(`Agenda #${cancelledId} cancelada!`);
       } else if (wasRescheduleFlow) {
         const cancelledId = cancelBookingIdField.trim();
-        lastCancelledIdRef.current = cancelledId;
-        cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
+        const wasHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+        if (wasHandoffRescheduleFlow) {
+          lastCancelledIdRef.current = cancelledId;
+          cancelledBookingCache.set(booking!.id, { cancelledId, botOff: false, realProcedureName: savedProcName || undefined });
+        }
         if (savedProcName) setOverrideProcedureName(savedProcName);
         try {
           console.log("[BookingDrawer] Reschedule flow — calling handoffOff to turn bot ON");
           await handoffOff(booking!.id);
-          setActionDone(`Agenda #${cancelledId} cancelada e bot ligado!`);
+          setActionDone(wasHandoffRescheduleFlow ? `Agenda #${cancelledId} cancelada e bot ligado!` : "Bot ligado para reagendar!");
         } catch (err) {
           console.error("[BookingDrawer] handoffOff after reschedule failed:", err);
-          setActionDone(`Agenda #${cancelledId} cancelada, mas falha ao ligar bot.`);
+          setActionDone(wasHandoffRescheduleFlow ? `Agenda #${cancelledId} cancelada, mas falha ao ligar bot.` : "Falha ao ligar bot para reagendar.");
         }
       } else if (isConvo) {
         try {
