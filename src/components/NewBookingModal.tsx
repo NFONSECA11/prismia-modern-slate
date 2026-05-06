@@ -348,6 +348,16 @@ function ModalBody({
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
 
+  // Paleta herdada do card da agenda (apenas no modo leitura)
+  const PALETTE_MAP: Record<string, { bg: string; border: string; text: string; soft: string }> = {
+    "gcal-c-blue":   { bg: "#d6e4fd", border: "#1a56db", text: "#0b3da8", soft: "#eaf1fe" },
+    "gcal-c-green":  { bg: "#d4ecdb", border: "#1e7e34", text: "#0f5223", soft: "#e9f5ee" },
+    "gcal-c-yellow": { bg: "#fbe09a", border: "#c98b00", text: "#5a3a00", soft: "#fcefc7" },
+    "gcal-c-red":    { bg: "#fbd0d9", border: "#c62828", text: "#8b0d18", soft: "#fde6ea" },
+    "gcal-c-purple": { bg: "#ddd0f5", border: "#5e35b1", text: "#311b92", soft: "#ece4f9" },
+  };
+  const accent = readOnly && slot.prefill?.palette ? PALETTE_MAP[slot.prefill.palette] : null;
+
   return createPortal(
     <>
       {/* Backdrop */}
@@ -355,13 +365,24 @@ function ModalBody({
 
       {/* Modal */}
       <div
-        className="gcal-modal fixed z-[121] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg animate-fade-in flex flex-col"
-        style={{ background: "#ffffff", border: "1px solid #e0e0e0", maxHeight: "90vh" }}
+        className="gcal-modal fixed z-[121] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl shadow-lg animate-fade-in flex flex-col overflow-hidden"
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e0e0e0",
+          maxHeight: "90vh",
+          borderTop: accent ? `4px solid ${accent.border}` : undefined,
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border surface-elevated rounded-t-2xl flex-shrink-0">
+        <div
+          className="flex items-center justify-between px-5 py-4 border-b border-border rounded-t-2xl flex-shrink-0"
+          style={accent ? { background: accent.soft } : undefined}
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary"
+              style={accent ? { background: accent.border, backgroundImage: "none" } : undefined}
+            >
               <Calendar className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
