@@ -170,6 +170,7 @@ function ModalBody({
   defaultTimeEnd,
   defaultDate,
   professionals,
+  unit,
   onClose,
   onSave,
 }: {
@@ -178,6 +179,7 @@ function ModalBody({
   defaultTimeEnd: string;
   defaultDate: string;
   professionals: Professional[];
+  unit: { id: number; name: string } | null;
   onClose: () => void;
   onSave: (data: NewBookingFormData) => Promise<void>;
 }) {
@@ -185,11 +187,34 @@ function ModalBody({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Fetch unit-procedures for the active unit (only when creating new)
+  const { data: unitProcedureNames = [] } = useQuery({
+    queryKey: ["new-booking-unit-procedures", unit?.id],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/unit-procedures/", {
+        params: { unit: unit!.id, page_size: 500 },
+      });
+      const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? data?.result?.results ?? []);
+      const names = new Set<string>();
+      for (const item of list) {
+        if (item?.is_active === false || item?.enabled === false) continue;
+        const name = item?.procedure_name ?? item?.procedure?.name ?? item?.name;
+        if (name) names.add(String(name));
+      }
+      return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    },
+    enabled: !!unit && !readOnly,
+    staleTime: 60_000,
+  });
+
+  const unitName = unit?.name ?? slot.prefill?.unit_name ?? "";
+
   const [form, setForm] = useState<NewBookingFormData>({
     lead_name: slot.prefill?.lead_name ?? "",
     phone: slot.prefill?.phone ?? "",
     procedure_name: slot.prefill?.procedure_name ?? "",
-    unit_name: slot.prefill?.unit_name ?? UNITS[0],
+    unit_name: slot.prefill?.unit_name ?? unitName,
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
@@ -220,8 +245,7 @@ function ModalBody({
   };
 
   const profOptions = professionals.map((p) => ({ value: String(p.id), label: p.name }));
-  const procedureOptions = PROCEDURES.map((p) => ({ value: p, label: p }));
-  const unitOptions = UNITS.map((u) => ({ value: u, label: u }));
+  const procedureOptions = unitProcedureNames.map((p) => ({ value: p, label: p }));
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
