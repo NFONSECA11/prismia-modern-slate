@@ -2244,10 +2244,11 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       const effResolvedSpecialty = selectedSpecialtyId ?? procSpecLinks.find((ps) => ps.procedure === effProcId)?.specialty ?? autoSpecialtyId;
       const procedureCode = procedureSlug || effResolvedUnitProcId || "";
 
-      // REGRA: só cancelar uma BR quando o fluxo é ai_handoff (handoff_reschedule).
-      // Em qualquer outro cenário (reagendamento manual direto, reopen→reschedule,
-      // manual_reschedule registrado pelo dashboard) NÃO cancelamos nenhuma BR.
-      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
+      // REGRA: só cancelar uma BR quando existe origem explícita de `ai_handoff`.
+      // `handoff_reschedule` sozinho apenas indica que a IA pediu reagendamento manual,
+      // mas não autoriza cancelar a BR original.
+      const currentNotes = (((bookingDetailForBot as any)?.notes ?? (booking as any)?.notes ?? "") as string);
+      const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule" && hasAiHandoffOrigin(currentNotes);
       const shouldCancel = isHandoffRescheduleFlow;
       const skipCancel = !shouldCancel;
 
