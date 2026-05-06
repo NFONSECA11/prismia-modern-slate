@@ -24,6 +24,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+export type GcalPaletteName = "gcal-c-blue" | "gcal-c-green" | "gcal-c-yellow" | "gcal-c-red" | "gcal-c-purple";
+
 export interface NewBookingSlot {
   date: Date;
   hour: number;
@@ -38,6 +40,7 @@ export interface NewBookingSlot {
     unit_name?: string;
     notes?: string;
     confirmation?: BookingConfirmation | null;
+    palette?: GcalPaletteName;
   };
 }
 
