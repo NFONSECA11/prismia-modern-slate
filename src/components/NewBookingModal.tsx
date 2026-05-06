@@ -41,6 +41,7 @@ export interface NewBookingSlot {
 interface NewBookingModalProps {
   slot: NewBookingSlot | null;
   professionals: Professional[];
+  unit?: { id: number; name: string } | null;
   onClose: () => void;
   onSave: (data: NewBookingFormData) => Promise<void>;
 }
@@ -59,20 +60,6 @@ export interface NewBookingFormData {
   motivo: string;
 }
 
-const PROCEDURES = [
-  "Limpeza de Pele Profunda",
-  "Botox Facial",
-  "Peeling Químico",
-  "Microagulhamento",
-  "Preenchimento Labial",
-  "Depilação a Laser",
-  "Massagem Relaxante",
-  "Harmonização Facial",
-  "Hidratação Profunda",
-  "Outro",
-];
-
-const UNITS = ["Unidade Centro", "Unidade Zona Sul", "Unidade Norte"];
 const PERIODS = ["Manhã", "Tarde", "Noite"];
 
 function formatPhone(raw: string): string {
