@@ -298,6 +298,21 @@ function ModalBody({
     motivo: "",
   });
 
+  // Em modo leitura, se a BR não veio com telefone na lista, busca pelo detalhe
+  useEffect(() => {
+    if (!readOnly) return;
+    if (form.phone) return;
+    const id = slot.prefill?.booking_id;
+    if (!id) return;
+    let cancelled = false;
+    fetchBookingPhoneById(id).then((p) => {
+      if (!cancelled && p) setForm((f) => (f.phone ? f : { ...f, phone: p }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [readOnly, slot.prefill?.booking_id, form.phone]);
+
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
