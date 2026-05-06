@@ -2235,9 +2235,18 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       // então não devemos depender de targetId === booking.id.
       const isHandoffRescheduleFlow = latestHandoffActionEvent?.type === "handoff_reschedule";
 
-      if (isHandoffRescheduleFlow) {
+      // Reabrir→Reagendar: a própria BR foi reaberta via /reopen/ e está em handoff.
+      // Não devemos cancelar nada (não há "BR antiga" — é a mesma).
+      const isManualReopenRescheduleFlow =
+        latestHandoffActionEvent?.type === "manual_reschedule" && targetId === booking.id;
+
+      const skipCancel = isHandoffRescheduleFlow || isManualReopenRescheduleFlow;
+
+      if (skipCancel) {
         pushRescheduleLog({
-          label: `Reagendamento solicitado pela IA — sem cancelamento de BR`,
+          label: isManualReopenRescheduleFlow
+            ? `BR #${booking.id} reaberta para reagendamento — sem cancelamento`
+            : `Reagendamento solicitado pela IA — sem cancelamento de BR`,
           status: "info",
           detail: `BR #${booking.id} será preparada para novos horários`,
         });
@@ -2321,7 +2330,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           ? "Reagendamento solicitado pela IA — bot reassumirá após sugestão de horários"
           : (effLeadName ? `Solicitado por ${effLeadName}` : "Reagendamento manual"),
       };
-      if (!isHandoffRescheduleFlow) {
+      if (!skipCancel) {
         manualEvent.cancelled_br_id = targetId;
       }
       const updatedNotes = appendManualAiEvent(existingNotesRaw, manualEvent);
