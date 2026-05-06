@@ -269,7 +269,7 @@ function ModalBody({
   const set = (field: keyof NewBookingFormData) => (value: string | number) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const isValid = !!form.lead_name.trim() && !!form.procedure_name && !!form.motivo.trim();
+  const isValid = !!form.lead_name.trim() && !!form.procedure_id && !!form.motivo.trim() && !!form.unit_id;
 
   const handleSave = async () => {
     if (!isValid || readOnly) return;
