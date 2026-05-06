@@ -287,7 +287,13 @@ function ModalBody({
   };
 
   const profOptions = professionals.map((p) => ({ value: String(p.id), label: p.name }));
-  const procedureOptions = unitProcedureNames.map((p) => ({ value: p, label: p }));
+  const procedureOptions = unitProcedures.map((p) => ({ value: String(p.id), label: p.name }));
+
+  const handleProcedureChange = (idStr: string) => {
+    const id = Number(idStr);
+    const found = unitProcedures.find((p) => p.id === id);
+    setForm((f) => ({ ...f, procedure_id: id, procedure_name: found?.name ?? "" }));
+  };
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
