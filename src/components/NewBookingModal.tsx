@@ -2,6 +2,9 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { fetchCsrf } from "@/lib/authApi";
 import { Professional, BookingConfirmation } from "@/types/booking";
 import { ConfirmationIndicator } from "@/components/ConfirmationIndicator";
 import {
@@ -38,6 +41,7 @@ export interface NewBookingSlot {
 interface NewBookingModalProps {
   slot: NewBookingSlot | null;
   professionals: Professional[];
+  unit?: { id: number; name: string } | null;
   onClose: () => void;
   onSave: (data: NewBookingFormData) => Promise<void>;
 }
@@ -56,20 +60,6 @@ export interface NewBookingFormData {
   motivo: string;
 }
 
-const PROCEDURES = [
-  "Limpeza de Pele Profunda",
-  "Botox Facial",
-  "Peeling Químico",
-  "Microagulhamento",
-  "Preenchimento Labial",
-  "Depilação a Laser",
-  "Massagem Relaxante",
-  "Harmonização Facial",
-  "Hidratação Profunda",
-  "Outro",
-];
-
-const UNITS = ["Unidade Centro", "Unidade Zona Sul", "Unidade Norte"];
 const PERIODS = ["Manhã", "Tarde", "Noite"];
 
 function formatPhone(raw: string): string {
@@ -152,10 +142,9 @@ function SelectInput({
   );
 }
 
-export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBookingModalProps) {
+export function NewBookingModal({ slot, professionals, unit, onClose, onSave }: NewBookingModalProps) {
   if (!slot) return null;
 
-  // Compute defaults from the clicked slot
   const defaultTime = `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
   const defaultTimeEnd = `${String(slot.hour + 1).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
   const defaultDate = `${slot.date.getFullYear()}-${String(slot.date.getMonth() + 1).padStart(2, "0")}-${String(slot.date.getDate()).padStart(2, "0")}`;
@@ -167,6 +156,7 @@ export function NewBookingModal({ slot, professionals, onClose, onSave }: NewBoo
       defaultTimeEnd={defaultTimeEnd}
       defaultDate={defaultDate}
       professionals={professionals}
+      unit={unit ?? null}
       onClose={onClose}
       onSave={onSave}
     />
@@ -180,6 +170,7 @@ function ModalBody({
   defaultTimeEnd,
   defaultDate,
   professionals,
+  unit,
   onClose,
   onSave,
 }: {
@@ -188,6 +179,7 @@ function ModalBody({
   defaultTimeEnd: string;
   defaultDate: string;
   professionals: Professional[];
+  unit: { id: number; name: string } | null;
   onClose: () => void;
   onSave: (data: NewBookingFormData) => Promise<void>;
 }) {
@@ -195,11 +187,34 @@ function ModalBody({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Fetch unit-procedures for the active unit (only when creating new)
+  const { data: unitProcedureNames = [] } = useQuery({
+    queryKey: ["new-booking-unit-procedures", unit?.id],
+    queryFn: async () => {
+      await fetchCsrf();
+      const { data } = await api.get("/api/settings/unit-procedures/", {
+        params: { unit: unit!.id, page_size: 500 },
+      });
+      const list = Array.isArray(data) ? data : (data?.results ?? data?.data ?? data?.result?.results ?? []);
+      const names = new Set<string>();
+      for (const item of list) {
+        if (item?.is_active === false || item?.enabled === false) continue;
+        const name = item?.procedure_name ?? item?.procedure?.name ?? item?.name;
+        if (name) names.add(String(name));
+      }
+      return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    },
+    enabled: !!unit && !readOnly,
+    staleTime: 60_000,
+  });
+
+  const unitName = unit?.name ?? slot.prefill?.unit_name ?? "";
+
   const [form, setForm] = useState<NewBookingFormData>({
     lead_name: slot.prefill?.lead_name ?? "",
     phone: slot.prefill?.phone ?? "",
     procedure_name: slot.prefill?.procedure_name ?? "",
-    unit_name: slot.prefill?.unit_name ?? UNITS[0],
+    unit_name: slot.prefill?.unit_name ?? unitName,
     professional_id: slot.professional.id,
     date: defaultDate,
     time: defaultTime,
@@ -230,8 +245,7 @@ function ModalBody({
   };
 
   const profOptions = professionals.map((p) => ({ value: String(p.id), label: p.name }));
-  const procedureOptions = PROCEDURES.map((p) => ({ value: p, label: p }));
-  const unitOptions = UNITS.map((u) => ({ value: u, label: u }));
+  const procedureOptions = unitProcedureNames.map((p) => ({ value: p, label: p }));
   const periodOptions = PERIODS.map((p) => ({ value: p, label: p }));
 
   const displayDate = format(slot.date, "dd/MM/yyyy", { locale: ptBR });
@@ -371,11 +385,8 @@ function ModalBody({
               <FieldLabel>
                 <span className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /> Unidade</span>
               </FieldLabel>
-              {readOnly ? (
-                <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
-              ) : (
-                <SelectInput value={form.unit_name} onChange={set("unit_name")} options={unitOptions} />
-              )}
+              <TextInput value={form.unit_name} onChange={() => {}} placeholder="" disabled />
+
             </div>
             <div>
               <FieldLabel>Período</FieldLabel>

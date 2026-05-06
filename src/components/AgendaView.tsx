@@ -1066,6 +1066,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
         key={newSlot ? `${newSlot.professional.id}_${newSlot.date.toISOString()}_${newSlot.hour}` : "closed"}
         slot={newSlot}
         professionals={displayProfessionals}
+        unit={unit ? { id: unit.id, name: unit.name } : null}
         onClose={() => setNewSlot(null)}
         onSave={handleSaveBooking}
       />
