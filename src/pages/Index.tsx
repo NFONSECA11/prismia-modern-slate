@@ -817,7 +817,10 @@ export default function Index() {
         }}
       >
         <div className="flex items-center justify-between w-full gap-2">
-          <PrismIAAgendaLogo size="sm" bare />
+          {/* Offset on mobile so the calendar icon center aligns with the circular client logo above */}
+          <div className="pl-[8px] sm:pl-0">
+            <PrismIAAgendaLogo size="sm" bare />
+          </div>
 
           {/* Mobile: view toggle + hamburger alinhados na linha baixa do módulo */}
           <div className="flex sm:hidden items-center gap-2 flex-shrink-0">
