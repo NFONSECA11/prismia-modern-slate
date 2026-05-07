@@ -373,7 +373,7 @@ export default function Reports() {
         }}
       >
         <div className="flex items-center justify-between w-full gap-2">
-          <div className="pl-[17px]">
+          <div className="pl-1">
             <PrismIAAgendaLogo size="sm" bare />
           </div>
           <button
