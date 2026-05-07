@@ -702,6 +702,7 @@ export default function Index() {
             <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
               <button
                 onClick={() => handleSetView("table")}
+                title="Tabela"
                 className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
                   view === "table"
                     ? "bg-surface-raised text-foreground shadow-sm"
@@ -712,6 +713,7 @@ export default function Index() {
               </button>
               <button
                 onClick={() => handleSetView("agenda")}
+                title="Agenda"
                 className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
                   view === "agenda"
                     ? "bg-surface-raised text-foreground shadow-sm"
@@ -720,6 +722,15 @@ export default function Index() {
               >
                 <CalendarDays className="h-4 w-4" />
               </button>
+              {canManage && (
+                <button
+                  onClick={() => navigate("/reports")}
+                  title="Relatórios"
+                  className="flex items-center justify-center p-1.5 rounded-md transition-all text-muted-foreground"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
             <button
