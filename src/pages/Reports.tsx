@@ -183,12 +183,12 @@ export default function Reports() {
       >
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:w-auto sm:max-w-[180px] sm:justify-start">
               {branding?.logo_url ? (
                 <img
                   src={branding.logo_url}
                   alt={branding.logo_alt || "Logo"}
-                  className="h-11 max-w-[180px] object-contain"
+                  className="h-11 w-11 object-contain sm:w-auto sm:max-w-[180px]"
                 />
               ) : (
                 <>
@@ -360,16 +360,7 @@ export default function Reports() {
             </button>
           </div>
 
-          {/* Mobile: voltar */}
-          <div className="flex sm:hidden items-center gap-2">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </button>
-          </div>
+          <div className="sm:hidden" />
         </div>
       </header>
 
@@ -381,8 +372,17 @@ export default function Reports() {
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center w-full" style={{ paddingLeft: 8 }}>
-          <PrismIAAgendaLogo size="sm" bare />
+        <div className="flex items-center justify-between w-full gap-2">
+          <div className="pl-[8px] sm:pl-0">
+            <PrismIAAgendaLogo size="sm" bare />
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground sm:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
         </div>
       </div>
 

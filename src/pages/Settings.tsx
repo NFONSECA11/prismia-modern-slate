@@ -296,18 +296,20 @@ export default function Settings() {
         className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        {branding?.logo_url ? (
-          <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 max-w-[180px] object-contain" />
-        ) : (
-          <h1 className="text-sm font-bold text-foreground">Configurações</h1>
-        )}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center sm:w-auto sm:max-w-[180px] sm:justify-start">
+          {branding?.logo_url ? (
+            <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 w-11 object-contain sm:w-auto sm:max-w-[180px]" />
+          ) : (
+            <h1 className="text-sm font-bold text-foreground">Configurações</h1>
+          )}
+        </div>
         {company && (
-          <span className="text-xs text-muted-foreground">{company.name}</span>
+          <span className="hidden text-xs text-muted-foreground sm:inline">{company.name}</span>
         )}
         <div className="flex-1" />
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
+          className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-elevated"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -319,8 +321,17 @@ export default function Settings() {
         className="print:hidden relative w-full flex items-center px-4 sm:px-6 py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        <div className="flex items-center w-full" style={{ paddingLeft: 8 }}>
-          <PrismIAAgendaLogo size="sm" bare />
+        <div className="flex items-center justify-between w-full gap-2">
+          <div className="pl-[8px] sm:pl-0">
+            <PrismIAAgendaLogo size="sm" bare />
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground sm:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
         </div>
       </div>
 
