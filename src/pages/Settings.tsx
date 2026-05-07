@@ -322,7 +322,7 @@ export default function Settings() {
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center justify-between w-full gap-2">
-          <div>
+          <div className="pl-2">
             <PrismIAAgendaLogo size="sm" bare />
           </div>
           <button
