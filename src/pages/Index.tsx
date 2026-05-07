@@ -817,7 +817,7 @@ export default function Index() {
         }}
       >
         <div className="flex items-center justify-between w-full gap-2">
-          <div className="pl-2">
+          <div className="pl-[17px]">
             <PrismIAAgendaLogo size="sm" bare />
           </div>
 
