@@ -816,7 +816,7 @@ export default function Index() {
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center justify-between w-full gap-2" style={{ paddingLeft: 8 }}>
+        <div className="flex items-center justify-between w-full gap-2">
           <PrismIAAgendaLogo size="sm" bare />
 
           {/* Mobile: view toggle + hamburger alinhados na linha baixa do módulo */}
