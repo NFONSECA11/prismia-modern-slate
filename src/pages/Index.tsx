@@ -696,50 +696,7 @@ export default function Index() {
             </button>
           </div>
 
-          {/* Mobile: view toggle + hamburger */}
-          <div className="flex sm:hidden items-center gap-2">
-            {/* Compact view toggle */}
-            <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
-              <button
-                onClick={() => handleSetView("table")}
-                title="Tabela"
-                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
-                  view === "table"
-                    ? "bg-surface-raised text-foreground shadow-sm"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <LayoutList className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleSetView("agenda")}
-                title="Agenda"
-                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
-                  view === "agenda"
-                    ? "bg-surface-raised text-foreground shadow-sm"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <CalendarDays className="h-4 w-4" />
-              </button>
-              {canManage && (
-                <button
-                  onClick={() => navigate("/reports")}
-                  title="Relatórios"
-                  className="flex items-center justify-center p-1.5 rounded-md transition-all text-muted-foreground"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
+          <div className="sm:hidden" />
         </div>
 
         {/* Mobile dropdown menu */}
@@ -859,8 +816,52 @@ export default function Index() {
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
         }}
       >
-        <div className="flex items-center w-full" style={{ paddingLeft: 8 }}>
+        <div className="flex items-center justify-between w-full gap-2" style={{ paddingLeft: 8 }}>
           <PrismIAAgendaLogo size="sm" bare />
+
+          {/* Mobile: view toggle + hamburger alinhados na linha baixa do módulo */}
+          <div className="flex sm:hidden items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 rounded-lg p-0.5 bg-surface-elevated border border-border">
+              <button
+                onClick={() => handleSetView("table")}
+                title="Tabela"
+                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
+                  view === "table"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleSetView("agenda")}
+                title="Agenda"
+                className={`flex items-center justify-center p-1.5 rounded-md transition-all ${
+                  view === "agenda"
+                    ? "bg-surface-raised text-foreground shadow-sm"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <CalendarDays className="h-4 w-4" />
+              </button>
+              {canManage && (
+                <button
+                  onClick={() => navigate("/reports")}
+                  title="Relatórios"
+                  className="flex items-center justify-center p-1.5 rounded-md transition-all text-muted-foreground"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
