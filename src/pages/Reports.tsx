@@ -183,12 +183,12 @@ export default function Reports() {
       >
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:w-auto sm:max-w-[180px] sm:justify-start">
+            <div className="flex h-11 w-auto flex-shrink-0 items-center justify-start pl-2 sm:max-w-[180px] sm:pl-0">
               {branding?.logo_url ? (
                 <img
                   src={branding.logo_url}
                   alt={branding.logo_alt || "Logo"}
-                  className="h-11 w-11 object-contain sm:w-auto sm:max-w-[180px]"
+                  className="h-11 w-auto max-w-[180px] object-contain"
                 />
               ) : (
                 <>
