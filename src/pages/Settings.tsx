@@ -296,7 +296,7 @@ export default function Settings() {
         className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center sm:w-auto sm:max-w-[180px] sm:justify-start">
+        <div className="ml-2 flex h-11 w-11 shrink-0 items-center justify-center sm:ml-0 sm:w-auto sm:max-w-[180px] sm:justify-start">
           {branding?.logo_url ? (
             <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 w-11 object-contain sm:w-auto sm:max-w-[180px]" />
           ) : (
