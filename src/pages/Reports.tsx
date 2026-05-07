@@ -175,7 +175,7 @@ export default function Reports() {
 
       {/* Top navigation bar — replica do Index */}
       <header
-        className="sticky top-0 z-30 print:hidden"
+        className="app-safe-area-top sticky top-0 z-30 print:hidden"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
