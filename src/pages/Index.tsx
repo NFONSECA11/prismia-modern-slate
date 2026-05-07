@@ -504,7 +504,7 @@ export default function Index() {
         {/* Main bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="ml-2 flex h-11 w-11 flex-shrink-0 items-center justify-center sm:ml-0 sm:w-auto sm:max-w-[180px] sm:justify-start">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:w-auto sm:max-w-[180px] sm:justify-start">
               {branding?.logo_url ? (
                 <img src={branding.logo_url} alt={branding.logo_alt || "Logo"} className="h-11 w-11 object-contain sm:w-auto sm:max-w-[180px]" />
               ) : (
@@ -818,7 +818,7 @@ export default function Index() {
       >
         <div className="flex items-center justify-between w-full gap-2">
           {/* Offset on mobile so the calendar icon center aligns with the circular client logo above */}
-            <div className="pl-[8px] sm:pl-0">
+          <div className="pl-[8px] sm:pl-0">
             <PrismIAAgendaLogo size="sm" bare />
           </div>
 
