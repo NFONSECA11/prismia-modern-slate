@@ -85,8 +85,8 @@ function formatCreatedAgo(dateStr: string) {
   }
 }
 
-const tableCellPadding = "px-2 py-2 xl:px-4 xl:py-3";
-const tableHeadPadding = "px-2 py-2 xl:px-4 xl:py-3";
+const tableCellPadding = "px-2 py-2 sm:px-4 sm:py-3";
+const tableHeadPadding = "px-2 py-2 sm:px-4 sm:py-3";
 
 function SkeletonRow() {
   return (
@@ -536,7 +536,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-2 py-8 xl:px-4 xl:py-12 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="px-2 py-8 sm:px-4 sm:py-12 text-center text-muted-foreground text-sm">
                     Nenhum agendamento encontrado
                   </td>
                 </tr>
