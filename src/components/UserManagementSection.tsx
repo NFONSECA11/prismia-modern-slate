@@ -219,8 +219,8 @@ export default function UserManagementSection() {
             )}
           </div>
 
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 px-3 py-1 items-center">
+          {/* Table header (desktop only) */}
+          <div className="hidden md:grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 px-3 py-1 items-center">
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Username</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Email</span>
@@ -240,53 +240,113 @@ export default function UserManagementSection() {
               return (
                 <div
                   key={u.membership_id}
-                  className="grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                  className="rounded-lg px-3 py-2 border border-border"
                   style={{ background: "hsl(var(--surface-elevated))" }}
                 >
-                  <span className="text-sm font-medium text-foreground truncate">{u.name}</span>
-                  <span className="text-xs text-muted-foreground truncate">{u.username}</span>
-                  <span className="text-xs text-muted-foreground truncate">{u.email || "—"}</span>
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full border border-border whitespace-nowrap">
-                    <Shield className="h-3 w-3" />
-                    {ROLE_LABELS[u.role] ?? u.role}
-                  </span>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {u.all_units
-                      ? "Todas"
-                      : u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ") || "—"}
-                  </span>
-                  <UserStatusBadge user={u} />
-                  <div className="flex items-center gap-1">
-                    {canEditUser(u) && (
-                      <button
-                        onClick={() => setEditUser(u)}
-                        className="text-muted-foreground hover:text-primary transition-colors p-1 rounded hover:bg-accent"
-                        title="Editar"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    {canToggleStatus(u) && (
-                      isActive ? (
+                  {/* Desktop layout */}
+                  <div className="hidden md:grid grid-cols-[1fr_0.8fr_1fr_auto_0.8fr_auto_auto] gap-2 items-center">
+                    <span className="text-sm font-medium text-foreground truncate">{u.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{u.username}</span>
+                    <span className="text-xs text-muted-foreground truncate">{u.email || "—"}</span>
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full border border-border whitespace-nowrap">
+                      <Shield className="h-3 w-3" />
+                      {ROLE_LABELS[u.role] ?? u.role}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {u.all_units
+                        ? "Todas"
+                        : u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ") || "—"}
+                    </span>
+                    <UserStatusBadge user={u} />
+                    <div className="flex items-center gap-1">
+                      {canEditUser(u) && (
                         <button
-                          onClick={() => deactivateMutation.mutate(u.membership_id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-destructive/10"
-                          title="Desativar"
-                          disabled={deactivateMutation.isPending}
+                          onClick={() => setEditUser(u)}
+                          className="text-muted-foreground hover:text-primary transition-colors p-1 rounded hover:bg-accent"
+                          title="Editar"
                         >
-                          <UserX className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => reactivateMutation.mutate(u.membership_id)}
-                          className="text-muted-foreground hover:text-emerald-600 transition-colors p-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                          title="Reativar"
-                          disabled={reactivateMutation.isPending}
-                        >
-                          <UserCheck className="h-3.5 w-3.5" />
-                        </button>
-                      )
-                    )}
+                      )}
+                      {canToggleStatus(u) && (
+                        isActive ? (
+                          <button
+                            onClick={() => deactivateMutation.mutate(u.membership_id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-destructive/10"
+                            title="Desativar"
+                            disabled={deactivateMutation.isPending}
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => reactivateMutation.mutate(u.membership_id)}
+                            className="text-muted-foreground hover:text-emerald-600 transition-colors p-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            title="Reativar"
+                            disabled={reactivateMutation.isPending}
+                          >
+                            <UserCheck className="h-3.5 w-3.5" />
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Mobile layout: compact card */}
+                  <div className="md:hidden flex flex-col gap-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-foreground truncate">{u.name || u.username}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{u.email || u.username}</div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {canEditUser(u) && (
+                          <button
+                            onClick={() => setEditUser(u)}
+                            className="text-muted-foreground hover:text-primary transition-colors p-1.5 rounded hover:bg-accent"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
+                        {canToggleStatus(u) && (
+                          isActive ? (
+                            <button
+                              onClick={() => deactivateMutation.mutate(u.membership_id)}
+                              className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded hover:bg-destructive/10"
+                              title="Desativar"
+                              disabled={deactivateMutation.isPending}
+                            >
+                              <UserX className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => reactivateMutation.mutate(u.membership_id)}
+                              className="text-muted-foreground hover:text-emerald-600 transition-colors p-1.5 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              title="Reativar"
+                              disabled={reactivateMutation.isPending}
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full border border-border">
+                        <Shield className="h-3 w-3" />
+                        {ROLE_LABELS[u.role] ?? u.role}
+                      </span>
+                      <UserStatusBadge user={u} />
+                      {!u.all_units && u.unit_ids.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
+                          {u.unit_ids.map((id) => unitNameMap[id] ?? `#${id}`).join(", ")}
+                        </span>
+                      )}
+                      {u.all_units && (
+                        <span className="text-[10px] text-muted-foreground">Todas unidades</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
