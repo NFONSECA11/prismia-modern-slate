@@ -16,7 +16,7 @@ export function ReportsFilters({ value, onChange, units = [], professionals = []
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5 sm:gap-2 rounded-xl border border-border px-2 sm:px-3 py-1.5 sm:py-2"
+      className="flex flex-wrap items-center gap-1.5 sm:gap-2 rounded-xl border border-border px-2 sm:px-3 py-2 sm:py-2"
       style={{ background: "hsl(var(--surface))" }}
     >
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
