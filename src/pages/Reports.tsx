@@ -386,7 +386,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <main className="px-1 xl:px-6 py-6 max-w-7xl mx-auto space-y-4 relative z-10">
+      <main className="px-1 xl:px-6 py-2 xl:py-6 max-w-7xl mx-auto space-y-2 xl:space-y-4 relative z-10">
 
         <ReportsFilters
           value={filters}
