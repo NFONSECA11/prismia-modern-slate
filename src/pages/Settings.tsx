@@ -293,7 +293,7 @@ export default function Settings() {
         />
       )}
       <header
-        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-1 sm:px-6 py-2 sm:py-3"
+        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-2 sm:px-6 py-2.5 sm:py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex h-11 w-auto shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
@@ -318,7 +318,7 @@ export default function Settings() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-1 sm:px-6 py-0.5 sm:py-1"
+        className="print:hidden relative w-full flex items-center px-2 sm:px-6 py-1 sm:py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center justify-between w-full gap-2">
@@ -335,7 +335,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="px-0.5 sm:px-6 py-1 sm:py-6 sm:max-w-3xl sm:mx-auto space-y-2 sm:space-y-6 relative z-10">
+      <main className="px-2 sm:px-6 py-2 sm:py-6 sm:max-w-3xl sm:mx-auto space-y-3 sm:space-y-6 relative z-10">
 
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-2 sm:space-y-3">
