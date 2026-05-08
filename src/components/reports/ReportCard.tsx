@@ -10,10 +10,10 @@ interface Props {
 export function ReportCard({ title, action, children, className = "" }: Props) {
   return (
     <div
-      className={`rounded-2xl border border-border p-2.5 xl:p-5 ${className}`}
+      className={`rounded-2xl border border-border p-2.5 sm:p-5 ${className}`}
       style={{ background: "hsl(var(--surface))" }}
     >
-      <div className="flex items-center justify-between mb-2.5 xl:mb-4">
+      <div className="flex items-center justify-between mb-2.5 sm:mb-4">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </h3>
@@ -41,7 +41,7 @@ const toneClass: Record<NonNullable<KpiProps["tone"]>, string> = {
 export function ReportKpi({ label, value, sub, tone = "default" }: KpiProps) {
   return (
     <div
-      className="rounded-xl border border-border p-2.5 xl:p-4"
+      className="rounded-xl border border-border p-2.5 sm:p-4"
       style={{ background: "hsl(var(--surface-elevated))" }}
     >
       <div className="text-xs text-muted-foreground mb-1.5">{label}</div>
