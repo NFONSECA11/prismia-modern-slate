@@ -502,7 +502,7 @@ export default function Index() {
         }}
       >
         {/* Main bar */}
-        <div className="flex items-center justify-between px-1 xl:px-6 py-3">
+        <div className="flex items-center justify-between px-1 xl:px-6 py-2 xl:py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex h-11 w-auto flex-shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
               {branding?.logo_url ? (
@@ -810,7 +810,7 @@ export default function Index() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-1 xl:px-6 py-1"
+        className="print:hidden relative w-full flex items-center px-1 xl:px-6 py-0.5 xl:py-1"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
@@ -884,7 +884,7 @@ export default function Index() {
         </div>
       )}
 
-      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-1 xl:px-6 pt-2 xl:pt-5 pb-2 space-y-2" : "px-1 xl:px-6 py-2 xl:py-5 space-y-2 xl:space-y-5"} max-w-[1440px] mx-auto`}>
+      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-0.5 xl:px-6 pt-1 xl:pt-5 pb-1 space-y-1 xl:space-y-2" : "px-0.5 xl:px-6 py-1 xl:py-5 space-y-1 xl:space-y-5"} max-w-[1440px] mx-auto`}>
 
         {/* Error banner */}
         {isError && (
@@ -898,7 +898,7 @@ export default function Index() {
 
         {/* Filters row — only for table view */}
         {view === "table" && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl border-2 px-3 py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--filter-bar-bg) / 0.80)" : "hsl(var(--filter-bar-bg))", borderColor: "hsl(var(--filter-bar-bg))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 xl:gap-2 rounded-xl border-2 px-2 xl:px-3 py-1.5 xl:py-2" style={{ background: isLandscape || isGradient ? "hsl(var(--filter-bar-bg) / 0.80)" : "hsl(var(--filter-bar-bg))", borderColor: "hsl(var(--filter-bar-bg))", backdropFilter: isLandscape || isGradient ? "blur(12px)" : undefined }}>
             {/* Search + result count */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:w-64 sm:flex-none">
