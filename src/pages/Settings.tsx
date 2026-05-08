@@ -293,7 +293,7 @@ export default function Settings() {
         />
       )}
       <header
-        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-1 xl:px-6 py-3"
+        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-1 xl:px-6 py-2 xl:py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex h-11 w-auto shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
@@ -318,7 +318,7 @@ export default function Settings() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-1 xl:px-6 py-1"
+        className="print:hidden relative w-full flex items-center px-1 xl:px-6 py-0.5 xl:py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center justify-between w-full gap-2">
@@ -335,10 +335,10 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="px-1 xl:px-6 py-2 xl:py-6 xl:max-w-3xl xl:mx-auto space-y-3 xl:space-y-6 relative z-10">
+      <main className="px-0.5 xl:px-6 py-1 xl:py-6 xl:max-w-3xl xl:mx-auto space-y-2 xl:space-y-6 relative z-10">
 
         {/* ─── 1) Contexto da conta ─── */}
-        <section className="space-y-3">
+        <section className="space-y-2 xl:space-y-3">
           <div className="flex items-center px-1 pb-1 border-b border-border/70">
             <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{isAgent ? "Personalização" : "Contexto da conta"}</span>
           </div>
