@@ -293,7 +293,7 @@ export default function Settings() {
         />
       )}
       <header
-        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-1 sm:px-6 py-2 sm:py-3"
+        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-2 sm:px-6 py-2.5 sm:py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex h-11 w-auto shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
@@ -318,7 +318,7 @@ export default function Settings() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-1 sm:px-6 py-0.5 sm:py-1"
+        className="print:hidden relative w-full flex items-center px-2 sm:px-6 py-1 sm:py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center justify-between w-full gap-2">
@@ -335,7 +335,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="px-0.5 sm:px-6 py-1 sm:py-6 sm:max-w-3xl sm:mx-auto space-y-2 sm:space-y-6 relative z-10">
+      <main className="px-2 sm:px-6 py-2 sm:py-6 sm:max-w-3xl sm:mx-auto space-y-3 sm:space-y-6 relative z-10">
 
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-2 sm:space-y-3">
@@ -349,14 +349,14 @@ export default function Settings() {
           {/* Empresa */}
           {canManage && (
           <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-3 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Empresa</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1.5 sm:mt-2 rounded-xl border border-border p-2.5 sm:p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-2 sm:mt-2 rounded-xl border border-border p-3 sm:p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center justify-between px-3 py-1">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
@@ -375,14 +375,14 @@ export default function Settings() {
           {/* Unidades */}
           {canManage && (
           <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-3 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Unidades</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1.5 sm:mt-2 rounded-xl border border-border p-2.5 sm:p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-2 sm:mt-2 rounded-xl border border-border p-3 sm:p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center justify-between px-3 py-1">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
                 <div className="flex items-center gap-6">
@@ -419,14 +419,14 @@ export default function Settings() {
 
           {/* Aparência */}
           <Collapsible defaultOpen={false} id="section-aparencia">
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-3 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Aparência</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1.5 sm:mt-2 rounded-xl border border-border p-2.5 sm:p-4 space-y-3 sm:space-y-5" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-2 sm:mt-2 rounded-xl border border-border p-3 sm:p-4 space-y-3 sm:space-y-5" style={{ background: "hsl(var(--surface))" }}>
               {/* Theme selection */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
@@ -634,7 +634,7 @@ export default function Settings() {
 
           {/* Profissionais */}
           <Collapsible defaultOpen={false} id="section-profissionais">
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-3 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary shrink-0" />
                 <div className="text-left">
@@ -644,7 +644,7 @@ export default function Settings() {
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1.5 sm:mt-2 rounded-xl border border-border p-2.5 sm:p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-2 sm:mt-2 rounded-xl border border-border p-3 sm:p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
               <div className="grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>

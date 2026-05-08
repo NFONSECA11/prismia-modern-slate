@@ -85,8 +85,8 @@ function formatCreatedAgo(dateStr: string) {
   }
 }
 
-const tableCellPadding = "px-2 py-2 sm:px-4 sm:py-3";
-const tableHeadPadding = "px-2 py-2 sm:px-4 sm:py-3";
+const tableCellPadding = "px-2 py-2.5 sm:px-4 sm:py-3";
+const tableHeadPadding = "px-2 py-2.5 sm:px-4 sm:py-3";
 
 function SkeletonRow() {
   return (
