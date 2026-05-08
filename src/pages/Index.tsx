@@ -884,7 +884,7 @@ export default function Index() {
         </div>
       )}
 
-      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-1 xl:px-6 pt-5 pb-2 space-y-2" : "px-1 xl:px-6 py-5 space-y-5"} max-w-[1440px] mx-auto`}>
+      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-1 xl:px-6 pt-2 xl:pt-5 pb-2 space-y-2" : "px-1 xl:px-6 py-2 xl:py-5 space-y-2 xl:space-y-5"} max-w-[1440px] mx-auto`}>
 
         {/* Error banner */}
         {isError && (
