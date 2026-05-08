@@ -615,7 +615,7 @@ export default function Settings() {
 
         {canManage && (<>
         {/* ─── 2) Catálogo e oferta da unidade ─── */}
-        <section className="space-y-3">
+        <section className="space-y-2 xl:space-y-3">
           <div className="flex items-center px-1 pb-1 border-b border-border/70">
             <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Catálogo e oferta da unidade</span>
           </div>
@@ -634,7 +634,7 @@ export default function Settings() {
 
           {/* Profissionais */}
           <Collapsible defaultOpen={false} id="section-profissionais">
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 xl:px-4 py-2.5 xl:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary shrink-0" />
                 <div className="text-left">
@@ -644,7 +644,7 @@ export default function Settings() {
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-1.5 xl:mt-2 rounded-xl border border-border p-2.5 xl:p-4 space-y-2" style={{ background: "hsl(var(--surface))" }}>
               <div className="grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Empresa</span>
