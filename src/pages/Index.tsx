@@ -810,7 +810,7 @@ export default function Index() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-4 sm:px-6 py-1"
+        className="print:hidden relative w-full flex items-center px-3 sm:px-6 py-1"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
