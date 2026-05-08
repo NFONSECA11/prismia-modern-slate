@@ -349,14 +349,14 @@ export default function Settings() {
           {/* Empresa */}
           {canManage && (
           <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 xl:px-4 py-2.5 xl:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Empresa</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-1.5 xl:mt-2 rounded-xl border border-border p-2.5 xl:p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center justify-between px-3 py-1">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
@@ -375,14 +375,14 @@ export default function Settings() {
           {/* Unidades */}
           {canManage && (
           <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 xl:px-4 py-2.5 xl:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Unidades</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-1.5 xl:mt-2 rounded-xl border border-border p-2.5 xl:p-4 space-y-1" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center justify-between px-3 py-1">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Nome</span>
                 <div className="flex items-center gap-6">
@@ -419,14 +419,14 @@ export default function Settings() {
 
           {/* Aparência */}
           <Collapsible defaultOpen={false} id="section-aparencia">
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-4 py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 xl:px-4 py-2.5 xl:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Aparência</span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 rounded-xl border border-border p-4 space-y-5" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleContent className="mt-1.5 xl:mt-2 rounded-xl border border-border p-2.5 xl:p-4 space-y-3 xl:space-y-5" style={{ background: "hsl(var(--surface))" }}>
               {/* Theme selection */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground px-1 font-medium uppercase tracking-wider">
