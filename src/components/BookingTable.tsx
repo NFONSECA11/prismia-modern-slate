@@ -566,7 +566,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
                     >
                       {/* Contato */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
                             {(aiEnabled || handoffOriginSet.has(booking.id)) && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} forceHandoffOrigin={handoffOriginSet.has(booking.id)} />}
@@ -596,7 +596,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       </td>
 
                       {/* Procedimento */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <div className="flex flex-col gap-0.5">
                           {aiEnabled ? (
                             (() => {
@@ -628,7 +628,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       </td>
 
                       {/* Agendamento */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <div className="flex flex-col gap-0.5">
                           {booking.scheduled_at ? (() => {
                             const dt = new Date(booking.scheduled_at);
@@ -653,7 +653,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <div className="flex flex-col gap-1 items-start">
                           <StatusBadge
                             status={booking.status}
@@ -678,7 +678,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       </td>
 
                       {/* Profissional */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <span className="flex items-center gap-1.5 text-foreground text-xs">
                           <User className="h-3.5 w-3.5 text-muted-foreground" />
                           {booking.professional_name}
@@ -686,7 +686,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       </td>
 
                       {/* Criado há + Quick Actions */}
-                      <td className="px-4 py-3">
+                      <td className={tableCellPadding}>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatCreatedAgo(booking.created_at)}
