@@ -318,7 +318,7 @@ export default function Settings() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-4 sm:px-6 py-1"
+        className="print:hidden relative w-full flex items-center px-3 sm:px-6 py-1"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex items-center justify-between w-full gap-2">
