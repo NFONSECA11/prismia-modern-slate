@@ -335,7 +335,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="px-1 xl:px-6 py-6 xl:max-w-3xl xl:mx-auto space-y-6 relative z-10">
+      <main className="px-1 xl:px-6 py-2 xl:py-6 xl:max-w-3xl xl:mx-auto space-y-3 xl:space-y-6 relative z-10">
 
         {/* ─── 1) Contexto da conta ─── */}
         <section className="space-y-3">
