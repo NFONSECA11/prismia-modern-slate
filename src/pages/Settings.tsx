@@ -293,7 +293,7 @@ export default function Settings() {
         />
       )}
       <header
-        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-4 sm:px-6 py-3"
+        className="app-safe-area-top sticky top-0 z-30 flex items-center gap-3 px-3 sm:px-6 py-3"
         style={{ background: "hsl(var(--topbar-bg))" }}
       >
         <div className="flex h-11 w-auto shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
