@@ -85,11 +85,14 @@ function formatCreatedAgo(dateStr: string) {
   }
 }
 
+const tableCellPadding = "px-2 py-2 xl:px-4 xl:py-3";
+const tableHeadPadding = "px-2 py-2 xl:px-4 xl:py-3";
+
 function SkeletonRow() {
   return (
     <tr className="border-b border-border/40">
       {Array.from({ length: 6 }).map((_, i) => (
-        <td key={i} className="px-4 py-3">
+        <td key={i} className={tableCellPadding}>
           <div className="h-3 rounded-full bg-surface-elevated animate-pulse" style={{ width: `${60 + i * 10}%` }} />
         </td>
       ))}
@@ -508,22 +511,22 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60" style={{ background: "hsl(var(--table-header-bg))" }}>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap`}>
                   Contato
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
                   Procedimento
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
                   Agendamento
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
                   Status
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
                   Profissional
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
                   Criado
                 </th>
               </tr>
@@ -533,7 +536,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="px-2 py-8 xl:px-4 xl:py-12 text-center text-muted-foreground text-sm">
                     Nenhum agendamento encontrado
                   </td>
                 </tr>
