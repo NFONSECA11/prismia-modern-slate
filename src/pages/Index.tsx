@@ -502,7 +502,7 @@ export default function Index() {
         }}
       >
         {/* Main bar */}
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3">
+        <div className="flex items-center justify-between px-2 sm:px-6 py-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex h-11 w-auto flex-shrink-0 items-center justify-start pl-2 sm:max-w-[180px]">
               {branding?.logo_url ? (
@@ -810,7 +810,7 @@ export default function Index() {
 
       {/* Module banner — barra dupla full-width */}
       <div
-        className="print:hidden relative w-full flex items-center px-3 sm:px-6 py-1"
+        className="print:hidden relative w-full flex items-center px-2 sm:px-6 py-1"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
@@ -884,7 +884,7 @@ export default function Index() {
         </div>
       )}
 
-      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-3 sm:px-6 pt-5 pb-2 space-y-2" : "px-3 sm:px-6 py-5 space-y-5"} max-w-[1440px] mx-auto`}>
+      <main className={`relative z-10 ${zenMode ? "hidden" : ""} ${view === "agenda" ? "px-2 sm:px-6 pt-5 pb-2 space-y-2" : "px-2 sm:px-6 py-5 space-y-5"} max-w-[1440px] mx-auto`}>
 
         {/* Error banner */}
         {isError && (
