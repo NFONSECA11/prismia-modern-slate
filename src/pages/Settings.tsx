@@ -349,7 +349,7 @@ export default function Settings() {
           {/* Empresa */}
           {canManage && (
           <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
+            <CollapsibleTrigger className="w-full rounded-xl border border-border px-3 sm:px-4 py-3 sm:py-3 flex items-center justify-between transition-colors hover:bg-surface-elevated" style={{ background: "hsl(var(--surface))" }}>
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">Empresa</span>
