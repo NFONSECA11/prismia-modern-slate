@@ -405,7 +405,8 @@ function parseNotes(notes: string): NoteEntry[] {
 
   let working = notes;
   // Remove tanto o formato correto `"ai_events":` quanto o malformado `"ai_events"[`
-  working = working.replace(/\{\s*"ai_events"\s*:?\s*\[[\s\S]*?\]\s*\}/g, "");
+  // Tolerate malformed payloads: missing colon after "ai_events" and missing outer `}`.
+  working = working.replace(/\{\s*"ai_events"\s*:?\s*\[[\s\S]*?\]\s*\}?/g, "");
 
   // Remove linhas que são apenas tags técnicas (BR_TAG_X = 1234)
   const cleaned = working

@@ -172,18 +172,28 @@ export interface AiEvent {
 export function extractAiEvents(notes?: string | null): AiEvent[] {
   if (!notes) return [];
 
-  // Find the start of an ai_events object — accept both `"ai_events":` and `"ai_events"[`
-  const re = /\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}/;
+  // Find the start of an ai_events object — tolerate:
+  //   - `"ai_events":` (correct) and `"ai_events"[` (missing colon)
+  //   - missing outer closing `}` (truncated payloads)
+  const re = /\{\s*"ai_events"\s*:?\s*(\[[\s\S]*?\])\s*\}?/;
   const match = notes.match(re);
   if (!match) return [];
 
-  try {
-    const arr = JSON.parse(match[1]);
-    if (!Array.isArray(arr)) return [];
-    return arr.filter((e) => e && typeof e === "object" && typeof e.type === "string") as AiEvent[];
-  } catch {
-    return [];
-  }
+  // Repair common backend typos before parsing:
+  //   `"key""value"` → `"key":"value"` (missing colon between key and string value)
+  const repaired = match[1].replace(/"(\w+)"\s*"/g, '"$1":"');
+
+  const tryParse = (s: string): AiEvent[] | null => {
+    try {
+      const arr = JSON.parse(s);
+      if (!Array.isArray(arr)) return null;
+      return arr.filter((e) => e && typeof e === "object" && typeof e.type === "string") as AiEvent[];
+    } catch {
+      return null;
+    }
+  };
+
+  return tryParse(repaired) ?? tryParse(match[1]) ?? [];
 }
 
 /** Get the latest AI event (by ts, falling back to array order) */
