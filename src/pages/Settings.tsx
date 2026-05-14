@@ -191,7 +191,7 @@ export default function Settings() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       setShowNewProfessional(false);
       setNewProfName("");
       setNewProfCode("");
@@ -231,7 +231,7 @@ export default function Settings() {
       toast.error("Erro ao alterar status do profissional");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
     },
   });
 
@@ -241,7 +241,7 @@ export default function Settings() {
       await api.delete(`/api/settings/professionals/${id}/`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", activeUnit?.id] });
+      queryClient.invalidateQueries({ queryKey: ["professionals"] });
       toast.success("Profissional removido com sucesso");
     },
     onError: (err: any) => {
