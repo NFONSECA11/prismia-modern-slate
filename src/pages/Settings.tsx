@@ -184,6 +184,7 @@ export default function Settings() {
       await fetchCsrf();
       const body: Record<string, any> = { name: payload.name };
       if (payload.code) body.code = payload.code;
+      if (company?.id) body.company = company.id;
       const unitId = payload.unit ?? activeUnit?.id;
       if (unitId) body.unit = unitId;
       const { data } = await api.post("/api/settings/professionals/", body);
