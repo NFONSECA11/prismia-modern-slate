@@ -152,7 +152,15 @@ function UnitBookingSettings({ unitId, unitName }: { unitId: number; unitName: s
       setDirty(false);
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.detail || err?.response?.data?.error || err?.message || "Erro ao salvar";
+      const data = err?.response?.data;
+      console.error("[BookingSettings] save error:", err?.response?.status, data);
+      let msg = data?.detail || data?.error || err?.message || "Erro ao salvar";
+      if (data && typeof data === "object" && !data.detail && !data.error) {
+        const fieldErrors = Object.entries(data)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`)
+          .join(" • ");
+        if (fieldErrors) msg = fieldErrors;
+      }
       toast.error(String(msg));
     },
   });
