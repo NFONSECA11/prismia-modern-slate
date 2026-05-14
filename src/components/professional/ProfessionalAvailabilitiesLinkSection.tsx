@@ -168,6 +168,23 @@ export default function ProfessionalAvailabilitiesLinkSection() {
         .filter((option) => option.profName === profName);
   }, [puOptions]);
 
+  const resetNewForm = () => {
+    setShowNewFor(null);
+    setNewPuId("");
+    setNewSlot(60);
+    setNewBuffer(0);
+    setNewWeekly({});
+  };
+
+  const startNewForProfessional = (profName: string) => {
+    const options = puOptionsByProf(profName);
+    setShowNewFor(profName);
+    setNewPuId(options.length === 1 ? options[0].id : "");
+    setNewSlot(60);
+    setNewBuffer(0);
+    setNewWeekly({});
+  };
+
   const createAvailability = useMutation({
     mutationFn: async (payload: {
       professional_unit: number;
@@ -187,11 +204,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey });
-      setShowNewFor(null);
-      setNewPuId("");
-      setNewSlot(60);
-      setNewBuffer(0);
-      setNewWeekly({});
+      resetNewForm();
       toast.success("Disponibilidade criada");
     },
     onError: (err: any) =>
@@ -466,20 +479,14 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                             size="sm"
                             variant="ghost"
                             className="h-8 text-xs"
-                            onClick={() => {
-                              setShowNewFor(null);
-                              setNewPuId("");
-                              setNewSlot(60);
-                              setNewBuffer(0);
-                              setNewWeekly({});
-                            }}
+                            onClick={resetNewForm}
                           >
                             Cancelar
                           </Button>
                           <Button
                             size="sm"
                             className="h-8 text-xs"
-                            disabled={!newPuId || Object.keys(newWeekly).length === 0 || createAvailability.isPending}
+                            disabled={!newPuId || !Object.values(newWeekly).some((slots) => slots?.some((s) => s.start && s.end)) || createAvailability.isPending}
                             onClick={() => {
                               createAvailability.mutate({
                                 professional_unit: newPuId as number,
@@ -495,13 +502,7 @@ export default function ProfessionalAvailabilitiesLinkSection() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => {
-                          setShowNewFor(profName);
-                          setNewPuId("");
-                          setNewSlot(60);
-                          setNewBuffer(0);
-                          setNewWeekly({});
-                        }}
+                        onClick={() => startNewForProfessional(profName)}
                         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors pt-2 px-2"
                       >
                         <Plus className="h-3.5 w-3.5" />
