@@ -197,8 +197,17 @@ export default function Settings() {
       setNewProfUnitId(activeUnit?.id ?? "");
       toast.success("Profissional criado com sucesso");
     },
-    onError: () => {
-      toast.error("Erro ao criar profissional");
+    onError: (err: any) => {
+      const data = err?.response?.data;
+      console.error("[createProfessional] error:", err?.response?.status, data);
+      let msg = data?.detail || data?.error || err?.message || "Erro ao criar profissional";
+      if (data && typeof data === "object" && !data.detail && !data.error) {
+        const fieldErrors = Object.entries(data)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`)
+          .join(" • ");
+        if (fieldErrors) msg = fieldErrors;
+      }
+      toast.error(String(msg));
     },
   });
 
