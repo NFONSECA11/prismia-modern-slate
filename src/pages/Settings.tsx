@@ -182,10 +182,11 @@ export default function Settings() {
   const createProfessional = useMutation({
     mutationFn: async (payload: { name: string; code?: string; unit?: number }) => {
       await fetchCsrf();
-      const { data } = await api.post("/api/settings/professionals/", {
-        ...payload,
-        unit: payload.unit ?? activeUnit!.id,
-      });
+      const body: Record<string, any> = { name: payload.name };
+      if (payload.code) body.code = payload.code;
+      const unitId = payload.unit ?? activeUnit?.id;
+      if (unitId) body.unit = unitId;
+      const { data } = await api.post("/api/settings/professionals/", body);
       return data;
     },
     onSuccess: () => {
@@ -715,8 +716,8 @@ export default function Settings() {
                     <Button
                       size="sm"
                       className="h-8 text-xs"
-                      disabled={!newProfName.trim() || !activeUnit?.id || createProfessional.isPending}
-                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: activeUnit!.id, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
+                      disabled={!newProfName.trim() || createProfessional.isPending}
+                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), ...(activeUnit?.id ? { unit: activeUnit.id } : {}), ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
                     >
                       {createProfessional.isPending ? "…" : "Salvar"}
                     </Button>
