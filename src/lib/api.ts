@@ -47,7 +47,7 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-const DEFAULT_API_BASE_URL = "https://stationery-edited-members-packard.trycloudflare.com";
+const DEFAULT_API_BASE_URL = "https://committees-ability-monica-com.trycloudflare.com";
 const FALLBACK_API_BASE_URLS = [DEFAULT_API_BASE_URL];
 
 function normalizeApiBaseUrl(url: string): string {
