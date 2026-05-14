@@ -716,8 +716,8 @@ export default function Settings() {
                     <Button
                       size="sm"
                       className="h-8 text-xs"
-                      disabled={!newProfName.trim() || !activeUnit?.id || createProfessional.isPending}
-                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), unit: activeUnit!.id, ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
+                      disabled={!newProfName.trim() || createProfessional.isPending}
+                      onClick={() => createProfessional.mutate({ name: newProfName.trim(), ...(activeUnit?.id ? { unit: activeUnit.id } : {}), ...(newProfCode.trim() ? { code: newProfCode.trim() } : {}) })}
                     >
                       {createProfessional.isPending ? "…" : "Salvar"}
                     </Button>
