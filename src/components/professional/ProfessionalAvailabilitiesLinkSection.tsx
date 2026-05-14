@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Plus, Trash2, CalendarClock, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -184,6 +184,12 @@ export default function ProfessionalAvailabilitiesLinkSection() {
     setNewBuffer(0);
     setNewWeekly({});
   };
+
+  useEffect(() => {
+    if (!showNewFor || newPuId) return;
+    const options = puOptionsByProf(showNewFor);
+    if (options.length === 1) setNewPuId(options[0].id);
+  }, [newPuId, puOptionsByProf, showNewFor]);
 
   const createAvailability = useMutation({
     mutationFn: async (payload: {
