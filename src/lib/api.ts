@@ -47,7 +47,7 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-const DEFAULT_API_BASE_URL = "https://drive-turtle-peas-patches.trycloudflare.com";
+const DEFAULT_API_BASE_URL = "https://outcome-matches-theoretical-virginia.trycloudflare.com";
 const FALLBACK_API_BASE_URLS = [DEFAULT_API_BASE_URL];
 
 function normalizeApiBaseUrl(url: string): string {
