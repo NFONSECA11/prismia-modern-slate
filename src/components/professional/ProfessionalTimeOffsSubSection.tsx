@@ -127,7 +127,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
         <p className="text-xs text-muted-foreground px-3">Vincule uma unidade primeiro para gerenciar bloqueios.</p>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1.5fr_2rem] gap-2 px-3 py-1 items-center">
+          <div className="min-w-[32rem] grid grid-cols-[1fr_1fr_1fr_1fr_1.5fr_2rem] gap-2 px-3 py-1 items-center">
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tipo</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
@@ -146,7 +146,7 @@ export default function ProfessionalTimeOffsSubSection({ professionalId }: Props
               return (
                 <div
                   key={b.id}
-                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1.5fr_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                  className="min-w-[32rem] grid grid-cols-[1fr_1fr_1fr_1fr_1.5fr_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                   style={{ background: "hsl(var(--surface-elevated))" }}
                 >
                   <span className="text-xs text-foreground truncate">{b.unit_name ?? pu?.unit_name ?? "—"}</span>

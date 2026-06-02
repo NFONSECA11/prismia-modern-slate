@@ -141,11 +141,11 @@ export default function ServiceCategoriesSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-1"
+        className="mt-2 rounded-xl border border-border p-4 space-y-1 overflow-x-auto"
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
+        <div className="min-w-[30rem] grid grid-cols-[3rem_1fr_1fr_auto] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Especialidade</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Procedimento</span>
@@ -160,7 +160,7 @@ export default function ServiceCategoriesSection() {
           (items as ProcedureSpecialty[]).map((item) => (
             <div
               key={item.id}
-              className="grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="min-w-[30rem] grid grid-cols-[3rem_1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-xs font-mono text-muted-foreground">{item.id}</span>

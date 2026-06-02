@@ -119,7 +119,7 @@ export default function ProfessionalUnitsSubSection({ professionalId }: Props) {
   return (
     <SubSectionShell icon={MapPin} title="Unidades" description="Unidades onde este profissional atua">
       {/* Header */}
-      <div className="grid grid-cols-[1fr_4rem_auto_2rem] gap-2 px-3 py-1 items-center">
+      <div className="min-w-[26rem] grid grid-cols-[1fr_4rem_auto_2rem] gap-2 px-3 py-1 items-center">
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Prior.</span>
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Status</span>
@@ -136,7 +136,7 @@ export default function ProfessionalUnitsSubSection({ professionalId }: Props) {
           return (
             <div
               key={item.id}
-              className="grid grid-cols-[1fr_4rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+              className="min-w-[26rem] grid grid-cols-[1fr_4rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
               style={{ background: "hsl(var(--surface-elevated))" }}
             >
               <span className="text-sm font-medium text-foreground truncate">

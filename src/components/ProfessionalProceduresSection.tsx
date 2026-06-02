@@ -70,7 +70,7 @@ export default function ProfessionalProceduresSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-4"
+        className="mt-2 rounded-xl border border-border p-4 space-y-4 overflow-x-auto"
         style={{ background: "hsl(var(--surface))" }}
       >
         {isLoading ? (
@@ -87,7 +87,7 @@ export default function ProfessionalProceduresSection() {
               )}
 
               {/* Header */}
-              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 px-3 py-1 items-center">
+              <div className="min-w-[28rem] grid grid-cols-[1fr_1fr_auto] gap-2 px-3 py-1 items-center">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   Profissional
                 </span>
@@ -104,7 +104,7 @@ export default function ProfessionalProceduresSection() {
                 return (
                   <div
                     key={item.id}
-                    className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                    className="min-w-[28rem] grid grid-cols-[1fr_1fr_auto] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                     style={{ background: "hsl(var(--surface-elevated))" }}
                   >
                     <span className="text-sm font-medium text-foreground truncate">

@@ -197,7 +197,7 @@ export default function ProfessionalAvailabilitiesSubSection({ professionalId }:
         <p className="text-xs text-muted-foreground px-3">Vincule uma unidade primeiro para gerenciar disponibilidades.</p>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_4rem_4rem_4rem_3.5rem_3.5rem_auto_2rem_2rem] gap-2 px-3 py-1 items-center">
+          <div className="min-w-[44rem] grid grid-cols-[1fr_4rem_4rem_4rem_3.5rem_3.5rem_auto_2rem_2rem] gap-2 px-3 py-1 items-center">
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
@@ -220,7 +220,7 @@ export default function ProfessionalAvailabilitiesSubSection({ professionalId }:
               return (
                 <div
                   key={`${a.id}-${row.dayKey}-${idx}`}
-                  className="grid grid-cols-[1fr_4rem_4rem_4rem_3.5rem_3.5rem_auto_2rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                  className="min-w-[44rem] grid grid-cols-[1fr_4rem_4rem_4rem_3.5rem_3.5rem_auto_2rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                   style={{ background: "hsl(var(--surface-elevated))" }}
                 >
                   <span className="text-xs text-foreground truncate">{a.unit_name ?? pu?.unit_name ?? "—"}</span>

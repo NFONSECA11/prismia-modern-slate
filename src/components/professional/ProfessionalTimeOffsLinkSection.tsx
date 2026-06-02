@@ -249,7 +249,7 @@ export default function ProfessionalTimeOffsLinkSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-2"
+        className="mt-2 rounded-xl border border-border p-4 space-y-2 overflow-x-auto"
         style={{ background: "hsl(var(--surface))" }}
       >
         {isAuthLoading || isLoading ? (
@@ -285,7 +285,7 @@ export default function ProfessionalTimeOffsLinkSection() {
                       <p className="text-xs text-muted-foreground px-1 py-2">Nenhum bloqueio cadastrado.</p>
                     ) : (
                       <>
-                        <div className="grid grid-cols-[1.2fr_0.8fr_1fr_1fr_1.4fr_2rem] gap-2 px-2 py-1 items-center">
+                        <div className="min-w-[32rem] grid grid-cols-[1.2fr_0.8fr_1fr_1fr_1.4fr_2rem] gap-2 px-2 py-1 items-center">
                           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
                           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tipo</span>
                           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
@@ -296,7 +296,7 @@ export default function ProfessionalTimeOffsLinkSection() {
                         {list.map((b) => (
                           <div
                             key={b.id}
-                            className="grid grid-cols-[1.2fr_0.8fr_1fr_1fr_1.4fr_2rem] gap-2 items-center rounded-md px-2 py-2 border border-border"
+                            className="min-w-[32rem] grid grid-cols-[1.2fr_0.8fr_1fr_1fr_1.4fr_2rem] gap-2 items-center rounded-md px-2 py-2 border border-border"
                             style={{ background: "hsl(var(--surface))" }}
                           >
                             <span className="text-xs text-foreground truncate">{b.unit_name ?? "—"}</span>
