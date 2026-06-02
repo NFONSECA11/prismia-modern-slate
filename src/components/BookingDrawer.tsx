@@ -3390,7 +3390,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
+        <div className="flex items-center justify-between px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
           <div className="flex items-center gap-3">
             {logoUrl ? (
               <img src={logoUrl} alt={logoAlt || "Logo"} className="h-8 w-8 rounded-lg object-contain" />
