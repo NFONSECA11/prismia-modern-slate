@@ -3390,39 +3390,39 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
+          {/* Logo row */}
+          <div className="flex items-center justify-between mb-3">
             {logoUrl ? (
               <div
-                className="flex h-9 items-center justify-center rounded-lg px-2 shrink-0"
+                className="flex h-10 items-center justify-center rounded-lg px-2.5 shrink-0"
                 style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
               >
                 <img
                   src={logoUrl}
                   alt={logoAlt || "Logo"}
-                  className="h-5 w-auto max-w-[80px] object-contain"
+                  className="h-6 w-auto max-w-[110px] object-contain"
                 />
               </div>
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
             )}
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-foreground leading-tight truncate">
-                Detalhe do Agendamento
-              </h2>
-              <p className="text-xs text-muted-foreground font-mono">#{booking.id}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {terminal && <TerminalBadge />}
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
+              aria-label="Fechar"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors shrink-0"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
+          </div>
+          {/* Title row */}
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-foreground leading-tight truncate">
+              Detalhe do Agendamento
+            </h2>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">#{booking.id}</p>
           </div>
         </div>
 
