@@ -974,7 +974,7 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
             </button>
           </div>
 
-          <span className="text-sm font-semibold text-foreground capitalize flex-1 min-w-0 truncate">
+          <span className="text-sm font-semibold text-foreground capitalize min-w-0 truncate order-last w-full sm:order-none sm:flex-1 sm:w-auto">
             {periodLabel}
           </span>
 
