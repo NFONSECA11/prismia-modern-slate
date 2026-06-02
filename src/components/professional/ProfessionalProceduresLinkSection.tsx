@@ -256,10 +256,10 @@ export default function ProfessionalProceduresLinkSection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-1"
+        className="mt-2 rounded-xl border border-border p-4 space-y-1 overflow-x-auto"
         style={{ background: "hsl(var(--surface))" }}
       >
-        <div className="grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto_2rem] gap-2 px-3 py-1 items-center">
+        <div className="min-w-[40rem] grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Unidade</span>
@@ -278,7 +278,7 @@ export default function ProfessionalProceduresLinkSection() {
             return (
               <div
                 key={item.id}
-                className="grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="min-w-[40rem] grid grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-xs font-mono text-muted-foreground">{item.id}</span>

@@ -221,11 +221,11 @@ export default function ProfessionalAvailabilitySection() {
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
       </CollapsibleTrigger>
       <CollapsibleContent
-        className="mt-2 rounded-xl border border-border p-4 space-y-1"
+        className="mt-2 rounded-xl border border-border p-4 space-y-1 overflow-x-auto"
         style={{ background: "hsl(var(--surface))" }}
       >
         {/* Header */}
-        <div className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 px-3 py-1 items-center">
+        <div className="min-w-[48rem] grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 px-3 py-1 items-center">
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Profissional</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Dia</span>
           <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Início</span>
@@ -248,7 +248,7 @@ export default function ProfessionalAvailabilitySection() {
             return (
               <div
                 key={`${a.id}-${row.dayKey}-${idx}`}
-                className="grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+                className="min-w-[48rem] grid grid-cols-[1fr_5rem_5rem_5rem_4rem_4rem_auto_2rem_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
                 style={{ background: "hsl(var(--surface-elevated))" }}
               >
                 <span className="text-sm font-medium text-foreground">
