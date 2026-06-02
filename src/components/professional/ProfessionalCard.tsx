@@ -21,7 +21,7 @@ export default function ProfessionalCard({ professional, companyName, onToggleAc
 
   return (
     <div
-      className="grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
+      className="min-w-[34rem] grid grid-cols-[3rem_8rem_minmax(0,1fr)_6rem_auto_2rem] gap-2 items-center rounded-lg px-3 py-2 border border-border"
       style={{ background: "hsl(var(--surface-elevated))" }}
     >
       <span className="text-xs font-mono text-muted-foreground">{professional.id}</span>
