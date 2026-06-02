@@ -974,11 +974,14 @@ function AgendaUnitView({ onSelectBooking, onSaveBooking, unit, showUnitHeader }
             </button>
           </div>
 
-          <span className="text-sm font-semibold text-foreground capitalize min-w-0 truncate order-last w-full sm:order-none sm:flex-1 sm:w-auto">
+          <span className="text-sm font-semibold text-foreground capitalize flex-1 min-w-0 truncate">
             {periodLabel}
           </span>
 
+          <div className="basis-full h-0 sm:hidden" aria-hidden="true" />
+
           <div className="flex items-center gap-0.5 rounded-lg p-0.5 bg-surface border border-border">
+
             {(["day", "week"] as AgendaMode[]).map((m) => (
               <button
                 key={m}
