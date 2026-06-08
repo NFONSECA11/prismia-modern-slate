@@ -691,7 +691,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
 
                       {/* Criado há + Quick Actions */}
                       <td className={tableCellPadding}>
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-end md:justify-between gap-3 md:gap-2">
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatCreatedAgo(booking.created_at)}
                           </span>
