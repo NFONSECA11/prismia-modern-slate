@@ -538,7 +538,149 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
   return (
     <TooltipProvider delayDuration={200}>
       <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isGlass ? "backdrop-blur-xl" : ""}`} style={{ background: isGlass ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))" }}>
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-border/60">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-3 space-y-3">
+                <div className="h-4 w-32 rounded-full bg-surface-elevated animate-pulse" />
+                <div className="h-3 w-48 rounded-full bg-surface-elevated animate-pulse" />
+              </div>
+            ))
+          ) : bookings.length === 0 ? (
+            <div className="px-3 py-8 text-center text-muted-foreground text-sm">
+              Nenhum agendamento encontrado
+            </div>
+          ) : (
+            bookings.map((booking, index) => {
+              const rawBotMode = booking.conversation_bot_mode ?? booking.vars_snapshot?.conversation_bot_mode;
+              const normalizedBotMode = typeof rawBotMode === "string" ? rawBotMode.trim().toLowerCase() : "off";
+              const isBotOn = normalizedBotMode === "on";
+              const isConversationButtonHighlighted = booking.status === "handoff" || !isBotOn;
+              const normalizedProcedureCode = (
+                (booking as BookingRequest & { procedure_code?: string }).procedure_code ??
+                booking.procedure_slug ??
+                booking.procedure_name ??
+                ""
+              ).trim().toLowerCase();
+              const isConversationRequest = normalizedProcedureCode === "human" || normalizedProcedureCode === "prices";
+              const isReschedule = normalizedProcedureCode === "reschedule" || rescheduleSet.has(booking.id);
+              const lastInTs = lastInMsgMap[booking.id] ?? 0;
+              const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+              const refTs = lastInTs || fallbackTs;
+              const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
+              const phone = aiEnabled
+                ? booking.contact_phone || booking.phone || phoneMap[booking.id]
+                : booking.contact_phone || booking.phone;
+
+              return (
+                <article key={`mobile-${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`} className="p-3 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {(aiEnabled || handoffOriginSet.has(booking.id)) && <BookingModeIcon mode={booking.booking_mode} notes={booking.notes} forceHandoffOrigin={handoffOriginSet.has(booking.id)} />}
+                        <span className="inline-flex items-center rounded-md border border-border bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
+                          #{booking.id}
+                        </span>
+                        <span className={`font-medium leading-tight truncate ${isConversationRequest ? "text-primary" : "text-foreground"}`}>
+                          {isConversationRequest ? "Conversa" : booking.lead_name}
+                        </span>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {phone ? formatPhone(phone) : "Sem telefone"}
+                      </span>
+                    </div>
+                    <StatusBadge
+                      status={booking.status}
+                      hasSchedule={!!booking.scheduled_at}
+                      procedureName={booking.procedure_name}
+                      aiTag={(() => {
+                        const resolvedTag = aiTagMap[booking.id] ?? detectAiTag(typeof booking.notes === "string" ? booking.notes : "") ?? null;
+                        if (aiEnabled) return resolvedTag;
+                        if (resolvedTag && (resolvedTag === "handoff_schedule" || resolvedTag === "handoff_reschedule" || resolvedTag === "handoff_cancel" || resolvedTag === "handoff")) {
+                          return resolvedTag;
+                        }
+                        return null;
+                      })()}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="min-w-0">
+                      <span className="block text-muted-foreground">Procedimento</span>
+                      <span className="flex items-center gap-1 text-foreground truncate">
+                        {isReschedule && <RefreshCw className="h-3.5 w-3.5 text-status-pending flex-shrink-0" />}
+                        {isReschedule && rescheduleProcNameMap[booking.id] ? rescheduleProcNameMap[booking.id] : booking.procedure_name}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-muted-foreground">Profissional</span>
+                      <span className="block text-foreground truncate">{booking.professional_name || "—"}</span>
+                    </div>
+                    <div className="col-span-2 min-w-0">
+                      <span className="block text-muted-foreground">Agendamento</span>
+                      <span className="block text-foreground truncate">
+                        {booking.scheduled_at ? (() => {
+                          const dt = new Date(booking.scheduled_at);
+                          const day = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+                          const time = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                          return `${day} às ${time}`;
+                        })() : "Não agendado"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onSelectBooking(booking);
+                      }}
+                      aria-label="Ver detalhes"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/50"
+                    >
+                      <Search className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openConversationForBooking(booking);
+                      }}
+                      aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                      className={`flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
+                        unread || isConversationButtonHighlighted
+                          ? "border-primary/40 bg-primary/15 text-primary"
+                          : "border-border bg-surface-elevated text-muted-foreground"
+                      }`}
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                    </button>
+                    {!isTerminal(booking.status) && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onManageBooking(booking);
+                        }}
+                        aria-label="Gerenciar agenda"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                      >
+                        <CalendarCog className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60" style={{ background: "hsl(var(--table-header-bg))" }}>
