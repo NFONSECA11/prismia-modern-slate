@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
