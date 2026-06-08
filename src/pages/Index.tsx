@@ -987,7 +987,10 @@ export default function Index() {
             />
           ) : (
             <AgendaView
-              onSelectBooking={setSelectedBooking}
+              onSelectBooking={(booking) => {
+                setBookingDrawerMode("details");
+                setSelectedBooking(booking);
+              }}
               onSaveBooking={handleSaveBooking}
             />
           )}
