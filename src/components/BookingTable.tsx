@@ -589,7 +589,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        const actionEl = (e.target as HTMLElement).closest<HTMLElement>("[data-row-action]");
+                        if (actionEl?.dataset.rowAction === "conversation") {
+                          openConversationForBooking(booking);
+                          return;
+                        }
+                        if (actionEl) return;
                         const suppressed = suppressRowClickRef.current;
                         if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
                           suppressRowClickRef.current = null;
@@ -737,16 +743,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
-                            const handleOpenConversation = () => {
-                              suppressNextRowClick(booking.id);
-                              markConversationRead(booking.id, refTs || undefined);
-                              const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
-                              if (useMobileDrawer) {
-                                onOpenConversation(booking);
-                              } else {
-                                openConversationPopout(booking);
-                              }
-                            };
+                            const handleOpenConversation = () => openConversationForBooking(booking);
 
                             const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               e.preventDefault();
@@ -766,6 +763,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const button = (
                               <button
                                 type="button"
+                                data-row-action="conversation"
                                 onClick={(e) => {
                                   stopRowClick(e);
                                   handleOpenConversation();
@@ -792,6 +790,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const mobileButton = (
                               <button
                                 type="button"
+                                data-row-action="conversation"
                                 onClick={openConversationFromButton}
                                 onPointerDown={(e) => {
                                   e.preventDefault();
