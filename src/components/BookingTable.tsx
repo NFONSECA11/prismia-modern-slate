@@ -596,7 +596,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                           openConversationForBooking(booking);
                           return;
                         }
+                        if (actionEl?.dataset.rowAction === "details") {
+                          onSelectBooking(booking);
+                          return;
+                        }
                         if (actionEl) return;
+                        // No mobile, exigir botão explícito (lupa) para abrir detalhes
+                        if (isMobile || window.matchMedia("(max-width: 767px)").matches) return;
                         const suppressed = suppressRowClickRef.current;
                         if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
                           suppressRowClickRef.current = null;
