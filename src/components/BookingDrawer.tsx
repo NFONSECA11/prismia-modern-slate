@@ -3412,17 +3412,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       >
         {/* Header */}
         <div className="px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
-          {/* Logo row */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
             {logoUrl ? (
               <div
-                className="flex h-10 items-center justify-center rounded-lg px-2.5 shrink-0"
+                className="flex h-10 items-center justify-center rounded-lg px-2 shrink-0"
                 style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
               >
                 <img
                   src={logoUrl}
                   alt={logoAlt || "Logo"}
-                  className="h-6 w-auto max-w-[110px] object-contain"
+                  className="h-5 w-auto max-w-[90px] object-contain"
                 />
               </div>
             ) : (
@@ -3430,6 +3429,16 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
             )}
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-semibold text-foreground leading-tight truncate">
+                {drawerMode === "conversation"
+                  ? (booking.lead_name || "Conversa")
+                  : "Detalhe do Agendamento"}
+              </h2>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">
+                {drawerMode === "conversation" ? "Conversa · " : ""}#{booking.id}
+              </p>
+            </div>
             <button
               onClick={onClose}
               aria-label="Fechar"
@@ -3437,13 +3446,6 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             >
               <X className="h-5 w-5" />
             </button>
-          </div>
-          {/* Title row */}
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-foreground leading-tight truncate">
-              {drawerMode === "conversation" ? "Conversa" : "Detalhe do Agendamento"}
-            </h2>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">#{booking.id}</p>
           </div>
         </div>
 
@@ -3661,7 +3663,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             </button>
             {!effectiveConversationCollapsed && (
             <>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-surface" style={{ minHeight: "150px" }}>
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2" style={{ minHeight: "150px", background: "hsl(var(--surface-elevated) / 0.5)" }}>
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
