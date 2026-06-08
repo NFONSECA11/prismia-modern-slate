@@ -530,7 +530,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                   Profissional
                 </th>
                 <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
-                  Criado
+                  <span className="hidden md:inline">Criado</span>
                 </th>
               </tr>
             </thead>
@@ -692,7 +692,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                       {/* Criado há + Quick Actions */}
                       <td className={tableCellPadding}>
                         <div className="flex items-center justify-end md:justify-between gap-3 md:gap-2">
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          <span className="hidden md:inline text-xs text-muted-foreground whitespace-nowrap">
                             {formatCreatedAgo(booking.created_at)}
                           </span>
 
@@ -710,7 +710,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       markConversationRead(booking.id, refTs || undefined);
-                                      openConversationPopout(booking);
+                                      if (isMobile) {
+                                        try { localStorage.setItem("conversation_collapsed", "false"); } catch {}
+                                        onSelectBooking(booking);
+                                      } else {
+                                        openConversationPopout(booking);
+                                      }
                                     }}
                                     aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                     className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border ${
