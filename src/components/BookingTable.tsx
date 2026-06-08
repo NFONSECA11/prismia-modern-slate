@@ -39,6 +39,7 @@ import {
   Loader2,
   MessageCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import {
   Tooltip,
@@ -595,7 +596,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                           openConversationForBooking(booking);
                           return;
                         }
+                        if (actionEl?.dataset.rowAction === "details") {
+                          onSelectBooking(booking);
+                          return;
+                        }
                         if (actionEl) return;
+                        // No mobile, exigir botão explícito (lupa) para abrir detalhes
+                        if (isMobile || window.matchMedia("(max-width: 767px)").matches) return;
                         const suppressed = suppressRowClickRef.current;
                         if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
                           suppressRowClickRef.current = null;
@@ -736,6 +743,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             {formatCreatedAgo(booking.created_at)}
                           </span>
 
+
+                          {/* Mobile: botão Ver detalhes (lupa) */}
+                          <button
+                            type="button"
+                            data-row-action="details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }}
+                            aria-label="Ver detalhes"
+                            className="md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border text-muted-foreground bg-muted/30 hover:bg-muted/50 border-border select-none touch-manipulation relative z-20"
+                            style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                          >
+                            <Search className="h-5 w-5" />
+                          </button>
 
                           {/* Conversa (popout) — somente status handoff */}
                           {booking.status === "handoff" && (() => {
