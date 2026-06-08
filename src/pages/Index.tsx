@@ -868,6 +868,8 @@ export default function Index() {
           </div>
         </div>
       </div>
+      </div>
+
 
       {/* Zen mode - fullscreen landscape */}
       {zenMode && isLandscape && (
