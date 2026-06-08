@@ -791,49 +791,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                           <ChevronRight className={`h-4 w-4 text-muted-foreground/40 group-hover:hidden transition-colors ${actions.length === 0 ? '!block group-hover:!block group-hover:text-primary' : ''}`} />
                         </div>
 
-                        {/* Mobile swipe-to-reveal action panel */}
-                        {isMobile && (
-                          <div
-                            className={`absolute inset-y-0 right-0 flex items-stretch z-20 shadow-2xl transition-transform duration-200 ease-out ${
-                              swipedBookingId === booking.id
-                                ? "translate-x-0"
-                                : "translate-x-full pointer-events-none"
-                            }`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {booking.status === "handoff" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSwipedBookingId(null);
-                                  const lastInTs = lastInMsgMap[booking.id] ?? 0;
-                                  const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
-                                  markConversationRead(booking.id, lastInTs || fallbackTs || undefined);
-                                  onSelectBooking(booking);
-                                }}
-                                aria-label="Abrir conversa"
-                                className="w-20 flex flex-col items-center justify-center gap-1 bg-primary text-primary-foreground active:bg-primary/90"
-                              >
-                                <MessageCircle className="h-5 w-5" />
-                                <span className="text-[10px] font-medium">Conversa</span>
-                              </button>
-                            )}
-                            {!isTerminal(booking.status) && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSwipedBookingId(null);
-                                  onManageBooking(booking);
-                                }}
-                                aria-label="Gerenciar agenda"
-                                className="w-20 flex flex-col items-center justify-center gap-1 bg-accent text-accent-foreground active:bg-accent/90"
-                              >
-                                <CalendarCog className="h-5 w-5" />
-                                <span className="text-[10px] font-medium">Agenda</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
+
+
                       </td>
                     </tr>
                   );
