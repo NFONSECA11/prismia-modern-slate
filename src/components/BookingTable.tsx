@@ -744,9 +744,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                     onManageBooking(booking);
                                   }}
                                   aria-label="Gerenciar agenda"
-                                  className="hidden md:flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                  className="flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                 >
-                                  <CalendarCog className="h-3.5 w-3.5" />
+                                  <CalendarCog className="h-5 w-5 md:h-3.5 md:w-3.5" />
+
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs">
