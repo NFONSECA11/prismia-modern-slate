@@ -704,9 +704,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
-                            const handleOpenConversation = (e: React.MouseEvent<HTMLButtonElement>) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            const handleOpenConversation = () => {
                               markConversationRead(booking.id, refTs || undefined);
                               if (isMobile) {
                                 onOpenConversation(booking);
@@ -715,11 +713,25 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               }
                             };
 
+                            const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            };
+
                             const button = (
                               <button
                                 type="button"
-                                onClick={handleOpenConversation}
+                                onClick={(e) => {
+                                  stopRowClick(e);
+                                  handleOpenConversation();
+                                }}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => {
+                                  stopRowClick(e);
+                                  handleOpenConversation();
+                                }}
                                 onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border select-none touch-manipulation ${
                                   unread
