@@ -51,6 +51,7 @@ interface BookingTableProps {
   bookings: BookingRequest[];
   isLoading: boolean;
   onSelectBooking: (booking: BookingRequest) => void;
+  onOpenConversation: (booking: BookingRequest) => void;
   onManageBooking: (booking: BookingRequest) => void;
   aiEnabled: boolean;
 }
@@ -191,7 +192,7 @@ function QuickActionButton({
   );
 }
 
-export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBooking, aiEnabled }: BookingTableProps) {
+export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConversation, onManageBooking, aiEnabled }: BookingTableProps) {
   console.log("[BookingTable] aiEnabled:", aiEnabled);
   const queryClient = useQueryClient();
   const { bgMode } = useTheme();
@@ -703,31 +704,52 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
+                            const handleOpenConversation = () => {
+                              markConversationRead(booking.id, refTs || undefined);
+                              const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
+                              if (useMobileDrawer) {
+                                onOpenConversation(booking);
+                              } else {
+                                openConversationPopout(booking);
+                              }
+                            };
+
+                            const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            };
+
+                            const button = (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  stopRowClick(e);
+                                  handleOpenConversation();
+                                }}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => {
+                                  stopRowClick(e);
+                                  handleOpenConversation();
+                                }}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                                className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border select-none touch-manipulation ${
+                                  unread
+                                    ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                                    : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                }`}
+                                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                              >
+                                <MessageCircle className="h-5 w-5 md:h-3.5 md:w-3.5" />
+                              </button>
+                            );
+
+                            if (isMobile) return button;
+
                             return (
                               <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      markConversationRead(booking.id, refTs || undefined);
-                                      if (isMobile) {
-                                        try { localStorage.setItem("conversation_collapsed", "false"); } catch {}
-                                        onSelectBooking(booking);
-                                      } else {
-                                        openConversationPopout(booking);
-                                      }
-                                    }}
-                                    aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
-                                    className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border ${
-                                      unread
-                                        ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
-                                        : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
-                                    }`}
-                                  >
-                                    <MessageCircle className="h-5 w-5 md:h-3.5 md:w-3.5" />
-
-                                  </button>
-                                </TooltipTrigger>
+                                <TooltipTrigger asChild>{button}</TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs">
                                   {unread ? "Mensagem não lida" : "Abrir conversa"}
                                 </TooltipContent>
