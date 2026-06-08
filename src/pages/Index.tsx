@@ -494,7 +494,10 @@ export default function Index() {
         />
       )}
       {/* Sticky top stack: header + module banner */}
-      <div className="sticky top-0 z-30 print:static print:z-auto">
+      <div
+        className="sticky top-0 z-40 print:static print:z-auto"
+        style={{ background: "hsl(var(--topbar-bg))" }}
+      >
       {/* Top navigation bar */}
       <header
         className="app-safe-area-top print:hidden"
