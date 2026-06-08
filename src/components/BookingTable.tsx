@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
@@ -199,6 +199,11 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
   const { open: openConversationPopout } = useConversationPopout();
   const isMobile = useIsMobile();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
+  const suppressRowClickRef = useRef<{ bookingId: number; until: number } | null>(null);
+
+  const suppressNextRowClick = useCallback((bookingId: number) => {
+    suppressRowClickRef.current = { bookingId, until: Date.now() + 900 };
+  }, []);
 
   // Re-render when any conversation read-state changes
   const [, setReadTick] = useState(0);
