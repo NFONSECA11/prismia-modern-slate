@@ -743,6 +743,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              const lastConversation = lastConversationOpenRef.current;
+                              if (lastConversation?.bookingId === booking.id && Date.now() - lastConversation.at < 900) return;
                               suppressNextRowClick(booking.id);
                               onSelectBooking(booking);
                             }}
@@ -802,8 +804,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                                 data-row-action="conversation"
                                 onClick={openConversationFromButton}
                                 onPointerDownCapture={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   suppressNextRowClick(booking.id);
+                                  openConversationForBooking(booking);
                                 }}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
