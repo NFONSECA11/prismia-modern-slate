@@ -676,6 +676,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     } catch {}
   }, [booking?.id, drawerMode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!booking?.id || drawerMode !== "conversation") return;
+    requestAnimationFrame(() => {
+      conversationSectionRef.current?.scrollIntoView({ block: "start" });
+    });
+  }, [booking?.id, drawerMode]);
 
   const toggleConversationCollapsed = () => {
     setConversationCollapsed((prev) => {
@@ -3432,7 +3440,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           {/* Title row */}
           <div className="min-w-0">
             <h2 className="text-base font-semibold text-foreground leading-tight truncate">
-              Detalhe do Agendamento
+              {drawerMode === "conversation" ? "Conversa" : "Detalhe do Agendamento"}
             </h2>
             <p className="text-xs text-muted-foreground font-mono mt-0.5">#{booking.id}</p>
           </div>
@@ -3626,8 +3634,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
           {/* Mensagens */}
           <div
+            ref={conversationSectionRef}
             className="rounded-xl overflow-hidden border border-border flex flex-col"
-            style={{ maxHeight: conversationCollapsed ? undefined : (showQuickReplies ? "420px" : "320px") }}
+            style={{ maxHeight: conversationCollapsed ? undefined : drawerMode === "conversation" ? "calc(100dvh - 210px)" : (showQuickReplies ? "420px" : "320px") }}
           >
             <button
               type="button"
