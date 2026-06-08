@@ -3411,34 +3411,72 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         }}
       >
         {/* Header */}
-        <div className="px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface-elevated)) / 0.2)" }}>
+        <div
+          className="px-5 py-4 pt-[calc(env(safe-area-inset-top)+2.5rem)] md:pt-4 border-b border-border/60"
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(var(--surface-raised)) 0%, hsl(var(--surface-elevated) / 0.85) 100%)",
+          }}
+        >
           <div className="flex items-center gap-3">
-            {logoUrl ? (
+            {/* Avatar com inicial */}
+            {(() => {
+              const displayName =
+                drawerMode === "conversation"
+                  ? booking.lead_name || "Conversa"
+                  : booking.lead_name || "Agendamento";
+              const initial = (displayName.trim()[0] || "?").toUpperCase();
+              return (
+                <div
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold text-white shadow-md shrink-0 ring-1 ring-white/10"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, hsl(186 72% 48%) 0%, hsl(186 72% 32%) 100%)",
+                  }}
+                  aria-hidden
+                >
+                  {initial}
+                </div>
+              );
+            })()}
+
+            {/* Nome + subtítulo */}
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-semibold text-foreground leading-tight truncate">
+                {drawerMode === "conversation"
+                  ? booking.lead_name || "Conversa"
+                  : "Detalhe do Agendamento"}
+              </h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5 truncate flex items-center gap-1.5">
+                {drawerMode === "conversation" && (
+                  <>
+                    <MessageSquare className="h-3 w-3" />
+                    <span>Conversa</span>
+                    <span className="opacity-40">·</span>
+                  </>
+                )}
+                <span className="font-mono">#{booking.id}</span>
+              </p>
+            </div>
+
+            {/* Logo discreto */}
+            {logoUrl && (
               <div
-                className="flex h-10 items-center justify-center rounded-lg px-2 shrink-0"
-                style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
+                className="flex h-8 items-center justify-center rounded-md px-2 shrink-0"
+                style={{
+                  background: "hsl(0 0% 100% / 0.92)",
+                  border: "1px solid hsl(var(--border) / 0.6)",
+                }}
+                title={logoAlt || "Logo"}
               >
                 <img
                   src={logoUrl}
                   alt={logoAlt || "Logo"}
-                  className="h-5 w-auto max-w-[90px] object-contain"
+                  className="h-4 w-auto max-w-[64px] object-contain"
                 />
               </div>
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0" style={{ background: "hsl(var(--appointment-bg, var(--primary)))" }}>
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-              </div>
             )}
-            <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-foreground leading-tight truncate">
-                {drawerMode === "conversation"
-                  ? (booking.lead_name || "Conversa")
-                  : "Detalhe do Agendamento"}
-              </h2>
-              <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">
-                {drawerMode === "conversation" ? "Conversa · " : ""}#{booking.id}
-              </p>
-            </div>
+
             <button
               onClick={onClose}
               aria-label="Fechar"
@@ -3448,6 +3486,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             </button>
           </div>
         </div>
+
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
