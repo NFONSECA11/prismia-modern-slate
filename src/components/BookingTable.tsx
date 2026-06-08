@@ -514,6 +514,26 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
     }
   };
 
+  const openConversationForBooking = useCallback((booking: BookingRequest) => {
+    suppressNextRowClick(booking.id);
+    const now = Date.now();
+    const last = lastConversationOpenRef.current;
+    if (last?.bookingId === booking.id && now - last.at < 450) return;
+    lastConversationOpenRef.current = { bookingId: booking.id, at: now };
+
+    const lastInTs = lastInMsgMap[booking.id] ?? 0;
+    const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+    const refTs = lastInTs || fallbackTs;
+    markConversationRead(booking.id, refTs || undefined);
+
+    const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
+    if (useMobileDrawer) {
+      onOpenConversation(booking);
+    } else {
+      openConversationPopout(booking);
+    }
+  }, [isMobile, lastInMsgMap, onOpenConversation, openConversationPopout, suppressNextRowClick]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isGlass ? "backdrop-blur-xl" : ""}`} style={{ background: isGlass ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))" }}>
