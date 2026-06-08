@@ -710,7 +710,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       markConversationRead(booking.id, refTs || undefined);
-                                      openConversationPopout(booking);
+                                      if (isMobile) {
+                                        try { localStorage.setItem("conversation_collapsed", "false"); } catch {}
+                                        onSelectBooking(booking);
+                                      } else {
+                                        openConversationPopout(booking);
+                                      }
                                     }}
                                     aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                     className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border ${
