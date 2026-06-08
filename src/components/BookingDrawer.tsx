@@ -72,7 +72,7 @@ interface BookingDrawerProps {
   onConfirmed: () => void;
   logoUrl?: string | null;
   logoAlt?: string | null;
-  mode?: "details" | "manage";
+  mode?: "details" | "manage" | "conversation";
 }
 
 const TERMINAL_STATUSES: BookingStatus[] = ["confirmed", "canceled", "cancelled", "failed"];
@@ -666,11 +666,15 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
   // Re-read collapsed state whenever a new booking opens (allows external triggers to force-expand)
   useEffect(() => {
     if (!booking?.id) return;
+    if (drawerMode === "conversation") {
+      setConversationCollapsed(false);
+      return;
+    }
     try {
       const saved = localStorage.getItem("conversation_collapsed");
       setConversationCollapsed(saved === null ? true : saved === "true");
     } catch {}
-  }, [booking?.id]);
+  }, [booking?.id, drawerMode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleConversationCollapsed = () => {
