@@ -759,7 +759,31 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               </button>
                             );
 
-                            if (isMobile) return button;
+                            const mobileButton = (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  stopRowClick(e);
+                                  handleOpenConversation();
+                                }}
+                                onPointerDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  suppressNextRowClick(booking.id);
+                                }}
+                                aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                                className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
+                                  unread
+                                    ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                                    : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                }`}
+                                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                              >
+                                <MessageCircle className="h-5 w-5" />
+                              </button>
+                            );
+
+                            if (isMobile) return mobileButton;
 
                             return (
                               <Tooltip>
