@@ -530,7 +530,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                   Profissional
                 </th>
                 <th className={`${tableHeadPadding} text-left font-medium text-muted-foreground text-xs uppercase tracking-wider`}>
-                  Criado
+                  <span className="hidden md:inline">Criado</span>
                 </th>
               </tr>
             </thead>
