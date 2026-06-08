@@ -723,7 +723,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                         : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                     }`}
                                   >
-                                    <MessageCircle className="h-3.5 w-3.5" />
+                                    <MessageCircle className="h-5 w-5 md:h-3.5 md:w-3.5" />
+
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs">
