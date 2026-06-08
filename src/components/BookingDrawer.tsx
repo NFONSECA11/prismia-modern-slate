@@ -976,6 +976,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     onSuccess: () => {
       setMessageText("");
       queryClient.invalidateQueries({ queryKey: ["booking-messages", booking?.id] });
+      // Mantém o foco no input para que o teclado mobile não recolha
+      requestAnimationFrame(() => messageInputRef.current?.focus());
     },
   });
 
