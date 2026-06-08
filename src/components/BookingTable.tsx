@@ -706,7 +706,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
                             const handleOpenConversation = () => {
                               markConversationRead(booking.id, refTs || undefined);
-                              if (isMobile) {
+                              const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
+                              if (useMobileDrawer) {
                                 onOpenConversation(booking);
                               } else {
                                 openConversationPopout(booking);
