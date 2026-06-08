@@ -3449,6 +3449,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          {drawerMode !== "conversation" && (
+          <>
           {/* Lead identity */}
           <div className="rounded-xl p-4 border border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface)) / 0.3)" }}>
             <div className="flex items-start justify-between gap-3 mb-1">
@@ -3631,6 +3633,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                 </span>
               </div>
             </div>
+          )}
+          </>
           )}
 
           {/* Mensagens */}
