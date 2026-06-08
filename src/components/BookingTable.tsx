@@ -773,7 +773,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                     onManageBooking(booking);
                                   }}
                                   aria-label="Gerenciar agenda"
-                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                  className="hidden md:flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                 >
                                   <CalendarCog className="h-3.5 w-3.5" />
                                 </button>
