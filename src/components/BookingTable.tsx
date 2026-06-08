@@ -657,22 +657,24 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                       >
                         <Search className="h-4 w-4" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          openConversationForBooking(booking);
-                        }}
-                        aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
-                          unread || isConversationButtonHighlighted
-                            ? "border-primary/40 bg-primary/15 text-primary"
-                            : "border-border bg-surface-elevated text-muted-foreground"
-                        }`}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </button>
+                      {booking.status === "handoff" && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openConversationForBooking(booking);
+                          }}
+                          aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
+                            unread || isConversationButtonHighlighted
+                              ? "border-primary/40 bg-primary/15 text-primary"
+                              : "border-border bg-surface-elevated text-muted-foreground"
+                          }`}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      )}
                       {!isTerminal(booking.status) && (
                         <button
                           type="button"
