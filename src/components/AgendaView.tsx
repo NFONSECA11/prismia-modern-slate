@@ -44,6 +44,36 @@ type AgendaMode = "day" | "week";
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00–19:00
 const CELL_HEIGHT = 56; // px per hour
 
+function getProfessionalInitials(name?: string): string {
+  if (!name) return "?";
+  const cleaned = name.replace(/^(dr\.?a?\.?|dra\.?)\s+/i, "").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function ProfessionalAvatar({ name, size = "sm" }: { name?: string; size?: "sm" | "md" }) {
+  const initials = getProfessionalInitials(name);
+  const dims = size === "md" ? "w-9 h-9 text-[12px]" : "w-7 h-7 text-[11px]";
+  return (
+    <div className="relative shrink-0">
+      <div
+        className={`${dims} rounded-full flex items-center justify-center font-semibold text-foreground ring-1 ring-border shadow-sm`}
+        style={{ background: "hsl(var(--surface-elevated))" }}
+      >
+        {initials}
+      </div>
+      <span
+        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+        style={{ background: "hsl(142 71% 45%)", borderColor: "hsl(var(--surface-elevated))" }}
+        title="Disponível"
+      />
+    </div>
+  );
+}
+
+
 // Day-of-week index (JS getDay: 0=Sun) → availability key
 const DOW_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
