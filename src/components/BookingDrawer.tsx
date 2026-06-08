@@ -3001,7 +3001,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         <div className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm" onClick={onClose} />
         <aside
           data-booking-drawer
-          className="fixed right-6 z-50 w-full max-w-[480px] rounded-xl shadow-2xl animate-fade-in flex flex-col overflow-hidden"
+          className="fixed inset-x-3 sm:inset-x-auto sm:right-6 z-50 w-auto sm:w-full max-w-none sm:max-w-[480px] rounded-xl shadow-2xl animate-fade-in flex flex-col overflow-hidden"
           style={{
             top: "50%",
             transform: "translateY(-50%)",
@@ -3207,7 +3207,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {iaOpType === "schedule" && (
                 <>
                     <button
