@@ -458,9 +458,18 @@ function DayView({
         <div className="gcal-header flex border-b sticky top-0 z-10">
           <div className="w-[60px] flex-shrink-0 gcal-time-col" />
           {professionals.map((prof) => (
-            <div key={prof.id} className="gcal-header-prof w-[200px] border-r last:border-r-0 px-3 py-2.5">
-              <p className="text-xs font-semibold truncate">{prof.name}</p>
-              <p className="gcal-prof-spec text-[10px] truncate">{prof.specialty}</p>
+            <div
+              key={prof.id}
+              className="gcal-header-prof w-[200px] border-r last:border-r-0 px-3 py-2 flex items-center gap-2.5"
+              title={prof.specialty ? `${prof.name} — ${prof.specialty}` : prof.name}
+            >
+              <ProfessionalAvatar name={prof.name} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold leading-tight truncate">{prof.name}</p>
+                {prof.specialty && (
+                  <p className="gcal-prof-spec text-[10px] truncate mt-0.5">{prof.specialty}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
