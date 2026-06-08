@@ -653,6 +653,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
     setRescheduleLog((prev) => [...prev, { ...entry, ts }]);
   };
   const [messageText, setMessageText] = useState("");
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [editingQuickReplies, setEditingQuickReplies] = useState(false);
   const [conversationCollapsed, setConversationCollapsed] = useState<boolean>(() => {
