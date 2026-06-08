@@ -592,7 +592,22 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
                       onClick={(e) => {
                         const actionEl = (e.target as HTMLElement).closest<HTMLElement>("[data-row-action]");
-                        if (actionEl) return;
+                        if (actionEl) {
+                          const action = actionEl.dataset.rowAction;
+                          if (action === "conversation") {
+                            openConversationForBooking(booking);
+                          } else if (action === "details") {
+                            const lastConversation = lastConversationOpenRef.current;
+                            if (!(lastConversation?.bookingId === booking.id && Date.now() - lastConversation.at < 900)) {
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }
+                          } else if (action === "manage") {
+                            suppressNextRowClick(booking.id);
+                            onManageBooking(booking);
+                          }
+                          return;
+                        }
                         // No mobile, exigir botão explícito (lupa) para abrir detalhes
                         if (isMobile || window.matchMedia("(max-width: 767px)").matches) return;
                         const suppressed = suppressRowClickRef.current;
@@ -618,10 +633,24 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             </span>
                             {aiEnabled ? (
                               isConversationRequest ? (
-                                <span className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight">
+                                <button
+                                  type="button"
+                                  data-row-action="conversation"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openConversationForBooking(booking);
+                                  }}
+                                  onPointerDownCapture={(e) => {
+                                    e.stopPropagation();
+                                    suppressNextRowClick(booking.id);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight hover:text-primary/80 transition-colors"
+                                  aria-label="Abrir conversa"
+                                >
                                   <MessageCircle className="h-4 w-4 text-primary" />
                                   Conversa
-                                </span>
+                                </button>
                               ) : (
                                 <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                               )
@@ -752,6 +781,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               e.stopPropagation();
                               suppressNextRowClick(booking.id);
                             }}
+                            onTouchEnd={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const lastConversation = lastConversationOpenRef.current;
+                              if (lastConversation?.bookingId === booking.id && Date.now() - lastConversation.at < 900) return;
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }}
                             aria-label="Ver detalhes"
                             className="md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border text-muted-foreground bg-muted/30 hover:bg-muted/50 border-border select-none touch-manipulation relative z-20"
                             style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
@@ -804,11 +841,10 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                                 data-row-action="conversation"
                                 onClick={openConversationFromButton}
                                 onPointerDownCapture={(e) => {
-                                  e.preventDefault();
                                   e.stopPropagation();
                                   suppressNextRowClick(booking.id);
-                                  openConversationForBooking(booking);
                                 }}
+                                onTouchEnd={openConversationFromButton}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
                                   unread
@@ -839,9 +875,17 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
+                                  type="button"
+                                  data-row-action="manage"
                                   onClick={(e) => {
+                                    e.preventDefault();
                                     e.stopPropagation();
+                                    suppressNextRowClick(booking.id);
                                     onManageBooking(booking);
+                                  }}
+                                  onPointerDownCapture={(e) => {
+                                    e.stopPropagation();
+                                    suppressNextRowClick(booking.id);
                                   }}
                                   aria-label="Gerenciar agenda"
                                   className="flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
