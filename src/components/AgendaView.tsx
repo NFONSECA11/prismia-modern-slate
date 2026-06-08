@@ -44,6 +44,36 @@ type AgendaMode = "day" | "week";
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00–19:00
 const CELL_HEIGHT = 56; // px per hour
 
+function getProfessionalInitials(name?: string): string {
+  if (!name) return "?";
+  const cleaned = name.replace(/^(dr\.?a?\.?|dra\.?)\s+/i, "").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function ProfessionalAvatar({ name, size = "sm" }: { name?: string; size?: "sm" | "md" }) {
+  const initials = getProfessionalInitials(name);
+  const dims = size === "md" ? "w-9 h-9 text-[12px]" : "w-7 h-7 text-[11px]";
+  return (
+    <div className="relative shrink-0">
+      <div
+        className={`${dims} rounded-full flex items-center justify-center font-semibold text-foreground ring-1 ring-border shadow-sm`}
+        style={{ background: "hsl(var(--surface-elevated))" }}
+      >
+        {initials}
+      </div>
+      <span
+        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+        style={{ background: "hsl(142 71% 45%)", borderColor: "hsl(var(--surface-elevated))" }}
+        title="Disponível"
+      />
+    </div>
+  );
+}
+
+
 // Day-of-week index (JS getDay: 0=Sun) → availability key
 const DOW_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
@@ -458,9 +488,18 @@ function DayView({
         <div className="gcal-header flex border-b sticky top-0 z-10">
           <div className="w-[60px] flex-shrink-0 gcal-time-col" />
           {professionals.map((prof) => (
-            <div key={prof.id} className="gcal-header-prof w-[200px] border-r last:border-r-0 px-3 py-2.5">
-              <p className="text-xs font-semibold truncate">{prof.name}</p>
-              <p className="gcal-prof-spec text-[10px] truncate">{prof.specialty}</p>
+            <div
+              key={prof.id}
+              className="gcal-header-prof w-[200px] border-r last:border-r-0 px-3 py-2 flex items-center gap-2.5"
+              title={prof.specialty ? `${prof.name} — ${prof.specialty}` : prof.name}
+            >
+              <ProfessionalAvatar name={prof.name} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold leading-tight truncate">{prof.name}</p>
+                {prof.specialty && (
+                  <p className="gcal-prof-spec text-[10px] truncate mt-0.5">{prof.specialty}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -567,11 +606,18 @@ function WeekView({
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
-                    className={`gcal-header-prof flex-1 px-2 py-1.5 text-center ${pi > 0 ? "gcal-col-divider-strong" : ""}`}
-                    title={`${prof.name} (${prof.specialty})`}
+                    className={`gcal-header-prof flex-1 px-3 py-3 ${pi > 0 ? "gcal-col-divider-strong" : ""}`}
+                    title={prof.specialty ? `${prof.name} — ${prof.specialty}` : prof.name}
                   >
-                    <p className="text-[11px] font-semibold leading-tight truncate">{prof.name}</p>
-                    <p className="gcal-prof-spec text-[9px] truncate">{prof.specialty}</p>
+                    <div className="flex items-center justify-center gap-2.5 min-w-0">
+                      <ProfessionalAvatar name={prof.name} size="md" />
+                      <div className="min-w-0 text-left">
+                        <p className="text-[13px] font-semibold leading-tight truncate text-foreground">{prof.name}</p>
+                        {prof.specialty && (
+                          <p className="gcal-prof-spec text-[10px] truncate mt-0.5">{prof.specialty}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
