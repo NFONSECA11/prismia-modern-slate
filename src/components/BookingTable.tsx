@@ -39,6 +39,7 @@ import {
   Loader2,
   MessageCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import {
   Tooltip,
