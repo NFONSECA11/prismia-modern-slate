@@ -514,6 +514,26 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
     }
   };
 
+  const openConversationForBooking = useCallback((booking: BookingRequest) => {
+    suppressNextRowClick(booking.id);
+    const now = Date.now();
+    const last = lastConversationOpenRef.current;
+    if (last?.bookingId === booking.id && now - last.at < 450) return;
+    lastConversationOpenRef.current = { bookingId: booking.id, at: now };
+
+    const lastInTs = lastInMsgMap[booking.id] ?? 0;
+    const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+    const refTs = lastInTs || fallbackTs;
+    markConversationRead(booking.id, refTs || undefined);
+
+    const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
+    if (useMobileDrawer) {
+      onOpenConversation(booking);
+    } else {
+      openConversationPopout(booking);
+    }
+  }, [isMobile, lastInMsgMap, onOpenConversation, openConversationPopout, suppressNextRowClick]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className={`rounded-xl border border-border/60 overflow-hidden shadow-md ${isGlass ? "backdrop-blur-xl" : ""}`} style={{ background: isGlass ? "hsl(var(--surface) / 0.85)" : "hsl(var(--surface))" }}>
@@ -569,7 +589,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        const actionEl = (e.target as HTMLElement).closest<HTMLElement>("[data-row-action]");
+                        if (actionEl?.dataset.rowAction === "conversation") {
+                          openConversationForBooking(booking);
+                          return;
+                        }
+                        if (actionEl) return;
                         const suppressed = suppressRowClickRef.current;
                         if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
                           suppressRowClickRef.current = null;
@@ -717,16 +743,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
-                            const handleOpenConversation = () => {
-                              suppressNextRowClick(booking.id);
-                              markConversationRead(booking.id, refTs || undefined);
-                              const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
-                              if (useMobileDrawer) {
-                                onOpenConversation(booking);
-                              } else {
-                                openConversationPopout(booking);
-                              }
-                            };
+                            const handleOpenConversation = () => openConversationForBooking(booking);
 
                             const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               e.preventDefault();
@@ -736,16 +753,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
 
                             const openConversationFromButton = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               stopRowClick(e);
-                              const now = Date.now();
-                              const last = lastConversationOpenRef.current;
-                              if (last?.bookingId === booking.id && now - last.at < 450) return;
-                              lastConversationOpenRef.current = { bookingId: booking.id, at: now };
                               handleOpenConversation();
                             };
 
                             const button = (
                               <button
                                 type="button"
+                                data-row-action="conversation"
                                 onClick={(e) => {
                                   stopRowClick(e);
                                   handleOpenConversation();
@@ -772,6 +786,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const mobileButton = (
                               <button
                                 type="button"
+                                data-row-action="conversation"
                                 onClick={openConversationFromButton}
                                 onPointerDown={(e) => {
                                   e.preventDefault();
@@ -779,6 +794,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                                   suppressNextRowClick(booking.id);
                                 }}
                                 onPointerUp={openConversationFromButton}
+                                onTouchEnd={openConversationFromButton}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
                                   unread
