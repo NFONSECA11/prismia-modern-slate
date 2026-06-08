@@ -200,6 +200,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
   const isMobile = useIsMobile();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
   const suppressRowClickRef = useRef<{ bookingId: number; until: number } | null>(null);
+  const lastConversationOpenRef = useRef<{ bookingId: number; at: number } | null>(null);
 
   const suppressNextRowClick = useCallback((bookingId: number) => {
     suppressRowClickRef.current = { bookingId, until: Date.now() + 900 };
@@ -733,6 +734,15 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               suppressNextRowClick(booking.id);
                             };
 
+                            const openConversationFromButton = (e: React.SyntheticEvent<HTMLButtonElement>) => {
+                              stopRowClick(e);
+                              const now = Date.now();
+                              const last = lastConversationOpenRef.current;
+                              if (last?.bookingId === booking.id && now - last.at < 450) return;
+                              lastConversationOpenRef.current = { bookingId: booking.id, at: now };
+                              handleOpenConversation();
+                            };
+
                             const button = (
                               <button
                                 type="button"
@@ -762,15 +772,13 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const mobileButton = (
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  stopRowClick(e);
-                                  handleOpenConversation();
-                                }}
+                                onClick={openConversationFromButton}
                                 onPointerDown={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   suppressNextRowClick(booking.id);
                                 }}
+                                onPointerUp={openConversationFromButton}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
                                   unread
