@@ -571,7 +571,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => onSelectBooking(booking)}
+                      onClick={(e) => {
+                        if (isMobile && swipedBookingId === booking.id) {
+                          e.stopPropagation();
+                          setSwipedBookingId(null);
+                          return;
+                        }
+                        onSelectBooking(booking);
+                      }}
+                      onTouchStart={(e) => {
+                        if (!isMobile) return;
+                        const t = e.touches[0];
+                        swipeStartRef.current = { id: booking.id, x: t.clientX, y: t.clientY };
+                      }}
+                      onTouchEnd={(e) => {
+                        if (!isMobile || !swipeStartRef.current || swipeStartRef.current.id !== booking.id) return;
+                        const t = e.changedTouches[0];
+                        const dx = t.clientX - swipeStartRef.current.x;
+                        const dy = t.clientY - swipeStartRef.current.y;
+                        swipeStartRef.current = null;
+                        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+                        if (dx < 0) setSwipedBookingId(booking.id);
+                        else setSwipedBookingId(null);
+                      }}
                       className="border-b border-white/10 cursor-pointer transition-colors group relative"
                       style={{ backgroundColor: undefined }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--row-hover) / 0.6)'}
