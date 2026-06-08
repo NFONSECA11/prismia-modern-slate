@@ -633,10 +633,24 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             </span>
                             {aiEnabled ? (
                               isConversationRequest ? (
-                                <span className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight">
+                                <button
+                                  type="button"
+                                  data-row-action="conversation"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openConversationForBooking(booking);
+                                  }}
+                                  onPointerDownCapture={(e) => {
+                                    e.stopPropagation();
+                                    suppressNextRowClick(booking.id);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 font-medium text-primary leading-tight hover:text-primary/80 transition-colors"
+                                  aria-label="Abrir conversa"
+                                >
                                   <MessageCircle className="h-4 w-4 text-primary" />
                                   Conversa
-                                </span>
+                                </button>
                               ) : (
                                 <span className="font-medium text-foreground leading-tight whitespace-nowrap">{booking.lead_name}</span>
                               )
