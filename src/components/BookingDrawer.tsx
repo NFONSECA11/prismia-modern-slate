@@ -3449,6 +3449,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          {drawerMode !== "conversation" && (
+          <>
           {/* Lead identity */}
           <div className="rounded-xl p-4 border border-border" style={{ background: "hsl(var(--appointment-bg, var(--surface)) / 0.3)" }}>
             <div className="flex items-start justify-between gap-3 mb-1">
@@ -3632,12 +3634,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
               </div>
             </div>
           )}
+          </>
+          )}
 
           {/* Mensagens */}
           <div
             ref={conversationSectionRef}
-            className={`rounded-xl overflow-hidden border border-border flex flex-col ${drawerMode === "conversation" ? "order-first" : ""}`}
-            style={{ maxHeight: effectiveConversationCollapsed ? undefined : drawerMode === "conversation" ? "calc(100dvh - 210px)" : (showQuickReplies ? "420px" : "320px") }}
+            className={`rounded-xl overflow-hidden border border-border flex flex-col ${drawerMode === "conversation" ? "order-first flex-1 min-h-0" : ""}`}
+            style={{ maxHeight: drawerMode === "conversation" || effectiveConversationCollapsed ? undefined : (showQuickReplies ? "420px" : "320px") }}
           >
             <button
               type="button"
@@ -3819,6 +3823,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         </div>
 
         {/* Footer — Actions */}
+        {drawerMode !== "conversation" && (
         <div className="px-5 py-4 border-t border-border surface-elevated space-y-2">
           {renderActions()}
 
@@ -3828,6 +3833,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             </p>
           )}
         </div>
+        )}
       </aside>
     </>
   );
