@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
@@ -199,6 +199,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
   const { open: openConversationPopout } = useConversationPopout();
   const isMobile = useIsMobile();
   const isGlass = bgMode === "landscape" || bgMode === "gradient";
+  const suppressRowClickRef = useRef<{ bookingId: number; until: number } | null>(null);
+  const lastConversationOpenRef = useRef<{ bookingId: number; at: number } | null>(null);
+
+  const suppressNextRowClick = useCallback((bookingId: number) => {
+    suppressRowClickRef.current = { bookingId, until: Date.now() + 900 };
+  }, []);
 
   // Re-render when any conversation read-state changes
   const [, setReadTick] = useState(0);
@@ -563,7 +569,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => onSelectBooking(booking)}
+                      onClick={() => {
+                        const suppressed = suppressRowClickRef.current;
+                        if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
+                          suppressRowClickRef.current = null;
+                          return;
+                        }
+                        onSelectBooking(booking);
+                      }}
 
                       className="border-b border-white/10 cursor-pointer transition-colors group relative"
                       style={{ backgroundColor: undefined }}
@@ -705,6 +718,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
                             const handleOpenConversation = () => {
+                              suppressNextRowClick(booking.id);
                               markConversationRead(booking.id, refTs || undefined);
                               const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
                               if (useMobileDrawer) {
@@ -717,6 +731,16 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              suppressNextRowClick(booking.id);
+                            };
+
+                            const openConversationFromButton = (e: React.SyntheticEvent<HTMLButtonElement>) => {
+                              stopRowClick(e);
+                              const now = Date.now();
+                              const last = lastConversationOpenRef.current;
+                              if (last?.bookingId === booking.id && now - last.at < 450) return;
+                              lastConversationOpenRef.current = { bookingId: booking.id, at: now };
+                              handleOpenConversation();
                             };
 
                             const button = (
@@ -745,7 +769,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               </button>
                             );
 
-                            if (isMobile) return button;
+                            const mobileButton = (
+                              <button
+                                type="button"
+                                onClick={openConversationFromButton}
+                                onPointerDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  suppressNextRowClick(booking.id);
+                                }}
+                                onPointerUp={openConversationFromButton}
+                                aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
+                                className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
+                                  unread
+                                    ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                                    : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                }`}
+                                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                              >
+                                <MessageCircle className="h-5 w-5" />
+                              </button>
+                            );
+
+                            if (isMobile) return mobileButton;
 
                             return (
                               <Tooltip>
