@@ -744,6 +744,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                           </span>
 
 
+                          {/* Mobile: botão Ver detalhes (lupa) */}
+                          <button
+                            type="button"
+                            data-row-action="details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              suppressNextRowClick(booking.id);
+                              onSelectBooking(booking);
+                            }}
+                            aria-label="Ver detalhes"
+                            className="md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border text-muted-foreground bg-muted/30 hover:bg-muted/50 border-border select-none touch-manipulation relative z-20"
+                            style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                          >
+                            <Search className="h-5 w-5" />
+                          </button>
+
                           {/* Conversa (popout) — somente status handoff */}
                           {booking.status === "handoff" && (() => {
                             const lastInTs = lastInMsgMap[booking.id] ?? 0;
