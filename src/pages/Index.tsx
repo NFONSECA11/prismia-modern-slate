@@ -493,9 +493,11 @@ export default function Index() {
           style={{ background: gradientBg }}
         />
       )}
+      {/* Sticky top stack: header + module banner */}
+      <div className="sticky top-0 z-30 print:static print:z-auto">
       {/* Top navigation bar */}
       <header
-        className="app-safe-area-top sticky top-0 z-30 print:hidden"
+        className="app-safe-area-top print:hidden"
         style={{
           background: isLandscape ? "hsl(var(--topbar-bg) / 0.92)" : "hsl(var(--topbar-bg))",
           backdropFilter: isLandscape ? "blur(16px)" : undefined,
@@ -866,6 +868,8 @@ export default function Index() {
           </div>
         </div>
       </div>
+      </div>
+
 
       {/* Zen mode - fullscreen landscape */}
       {zenMode && isLandscape && (
