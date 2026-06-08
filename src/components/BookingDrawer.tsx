@@ -3865,8 +3865,9 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             {/* Input de mensagem */}
             <div className="px-3 py-2 border-t border-border flex items-center gap-2 bg-surface-elevated">
               <input
+                ref={messageInputRef}
                 type="text"
-                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
                 placeholder="Digite uma mensagem..."
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -3876,9 +3877,10 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
                     handleSendMessage();
                   }
                 }}
-                disabled={isBotOn || sendMsgMutation.isPending}
+                disabled={isBotOn}
               />
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleSendMessage}
                 disabled={isBotOn || !messageText.trim() || sendMsgMutation.isPending}
                 className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
