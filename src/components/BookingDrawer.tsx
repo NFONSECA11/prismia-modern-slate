@@ -3663,7 +3663,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             </button>
             {!effectiveConversationCollapsed && (
             <>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2" style={{ minHeight: "150px", background: "hsl(var(--surface-elevated) / 0.5)" }}>
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2" style={{ minHeight: "150px", background: "hsl(var(--surface-elevated))" }}>
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
