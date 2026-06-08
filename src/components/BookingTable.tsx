@@ -592,14 +592,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
                       onClick={(e) => {
                         const actionEl = (e.target as HTMLElement).closest<HTMLElement>("[data-row-action]");
-                        if (actionEl?.dataset.rowAction === "conversation") {
-                          openConversationForBooking(booking);
-                          return;
-                        }
-                        if (actionEl?.dataset.rowAction === "details") {
-                          onSelectBooking(booking);
-                          return;
-                        }
                         if (actionEl) return;
                         // No mobile, exigir botão explícito (lupa) para abrir detalhes
                         if (isMobile || window.matchMedia("(max-width: 767px)").matches) return;
@@ -749,16 +741,16 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             type="button"
                             data-row-action="details"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
+                              const lastConversation = lastConversationOpenRef.current;
+                              if (lastConversation?.bookingId === booking.id && Date.now() - lastConversation.at < 900) return;
                               suppressNextRowClick(booking.id);
                               onSelectBooking(booking);
                             }}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => {
+                            onPointerDownCapture={(e) => {
                               e.stopPropagation();
-                              e.preventDefault();
                               suppressNextRowClick(booking.id);
-                              onSelectBooking(booking);
                             }}
                             aria-label="Ver detalhes"
                             className="md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border text-muted-foreground bg-muted/30 hover:bg-muted/50 border-border select-none touch-manipulation relative z-20"
@@ -767,14 +759,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             <Search className="h-5 w-5" />
                           </button>
 
-                          {/* Conversa (popout) — somente status handoff */}
-                          {booking.status === "handoff" && (() => {
+                          {/* Conversa */}
+                          {isBotOff && (() => {
                             const lastInTs = lastInMsgMap[booking.id] ?? 0;
                             const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
-                            const handleOpenConversation = () => openConversationForBooking(booking);
-
                             const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -783,33 +773,28 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
 
                             const openConversationFromButton = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               stopRowClick(e);
-                              handleOpenConversation();
+                              openConversationForBooking(booking);
                             };
 
                             const button = (
                               <button
                                 type="button"
                                 data-row-action="conversation"
-                                onClick={(e) => {
-                                  stopRowClick(e);
-                                  handleOpenConversation();
+                                onClick={openConversationFromButton}
+                                onPointerDownCapture={(e) => {
+                                  e.stopPropagation();
+                                  suppressNextRowClick(booking.id);
                                 }}
-                                onTouchStart={(e) => e.stopPropagation()}
-                                onTouchEnd={(e) => {
-                                  stopRowClick(e);
-                                  handleOpenConversation();
-                                }}
-                                onPointerDown={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
-                                className={`flex items-center justify-center h-11 w-11 md:h-7 md:w-7 rounded-lg text-xs transition-all border select-none touch-manipulation ${
+                                className={`hidden md:flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border select-none touch-manipulation ${
                                   unread
                                     ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
                                     : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                 }`}
                                 style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
                               >
-                                <MessageCircle className="h-5 w-5 md:h-3.5 md:w-3.5" />
+                                <MessageCircle className="h-3.5 w-3.5" />
                               </button>
                             );
 
@@ -818,13 +803,12 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                                 type="button"
                                 data-row-action="conversation"
                                 onClick={openConversationFromButton}
-                                onPointerDown={(e) => {
+                                onPointerDownCapture={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   suppressNextRowClick(booking.id);
+                                  openConversationForBooking(booking);
                                 }}
-                                onPointerUp={openConversationFromButton}
-                                onTouchEnd={openConversationFromButton}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
                                   unread
@@ -837,15 +821,16 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                               </button>
                             );
 
-                            if (isMobile) return mobileButton;
-
                             return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>{button}</TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs">
-                                  {unread ? "Mensagem não lida" : "Abrir conversa"}
-                                </TooltipContent>
-                              </Tooltip>
+                              <>
+                                {mobileButton}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>{button}</TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">
+                                    {unread ? "Mensagem não lida" : "Abrir conversa"}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </>
                             );
                           })()}
 
@@ -872,26 +857,8 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                           )}
 
                           {/* Quick actions - visible on hover */}
-                          {(actions.length > 0 || isBotOff) && (
-                            <div className="hidden group-hover:flex items-center gap-1 animate-fade-in">
-                              {isBotOff && booking.status !== "handoff" && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSelectBooking(booking);
-                                      }}
-                                      className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all text-primary bg-primary/15 hover:bg-primary/25 border border-primary/30"
-                                    >
-                                      <MessageCircle className="h-3.5 w-3.5" />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-xs">
-                                    Enviar mensagem
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
+                          {actions.length > 0 && (
+                            <div className="hidden md:group-hover:flex items-center gap-1 animate-fade-in">
                               {actions.map((a) => (
                                 <QuickActionButton
                                   key={a.key}
