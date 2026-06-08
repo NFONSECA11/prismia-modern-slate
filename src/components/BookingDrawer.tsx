@@ -3640,8 +3640,8 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
           {/* Mensagens */}
           <div
             ref={conversationSectionRef}
-            className={`rounded-xl overflow-hidden border border-border flex flex-col ${drawerMode === "conversation" ? "order-first" : ""}`}
-            style={{ maxHeight: effectiveConversationCollapsed ? undefined : drawerMode === "conversation" ? "calc(100dvh - 210px)" : (showQuickReplies ? "420px" : "320px") }}
+            className={`rounded-xl overflow-hidden border border-border flex flex-col ${drawerMode === "conversation" ? "order-first flex-1 min-h-0" : ""}`}
+            style={{ maxHeight: drawerMode === "conversation" || effectiveConversationCollapsed ? undefined : (showQuickReplies ? "420px" : "320px") }}
           >
             <button
               type="button"
@@ -3823,6 +3823,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
         </div>
 
         {/* Footer — Actions */}
+        {drawerMode !== "conversation" && (
         <div className="px-5 py-4 border-t border-border surface-elevated space-y-2">
           {renderActions()}
 
@@ -3832,6 +3833,7 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
             </p>
           )}
         </div>
+        )}
       </aside>
     </>
   );
