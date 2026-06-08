@@ -80,7 +80,7 @@ export default function Index() {
     savePreference({ last_view: v });
   }, []);
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
-  const [bookingDrawerMode, setBookingDrawerMode] = useState<"details" | "manage">("details");
+  const [bookingDrawerMode, setBookingDrawerMode] = useState<"details" | "manage" | "conversation">("details");
   const [statusFilter, setStatusFilter] = useState<QuickFilter>("today");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -973,6 +973,10 @@ export default function Index() {
               isLoading={isLoading}
               onSelectBooking={(booking) => {
                 setBookingDrawerMode("details");
+                setSelectedBooking(booking);
+              }}
+              onOpenConversation={(booking) => {
+                setBookingDrawerMode("conversation");
                 setSelectedBooking(booking);
               }}
               onManageBooking={(booking) => {
