@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversationPopout } from "@/contexts/ConversationPopoutContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cancelledBookingCache, extractCancelledIdFromNotes, isRescheduleFromNotes, extractProcedureFromNotes } from "@/lib/cancelledBookingCache";
@@ -208,6 +208,18 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
+
+  // Swipe-to-reveal actions (mobile)
+  const [swipedBookingId, setSwipedBookingId] = useState<number | null>(null);
+  const swipeStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
+
+  // Close swipe panel on outside click
+  useEffect(() => {
+    if (swipedBookingId === null) return;
+    const onDocClick = () => setSwipedBookingId(null);
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [swipedBookingId]);
   const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
   // BRs que tiveram ai_handoff em algum momento (mesmo que booking_mode atual seja outro)
   const [handoffOriginSet, setHandoffOriginSet] = useState<Set<number>>(new Set());
@@ -559,7 +571,29 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => onSelectBooking(booking)}
+                      onClick={(e) => {
+                        if (isMobile && swipedBookingId === booking.id) {
+                          e.stopPropagation();
+                          setSwipedBookingId(null);
+                          return;
+                        }
+                        onSelectBooking(booking);
+                      }}
+                      onTouchStart={(e) => {
+                        if (!isMobile) return;
+                        const t = e.touches[0];
+                        swipeStartRef.current = { id: booking.id, x: t.clientX, y: t.clientY };
+                      }}
+                      onTouchEnd={(e) => {
+                        if (!isMobile || !swipeStartRef.current || swipeStartRef.current.id !== booking.id) return;
+                        const t = e.changedTouches[0];
+                        const dx = t.clientX - swipeStartRef.current.x;
+                        const dy = t.clientY - swipeStartRef.current.y;
+                        swipeStartRef.current = null;
+                        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+                        if (dx < 0) setSwipedBookingId(booking.id);
+                        else setSwipedBookingId(null);
+                      }}
                       className="border-b border-white/10 cursor-pointer transition-colors group relative"
                       style={{ backgroundColor: undefined }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--row-hover) / 0.6)'}
@@ -713,7 +747,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                       }
                                     }}
                                     aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
-                                    className={`flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border ${
+                                    className={`hidden md:flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border ${
                                       unread
                                         ? "text-accent-foreground bg-accent hover:bg-accent/90 border-accent animate-pulse shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
                                         : "text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
@@ -739,7 +773,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                                     onManageBooking(booking);
                                   }}
                                   aria-label="Gerenciar agenda"
-                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
+                                  className="hidden md:flex items-center justify-center h-7 w-7 rounded-lg text-xs transition-all border text-primary bg-primary/10 hover:bg-primary/20 border-primary/30"
                                 >
                                   <CalendarCog className="h-3.5 w-3.5" />
                                 </button>
@@ -786,6 +820,50 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
                           {/* Chevron - hidden on hover when actions show */}
                           <ChevronRight className={`h-4 w-4 text-muted-foreground/40 group-hover:hidden transition-colors ${actions.length === 0 ? '!block group-hover:!block group-hover:text-primary' : ''}`} />
                         </div>
+
+                        {/* Mobile swipe-to-reveal action panel */}
+                        {isMobile && (
+                          <div
+                            className={`absolute inset-y-0 right-0 flex items-stretch z-20 shadow-2xl transition-transform duration-200 ease-out ${
+                              swipedBookingId === booking.id
+                                ? "translate-x-0"
+                                : "translate-x-full pointer-events-none"
+                            }`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {booking.status === "handoff" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSwipedBookingId(null);
+                                  const lastInTs = lastInMsgMap[booking.id] ?? 0;
+                                  const fallbackTs = booking.updated_at ? new Date(booking.updated_at).getTime() : 0;
+                                  markConversationRead(booking.id, lastInTs || fallbackTs || undefined);
+                                  onSelectBooking(booking);
+                                }}
+                                aria-label="Abrir conversa"
+                                className="w-20 flex flex-col items-center justify-center gap-1 bg-primary text-primary-foreground active:bg-primary/90"
+                              >
+                                <MessageCircle className="h-5 w-5" />
+                                <span className="text-[10px] font-medium">Conversa</span>
+                              </button>
+                            )}
+                            {!isTerminal(booking.status) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSwipedBookingId(null);
+                                  onManageBooking(booking);
+                                }}
+                                aria-label="Gerenciar agenda"
+                                className="w-20 flex flex-col items-center justify-center gap-1 bg-accent text-accent-foreground active:bg-accent/90"
+                              >
+                                <CalendarCog className="h-5 w-5" />
+                                <span className="text-[10px] font-medium">Agenda</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
