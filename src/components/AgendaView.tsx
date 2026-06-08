@@ -576,11 +576,18 @@ function WeekView({
                 {professionals.map((prof, pi) => (
                   <div
                     key={prof.id}
-                    className={`gcal-header-prof flex-1 px-2 py-1.5 text-center ${pi > 0 ? "gcal-col-divider-strong" : ""}`}
-                    title={`${prof.name} (${prof.specialty})`}
+                    className={`gcal-header-prof flex-1 px-3 py-3 ${pi > 0 ? "gcal-col-divider-strong" : ""}`}
+                    title={prof.specialty ? `${prof.name} — ${prof.specialty}` : prof.name}
                   >
-                    <p className="text-[11px] font-semibold leading-tight truncate">{prof.name}</p>
-                    <p className="gcal-prof-spec text-[9px] truncate">{prof.specialty}</p>
+                    <div className="flex items-center justify-center gap-2.5 min-w-0">
+                      <ProfessionalAvatar name={prof.name} size="md" />
+                      <div className="min-w-0 text-left">
+                        <p className="text-[13px] font-semibold leading-tight truncate text-foreground">{prof.name}</p>
+                        {prof.specialty && (
+                          <p className="gcal-prof-spec text-[10px] truncate mt-0.5">{prof.specialty}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
