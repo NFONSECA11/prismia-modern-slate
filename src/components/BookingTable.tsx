@@ -568,7 +568,14 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                   return (
                     <tr
                       key={`${booking.id}-${booking.updated_at ?? booking.created_at ?? ""}-${booking.status}-${index}`}
-                      onClick={() => onSelectBooking(booking)}
+                      onClick={() => {
+                        const suppressed = suppressRowClickRef.current;
+                        if (suppressed?.bookingId === booking.id && suppressed.until > Date.now()) {
+                          suppressRowClickRef.current = null;
+                          return;
+                        }
+                        onSelectBooking(booking);
+                      }}
 
                       className="border-b border-white/10 cursor-pointer transition-colors group relative"
                       style={{ backgroundColor: undefined }}
@@ -710,6 +717,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const refTs = lastInTs || fallbackTs;
                             const unread = aiEnabled && refTs > 0 && isConversationUnread(booking.id, refTs);
                             const handleOpenConversation = () => {
+                              suppressNextRowClick(booking.id);
                               markConversationRead(booking.id, refTs || undefined);
                               const useMobileDrawer = isMobile || window.matchMedia("(max-width: 767px)").matches;
                               if (useMobileDrawer) {
@@ -722,6 +730,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                             const stopRowClick = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              suppressNextRowClick(booking.id);
                             };
 
                             const button = (
