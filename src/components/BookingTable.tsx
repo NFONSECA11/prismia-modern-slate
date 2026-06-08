@@ -208,6 +208,18 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onManageBoo
   const [phoneMap, setPhoneMap] = useState<Record<number, string>>({});
   const [rescheduleSet, setRescheduleSet] = useState<Set<number>>(new Set());
   const [rescheduleProcNameMap, setRescheduleProcNameMap] = useState<Record<number, string>>({});
+
+  // Swipe-to-reveal actions (mobile)
+  const [swipedBookingId, setSwipedBookingId] = useState<number | null>(null);
+  const swipeStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
+
+  // Close swipe panel on outside click
+  useEffect(() => {
+    if (swipedBookingId === null) return;
+    const onDocClick = () => setSwipedBookingId(null);
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [swipedBookingId]);
   const [aiTagMap, setAiTagMap] = useState<Record<number, AiTag>>({});
   // BRs que tiveram ai_handoff em algum momento (mesmo que booking_mode atual seja outro)
   const [handoffOriginSet, setHandoffOriginSet] = useState<Set<number>>(new Set());
