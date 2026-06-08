@@ -753,10 +753,6 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
 
                             const openConversationFromButton = (e: React.SyntheticEvent<HTMLButtonElement>) => {
                               stopRowClick(e);
-                              const now = Date.now();
-                              const last = lastConversationOpenRef.current;
-                              if (last?.bookingId === booking.id && now - last.at < 450) return;
-                              lastConversationOpenRef.current = { bookingId: booking.id, at: now };
                               handleOpenConversation();
                             };
 
@@ -798,6 +794,7 @@ export function BookingTable({ bookings, isLoading, onSelectBooking, onOpenConve
                                   suppressNextRowClick(booking.id);
                                 }}
                                 onPointerUp={openConversationFromButton}
+                                onTouchEnd={openConversationFromButton}
                                 aria-label={unread ? "Abrir conversa (mensagem não lida)" : "Abrir conversa"}
                                 className={`md:hidden flex items-center justify-center h-11 w-11 rounded-lg text-xs transition-all border select-none touch-manipulation relative z-20 ${
                                   unread
