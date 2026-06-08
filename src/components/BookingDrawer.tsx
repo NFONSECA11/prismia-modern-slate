@@ -663,6 +663,14 @@ export function BookingDrawer({ booking, onClose, onConfirmed, logoUrl, logoAlt,
       return true;
     }
   });
+  // Re-read collapsed state whenever a new booking opens (allows external triggers to force-expand)
+  useEffect(() => {
+    if (!booking?.id) return;
+    try {
+      const saved = localStorage.getItem("conversation_collapsed");
+      setConversationCollapsed(saved === null ? true : saved === "true");
+    } catch {}
+  }, [booking?.id]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleConversationCollapsed = () => {
